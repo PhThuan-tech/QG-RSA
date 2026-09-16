@@ -2,7 +2,12 @@ import math
 import torch
 from torch import nn
 from torch.nn import functional as F
-from timm.models.layers.weight_init import trunc_normal_
+try:
+    # timm >= 0.9 (including the Python 3.13-compatible releases used by Colab)
+    from timm.layers import trunc_normal_
+except ImportError:
+    # timm 0.6.x used by the original local environment
+    from timm.models.layers.weight_init import trunc_normal_
 from copy import deepcopy
 
 class SimpleContinualLinear(nn.Module):
@@ -105,5 +110,4 @@ def reduce_proxies(out, nb_proxy):
     attentions = F.softmax(simi_per_class, dim=-1)
 
     return (attentions * simi_per_class).sum(-1)
-
 

@@ -5,14 +5,23 @@
 import math
 import torch
 import torch.nn as nn
-from timm.models.layers import DropPath
 import timm
 from functools import partial
 from collections import OrderedDict
 import torch
 import torch.nn as nn
-from timm.models.vision_transformer import PatchEmbed
-from timm.models import register_model
+try:
+    # timm >= 0.9; timm.models.layers is deprecated in these releases.
+    from timm.layers import DropPath, PatchEmbed
+except ImportError:
+    # Compatibility with the original timm 0.6.x environment.
+    from timm.models.layers import DropPath
+    from timm.models.vision_transformer import PatchEmbed
+
+try:
+    from timm.models import register_model
+except ImportError:
+    from timm.models._registry import register_model
 
 
 from collections import OrderedDict
@@ -378,4 +387,3 @@ def vit_base_patch16_224_in21k_adapter(pretrained=False, **kwargs):
         else:
             p.requires_grad = False
     return model
-
