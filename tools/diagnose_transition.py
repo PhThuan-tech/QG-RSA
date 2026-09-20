@@ -710,8 +710,11 @@ def main():
     oracle_f1, oracle_f2 = oracle_features
     if not torch.equal(oracle_ids, torch.as_tensor(selected_ids)):
         fail("Oracle loader did not preserve original global sample IDs/order")
-    by_class = {class_id: torch.flatnonzero(oracle_labels == class_id)
-                for class_id in range(30)}
+    by_class = {
+        class_id: torch.nonzero(
+            oracle_labels == class_id, as_tuple=False).flatten()
+        for class_id in range(30)
+    }
     if any(len(rows) != 500 for rows in by_class.values()):
         fail("Expected exactly 500 CIFAR-100 train samples per selected class")
     oracle_means_f2 = torch.stack([oracle_f2[by_class[c]].double().mean(0)
