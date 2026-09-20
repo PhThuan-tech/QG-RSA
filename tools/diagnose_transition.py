@@ -35,6 +35,9 @@ from utils.toolkit import AutoencoderSigmoid  # noqa: E402
 
 SIGMA = 4.0
 RBF_FLOOR = 1e-5
+RQ6_ABSOLUTE_SIGMAS = (0.25, 0.5, 1.0, 2.0, 4.0, 8.0, 16.0, 32.0,
+                       64.0, 128.0)
+RQ6_FLOORS = (1e-5, 1e-8, 1e-12, 0.0)
 COV_RIDGE = 1e-3
 SUPPORTED_TRANSITION = 2
 NONNEGATIVE_TOLERANCE = 1e-6
@@ -809,6 +812,384 @@ def ssca_repeat(features, old_means, stored_new_means, oracle_new_means):
     return global_record, per_class
 
 
+def rq6_distribution(values):
+    values = torch.as_tensor(values, dtype=torch.float64).flatten()
+    if values.numel() == 0:
+        fail("Cannot summarize an empty RQ6 distribution")
+    probabilities = torch.tensor(
+        [0.01, 0.05, 0.25, 0.50, 0.75, 0.95, 0.99],
+        dtype=torch.float64,
+    )
+    quantiles = torch.quantile(values, probabilities)
+    return {
+        "min": float(values.min()),
+        "quantiles": {
+            key: float(value) for key, value in zip(
+                ("q01", "q05", "q25", "q50", "q75", "q95", "q99"),
+                quantiles,
+            )
+        },
+        "max": float(values.max()),
+        "mean": float(values.mean()),
+        "std": float(values.std(unbiased=False)),
+        "count": int(values.numel()),
+    }
+
+
+def rq6_mean_median_max(values):
+    values = torch.as_tensor(values, dtype=torch.float64).flatten()
+    if values.numel() == 0:
+        fail("Cannot summarize an empty RQ6 metric")
+    return {
+        "mean": float(values.mean()),
+        "median": float(torch.quantile(values, 0.5)),
+        "max": float(values.max()),
+        "count": int(values.numel()),
+    }
+
+
+def rq6_mean_min_max(values):
+    values = torch.as_tensor(values, dtype=torch.float64).flatten()
+    if values.numel() == 0:
+        fail("Cannot summarize an empty RQ6 kernel metric")
+    return {
+        "mean": float(values.mean()),
+        "min": float(values.min()),
+        "max": float(values.max()),
+        "count": int(values.numel()),
+    }
+
+
+def build_rq6_sigma_grid(distance_summary):
+    quantiles = distance_summary["quantiles"]
+    median = quantiles["q50"]
+    candidates = [(value, "absolute") for value in RQ6_ABSOLUTE_SIGMAS]
+    candidates.extend([
+        (quantiles["q05"] / 2.0, "distance_q05/2"),
+        (quantiles["q25"] / 2.0, "distance_q25/2"),
+        (median / 8.0, "distance_median/8"),
+        (median / 4.0, "distance_median/4"),
+        (median / 2.0, "distance_median/2"),
+        (median, "distance_median"),
+        (quantiles["q75"], "distance_q75"),
+        (quantiles["q95"], "distance_q95"),
+    ])
+
+    combined = []
+    for value, source in candidates:
+        value = float(value)
+        if not math.isfinite(value) or value <= 0:
+            fail("RQ6 generated invalid sigma {!r} from {}".format(
+                value, source))
+        match = next((item for item in combined if math.isclose(
+            item["sigma"], value, rel_tol=1e-10, abs_tol=1e-12)), None)
+        if match is None:
+            combined.append({"sigma": value, "sources": [source]})
+        else:
+            match["sources"].append(source)
+    return sorted(combined, key=lambda item: item["sigma"])
+
+
+def rq6_ssca_kernel_sweep(protocol_a_features, old_means,
+                           stored_new_means, oracle_new_means, rq1,
+                           repeat_seeds):
+    if not protocol_a_features:
+        fail("RQ6 requires at least one protocol-A feature repeat")
+    if len(protocol_a_features) != len(repeat_seeds):
+        fail("RQ6 protocol-A feature/repeat-seed count mismatch")
+
+    means = old_means.double()
+    stored_target = stored_new_means.double()
+    oracle_target = oracle_new_means.double()
+    if (means.ndim != 2 or means.shape != stored_target.shape or
+            means.shape != oracle_target.shape):
+        fail("RQ6 old prototype/target shapes are inconsistent: {} / {} / {}"
+             .format(tuple(means.shape), tuple(stored_target.shape),
+                     tuple(oracle_target.shape)))
+    oracle_target_norm = torch.linalg.vector_norm(
+        oracle_target, dim=1).clamp_min(1e-30)
+    expected_feature_shape = tuple(protocol_a_features[0]["f1"].shape)
+    distance_matrices = []
+    f1_norms, f2_norms, displacement_norms = [], [], []
+    for repeat, features in enumerate(protocol_a_features):
+        if not torch.equal(features["left_ids"], features["right_ids"]):
+            fail("RQ6 protocol A repeat {} does not preserve exact IDs".format(
+                repeat))
+        if not torch.equal(features["left_labels"], features["right_labels"]):
+            fail("RQ6 protocol A repeat {} does not preserve exact labels"
+                 .format(repeat))
+        f1 = features["f1"].double()
+        f2 = features["f2"].double()
+        if (f1.shape != f2.shape or f1.ndim != 2 or
+                tuple(f1.shape) != expected_feature_shape):
+            fail("RQ6 protocol A repeat {} has incompatible feature shapes"
+                 .format(repeat))
+        if not torch.isfinite(f1).all() or not torch.isfinite(f2).all():
+            fail("RQ6 protocol A repeat {} contains non-finite features"
+                 .format(repeat))
+        distances = torch.cdist(means, f1)
+        if not torch.isfinite(distances).all():
+            fail("RQ6 encountered non-finite prototype distances")
+        distance_matrices.append(distances)
+        f1_norms.append(torch.linalg.vector_norm(f1, dim=1))
+        f2_norms.append(torch.linalg.vector_norm(f2, dim=1))
+        displacement_norms.append(torch.linalg.vector_norm(f2 - f1, dim=1))
+
+    aggregate_distances = torch.cat(
+        [distances.flatten() for distances in distance_matrices])
+    distance_summary = rq6_distribution(aggregate_distances)
+    per_class_distance = {
+        str(class_id): rq6_distribution(torch.cat([
+            distances[class_id] for distances in distance_matrices
+        ]))
+        for class_id in range(len(means))
+    }
+    sigma_grid = build_rq6_sigma_grid(distance_summary)
+    sigma_values = torch.tensor(
+        [item["sigma"] for item in sigma_grid], dtype=torch.float64)
+
+    sweep_accumulators = {
+        (sigma_index, floor): defaultdict(list)
+        for sigma_index in range(len(sigma_grid))
+        for floor in RQ6_FLOORS
+    }
+    global_accumulator = defaultdict(list)
+    maximum_normalization_error = 0.0
+
+    for repeat, (features, distances) in enumerate(zip(
+            protocol_a_features, distance_matrices)):
+        f1 = features["f1"].double()
+        f2 = features["f2"].double()
+        displacement = f2 - f1
+        global_drift = displacement.mean(dim=0)
+        global_prediction = means + global_drift
+        global_oracle_l2 = torch.linalg.vector_norm(
+            global_prediction - oracle_target, dim=1)
+        global_accumulator["oracle_l2"].extend(global_oracle_l2.tolist())
+        global_accumulator["oracle_relative_l2"].extend(
+            (global_oracle_l2 / oracle_target_norm).tolist())
+        global_accumulator["historical_l2"].extend(
+            torch.linalg.vector_norm(
+                global_prediction - stored_target, dim=1).tolist())
+        global_accumulator["drift_norm"].append(float(
+            torch.linalg.vector_norm(global_drift)))
+
+        squared_distance = distances.square()
+        logits = -squared_distance.unsqueeze(0) / (
+            2.0 * sigma_values[:, None, None].square())
+        stable_weights = torch.softmax(logits, dim=2)
+        if not torch.isfinite(stable_weights).all():
+            fail("RQ6 stable Gaussian softmax produced non-finite weights")
+        stable_row_error = (stable_weights.sum(dim=2) - 1.0).abs().max()
+        maximum_normalization_error = max(
+            maximum_normalization_error, float(stable_row_error))
+        local_drifts = torch.matmul(
+            stable_weights.reshape(-1, stable_weights.shape[-1]),
+            displacement,
+        ).reshape(len(sigma_grid), len(means), displacement.shape[1])
+        log_raw_sums = torch.logsumexp(logits, dim=2)
+        sample_count = logits.shape[2]
+        uniform_weight = 1.0 / sample_count
+
+        for sigma_index in range(len(sigma_grid)):
+            stable = stable_weights[sigma_index]
+            local_drift = local_drifts[sigma_index]
+            log_raw_sum = log_raw_sums[sigma_index]
+            for floor in RQ6_FLOORS:
+                accumulator = sweep_accumulators[(sigma_index, floor)]
+                if floor == 0.0:
+                    raw_mass_fraction = torch.ones_like(log_raw_sum)
+                    raw_below_floor = torch.zeros_like(log_raw_sum)
+                else:
+                    log_floor = math.log(floor)
+                    log_total_floor = math.log(sample_count) + log_floor
+                    raw_mass_fraction = torch.sigmoid(
+                        log_raw_sum - log_total_floor)
+                    raw_below_floor = (
+                        logits[sigma_index] < log_floor).double().mean(dim=1)
+                floor_mass_fraction = 1.0 - raw_mass_fraction
+                weights = (
+                    raw_mass_fraction[:, None] * stable +
+                    floor_mass_fraction[:, None] * uniform_weight
+                )
+                if not torch.isfinite(weights).all():
+                    fail("RQ6 sigma={} floor={} produced non-finite weights"
+                         .format(sigma_grid[sigma_index]["sigma"], floor))
+                normalization_error = (weights.sum(dim=1) - 1.0).abs()
+                maximum_normalization_error = max(
+                    maximum_normalization_error,
+                    float(normalization_error.max()))
+                entropy = -(weights * weights.clamp_min(1e-300).log()).sum(dim=1)
+                normalized_entropy = entropy / math.log(sample_count)
+                ess = 1.0 / weights.square().sum(dim=1)
+                max_weight = weights.max(dim=1).values
+
+                weighted_drift = (
+                    raw_mass_fraction[:, None] * local_drift +
+                    floor_mass_fraction[:, None] * global_drift
+                )
+                prediction = means + weighted_drift
+                oracle_l2 = torch.linalg.vector_norm(
+                    prediction - oracle_target, dim=1)
+                accumulator["oracle_l2"].extend(oracle_l2.tolist())
+                accumulator["oracle_relative_l2"].extend(
+                    (oracle_l2 / oracle_target_norm).tolist())
+                accumulator["prediction_to_global_l2"].extend(
+                    torch.linalg.vector_norm(
+                        prediction - global_prediction, dim=1).tolist())
+                accumulator["ess"].extend(ess.tolist())
+                accumulator["normalized_entropy"].extend(
+                    normalized_entropy.tolist())
+                accumulator["max_weight"].extend(max_weight.tolist())
+                accumulator["raw_below_floor_fraction"].extend(
+                    raw_below_floor.tolist())
+                accumulator["floor_added_mass_fraction"].extend(
+                    floor_mass_fraction.tolist())
+                accumulator["raw_kernel_mass_fraction"].extend(
+                    raw_mass_fraction.tolist())
+                accumulator["normalization_error"].extend(
+                    normalization_error.tolist())
+
+    if maximum_normalization_error > 1e-10:
+        fail("RQ6 weight normalization error {} exceeds tolerance".format(
+            maximum_normalization_error))
+
+    sweep_records = []
+    for sigma_index, sigma_spec in enumerate(sigma_grid):
+        for floor in RQ6_FLOORS:
+            accumulator = sweep_accumulators[(sigma_index, floor)]
+            sweep_records.append({
+                "sigma": sigma_spec["sigma"],
+                "sigma_sources": sigma_spec["sources"],
+                "floor": floor,
+                "weighting": (
+                    "stable_softmax_no_additive_floor" if floor == 0.0
+                    else "stable_exact_additive_floor_mixture"),
+                "old_oracle_prototype_error": {
+                    "l2": rq6_mean_median_max(accumulator["oracle_l2"]),
+                    "relative_l2": rq6_mean_median_max(
+                        accumulator["oracle_relative_l2"]),
+                    "aggregation": (
+                        "pooled protocol-A repeat x old-class pairs"),
+                },
+                "prediction_to_global_drift_l2": rq6_mean_median_max(
+                    accumulator["prediction_to_global_l2"]),
+                "kernel_statistics": {
+                    "ess": rq6_mean_min_max(accumulator["ess"]),
+                    "normalized_entropy": rq6_mean_min_max(
+                        accumulator["normalized_entropy"]),
+                    "max_weight": rq6_mean_min_max(
+                        accumulator["max_weight"]),
+                    "raw_below_floor_fraction": rq6_mean_min_max(
+                        accumulator["raw_below_floor_fraction"]),
+                    "floor_added_mass_fraction": rq6_mean_min_max(
+                        accumulator["floor_added_mass_fraction"]),
+                    "raw_kernel_mass_fraction": rq6_mean_min_max(
+                        accumulator["raw_kernel_mass_fraction"]),
+                    "normalization_absolute_error": rq6_mean_min_max(
+                        accumulator["normalization_error"]),
+                },
+            })
+
+    official = next(record for record in sweep_records
+                    if math.isclose(record["sigma"], SIGMA) and
+                    math.isclose(record["floor"], RBF_FLOOR))
+    stable_no_floor = [record for record in sweep_records
+                       if record["floor"] == 0.0]
+    best = min(sweep_records, key=lambda record: record[
+        "old_oracle_prototype_error"]["l2"]["mean"])
+    oracle_selected_best = dict(best)
+    oracle_selected_best["selection_label"] = (
+        "ORACLE_SELECTED_EXISTENCE_TEST_NOT_VALID_PRODUCTION_METHOD")
+    oracle_selected_best["selection_uses_old_oracle_error"] = True
+
+    rq1_protocol_a_l2 = rq1["comparison_summary"]["A"]["l2_mean"]
+    official_l2 = official["old_oracle_prototype_error"]["l2"]["mean"]
+    global_baseline = {
+        "definition": "Delta_global = mean_i[f2(x_i)-f1(x_i)] per protocol-A repeat",
+        "old_oracle_prototype_error": {
+            "l2": rq6_mean_median_max(global_accumulator["oracle_l2"]),
+            "relative_l2": rq6_mean_median_max(
+                global_accumulator["oracle_relative_l2"]),
+            "aggregation": "pooled protocol-A repeat x old-class pairs",
+        },
+        "prediction_to_historical_stored_task2_ssca_l2": (
+            rq6_mean_median_max(global_accumulator["historical_l2"])),
+        "global_drift_vector_norm_across_repeats": rq6_distribution(
+            global_accumulator["drift_norm"]),
+    }
+
+    return {
+        "question": (
+            "Can a genuinely localized Gaussian kernel reduce old-prototype "
+            "oracle error relative to historical/global-drift behavior?"),
+        "scope": {
+            "transition": "zero-based task 1->2",
+            "protocol": "A: same exact materialized current-task tensor through f1 and f2",
+            "repeat_seeds": list(repeat_seeds),
+            "repeat_count": len(protocol_a_features),
+            "current_samples_per_repeat": int(protocol_a_features[0]["f1"].shape[0]),
+            "old_prototype_count": int(len(means)),
+        },
+        "scientific_guardrail": {
+            "old_raw_data_usage": "evaluation of old-prototype error only",
+            "sigma_grid_inputs": (
+                "fixed absolute values plus distances between stored task1 old "
+                "prototypes and observable protocol-A current f1 features"),
+            "oracle_selection_status": (
+                "best sweep point is an oracle-selected existence test, not a "
+                "valid production sigma rule"),
+        },
+        "distance_scale": {
+            "formula": "r_ci = ||f1(x_i)-mu_c||_2",
+            "aggregate": distance_summary,
+            "per_old_class": per_class_distance,
+        },
+        "feature_norm_scale": {
+            "current_f1": rq6_distribution(torch.cat(f1_norms)),
+            "current_f2": rq6_distribution(torch.cat(f2_norms)),
+            "current_displacement_f2_minus_f1": rq6_distribution(
+                torch.cat(displacement_norms)),
+            "stored_task1_old_prototypes": rq6_distribution(
+                torch.linalg.vector_norm(means, dim=1)),
+        },
+        "sigma_grid": {
+            "absolute": list(RQ6_ABSOLUTE_SIGMAS),
+            "combined_with_distance_scale": sigma_grid,
+        },
+        "floor_grid": list(RQ6_FLOORS),
+        "implementation": {
+            "logits": "-r^2/(2*sigma^2)",
+            "no_floor": "weights = softmax(logits)",
+            "additive_floor_stable_equivalence": (
+                "w = alpha*softmax(logits) + (1-alpha)/N, where "
+                "alpha=sum(exp(logits))/(sum(exp(logits))+N*floor) and "
+                "alpha is evaluated in log space"),
+            "maximum_weight_normalization_absolute_error": (
+                maximum_normalization_error),
+            "weight_normalization_tolerance": 1e-10,
+            "weight_normalization_verified": True,
+            "finite_weights_verified": True,
+        },
+        "sweep_records": sweep_records,
+        "stable_gaussian_no_floor": stable_no_floor,
+        "official_sigma_4_floor_1e_5": official,
+        "global_drift_baseline": global_baseline,
+        "historical_and_no_shift_references": {
+            "historical_stored_task2_ssca": rq1["comparison_summary"]
+            ["historical_stored_task2_ssca"],
+            "no_shift": rq1["comparison_summary"]["no_shift"],
+            "protocol_A_exact_pair": rq1["comparison_summary"]["A"],
+        },
+        "official_crosscheck_against_RQ1_protocol_A": {
+            "rq6_official_l2_mean": official_l2,
+            "rq1_protocol_A_l2_mean": rq1_protocol_a_l2,
+            "absolute_difference": abs(official_l2 - rq1_protocol_a_l2),
+        },
+        "oracle_selected_best_sweep_result": oracle_selected_best,
+    }
+
+
 def parse_args():
     parser = argparse.ArgumentParser(
         description="Diagnose RSIAT zero-based transition task 1->2 without training")
@@ -922,7 +1303,7 @@ def main():
         for key, value in comparison.items():
             per_class[class_id]["stored_task2_mean_to_oracle_f2_" + key] = value
 
-    print("[4/6] Running RQ1 repeated estimators and RQ2/RQ4/RQ5 geometry...")
+    print("[4/6] Running RQ1/RQ6 estimators and RQ2/RQ4/RQ5 geometry...")
     # Keep original CIFAR train-row IDs even though rows are grouped by current class.
     current_global_ids = oracle_ids[
         torch.cat([by_class[c] for c in range(20, 30)])
@@ -962,6 +1343,7 @@ def main():
         },
     }
     rq1_class_records = defaultdict(lambda: defaultdict(list))
+    protocol_a_features = []
     for protocol in ("A", "B", "C"):
         repeats, repeat_cross_class_summaries = [], []
         for repeat in range(args.estimator_repeats):
@@ -977,6 +1359,8 @@ def main():
                 repeat_seed, repeat, protocol)
             features = extract_augmented(make_loader(dataset, args), old_network,
                                          new_network, args.device_obj)
+            if protocol == "A":
+                protocol_a_features.append(features)
             global_record, class_records = ssca_repeat(
                 features, old_means, stored_new_means[:20], oracle_means_f2[:20])
             global_record["repeat"] = repeat
@@ -1062,6 +1446,16 @@ def main():
                 "oracle_relative_l2_max"],
             "aggregation": "mean each old class across repeats, then summarize across old classes",
         }
+
+    print("  RQ6: sweeping localized Gaussian scales/floors on protocol A...")
+    rq6_ssca = rq6_ssca_kernel_sweep(
+        protocol_a_features,
+        old_means,
+        stored_new_means[:20],
+        oracle_means_f2[:20],
+        rq1,
+        rq1["repeat_seeds"],
+    )
 
     projected_old_means = apply_projector(projector, old_means.float(),
                                            args.device_obj, args.batch_size)
@@ -1292,6 +1686,7 @@ def main():
                        "old_classes": [0, 19], "current_classes": [20, 29]},
         "RQ1": rq1, "RQ2": rq2, "RQ3": rq3, "RQ4": rq4,
         "RQ5_projector_residual": rq5_projector_residual,
+        "RQ6_ssca_kernel_sweep": rq6_ssca,
     }
 
     print("[6/6] Writing metrics.json and per_class.csv...")
@@ -1361,6 +1756,30 @@ def main():
     print("Historical task2 SSCA old-mean L2 mean/median/max={:.6g}/{:.6g}/{:.6g}".format(
         stored_summary["l2_mean"], stored_summary["l2_median"],
         stored_summary["l2_max"]))
+    rq6_official = rq6_ssca["official_sigma_4_floor_1e_5"]
+    rq6_global = rq6_ssca["global_drift_baseline"]
+    rq6_best = rq6_ssca["oracle_selected_best_sweep_result"]
+    rq6_distance_median = rq6_ssca["distance_scale"]["aggregate"][
+        "quantiles"]["q50"]
+    print("RQ6 distance median={:.6g}".format(rq6_distance_median))
+    print("RQ6 official sigma=4 floor=1e-5: oracle L2 mean={:.6g}, "
+          "ESS mean={:.6g}, entropy mean={:.6g}, floor mass mean={:.6g}".format(
+              rq6_official["old_oracle_prototype_error"]["l2"]["mean"],
+              rq6_official["kernel_statistics"]["ess"]["mean"],
+              rq6_official["kernel_statistics"]["normalized_entropy"]["mean"],
+              rq6_official["kernel_statistics"]
+              ["floor_added_mass_fraction"]["mean"]))
+    print("RQ6 global drift: oracle L2 mean={:.6g}".format(
+        rq6_global["old_oracle_prototype_error"]["l2"]["mean"]))
+    print("RQ6 ORACLE-SELECTED, NOT VALID METHOD: sigma={:.6g}, floor={:.6g}, "
+          "oracle L2 mean={:.6g}, ESS mean={:.6g}, entropy mean={:.6g}, "
+          "floor mass mean={:.6g}".format(
+              rq6_best["sigma"], rq6_best["floor"],
+              rq6_best["old_oracle_prototype_error"]["l2"]["mean"],
+              rq6_best["kernel_statistics"]["ess"]["mean"],
+              rq6_best["kernel_statistics"]["normalized_entropy"]["mean"],
+              rq6_best["kernel_statistics"]
+              ["floor_added_mass_fraction"]["mean"]))
 
 
 if __name__ == "__main__":
