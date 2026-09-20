@@ -37,6 +37,7 @@ SIGMA = 4.0
 RBF_FLOOR = 1e-5
 COV_RIDGE = 1e-3
 SUPPORTED_TRANSITION = 2
+NONNEGATIVE_TOLERANCE = 1e-6
 CONFIG_FIELDS = (
     "model_name", "convnet_type", "ffn_num", "ae_code_dims", "init_cls",
     "increment", "dataset", "seed",
@@ -445,6 +446,176 @@ def transport_baseline_metrics(identity_features, projected_features, target):
     }
 
 
+def projector_residual_statistics(delta):
+    values = delta.double().flatten()
+    if values.numel() == 0:
+        fail("Cannot summarize an empty projector residual")
+    probabilities = torch.tensor(
+        [0.01, 0.05, 0.25, 0.50, 0.75, 0.95, 0.99],
+        dtype=torch.float64,
+    )
+    quantiles = torch.quantile(values, probabilities)
+    return {
+        "elementwise_mean": float(values.mean()),
+        "rms": float(torch.sqrt(values.square().mean())),
+        "elementwise_std": float(values.std(unbiased=False)),
+        "elementwise_min": float(values.min()),
+        "elementwise_max": float(values.max()),
+        "quantiles": {
+            name: float(value) for name, value in zip(
+                ("q01", "q05", "q25", "q50", "q75", "q95", "q99"),
+                quantiles,
+            )
+        },
+        "fraction_delta_lt_0": float((values < 0).double().mean()),
+        "fraction_delta_lt_0_01": float((values < 0.01).double().mean()),
+        "fraction_delta_in_0_4_0_6": float(
+            ((values >= 0.4) & (values <= 0.6)).double().mean()),
+        "fraction_delta_gt_0_9": float((values > 0.9).double().mean()),
+        "nonnegative_tolerance": NONNEGATIVE_TOLERANCE,
+        "fraction_below_negative_tolerance": float(
+            (values < -NONNEGATIVE_TOLERANCE).double().mean()),
+        "nonnegative_up_to_tolerance": bool(
+            values.min() >= -NONNEGATIVE_TOLERANCE),
+        "element_count": int(values.numel()),
+    }
+
+
+def true_drift_statistics(drift):
+    values = drift.double().flatten()
+    if values.numel() == 0:
+        fail("Cannot summarize an empty representation drift")
+    positive_part = values.clamp_min(0)
+    negative_part_magnitude = (-values).clamp_min(0)
+    return {
+        "elementwise_mean": float(values.mean()),
+        "rms": float(torch.sqrt(values.square().mean())),
+        "elementwise_std": float(values.std(unbiased=False)),
+        "fraction_d_lt_0": float((values < 0).double().mean()),
+        "fraction_d_gt_0": float((values > 0).double().mean()),
+        "rms_positive_part": float(torch.sqrt(
+            positive_part.square().mean())),
+        "rms_negative_part": float(torch.sqrt(
+            negative_part_magnitude.square().mean())),
+        "part_rms_definition": (
+            "sqrt(mean(max(+/-d, 0)^2)) over all elements"),
+        "element_count": int(values.numel()),
+    }
+
+
+def projector_error_decomposition(z1, z2, projected_z1):
+    if z1.shape != z2.shape or z1.shape != projected_z1.shape:
+        fail("RQ5 tensors have inconsistent shapes: z1={}, z2={}, projected_z1={}"
+             .format(tuple(z1.shape), tuple(z2.shape),
+                     tuple(projected_z1.shape)))
+    z1 = z1.double()
+    z2 = z2.double()
+    projected_z1 = projected_z1.double()
+    drift = (z2 - z1).flatten()
+    delta = (projected_z1 - z1).flatten()
+    identity_mse = drift.square().mean()
+    residual_energy = delta.square().mean()
+    cross_term = 2.0 * (drift * delta).mean()
+    reconstructed = identity_mse + residual_energy - cross_term
+    directly_measured = (projected_z1 - z2).square().mean()
+
+    cosine_denominator = (
+        torch.linalg.vector_norm(drift) *
+        torch.linalg.vector_norm(delta)
+    ).clamp_min(1e-30)
+    centered_drift = drift - drift.mean()
+    centered_delta = delta - delta.mean()
+    correlation_denominator = (
+        torch.linalg.vector_norm(centered_drift) *
+        torch.linalg.vector_norm(centered_delta)
+    ).clamp_min(1e-30)
+    return {
+        "identity_mse": float(identity_mse),
+        "residual_energy": float(residual_energy),
+        "cross_term_2E_d_dot_delta": float(cross_term),
+        "reconstructed_projector_mse": float(reconstructed),
+        "directly_measured_projector_mse": float(directly_measured),
+        "absolute_numerical_decomposition_error": float(
+            torch.abs(reconstructed - directly_measured)),
+        "flattened_d_delta_cosine": float(
+            torch.dot(drift, delta) / cosine_denominator),
+        "flattened_d_delta_pearson_correlation": float(
+            torch.dot(centered_drift, centered_delta) /
+            correlation_denominator),
+        "formula": "MSE(P2(z1),z2) = E[d^2] + E[delta^2] - 2E[d*delta]",
+    }
+
+
+def projector_support_diagnostics(z1, z2, projected_z1, class_range):
+    delta = projected_z1.double() - z1.double()
+    drift = z2.double() - z1.double()
+    return {
+        "classes": list(class_range),
+        "sample_count": int(z1.shape[0]),
+        "feature_dimension": int(z1.shape[1]),
+        "residual_delta": projector_residual_statistics(delta),
+        "true_drift_d": true_drift_statistics(drift),
+        "error_decomposition": projector_error_decomposition(
+            z1, z2, projected_z1),
+    }
+
+
+def projector_parameter_delta(task1_state, task2_state):
+    task1_keys = set(task1_state)
+    task2_keys = set(task2_state)
+    if task1_keys != task2_keys:
+        fail("Projector state keys differ between task1 and task2: only_task1={}, "
+             "only_task2={}".format(sorted(task1_keys - task2_keys),
+                                    sorted(task2_keys - task1_keys)))
+
+    total_delta_squared = 0.0
+    total_task1_squared = 0.0
+    total_task2_squared = 0.0
+    parameter_count = 0
+    identical = True
+    per_layer = {}
+    for key in sorted(task1_keys):
+        task1_tensor = torch.as_tensor(task1_state[key]).double()
+        task2_tensor = torch.as_tensor(task2_state[key]).double()
+        if task1_tensor.shape != task2_tensor.shape:
+            fail("Projector tensor shape differs for {}: {} != {}".format(
+                key, tuple(task1_tensor.shape), tuple(task2_tensor.shape)))
+        difference = task2_tensor - task1_tensor
+        task1_l2 = torch.linalg.vector_norm(task1_tensor)
+        task2_l2 = torch.linalg.vector_norm(task2_tensor)
+        delta_l2 = torch.linalg.vector_norm(difference)
+        per_layer[key] = {
+            "task1_l2_norm": float(task1_l2),
+            "task2_l2_norm": float(task2_l2),
+            "l2_parameter_delta": float(delta_l2),
+            "relative_l2_delta_vs_task1": float(
+                delta_l2 / task1_l2.clamp_min(1e-30)),
+            "parameter_count": int(task1_tensor.numel()),
+            "identical": bool(torch.equal(task1_tensor, task2_tensor)),
+        }
+        total_delta_squared += float(difference.square().sum())
+        total_task1_squared += float(task1_tensor.square().sum())
+        total_task2_squared += float(task2_tensor.square().sum())
+        parameter_count += int(task1_tensor.numel())
+        identical = identical and per_layer[key]["identical"]
+
+    total_delta_l2 = math.sqrt(total_delta_squared)
+    total_task1_l2 = math.sqrt(total_task1_squared)
+    return {
+        "task1_state": "task_1.pkl.old_ae_state_dict",
+        "task2_state": "task_2.pkl.old_ae_state_dict",
+        "total_l2_parameter_delta": total_delta_l2,
+        "relative_parameter_delta_vs_task1": (
+            total_delta_l2 / max(total_task1_l2, 1e-30)),
+        "task1_total_l2_norm": total_task1_l2,
+        "task2_total_l2_norm": math.sqrt(total_task2_squared),
+        "parameter_count": parameter_count,
+        "tensor_count": len(task1_keys),
+        "identical": bool(identical),
+        "per_layer": per_layer,
+    }
+
+
 def cross_class_oracle_error_summary(records):
     l2 = np.asarray(
         [record["predicted_to_oracle_f2_l2"] for record in records],
@@ -733,7 +904,7 @@ def main():
         for key, value in comparison.items():
             per_class[class_id]["stored_task2_mean_to_oracle_f2_" + key] = value
 
-    print("[4/6] Running RQ1 repeated A/B/C estimators and RQ2/RQ4 geometry...")
+    print("[4/6] Running RQ1 repeated estimators and RQ2/RQ4/RQ5 geometry...")
     # Keep original CIFAR train-row IDs even though rows are grouped by current class.
     current_global_ids = oracle_ids[
         torch.cat([by_class[c] for c in range(20, 30)])
@@ -995,6 +1166,30 @@ def main():
             max(current_transport["projector"]["rmse"], 1e-30)),
     }
 
+    rq5_projector_residual = {
+        "question": (
+            "Does the final sigmoid-residual projector add a large positive "
+            "residual that worsens identity transport?"),
+        "definitions": {
+            "z1": "f1(x)",
+            "z2": "f2(x)",
+            "delta": "P2(z1) - z1",
+            "d": "z2 - z1",
+            "architecture_expectation": (
+                "AutoencoderSigmoid makes delta elementwise nonnegative; "
+                "verify at tolerance 1e-6"),
+            "primary_support": "current classes 20-29",
+            "secondary_support": "old classes 0-19, oracle-only",
+        },
+        "current_support_primary": projector_support_diagnostics(
+            oracle_f1[current_rows], current_f2, projected_current_f1,
+            range(20, 30)),
+        "old_support_secondary_oracle_only": projector_support_diagnostics(
+            oracle_f1[old_rows], old_f2, projected_old_f1, range(0, 20)),
+        "P1_to_P2_parameter_delta": projector_parameter_delta(
+            old_ckpt["old_ae_state_dict"], new_ckpt["old_ae_state_dict"]),
+    }
+
     print("[5/6] Computing exact float64 covariance diagnostics...")
     old_covs, old_cov_repr = checkpoint_covariances(old_ckpt)
     new_covs, new_cov_repr = checkpoint_covariances(new_ckpt)
@@ -1073,6 +1268,7 @@ def main():
         "transition": {"zero_based_from_task": 1, "zero_based_to_task": 2,
                        "old_classes": [0, 19], "current_classes": [20, 29]},
         "RQ1": rq1, "RQ2": rq2, "RQ3": rq3, "RQ4": rq4,
+        "RQ5_projector_residual": rq5_projector_residual,
     }
 
     print("[6/6] Writing metrics.json and per_class.csv...")
@@ -1107,6 +1303,26 @@ def main():
         rq4["support_mismatch_comparison"]["old_support"]["projector_rmse"],
         rq4["support_mismatch_comparison"]["old_support"]
         ["relative_improvement"]))
+    rq5_current = rq5_projector_residual["current_support_primary"]
+    rq5_delta = rq5_current["residual_delta"]
+    rq5_drift = rq5_current["true_drift_d"]
+    rq5_decomposition = rq5_current["error_decomposition"]
+    rq5_parameter_delta = rq5_projector_residual["P1_to_P2_parameter_delta"]
+    print("RQ5 current delta RMS/mean/median={:.6g}/{:.6g}/{:.6g}, "
+          "negative={:.3%}".format(
+              rq5_delta["rms"], rq5_delta["elementwise_mean"],
+              rq5_delta["quantiles"]["q50"],
+              rq5_delta["fraction_delta_lt_0"]))
+    print("RQ5 current drift negative={:.3%}, identity/projector MSE={:.6g}/{:.6g}, "
+          "residual energy={:.6g}, cross term={:.6g}".format(
+              rq5_drift["fraction_d_lt_0"],
+              rq5_decomposition["identity_mse"],
+              rq5_decomposition["directly_measured_projector_mse"],
+              rq5_decomposition["residual_energy"],
+              rq5_decomposition["cross_term_2E_d_dot_delta"]))
+    print("RQ5 P1->P2 relative parameter change={:.6g}, identical={}".format(
+        rq5_parameter_delta["relative_parameter_delta_vs_task1"],
+        rq5_parameter_delta["identical"]))
     print("RQ2 final-P2 signed cosine mean={:.6g}, mean_abs={:.6g}, negative={:.3%}".format(
         rq2["aggregate"]["mean"], rq2["aggregate"]["mean_abs"],
         rq2["aggregate"]["negative_fraction"]))
