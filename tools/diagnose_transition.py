@@ -41,9 +41,14 @@ CONFIG_FIELDS = (
     "model_name", "convnet_type", "ffn_num", "ae_code_dims", "init_cls",
     "increment", "dataset", "seed",
 )
-CHECKPOINT_METADATA_FIELDS = (
-    "model_name", "convnet_type", "init_cls", "increment", "dataset", "seed",
-)
+CHECKPOINT_METADATA_ALIASES = {
+    "model_name": ("model_name", "model"),
+    "convnet_type": ("convnet_type", "backbone"),
+    "init_cls": ("init_cls",),
+    "increment": ("increment",),
+    "dataset": ("dataset",),
+    "seed": ("seed",),
+}
 
 
 def fail(message):
@@ -81,6 +86,43 @@ def scalar_config_value(value):
     return value
 
 
+def canonicalize_run_metadata(metadata, checkpoint_name):
+    if not isinstance(metadata, dict):
+        fail("{} checkpoint run_metadata is not a dictionary".format(
+            checkpoint_name))
+    canonical, resolved_keys = {}, {}
+    for field, aliases in CHECKPOINT_METADATA_ALIASES.items():
+        present = [alias for alias in aliases if alias in metadata]
+        if not present:
+            fail("{} checkpoint run_metadata has no key for {!r}; accepted aliases are {}"
+                 .format(checkpoint_name, field, list(aliases)))
+        values = [scalar_config_value(metadata[key]) for key in present]
+        if any(value != values[0] for value in values[1:]):
+            fail("{} checkpoint run_metadata has conflicting aliases for {!r}: {}"
+                 .format(checkpoint_name, field,
+                         {key: metadata[key] for key in present}))
+        canonical[field] = values[0]
+        resolved_keys[field] = present
+
+    uses_canonical = all(
+        aliases[0] in metadata for aliases in CHECKPOINT_METADATA_ALIASES.values())
+    uses_legacy_model_aliases = (
+        "model" in metadata or "backbone" in metadata)
+    if uses_canonical and not uses_legacy_model_aliases:
+        schema = "canonical_model_name_convnet_type"
+    elif ("model" in metadata and "backbone" in metadata and
+          "model_name" not in metadata and "convnet_type" not in metadata):
+        schema = "legacy_model_backbone"
+    else:
+        schema = "mixed_or_dual_aliases"
+    return canonical, {
+        "schema": schema,
+        "available_keys": sorted(metadata),
+        "canonical_to_present_keys": resolved_keys,
+        "canonical_values": canonical,
+    }
+
+
 def validate_inputs(config, old_ckpt, new_ckpt, transition_task):
     if transition_task != SUPPORTED_TRANSITION:
         fail("This v1 diagnostic supports only zero-based transition task 1->2; "
@@ -96,7 +138,11 @@ def validate_inputs(config, old_ckpt, new_ckpt, transition_task):
             config["convnet_type"]))
 
     expected_tasks = (transition_task - 1, transition_task)
-    validation = {"config_fields": {}, "checkpoint_structure": {}}
+    validation = {
+        "config_fields": {}, "checkpoint_structure": {},
+        "run_metadata_schema": {},
+    }
+    resolved_metadata = {}
     for name, ckpt, expected_task in (
         ("old", old_ckpt, expected_tasks[0]), ("new", new_ckpt, expected_tasks[1])
     ):
@@ -130,13 +176,10 @@ def validate_inputs(config, old_ckpt, new_ckpt, transition_task):
             "class_means_shape": list(means.shape),
         }
 
-        metadata = ckpt.get("run_metadata")
-        if not isinstance(metadata, dict):
-            fail("{} checkpoint run_metadata is not a dictionary".format(name))
-        missing_metadata = sorted(set(CHECKPOINT_METADATA_FIELDS) - set(metadata))
-        if missing_metadata:
-            fail("{} checkpoint run_metadata is missing {}".format(
-                name, missing_metadata))
+        metadata, metadata_schema = canonicalize_run_metadata(
+            ckpt.get("run_metadata"), name)
+        resolved_metadata[name] = metadata
+        validation["run_metadata_schema"][name] = metadata_schema
         for field in CONFIG_FIELDS:
             cfg_value = scalar_config_value(config.get(field))
             if field in metadata and cfg_value is not None:
@@ -149,11 +192,8 @@ def validate_inputs(config, old_ckpt, new_ckpt, transition_task):
                 validation["config_fields"].setdefault(field, {})[name] = (
                     "not_present_in_checkpoint_metadata")
 
-    old_metadata = old_ckpt["run_metadata"]
-    new_metadata = new_ckpt["run_metadata"]
-    for field in CHECKPOINT_METADATA_FIELDS:
-        if scalar_config_value(old_metadata[field]) != scalar_config_value(
-                new_metadata[field]):
+    for field in CHECKPOINT_METADATA_ALIASES:
+        if resolved_metadata["old"][field] != resolved_metadata["new"][field]:
             fail("Checkpoint run_metadata differs for {!r}".format(field))
 
     old_sizes = [int(x) for x in old_ckpt["task_sizes"]]
@@ -390,6 +430,53 @@ def mapping_metrics(mapped, target):
         "std_sample_l2": float(per_sample_l2.std(unbiased=False)),
         "mean_cosine": float(cosine_rows(mapped, target).double().mean()),
         "count": int(len(mapped)),
+    }
+
+
+def transport_baseline_metrics(identity_features, projected_features, target):
+    identity = mapping_metrics(identity_features, target)
+    projector = mapping_metrics(projected_features, target)
+    ratio = projector["rmse"] / max(identity["rmse"], 1e-30)
+    return {
+        "identity": identity,
+        "projector": projector,
+        "projector_over_identity_rmse_ratio": ratio,
+        "relative_improvement": 1.0 - ratio,
+    }
+
+
+def cross_class_oracle_error_summary(records):
+    l2 = np.asarray(
+        [record["predicted_to_oracle_f2_l2"] for record in records],
+        dtype=np.float64)
+    relative_l2 = np.asarray(
+        [record["predicted_to_oracle_f2_relative_l2"] for record in records],
+        dtype=np.float64)
+    return {
+        "oracle_l2_mean": float(l2.mean()),
+        "oracle_l2_median": float(np.median(l2)),
+        "oracle_l2_max": float(l2.max()),
+        "oracle_relative_l2_mean": float(relative_l2.mean()),
+        "oracle_relative_l2_median": float(np.median(relative_l2)),
+        "oracle_relative_l2_max": float(relative_l2.max()),
+    }
+
+
+def baseline_mean_summary(records):
+    l2 = np.asarray([record["l2"] for record in records], dtype=np.float64)
+    relative_l2 = np.asarray(
+        [record["relative_l2"] for record in records], dtype=np.float64)
+    cosine = np.asarray(
+        [record["cosine"] for record in records], dtype=np.float64)
+    return {
+        "l2_mean": float(l2.mean()),
+        "l2_median": float(np.median(l2)),
+        "l2_max": float(l2.max()),
+        "relative_l2_mean": float(relative_l2.mean()),
+        "relative_l2_median": float(np.median(relative_l2)),
+        "relative_l2_max": float(relative_l2.max()),
+        "cosine_mean": float(cosine.mean()),
+        "cosine_median": float(np.median(cosine)),
     }
 
 
@@ -655,12 +742,36 @@ def main():
         "repeat_seeds": [args.seed + repeat for repeat in range(args.estimator_repeats)],
         "protocols": {},
     }
-    stored_old_l2 = torch.linalg.vector_norm(
-        stored_new_means[:20] - oracle_means_f2[:20], dim=1)
-    rq1["stored_task2_old_means_vs_oracle_f2_l2"] = distribution(stored_old_l2)
+    no_shift_records, historical_stored_records = [], []
+    for class_id in range(20):
+        no_shift = vector_error(old_means[class_id], oracle_means_f2[class_id])
+        historical = vector_error(
+            stored_new_means[class_id], oracle_means_f2[class_id])
+        no_shift_records.append(no_shift)
+        historical_stored_records.append(historical)
+        per_class[class_id].update({
+            "rq1_no_shift_" + key: value for key, value in no_shift.items()
+        })
+    rq1["baselines"] = {
+        "no_shift_task1_old_mean_vs_oracle_f2": {
+            "per_old_class": {
+                str(class_id): record
+                for class_id, record in enumerate(no_shift_records)
+            },
+            "cross_old_class_summary": baseline_mean_summary(no_shift_records),
+        },
+        "historical_stored_task2_ssca_vs_oracle_f2": {
+            "per_old_class": {
+                str(class_id): record
+                for class_id, record in enumerate(historical_stored_records)
+            },
+            "cross_old_class_summary": baseline_mean_summary(
+                historical_stored_records),
+        },
+    }
     rq1_class_records = defaultdict(lambda: defaultdict(list))
     for protocol in ("A", "B", "C"):
-        repeats = []
+        repeats, repeat_cross_class_summaries = [], []
         for repeat in range(args.estimator_repeats):
             repeat_seed = args.seed + repeat
             if protocol == "C":
@@ -679,8 +790,29 @@ def main():
             global_record["repeat"] = repeat
             global_record["repeat_seed"] = repeat_seed
             repeats.append(global_record)
+            repeat_summary = cross_class_oracle_error_summary(class_records)
+            repeat_summary["repeat"] = repeat
+            repeat_summary["repeat_seed"] = repeat_seed
+            repeat_cross_class_summaries.append(repeat_summary)
             for record in class_records:
                 rq1_class_records[protocol][record["class_id"]].append(record)
+        pooled_class_records = [
+            record
+            for records in rq1_class_records[protocol].values()
+            for record in records
+        ]
+        per_class_repeat_mean_records = []
+        for class_id in range(20):
+            records = rq1_class_records[protocol][class_id]
+            per_class_repeat_mean_records.append({
+                "predicted_to_oracle_f2_l2": float(np.mean([
+                    record["predicted_to_oracle_f2_l2"] for record in records
+                ])),
+                "predicted_to_oracle_f2_relative_l2": float(np.mean([
+                    record["predicted_to_oracle_f2_relative_l2"]
+                    for record in records
+                ])),
+            })
         rq1["protocols"][protocol] = {
             "definition": {
                 "A": "same exact materialized augmented tensor per original ID for f1 and f2",
@@ -689,6 +821,20 @@ def main():
             }[protocol],
             "repeats": repeats,
             "aggregate_mean_std": aggregate_records(repeats),
+            "cross_old_class_oracle_summary": {
+                "per_repeat": repeat_cross_class_summaries,
+                "across_repeat_summaries_mean_std": aggregate_records(
+                    [
+                        {key: value for key, value in summary.items()
+                         if key.startswith("oracle_")}
+                        for summary in repeat_cross_class_summaries
+                    ]),
+                "pooled_repeat_class_pairs": cross_class_oracle_error_summary(
+                    pooled_class_records),
+                "per_class_repeat_mean_then_cross_class": (
+                    cross_class_oracle_error_summary(
+                        per_class_repeat_mean_records)),
+            },
             "per_old_class": {},
         }
         for class_id, records in rq1_class_records[protocol].items():
@@ -700,6 +846,30 @@ def main():
             for metric, summary in aggregate.items():
                 per_class[class_id]["rq1_{}_{}_mean".format(protocol, metric)] = summary["mean"]
                 per_class[class_id]["rq1_{}_{}_std".format(protocol, metric)] = summary["std"]
+
+    rq1["comparison_summary"] = {
+        "no_shift": rq1["baselines"]["no_shift_task1_old_mean_vs_oracle_f2"]
+        ["cross_old_class_summary"],
+        "historical_stored_task2_ssca": rq1["baselines"]
+        ["historical_stored_task2_ssca_vs_oracle_f2"]
+        ["cross_old_class_summary"],
+    }
+    for protocol in ("A", "B", "C"):
+        protocol_summary = rq1["protocols"][protocol][
+            "cross_old_class_oracle_summary"][
+                "per_class_repeat_mean_then_cross_class"]
+        rq1["comparison_summary"][protocol] = {
+            "l2_mean": protocol_summary["oracle_l2_mean"],
+            "l2_median": protocol_summary["oracle_l2_median"],
+            "l2_max": protocol_summary["oracle_l2_max"],
+            "relative_l2_mean": protocol_summary[
+                "oracle_relative_l2_mean"],
+            "relative_l2_median": protocol_summary[
+                "oracle_relative_l2_median"],
+            "relative_l2_max": protocol_summary[
+                "oracle_relative_l2_max"],
+            "aggregation": "mean each old class across repeats, then summarize across old classes",
+        }
 
     projected_old_means = apply_projector(projector, old_means.float(),
                                            args.device_obj, args.batch_size)
@@ -745,19 +915,40 @@ def main():
     projected_old_f1 = apply_projector(projector, oracle_f1[old_rows],
                                         args.device_obj, args.batch_size)
     old_f2 = oracle_f2[old_rows]
-    rq4["A_current_support"]["aggregate"] = mapping_metrics(projected_current_f1, current_f2)
-    rq4["B_old_support_oracle_only_no_fitting"]["aggregate"] = mapping_metrics(
-        projected_old_f1, old_f2)
+    rq4["A_current_support"]["aggregate"] = transport_baseline_metrics(
+        oracle_f1[current_rows], projected_current_f1, current_f2)
+    rq4["B_old_support_oracle_only_no_fitting"]["aggregate"] = (
+        transport_baseline_metrics(
+            oracle_f1[old_rows], projected_old_f1, old_f2))
     for class_id in range(20, 30):
         local = oracle_labels[current_rows] == class_id
-        metric = mapping_metrics(projected_current_f1[local], current_f2[local])
+        metric = transport_baseline_metrics(
+            oracle_f1[current_rows][local], projected_current_f1[local],
+            current_f2[local])
         rq4["A_current_support"][str(class_id)] = metric
-        per_class[class_id].update({"rq4_current_" + k: v for k, v in metric.items()})
+        for baseline in ("identity", "projector"):
+            per_class[class_id].update({
+                "rq4_current_{}_{}".format(baseline, key): value
+                for key, value in metric[baseline].items()
+            })
+        per_class[class_id]["rq4_current_projector_over_identity_rmse_ratio"] = (
+            metric["projector_over_identity_rmse_ratio"])
+        per_class[class_id]["rq4_current_relative_improvement"] = metric[
+            "relative_improvement"]
     for class_id in range(20):
         local = oracle_labels[old_rows] == class_id
-        metric = mapping_metrics(projected_old_f1[local], old_f2[local])
+        metric = transport_baseline_metrics(
+            oracle_f1[old_rows][local], projected_old_f1[local], old_f2[local])
         rq4["B_old_support_oracle_only_no_fitting"][str(class_id)] = metric
-        per_class[class_id].update({"rq4_old_" + k: v for k, v in metric.items()})
+        for baseline in ("identity", "projector"):
+            per_class[class_id].update({
+                "rq4_old_{}_{}".format(baseline, key): value
+                for key, value in metric[baseline].items()
+            })
+        per_class[class_id]["rq4_old_projector_over_identity_rmse_ratio"] = (
+            metric["projector_over_identity_rmse_ratio"])
+        per_class[class_id]["rq4_old_relative_improvement"] = metric[
+            "relative_improvement"]
         mean_projected_samples = projected_old_f1[local].double().mean(0)
         p2_mean = projected_old_means[class_id].double()
         oracle_mean = oracle_means_f2[class_id]
@@ -773,12 +964,32 @@ def main():
             p2_mean - mean_projected_samples))
         rq4["C_old_class_mean_and_Jensen_gap"][str(class_id)] = record
         per_class[class_id].update({"rq4_C_" + k: v for k, v in record.items()})
+    current_transport = rq4["A_current_support"]["aggregate"]
+    old_transport = rq4["B_old_support_oracle_only_no_fitting"]["aggregate"]
     rq4["support_mismatch_comparison"] = {
-        "current_rmse": rq4["A_current_support"]["aggregate"]["rmse"],
-        "old_rmse": rq4["B_old_support_oracle_only_no_fitting"]["aggregate"]["rmse"],
-        "old_over_current_rmse_ratio": (
-            rq4["B_old_support_oracle_only_no_fitting"]["aggregate"]["rmse"] /
-            max(rq4["A_current_support"]["aggregate"]["rmse"], 1e-30)),
+        "interpretation": (
+            "Compare projector against its identity baseline within each support; "
+            "do not infer support mismatch from raw old/current projector RMSE alone."),
+        "current_support": {
+            "identity_rmse": current_transport["identity"]["rmse"],
+            "projector_rmse": current_transport["projector"]["rmse"],
+            "projector_over_identity_rmse_ratio": current_transport[
+                "projector_over_identity_rmse_ratio"],
+            "relative_improvement": current_transport["relative_improvement"],
+        },
+        "old_support": {
+            "identity_rmse": old_transport["identity"]["rmse"],
+            "projector_rmse": old_transport["projector"]["rmse"],
+            "projector_over_identity_rmse_ratio": old_transport[
+                "projector_over_identity_rmse_ratio"],
+            "relative_improvement": old_transport["relative_improvement"],
+        },
+        "old_minus_current_relative_improvement": (
+            old_transport["relative_improvement"] -
+            current_transport["relative_improvement"]),
+        "old_over_current_projector_rmse_ratio_secondary_only": (
+            old_transport["projector"]["rmse"] /
+            max(current_transport["projector"]["rmse"], 1e-30)),
     }
 
     print("[5/6] Computing exact float64 covariance diagnostics...")
@@ -883,10 +1094,16 @@ def main():
         ", ".join("{}={:.6g}".format(p, rq1["protocols"][p]
                   ["aggregate_mean_std"]["predicted_to_oracle_f2_rmse"]["mean"])
                   for p in ("A", "B", "C"))))
-    print("RQ4 mapping RMSE current={:.6g}, old={:.6g}, ratio={:.6g}".format(
-        rq4["support_mismatch_comparison"]["current_rmse"],
-        rq4["support_mismatch_comparison"]["old_rmse"],
-        rq4["support_mismatch_comparison"]["old_over_current_rmse_ratio"]))
+    print("RQ4 current identity/projector RMSE={:.6g}/{:.6g}, improvement={:.3%}".format(
+        rq4["support_mismatch_comparison"]["current_support"]["identity_rmse"],
+        rq4["support_mismatch_comparison"]["current_support"]["projector_rmse"],
+        rq4["support_mismatch_comparison"]["current_support"]
+        ["relative_improvement"]))
+    print("RQ4 old identity/projector RMSE={:.6g}/{:.6g}, improvement={:.3%}".format(
+        rq4["support_mismatch_comparison"]["old_support"]["identity_rmse"],
+        rq4["support_mismatch_comparison"]["old_support"]["projector_rmse"],
+        rq4["support_mismatch_comparison"]["old_support"]
+        ["relative_improvement"]))
     print("RQ2 final-P2 signed cosine mean={:.6g}, mean_abs={:.6g}, negative={:.3%}".format(
         rq2["aggregate"]["mean"], rq2["aggregate"]["mean_abs"],
         rq2["aggregate"]["negative_fraction"]))
@@ -894,10 +1111,14 @@ def main():
         rq3["aggregates"]["old_task2_vs_oracle"]["relative_frobenius"]["mean"],
         rq3["aggregates"]["current_task2_vs_oracle_sanity"]
         ["relative_frobenius"]["mean"]))
-    print("Stored task2 old-mean L2 error mean={:.6g}, median={:.6g}, max={:.6g}".format(
-        rq1["stored_task2_old_means_vs_oracle_f2_l2"]["mean"],
-        rq1["stored_task2_old_means_vs_oracle_f2_l2"]["quantiles"]["q50"],
-        rq1["stored_task2_old_means_vs_oracle_f2_l2"]["max"]))
+    no_shift_summary = rq1["comparison_summary"]["no_shift"]
+    stored_summary = rq1["comparison_summary"]["historical_stored_task2_ssca"]
+    print("RQ1 no-shift old-mean L2 mean/median/max={:.6g}/{:.6g}/{:.6g}".format(
+        no_shift_summary["l2_mean"], no_shift_summary["l2_median"],
+        no_shift_summary["l2_max"]))
+    print("Historical task2 SSCA old-mean L2 mean/median/max={:.6g}/{:.6g}/{:.6g}".format(
+        stored_summary["l2_mean"], stored_summary["l2_median"],
+        stored_summary["l2_max"]))
 
 
 if __name__ == "__main__":
