@@ -136,8 +136,10 @@ def canonicalize_run_metadata(metadata, checkpoint_name):
     }
 
 
-def validate_inputs(config, old_ckpt, new_ckpt, transition_task):
-    if transition_task != SUPPORTED_TRANSITION:
+def validate_inputs(config, old_ckpt, new_ckpt, transition_task, general_transition=False):
+    if transition_task < 1:
+        fail("A transition requires a completed previous task")
+    if not general_transition and transition_task != SUPPORTED_TRANSITION:
         fail("This v1 diagnostic supports only zero-based transition task 1->2; "
              "pass --transition-task 2")
     for field in ("model_name", "convnet_type", "ffn_num", "ae_code_dims",
@@ -219,7 +221,11 @@ def validate_inputs(config, old_ckpt, new_ckpt, transition_task):
     new_sizes = [int(x) for x in new_ckpt["task_sizes"]]
     if new_sizes[:-1] != old_sizes:
         fail("Task-size history differs between checkpoints")
-    if old_sizes != [10, 10] or new_sizes != [10, 10, 10]:
+    if general_transition:
+        expected_sizes = [int(config["init_cls"])] + [int(config["increment"])] * transition_task
+        if new_sizes != expected_sizes:
+            fail("Checkpoint task sizes disagree with config: {} != {}".format(new_sizes, expected_sizes))
+    elif old_sizes != [10, 10] or new_sizes != [10, 10, 10]:
         fail("v1 requires task sizes [10,10] -> [10,10,10], got {} -> {}"
              .format(old_sizes, new_sizes))
     if list(old_ckpt["class_order"]) != list(new_ckpt["class_order"]):
