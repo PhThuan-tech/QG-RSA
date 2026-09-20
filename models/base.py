@@ -152,11 +152,28 @@ class BaseLearner(object):
 
     def _checkpoint_run_metadata(self):
         """Return the fields that must not change when resuming a run."""
-        keys = ("dataset", "seed", "init_cls", "increment", "model_name", "convnet_type")
-        return {
+        metadata = {
             "format_version": 1,
-            **{key: self.args.get(key) for key in keys if key in self.args},
+            **{
+                key: self.args.get(key)
+                for key in (
+                    "dataset", "seed", "init_cls", "increment", "model_name",
+                    "convnet_type", "ae_code_dims",
+                )
+                if key in self.args
+            },
         }
+        # Canonical defaults make new checkpoints reject an accidental resume
+        # across projector variants. Legacy checkpoints omit these keys and stay
+        # loadable because validation only compares keys present in both files.
+        metadata.update({
+            "projector_type": self.args.get("projector_type", "rsiat"),
+            "qg_num_qubits": self.args.get("qg_num_qubits", 4),
+            "qg_num_layers": self.args.get("qg_num_layers", 2),
+            "qg_gate_amplitude": self.args.get("qg_gate_amplitude", 0.5),
+            "qg_backend": self.args.get("qg_backend", "default.qubit"),
+        })
+        return metadata
 
     def save_checkpoint(self, filepath):
         """Persist the completed task state needed to start the next task.

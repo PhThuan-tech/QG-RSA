@@ -89,9 +89,16 @@ class BaseAttention(nn.Module):
         super(BaseAttention, self).__init__()
 
     def forward(self, x):
+        return self.forward_with_aux(x)[0]
+
+    def forward_with_aux(self, x):
         encoded_x = self.encoder(x)
         reconstructed_x = self.decoder(encoded_x)
-        return reconstructed_x + x
+        return reconstructed_x + x, {
+            "latent": encoded_x,
+            "scale": torch.ones_like(encoded_x),
+            "residual": reconstructed_x,
+        }
 
 class AutoencoderSigmoid(BaseAttention):
     def __init__(self, input_dims=768, code_dims=384):

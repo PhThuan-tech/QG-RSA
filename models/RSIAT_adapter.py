@@ -13,7 +13,7 @@ from torch.distributions.multivariate_normal import MultivariateNormal
 from models.base import BaseLearner
 from utils.toolkit import count_parameters, log_count_parameter, target2onehot, tensor2numpy
 from utils.loss import AngularPenaltySMLoss
-from utils.toolkit import AutoencoderSigmoid
+from models.qgors import build_projector
 import math
 num_workers = 8
 
@@ -43,14 +43,15 @@ class Learner(BaseLearner):
         self.task_sizes = []
         self.rs_loss_func = RS_Loss(self.args["alpha"], self.args["rs_margin"])
         self.old_ae = None
+        self._last_projector_stats = {}
+
+    def _build_projector(self):
+        return build_projector(self.args, input_dims=self.feature_dim)
 
     def _after_load_checkpoint(self, checkpoint):
         """Restore learner-specific state after BaseLearner restores the network."""
         if self._cur_task >= 1:
-            self.old_ae = AutoencoderSigmoid(
-                input_dims=768,
-                code_dims=self.args["ae_code_dims"],
-            )
+            self.old_ae = self._build_projector()
             if "old_ae_state_dict" not in checkpoint:
                 raise ValueError(
                     "Checkpoint is missing old_ae_state_dict required to resume task {}."
@@ -58,6 +59,8 @@ class Learner(BaseLearner):
                 )
             self.old_ae.load_state_dict(checkpoint["old_ae_state_dict"])
             self.old_ae.to(self._device)
+            if hasattr(self.old_ae, "ensure_quantum_cpu"):
+                self.old_ae.ensure_quantum_cpu()
 
         self._network_module_ptr = self._network
         self.old_network_module_ptr = self._old_network
@@ -92,8 +95,10 @@ class Learner(BaseLearner):
         self._cur_task += 1
         
         if self._cur_task == 1:
-            self.old_ae = AutoencoderSigmoid(input_dims=768, code_dims=self.args["ae_code_dims"])
+            self.old_ae = self._build_projector()
             self.old_ae.to(self._device)
+            if hasattr(self.old_ae, "ensure_quantum_cpu"):
+                self.old_ae.ensure_quantum_cpu()
             
         task_size = data_manager.get_task_size(self._cur_task)
         self.task_sizes.append(task_size)
@@ -173,7 +178,7 @@ class Learner(BaseLearner):
             if self.args['optimizer'] == 'sgd':
                 optimizer = optim.SGD(param_groups, momentum=0.9, lr=self.init_lr, weight_decay=self.weight_decay)
             elif self.args['optimizer'] == 'adam':
-                optimizer = optim.AdamW(self._network.parameters(), lr=self.init_lr, weight_decay=self.weight_decay)
+                optimizer = optim.AdamW(param_groups, lr=self.init_lr)
                 
             scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=self.tuned_epochs, eta_min=self.min_lr)
             log_count_parameter(param_groups)
@@ -191,7 +196,8 @@ class Learner(BaseLearner):
             if self.args['optimizer'] == 'sgd':
                 optimizer = optim.SGD(param_groups, momentum=0.9)
             elif self.args['optimizer'] == 'adam':
-                optimizer = optim.AdamW(self._network.parameters(), lr=self.init_lr, weight_decay=self.weight_decay)
+                # The projector (including a possible VQC) must be optimized too.
+                optimizer = optim.AdamW(param_groups, lr=self.init_lr)
 
             scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=self.tuned_epochs, eta_min=self.min_lr)
             log_count_parameter(param_groups)
@@ -206,6 +212,7 @@ class Learner(BaseLearner):
             losses = 0.0
             losses_c, losses_rt = 0.0, 0.0
             correct, total = 0, 0
+            projector_stats = {}
 
             for i, (_, inputs, targets) in enumerate(train_loader):
                 inputs = inputs.to(self._device, non_blocking=True)
@@ -221,6 +228,8 @@ class Learner(BaseLearner):
                 _, preds = torch.max(logits, dim=1)
                 correct += preds.eq(targets.expand_as(preds)).cpu().sum()
                 total += len(targets)
+                for key, value in self._last_projector_stats.items():
+                    projector_stats[key] = projector_stats.get(key, 0.0) + value
             scheduler.step()
 
             train_acc = np.around(tensor2numpy(correct) * 100 / total, decimals=2)
@@ -241,10 +250,29 @@ class Learner(BaseLearner):
                 test_acc_msg,
             )
             prog_bar.set_description(info)
+            if projector_stats:
+                averaged_stats = {
+                    key: value / len(train_loader)
+                    for key, value in projector_stats.items()
+                }
+                info += " => " + ", ".join(
+                    "{} {:.4f}".format(key, value)
+                    for key, value in averaged_stats.items()
+                )
+                prog_bar.set_description(info)
         logging.info(info)
 
     def _inc_loss(self, features, features_old):
-        features_old = self.old_ae(features_old)
+        features_old, projector_aux = self.old_ae.forward_with_aux(features_old)
+        scale = projector_aux["scale"].detach()
+        residual = projector_aux["residual"].detach()
+        self._last_projector_stats = {
+            "scale_mean": scale.mean().item(),
+            "scale_std": scale.std(unbiased=False).item(),
+            "scale_min": scale.min().item(),
+            "scale_max": scale.max().item(),
+            "residual_norm": residual.norm(dim=-1).mean().item(),
+        }
         loss_align = nn.MSELoss()(features, features_old)
         features_old_norm = F.normalize(features_old, p=2, dim=1)
         protos = torch.from_numpy(self._class_means).float().to(self._device,non_blocking=True)

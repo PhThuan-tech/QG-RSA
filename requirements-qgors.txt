@@ -1,0 +1,3 @@
+# Install after requirements-colab.txt (Colab) or requirements.txt (local).
+# QG-ORS uses PennyLane's PyTorch interface and default.qubit simulator.
+pennylane>=0.43,<0.46

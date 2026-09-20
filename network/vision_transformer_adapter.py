@@ -28,6 +28,20 @@ from collections import OrderedDict
 import torch
 
 
+def _create_timm_pretrained_model(*model_names):
+    """Resolve both current tagged timm names and legacy 0.6 aliases."""
+    for model_name in model_names:
+        is_model = getattr(timm, "is_model", None)
+        if is_model is not None and is_model(model_name):
+            return timm.create_model(model_name, pretrained=True, num_classes=0)
+        if is_model is None and model_name in timm.list_models():
+            return timm.create_model(model_name, pretrained=True, num_classes=0)
+    raise RuntimeError(
+        "None of the expected timm backbones is available: {} (timm {})."
+        .format(", ".join(model_names), timm.__version__)
+    )
+
+
 
 '''
 Attention Module
@@ -316,7 +330,7 @@ def vit_base_patch16_224_adapter(pretrained=False, **kwargs):
     model = VisionTransformer(patch_size=16, embed_dim=768, depth=12, num_heads=12, mlp_ratio=4, qkv_bias=True,
                               norm_layer=partial(nn.LayerNorm, eps=1e-6), **kwargs)
 
-    checkpoint_model = timm.create_model("vit_base_patch16_224", pretrained=True, num_classes=0)
+    checkpoint_model = _create_timm_pretrained_model("vit_base_patch16_224")
     state_dict = checkpoint_model.state_dict()
     for key in list(state_dict.keys()):
         if 'qkv.weight' in key:
@@ -354,7 +368,10 @@ def vit_base_patch16_224_in21k_adapter(pretrained=False, **kwargs):
     model = VisionTransformer(patch_size=16, embed_dim=768, depth=12, num_heads=12, mlp_ratio=4, qkv_bias=True,
                               norm_layer=partial(nn.LayerNorm, eps=1e-6), **kwargs)
 
-    checkpoint_model = timm.create_model("vit_base_patch16_224_in21k", pretrained=True, num_classes=0)
+    checkpoint_model = _create_timm_pretrained_model(
+        "vit_base_patch16_224.augreg_in21k",
+        "vit_base_patch16_224_in21k",
+    )
     state_dict = checkpoint_model.state_dict()
     for key in list(state_dict.keys()):
         if 'qkv.weight' in key:

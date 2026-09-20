@@ -6,6 +6,15 @@
 This repository serves as the official implementation corresponding to the paper titled "Representation-Steered Incremental Adapter-Tuning for Class-Incremental Learning with Pre-Trained Models". 
 ![Overall pipeline of RSIAT. ](images/framework.png)
 
+## QG-ORS extension
+
+This fork includes an optional training-only Quantum-Gated Orthogonal
+Representation Steering projector. The original RSIAT path remains the default.
+See [QGORS.md](QGORS.md) for equations, the controlled ablation protocol and
+commands, or open [QGORS_Colab.ipynb](QGORS_Colab.ipynb) for a two-task QG-ORS
+smoke test followed by classical-gate and QG-ORS experiments. The notebook can
+read an existing RSIAT result from Drive instead of training the baseline again.
+
 ## Installation
 ### Requirements
 Ubuntu 20.04 LTS
