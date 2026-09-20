@@ -94,8 +94,19 @@ class BaseAttention(nn.Module):
         return reconstructed_x + x
 
 class AutoencoderSigmoid(BaseAttention):
-    def __init__(self, input_dims=768, code_dims=384):
+    """Residual projector with parameter-free output centering modes."""
+
+    RESIDUAL_MODES = ("sigmoid", "centered_sigmoid")
+
+    def __init__(self, input_dims=768, code_dims=384,
+                 residual_mode="sigmoid"):
         super(AutoencoderSigmoid, self).__init__()
+        if residual_mode not in self.RESIDUAL_MODES:
+            raise ValueError(
+                "Unknown autoencoder residual mode {!r}; expected one of {}"
+                .format(residual_mode, self.RESIDUAL_MODES)
+            )
+        self.residual_mode = residual_mode
         self.encoder = nn.Sequential(
             nn.Linear(input_dims, 64),
             nn.GELU(),
@@ -106,3 +117,10 @@ class AutoencoderSigmoid(BaseAttention):
             nn.GELU(),
             nn.Linear(64, input_dims),
             nn.Sigmoid())
+
+    def forward(self, x):
+        encoded_x = self.encoder(x)
+        residual = self.decoder(encoded_x)
+        if self.residual_mode == "centered_sigmoid":
+            residual = residual - 0.5
+        return residual + x

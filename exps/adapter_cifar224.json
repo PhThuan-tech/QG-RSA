@@ -41,6 +41,7 @@
     "beta":1.0,
     "gamma":0.4,
     "ae_code_dims":256,
+    "ae_residual_mode":"sigmoid",
     "ae_init_lr":0.0005611742230603744,
     "ae_weight_decay":0.0029339295871570244
 }

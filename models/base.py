@@ -153,10 +153,13 @@ class BaseLearner(object):
     def _checkpoint_run_metadata(self):
         """Return the fields that must not change when resuming a run."""
         keys = ("dataset", "seed", "init_cls", "increment", "model_name", "convnet_type")
-        return {
+        metadata = {
             "format_version": 1,
             **{key: self.args.get(key) for key in keys if key in self.args},
         }
+        metadata["ae_residual_mode"] = self.args.get(
+            "ae_residual_mode", "sigmoid")
+        return metadata
 
     def save_checkpoint(self, filepath):
         """Persist the completed task state needed to start the next task.
@@ -240,6 +243,9 @@ class BaseLearner(object):
 
     def _validate_checkpoint(self, checkpoint):
         saved_metadata = checkpoint.get("run_metadata", {})
+        if "ae_residual_mode" not in saved_metadata:
+            saved_metadata = dict(saved_metadata)
+            saved_metadata["ae_residual_mode"] = "sigmoid"
         current_metadata = self._checkpoint_run_metadata()
         mismatches = [
             "{} (checkpoint={!r}, current={!r})".format(

@@ -40,7 +40,7 @@ SUPPORTED_TRANSITION = 2
 NONNEGATIVE_TOLERANCE = 1e-6
 CONFIG_FIELDS = (
     "model_name", "convnet_type", "ffn_num", "ae_code_dims", "init_cls",
-    "increment", "dataset", "seed",
+    "increment", "dataset", "seed", "ae_residual_mode",
 )
 CHECKPOINT_METADATA_ALIASES = {
     "model_name": ("model_name", "model"),
@@ -49,6 +49,9 @@ CHECKPOINT_METADATA_ALIASES = {
     "increment": ("increment",),
     "dataset": ("dataset",),
     "seed": ("seed",),
+}
+OPTIONAL_CHECKPOINT_METADATA_DEFAULTS = {
+    "ae_residual_mode": "sigmoid",
 }
 
 
@@ -105,6 +108,12 @@ def canonicalize_run_metadata(metadata, checkpoint_name):
         canonical[field] = values[0]
         resolved_keys[field] = present
 
+    for field, default in OPTIONAL_CHECKPOINT_METADATA_DEFAULTS.items():
+        present = [field] if field in metadata else []
+        canonical[field] = (
+            scalar_config_value(metadata[field]) if present else default)
+        resolved_keys[field] = present
+
     uses_canonical = all(
         aliases[0] in metadata for aliases in CHECKPOINT_METADATA_ALIASES.values())
     uses_legacy_model_aliases = (
@@ -137,6 +146,11 @@ def validate_inputs(config, old_ckpt, new_ckpt, transition_task):
     if "adapter" not in str(config["convnet_type"]).lower():
         fail("v1 requires the official adapter backbone, got {!r}".format(
             config["convnet_type"]))
+    residual_mode = config.get("ae_residual_mode", "sigmoid")
+    if residual_mode not in AutoencoderSigmoid.RESIDUAL_MODES:
+        fail("Config ae_residual_mode={!r}; expected one of {}".format(
+            residual_mode, AutoencoderSigmoid.RESIDUAL_MODES))
+    config["ae_residual_mode"] = residual_mode
 
     expected_tasks = (transition_task - 1, transition_task)
     validation = {
@@ -193,7 +207,8 @@ def validate_inputs(config, old_ckpt, new_ckpt, transition_task):
                 validation["config_fields"].setdefault(field, {})[name] = (
                     "not_present_in_checkpoint_metadata")
 
-    for field in CHECKPOINT_METADATA_ALIASES:
+    for field in tuple(CHECKPOINT_METADATA_ALIASES) + tuple(
+            OPTIONAL_CHECKPOINT_METADATA_DEFAULTS):
         if resolved_metadata["old"][field] != resolved_metadata["new"][field]:
             fail("Checkpoint run_metadata differs for {!r}".format(field))
 
@@ -228,6 +243,7 @@ def validate_inputs(config, old_ckpt, new_ckpt, transition_task):
     validation["config_tensor_shape_checks"] = {
         "ffn_num": int(config["ffn_num"]),
         "ae_code_dims": checkpoint_code_dims,
+        "ae_residual_mode": residual_mode,
     }
     return validation
 
@@ -250,7 +266,9 @@ def rebuild_network(config, checkpoint, device, label):
 
 def rebuild_projector(config, checkpoint, device):
     projector = AutoencoderSigmoid(input_dims=768,
-                                   code_dims=int(config["ae_code_dims"]))
+                                   code_dims=int(config["ae_code_dims"]),
+                                   residual_mode=config.get(
+                                       "ae_residual_mode", "sigmoid"))
     incompatible = projector.load_state_dict(checkpoint["old_ae_state_dict"],
                                               strict=True)
     if incompatible.missing_keys or incompatible.unexpected_keys:
@@ -1166,18 +1184,23 @@ def main():
             max(current_transport["projector"]["rmse"], 1e-30)),
     }
 
+    residual_mode = config.get("ae_residual_mode", "sigmoid")
+    residual_expectation = (
+        "delta is elementwise nonnegative up to tolerance 1e-6"
+        if residual_mode == "sigmoid"
+        else "delta is elementwise in [-0.5, 0.5] up to numerical tolerance"
+    )
     rq5_projector_residual = {
         "question": (
-            "Does the final sigmoid-residual projector add a large positive "
-            "residual that worsens identity transport?"),
+            "How does the configured final projector residual affect identity "
+            "transport?"),
         "definitions": {
             "z1": "f1(x)",
             "z2": "f2(x)",
             "delta": "P2(z1) - z1",
             "d": "z2 - z1",
-            "architecture_expectation": (
-                "AutoencoderSigmoid makes delta elementwise nonnegative; "
-                "verify at tolerance 1e-6"),
+            "ae_residual_mode": residual_mode,
+            "architecture_expectation": residual_expectation,
             "primary_support": "current classes 20-29",
             "secondary_support": "old classes 0-19, oracle-only",
         },

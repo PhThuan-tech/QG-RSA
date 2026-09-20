@@ -43,6 +43,12 @@ class Learner(BaseLearner):
         self.task_sizes = []
         self.rs_loss_func = RS_Loss(self.args["alpha"], self.args["rs_margin"])
         self.old_ae = None
+        self.ae_residual_mode = self.args.get("ae_residual_mode", "sigmoid")
+        if self.ae_residual_mode not in AutoencoderSigmoid.RESIDUAL_MODES:
+            raise ValueError(
+                "Unknown ae_residual_mode {!r}; expected one of {}".format(
+                    self.ae_residual_mode, AutoencoderSigmoid.RESIDUAL_MODES)
+            )
 
     def _after_load_checkpoint(self, checkpoint):
         """Restore learner-specific state after BaseLearner restores the network."""
@@ -50,6 +56,7 @@ class Learner(BaseLearner):
             self.old_ae = AutoencoderSigmoid(
                 input_dims=768,
                 code_dims=self.args["ae_code_dims"],
+                residual_mode=self.ae_residual_mode,
             )
             if "old_ae_state_dict" not in checkpoint:
                 raise ValueError(
@@ -92,7 +99,11 @@ class Learner(BaseLearner):
         self._cur_task += 1
         
         if self._cur_task == 1:
-            self.old_ae = AutoencoderSigmoid(input_dims=768, code_dims=self.args["ae_code_dims"])
+            self.old_ae = AutoencoderSigmoid(
+                input_dims=768,
+                code_dims=self.args["ae_code_dims"],
+                residual_mode=self.ae_residual_mode,
+            )
             self.old_ae.to(self._device)
             
         task_size = data_manager.get_task_size(self._cur_task)
