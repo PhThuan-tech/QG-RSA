@@ -474,7 +474,16 @@ def projector_residual_statistics(delta):
         [0.01, 0.05, 0.25, 0.50, 0.75, 0.95, 0.99],
         dtype=torch.float64,
     )
-    quantiles = torch.quantile(values, probabilities)
+    if values.numel() > (1 << 24):
+        quantiles = torch.as_tensor(
+            np.quantile(
+                values.cpu().numpy(), probabilities.cpu().numpy(),
+                method="linear",
+            ),
+            dtype=torch.float64,
+        )
+    else:
+        quantiles = torch.quantile(values, probabilities)
     return {
         "elementwise_mean": float(values.mean()),
         "rms": float(torch.sqrt(values.square().mean())),
