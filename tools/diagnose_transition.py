@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Read-only diagnostics for the zero-based RSIAT transition task 1 -> 2.
+"""Read-only diagnostics for an arbitrary zero-based RSIAT task transition.
 
 The script reconstructs the official repository networks, strictly loads the
 completed-task checkpoints, and writes only metrics.json and per_class.csv in
@@ -39,7 +39,6 @@ RQ6_ABSOLUTE_SIGMAS = (0.25, 0.5, 1.0, 2.0, 4.0, 8.0, 16.0, 32.0,
                        64.0, 128.0)
 RQ6_FLOORS = (1e-5, 1e-8, 1e-12, 0.0)
 COV_RIDGE = 1e-3
-SUPPORTED_TRANSITION = 2
 NONNEGATIVE_TOLERANCE = 1e-6
 CONFIG_FIELDS = (
     "model_name", "convnet_type", "ffn_num", "ae_code_dims", "init_cls",
@@ -136,12 +135,9 @@ def canonicalize_run_metadata(metadata, checkpoint_name):
     }
 
 
-def validate_inputs(config, old_ckpt, new_ckpt, transition_task, general_transition=False):
+def validate_inputs(config, old_ckpt, new_ckpt, transition_task):
     if transition_task < 1:
         fail("A transition requires a completed previous task")
-    if not general_transition and transition_task != SUPPORTED_TRANSITION:
-        fail("This v1 diagnostic supports only zero-based transition task 1->2; "
-             "pass --transition-task 2")
     for field in ("model_name", "convnet_type", "ffn_num", "ae_code_dims",
                   "init_cls", "increment", "dataset"):
         if field not in config:
@@ -221,13 +217,10 @@ def validate_inputs(config, old_ckpt, new_ckpt, transition_task, general_transit
     new_sizes = [int(x) for x in new_ckpt["task_sizes"]]
     if new_sizes[:-1] != old_sizes:
         fail("Task-size history differs between checkpoints")
-    if general_transition:
-        expected_sizes = [int(config["init_cls"])] + [int(config["increment"])] * transition_task
-        if new_sizes != expected_sizes:
-            fail("Checkpoint task sizes disagree with config: {} != {}".format(new_sizes, expected_sizes))
-    elif old_sizes != [10, 10] or new_sizes != [10, 10, 10]:
-        fail("v1 requires task sizes [10,10] -> [10,10,10], got {} -> {}"
-             .format(old_sizes, new_sizes))
+    expected_sizes = [int(config["init_cls"])] + [int(config["increment"])] * transition_task
+    if new_sizes != expected_sizes:
+        fail("Checkpoint task sizes disagree with config: {} != {}".format(
+            new_sizes, expected_sizes))
     if list(old_ckpt["class_order"]) != list(new_ckpt["class_order"]):
         fail("class_order differs between checkpoints")
     if torch.as_tensor(old_ckpt["class_means"]).shape[1] != 768:
@@ -281,7 +274,7 @@ def rebuild_projector(config, checkpoint, device):
     incompatible = projector.load_state_dict(checkpoint["old_ae_state_dict"],
                                               strict=True)
     if incompatible.missing_keys or incompatible.unexpected_keys:
-        fail("Final P2 strict load was not exact: missing={} unexpected={}".format(
+        fail("Final new-task projector strict load was not exact: missing={} unexpected={}".format(
             incompatible.missing_keys, incompatible.unexpected_keys))
     projector.to(device).eval()
     for parameter in projector.parameters():
@@ -569,7 +562,7 @@ def projector_error_decomposition(z1, z2, projected_z1):
         "flattened_d_delta_pearson_correlation": float(
             torch.dot(centered_drift, centered_delta) /
             correlation_denominator),
-        "formula": "MSE(P2(z1),z2) = E[d^2] + E[delta^2] - 2E[d*delta]",
+        "formula": "MSE(P_new(z_old),z_new) = E[d^2] + E[delta^2] - 2E[d*delta]",
     }
 
 
@@ -587,57 +580,57 @@ def projector_support_diagnostics(z1, z2, projected_z1, class_range):
     }
 
 
-def projector_parameter_delta(task1_state, task2_state):
-    task1_keys = set(task1_state)
-    task2_keys = set(task2_state)
-    if task1_keys != task2_keys:
-        fail("Projector state keys differ between task1 and task2: only_task1={}, "
-             "only_task2={}".format(sorted(task1_keys - task2_keys),
-                                    sorted(task2_keys - task1_keys)))
+def projector_parameter_delta(old_state, new_state):
+    old_keys = set(old_state)
+    new_keys = set(new_state)
+    if old_keys != new_keys:
+        fail("Projector state keys differ between old and new checkpoints: only_old={}, "
+             "only_new={}".format(sorted(old_keys - new_keys),
+                                  sorted(new_keys - old_keys)))
 
     total_delta_squared = 0.0
-    total_task1_squared = 0.0
-    total_task2_squared = 0.0
+    total_old_squared = 0.0
+    total_new_squared = 0.0
     parameter_count = 0
     identical = True
     per_layer = {}
-    for key in sorted(task1_keys):
-        task1_tensor = torch.as_tensor(task1_state[key]).double()
-        task2_tensor = torch.as_tensor(task2_state[key]).double()
-        if task1_tensor.shape != task2_tensor.shape:
+    for key in sorted(old_keys):
+        old_tensor = torch.as_tensor(old_state[key]).double()
+        new_tensor = torch.as_tensor(new_state[key]).double()
+        if old_tensor.shape != new_tensor.shape:
             fail("Projector tensor shape differs for {}: {} != {}".format(
-                key, tuple(task1_tensor.shape), tuple(task2_tensor.shape)))
-        difference = task2_tensor - task1_tensor
-        task1_l2 = torch.linalg.vector_norm(task1_tensor)
-        task2_l2 = torch.linalg.vector_norm(task2_tensor)
+                key, tuple(old_tensor.shape), tuple(new_tensor.shape)))
+        difference = new_tensor - old_tensor
+        old_l2 = torch.linalg.vector_norm(old_tensor)
+        new_l2 = torch.linalg.vector_norm(new_tensor)
         delta_l2 = torch.linalg.vector_norm(difference)
         per_layer[key] = {
-            "task1_l2_norm": float(task1_l2),
-            "task2_l2_norm": float(task2_l2),
+            "old_l2_norm": float(old_l2),
+            "new_l2_norm": float(new_l2),
             "l2_parameter_delta": float(delta_l2),
-            "relative_l2_delta_vs_task1": float(
-                delta_l2 / task1_l2.clamp_min(1e-30)),
-            "parameter_count": int(task1_tensor.numel()),
-            "identical": bool(torch.equal(task1_tensor, task2_tensor)),
+            "relative_l2_delta_vs_old": float(
+                delta_l2 / old_l2.clamp_min(1e-30)),
+            "parameter_count": int(old_tensor.numel()),
+            "identical": bool(torch.equal(old_tensor, new_tensor)),
         }
         total_delta_squared += float(difference.square().sum())
-        total_task1_squared += float(task1_tensor.square().sum())
-        total_task2_squared += float(task2_tensor.square().sum())
-        parameter_count += int(task1_tensor.numel())
+        total_old_squared += float(old_tensor.square().sum())
+        total_new_squared += float(new_tensor.square().sum())
+        parameter_count += int(old_tensor.numel())
         identical = identical and per_layer[key]["identical"]
 
     total_delta_l2 = math.sqrt(total_delta_squared)
-    total_task1_l2 = math.sqrt(total_task1_squared)
+    total_old_l2 = math.sqrt(total_old_squared)
     return {
-        "task1_state": "task_1.pkl.old_ae_state_dict",
-        "task2_state": "task_2.pkl.old_ae_state_dict",
+        "old_state": "old_checkpoint.old_ae_state_dict",
+        "new_state": "new_checkpoint.old_ae_state_dict",
         "total_l2_parameter_delta": total_delta_l2,
-        "relative_parameter_delta_vs_task1": (
-            total_delta_l2 / max(total_task1_l2, 1e-30)),
-        "task1_total_l2_norm": total_task1_l2,
-        "task2_total_l2_norm": math.sqrt(total_task2_squared),
+        "relative_parameter_delta_vs_old": (
+            total_delta_l2 / max(total_old_l2, 1e-30)),
+        "old_total_l2_norm": total_old_l2,
+        "new_total_l2_norm": math.sqrt(total_new_squared),
         "parameter_count": parameter_count,
-        "tensor_count": len(task1_keys),
+        "tensor_count": len(old_keys),
         "identical": bool(identical),
         "per_layer": per_layer,
     }
@@ -786,7 +779,7 @@ def ssca_repeat(features, old_means, stored_new_means, oracle_new_means):
             "raw_below_floor_fraction": float(floor_mask[class_id].double().mean()),
             "floor_added_mass_fraction": float(floor_mass_fraction[class_id]),
         }
-        for prefix, target in (("stored_task2", stored_new_means),
+        for prefix, target in (("stored_new", stored_new_means),
                                ("oracle_f2", oracle_new_means)):
             for metric, value in vector_error(predicted[class_id], target[class_id]).items():
                 record["predicted_to_{}_{}".format(prefix, metric)] = value
@@ -808,7 +801,7 @@ def ssca_repeat(features, old_means, stored_new_means, oracle_new_means):
         "cross_class_pair_count": int((features["left_labels"] !=
                                        features["right_labels"]).sum()),
     }
-    for prefix, target in (("stored_task2", stored_new_means.double()),
+    for prefix, target in (("stored_new", stored_new_means.double()),
                            ("oracle_f2", oracle_new_means.double())):
         errors = predicted - target
         global_record["predicted_to_{}_rmse".format(prefix)] = float(
@@ -898,7 +891,7 @@ def build_rq6_sigma_grid(distance_summary):
 
 def rq6_ssca_kernel_sweep(protocol_a_features, old_means,
                            stored_new_means, oracle_new_means, rq1,
-                           repeat_seeds):
+                           repeat_seeds, transition_label):
     if not protocol_a_features:
         fail("RQ6 requires at least one protocol-A feature repeat")
     if len(protocol_a_features) != len(repeat_seeds):
@@ -1119,7 +1112,7 @@ def rq6_ssca_kernel_sweep(protocol_a_features, old_means,
                 global_accumulator["oracle_relative_l2"]),
             "aggregation": "pooled protocol-A repeat x old-class pairs",
         },
-        "prediction_to_historical_stored_task2_ssca_l2": (
+        "prediction_to_historical_stored_new_ssca_l2": (
             rq6_mean_median_max(global_accumulator["historical_l2"])),
         "global_drift_vector_norm_across_repeats": rq6_distribution(
             global_accumulator["drift_norm"]),
@@ -1130,7 +1123,7 @@ def rq6_ssca_kernel_sweep(protocol_a_features, old_means,
             "Can a genuinely localized Gaussian kernel reduce old-prototype "
             "oracle error relative to historical/global-drift behavior?"),
         "scope": {
-            "transition": "zero-based task 1->2",
+            "transition": "zero-based task {}".format(transition_label),
             "protocol": "A: same exact materialized current-task tensor through f1 and f2",
             "repeat_seeds": list(repeat_seeds),
             "repeat_count": len(protocol_a_features),
@@ -1140,8 +1133,8 @@ def rq6_ssca_kernel_sweep(protocol_a_features, old_means,
         "scientific_guardrail": {
             "old_raw_data_usage": "evaluation of old-prototype error only",
             "sigma_grid_inputs": (
-                "fixed absolute values plus distances between stored task1 old "
-                "prototypes and observable protocol-A current f1 features"),
+                "fixed absolute values plus distances between stored old-task "
+                "prototypes and observable protocol-A current old-model features"),
             "oracle_selection_status": (
                 "best sweep point is an oracle-selected existence test, not a "
                 "valid production sigma rule"),
@@ -1156,7 +1149,7 @@ def rq6_ssca_kernel_sweep(protocol_a_features, old_means,
             "current_f2": rq6_distribution(torch.cat(f2_norms)),
             "current_displacement_f2_minus_f1": rq6_distribution(
                 torch.cat(displacement_norms)),
-            "stored_task1_old_prototypes": rq6_distribution(
+            "stored_old_task_prototypes": rq6_distribution(
                 torch.linalg.vector_norm(means, dim=1)),
         },
         "sigma_grid": {
@@ -1182,8 +1175,8 @@ def rq6_ssca_kernel_sweep(protocol_a_features, old_means,
         "official_sigma_4_floor_1e_5": official,
         "global_drift_baseline": global_baseline,
         "historical_and_no_shift_references": {
-            "historical_stored_task2_ssca": rq1["comparison_summary"]
-            ["historical_stored_task2_ssca"],
+            "historical_stored_new_ssca": rq1["comparison_summary"]
+            ["historical_stored_new_ssca"],
             "no_shift": rq1["comparison_summary"]["no_shift"],
             "protocol_A_exact_pair": rq1["comparison_summary"]["A"],
         },
@@ -1198,7 +1191,7 @@ def rq6_ssca_kernel_sweep(protocol_a_features, old_means,
 
 def parse_args():
     parser = argparse.ArgumentParser(
-        description="Diagnose RSIAT zero-based transition task 1->2 without training")
+        description="Diagnose an arbitrary zero-based RSIAT task transition without training")
     parser.add_argument("--ckpt-old", required=True)
     parser.add_argument("--ckpt-new", required=True)
     parser.add_argument("--transition-task", required=True, type=int)
@@ -1255,13 +1248,29 @@ def main():
     new_ckpt = load_checkpoint(new_path)
     validation = validate_inputs(config, old_ckpt, new_ckpt, args.transition_task)
 
+    old_task = int(args.transition_task - 1)
+    new_task = int(args.transition_task)
+    old_total = int(old_ckpt["total_classes"])
+    new_total = int(new_ckpt["total_classes"])
+    old_classes = range(old_total)
+    current_classes = range(old_total, new_total)
+    all_classes = range(new_total)
+    transition_label = "{}->{}".format(old_task, new_task)
+    init_cls = int(config["init_cls"])
+    increment = int(config["increment"])
+
+    def class_task_id(class_id):
+        if class_id < init_cls:
+            return 0
+        return 1 + (class_id - init_cls) // increment
+
     print("[1/6] Reconstructing official networks (pretrained download/cache may be used)...")
-    old_network = rebuild_network(config, old_ckpt, args.device_obj, "f1/task1")
-    new_network = rebuild_network(config, new_ckpt, args.device_obj, "f2/task2")
+    old_network = rebuild_network(config, old_ckpt, args.device_obj, "old_network")
+    new_network = rebuild_network(config, new_ckpt, args.device_obj, "new_network")
     projector = rebuild_projector(config, new_ckpt, args.device_obj)
     validation["strict_load"] = {
         "old_network": "zero missing/unexpected", "new_network": "zero missing/unexpected",
-        "final_P2": "zero missing/unexpected",
+        "final_new_task_projector": "zero missing/unexpected",
     }
 
     print("[2/6] Loading CIFAR-100 train split with download=False...")
@@ -1289,30 +1298,30 @@ def main():
     by_class = {
         class_id: torch.nonzero(
             oracle_labels == class_id, as_tuple=False).flatten()
-        for class_id in range(30)
+        for class_id in all_classes
     }
     if any(len(rows) != 500 for rows in by_class.values()):
         fail("Expected exactly 500 CIFAR-100 train samples per selected class")
     oracle_means_f2 = torch.stack([oracle_f2[by_class[c]].double().mean(0)
-                                   for c in range(30)])
-    old_means = torch.as_tensor(old_ckpt["class_means"][:20], dtype=torch.float64)
-    stored_new_means = torch.as_tensor(new_ckpt["class_means"][:30], dtype=torch.float64)
+                                   for c in all_classes])
+    old_means = torch.as_tensor(old_ckpt["class_means"][:old_total], dtype=torch.float64)
+    stored_new_means = torch.as_tensor(new_ckpt["class_means"][:new_total], dtype=torch.float64)
 
     per_class = {class_id: {
         "class_id": class_id, "original_class_id": int(class_order[class_id]),
-        "task_id": class_id // int(config["increment"]),
-        "support": "old" if class_id < 20 else "current",
+        "task_id": class_task_id(class_id),
+        "support": "old" if class_id < old_total else "current",
         "n_oracle": int(len(by_class[class_id])),
-    } for class_id in range(30)}
-    for class_id in range(30):
+    } for class_id in all_classes}
+    for class_id in all_classes:
         comparison = vector_error(stored_new_means[class_id], oracle_means_f2[class_id])
         for key, value in comparison.items():
-            per_class[class_id]["stored_task2_mean_to_oracle_f2_" + key] = value
+            per_class[class_id]["stored_new_mean_to_oracle_new_" + key] = value
 
     print("[4/6] Running RQ1/RQ6 estimators and RQ2/RQ4/RQ5 geometry...")
     # Keep original CIFAR train-row IDs even though rows are grouped by current class.
     current_global_ids = oracle_ids[
-        torch.cat([by_class[c] for c in range(20, 30)])
+        torch.cat([by_class[c] for c in current_classes])
     ].numpy()
     rq1 = {
         "question": "How do pairing protocols affect the exact SSCA mean transport estimator?",
@@ -1322,7 +1331,7 @@ def main():
         "protocols": {},
     }
     no_shift_records, historical_stored_records = [], []
-    for class_id in range(20):
+    for class_id in old_classes:
         no_shift = vector_error(old_means[class_id], oracle_means_f2[class_id])
         historical = vector_error(
             stored_new_means[class_id], oracle_means_f2[class_id])
@@ -1332,14 +1341,14 @@ def main():
             "rq1_no_shift_" + key: value for key, value in no_shift.items()
         })
     rq1["baselines"] = {
-        "no_shift_task1_old_mean_vs_oracle_f2": {
+        "no_shift_old_mean_vs_oracle_new": {
             "per_old_class": {
                 str(class_id): record
                 for class_id, record in enumerate(no_shift_records)
             },
             "cross_old_class_summary": baseline_mean_summary(no_shift_records),
         },
-        "historical_stored_task2_ssca_vs_oracle_f2": {
+        "historical_stored_new_ssca_vs_oracle_new": {
             "per_old_class": {
                 str(class_id): record
                 for class_id, record in enumerate(historical_stored_records)
@@ -1368,7 +1377,7 @@ def main():
             if protocol == "A":
                 protocol_a_features.append(features)
             global_record, class_records = ssca_repeat(
-                features, old_means, stored_new_means[:20], oracle_means_f2[:20])
+                features, old_means, stored_new_means[:old_total], oracle_means_f2[:old_total])
             global_record["repeat"] = repeat
             global_record["repeat_seed"] = repeat_seed
             repeats.append(global_record)
@@ -1384,7 +1393,7 @@ def main():
             for record in records
         ]
         per_class_repeat_mean_records = []
-        for class_id in range(20):
+        for class_id in old_classes:
             records = rq1_class_records[protocol][class_id]
             per_class_repeat_mean_records.append({
                 "predicted_to_oracle_f2_l2": float(np.mean([
@@ -1430,10 +1439,10 @@ def main():
                 per_class[class_id]["rq1_{}_{}_std".format(protocol, metric)] = summary["std"]
 
     rq1["comparison_summary"] = {
-        "no_shift": rq1["baselines"]["no_shift_task1_old_mean_vs_oracle_f2"]
+        "no_shift": rq1["baselines"]["no_shift_old_mean_vs_oracle_new"]
         ["cross_old_class_summary"],
-        "historical_stored_task2_ssca": rq1["baselines"]
-        ["historical_stored_task2_ssca_vs_oracle_f2"]
+        "historical_stored_new_ssca": rq1["baselines"]
+        ["historical_stored_new_ssca_vs_oracle_new"]
         ["cross_old_class_summary"],
     }
     for protocol in ("A", "B", "C"):
@@ -1457,40 +1466,41 @@ def main():
     rq6_ssca = rq6_ssca_kernel_sweep(
         protocol_a_features,
         old_means,
-        stored_new_means[:20],
-        oracle_means_f2[:20],
+        stored_new_means[:old_total],
+        oracle_means_f2[:old_total],
         rq1,
         rq1["repeat_seeds"],
+        transition_label,
     )
 
     projected_old_means = apply_projector(projector, old_means.float(),
                                            args.device_obj, args.batch_size)
-    current_rows = torch.cat([by_class[c] for c in range(20, 30)])
+    current_rows = torch.cat([by_class[c] for c in current_classes])
     projected_current_f1 = apply_projector(projector, oracle_f1[current_rows],
                                             args.device_obj, args.batch_size)
     current_f2 = oracle_f2[current_rows]
     cosine_matrix = F.normalize(projected_old_means.float(), p=2, dim=1) @ (
         F.normalize(projected_current_f1.float(), p=2, dim=1).T)
     rq2 = {
-        "wording": "evaluate exact signed-cosine objective geometry at final P2",
-        "formula": "cos(P2(mu_task1[c]), P2(f1(x))) for old prototype c and current sample x",
+        "wording": "evaluate exact signed-cosine objective geometry at the final new-task projector",
+        "formula": "cos(P_new(mu_old[c]), P_new(f_old(x))) for old prototype c and current sample x",
         "historical_replay_claimed": False,
         "sample_transform": "deterministic repository oracle/test transform",
         "aggregate": distribution(cosine_matrix),
         "per_prototype": {}, "per_current_class": {}, "per_prototype_current_class": {},
     }
-    for old_class in range(20):
+    for old_class in old_classes:
         summary = distribution(cosine_matrix[old_class])
         rq2["per_prototype"][str(old_class)] = summary
         for key in ("mean", "mean_abs", "std", "min", "max", "negative_fraction",
                     "abs_lt_0_1_fraction", "abs_lt_0_2_fraction"):
             per_class[old_class]["rq2_as_prototype_" + key] = summary[key]
         rq2["per_prototype_current_class"][str(old_class)] = {}
-        for current_class in range(20, 30):
+        for current_class in current_classes:
             local = (oracle_labels[current_rows] == current_class)
             rq2["per_prototype_current_class"][str(old_class)][str(current_class)] = (
                 distribution(cosine_matrix[old_class, local]))
-    for current_class in range(20, 30):
+    for current_class in current_classes:
         local = (oracle_labels[current_rows] == current_class)
         summary = distribution(cosine_matrix[:, local].reshape(-1))
         rq2["per_current_class"][str(current_class)] = summary
@@ -1499,11 +1509,11 @@ def main():
             per_class[current_class]["rq2_as_current_class_" + key] = summary[key]
 
     rq4 = {
-        "question": "Does final P2 generalize from current support to old support?",
+        "question": "Does the final new-task projector generalize from current support to old support?",
         "A_current_support": {}, "B_old_support_oracle_only_no_fitting": {},
         "C_old_class_mean_and_Jensen_gap": {},
     }
-    old_rows = torch.cat([by_class[c] for c in range(20)])
+    old_rows = torch.cat([by_class[c] for c in old_classes])
     projected_old_f1 = apply_projector(projector, oracle_f1[old_rows],
                                         args.device_obj, args.batch_size)
     old_f2 = oracle_f2[old_rows]
@@ -1512,7 +1522,7 @@ def main():
     rq4["B_old_support_oracle_only_no_fitting"]["aggregate"] = (
         transport_baseline_metrics(
             oracle_f1[old_rows], projected_old_f1, old_f2))
-    for class_id in range(20, 30):
+    for class_id in current_classes:
         local = oracle_labels[current_rows] == class_id
         metric = transport_baseline_metrics(
             oracle_f1[current_rows][local], projected_current_f1[local],
@@ -1527,7 +1537,7 @@ def main():
             metric["projector_over_identity_rmse_ratio"])
         per_class[class_id]["rq4_current_relative_improvement"] = metric[
             "relative_improvement"]
-    for class_id in range(20):
+    for class_id in old_classes:
         local = oracle_labels[old_rows] == class_id
         metric = transport_baseline_metrics(
             oracle_f1[old_rows][local], projected_old_f1[local], old_f2[local])
@@ -1546,9 +1556,9 @@ def main():
         oracle_mean = oracle_means_f2[class_id]
         record = {}
         for label, a, b in (
-            ("P2_mu_task1_to_mean_P2_f1", p2_mean, mean_projected_samples),
-            ("P2_mu_task1_to_oracle_f2_mean", p2_mean, oracle_mean),
-            ("mean_P2_f1_to_oracle_f2_mean", mean_projected_samples, oracle_mean),
+            ("Pnew_mu_old_to_mean_Pnew_fold", p2_mean, mean_projected_samples),
+            ("Pnew_mu_old_to_oracle_new_mean", p2_mean, oracle_mean),
+            ("mean_Pnew_fold_to_oracle_new_mean", mean_projected_samples, oracle_mean),
         ):
             for key, value in vector_error(a, b).items():
                 record[label + "_" + key] = value
@@ -1595,21 +1605,21 @@ def main():
             "How does the configured final projector residual affect identity "
             "transport?"),
         "definitions": {
-            "z1": "f1(x)",
-            "z2": "f2(x)",
-            "delta": "P2(z1) - z1",
+            "z1": "f_old(x)",
+            "z2": "f_new(x)",
+            "delta": "P_new(z_old) - z_old",
             "d": "z2 - z1",
             "ae_residual_mode": residual_mode,
             "architecture_expectation": residual_expectation,
-            "primary_support": "current classes 20-29",
-            "secondary_support": "old classes 0-19, oracle-only",
+            "primary_support": "current classes {}-{}".format(old_total, new_total - 1),
+            "secondary_support": "old classes 0-{}, oracle-only".format(old_total - 1),
         },
         "current_support_primary": projector_support_diagnostics(
             oracle_f1[current_rows], current_f2, projected_current_f1,
-            range(20, 30)),
+            current_classes),
         "old_support_secondary_oracle_only": projector_support_diagnostics(
-            oracle_f1[old_rows], old_f2, projected_old_f1, range(0, 20)),
-        "P1_to_P2_parameter_delta": projector_parameter_delta(
+            oracle_f1[old_rows], old_f2, projected_old_f1, old_classes),
+        "old_to_new_parameter_delta": projector_parameter_delta(
             old_ckpt["old_ae_state_dict"], new_ckpt["old_ae_state_dict"]),
     }
 
@@ -1617,45 +1627,45 @@ def main():
     old_covs, old_cov_repr = checkpoint_covariances(old_ckpt)
     new_covs, new_cov_repr = checkpoint_covariances(new_ckpt)
     rq3 = {
-        "question": "How do stored task2 covariances compare with deterministic f2 oracle covariances?",
+        "question": "How do stored new-task covariances compare with deterministic new-model oracle covariances?",
         "oracle_formula": "torch.cov(float64_features.T) + 1e-3 I",
         "ridge": COV_RIDGE, "full_eigh": bool(args.full_eigh),
-        "checkpoint_representations": {"task1": old_cov_repr, "task2": new_cov_repr},
-        "old_classes_stored_task2_vs_oracle": {},
-        "old_classes_carryover_task1_to_task2": {},
+        "checkpoint_representations": {"old": old_cov_repr, "new": new_cov_repr},
+        "old_classes_stored_new_vs_oracle": {},
+        "old_classes_carryover_old_to_new": {},
         "current_classes_sanity": {},
     }
     old_oracle_comparisons, carry_comparisons, current_comparisons = [], [], []
-    for class_id in range(30):
+    for class_id in all_classes:
         oracle_cov = covariance_from_features(oracle_f2[by_class[class_id]])
         comparison = covariance_comparison(new_covs[class_id], oracle_cov, args.full_eigh)
-        bucket = ("old_classes_stored_task2_vs_oracle" if class_id < 20
+        bucket = ("old_classes_stored_new_vs_oracle" if class_id < old_total
                   else "current_classes_sanity")
         rq3[bucket][str(class_id)] = comparison
-        (old_oracle_comparisons if class_id < 20 else current_comparisons).append(comparison)
-        per_class[class_id].update({"rq3_task2_vs_oracle_" + k: v
+        (old_oracle_comparisons if class_id < old_total else current_comparisons).append(comparison)
+        per_class[class_id].update({"rq3_new_vs_oracle_" + k: v
                                     for k, v in comparison.items()})
-        if class_id < 20:
+        if class_id < old_total:
             carry = covariance_comparison(new_covs[class_id], old_covs[class_id],
                                           args.full_eigh)
-            # Here the denominator/reference is task1, as named explicitly.
-            rq3["old_classes_carryover_task1_to_task2"][str(class_id)] = carry
+            # Here the denominator/reference is the old checkpoint covariance.
+            rq3["old_classes_carryover_old_to_new"][str(class_id)] = carry
             carry_comparisons.append(carry)
-            per_class[class_id].update({"rq3_carryover_task2_vs_task1_" + k: v
+            per_class[class_id].update({"rq3_carryover_new_vs_old_" + k: v
                                         for k, v in carry.items()})
     rq3["aggregates"] = {
-        "old_task2_vs_oracle": aggregate_records(old_oracle_comparisons),
-        "old_carryover_task2_vs_task1": aggregate_records(carry_comparisons),
-        "current_task2_vs_oracle_sanity": aggregate_records(current_comparisons),
+        "old_new_vs_oracle": aggregate_records(old_oracle_comparisons),
+        "old_carryover_new_vs_old": aggregate_records(carry_comparisons),
+        "current_new_vs_oracle_sanity": aggregate_records(current_comparisons),
     }
     validation["current_class_statistics_sanity"] = {
         "mean_l2": distribution(torch.tensor([
-            per_class[class_id]["stored_task2_mean_to_oracle_f2_l2"]
-            for class_id in range(20, 30)
+            per_class[class_id]["stored_new_mean_to_oracle_new_l2"]
+            for class_id in current_classes
         ], dtype=torch.float64)),
         "covariance_relative_frobenius": distribution(torch.tensor([
             rq3["current_classes_sanity"][str(class_id)]["relative_frobenius"]
-            for class_id in range(20, 30)
+            for class_id in current_classes
         ], dtype=torch.float64)),
     }
 
@@ -1665,7 +1675,7 @@ def main():
     except (OSError, subprocess.CalledProcessError) as exc:
         fail("Could not determine git commit: {}".format(exc))
     provenance = {
-        "script_version": 1,
+        "script_version": 2,
         "config": {"path": str(config_path), "sha256": sha256_file(config_path)},
         "checkpoints": {
             "old": {"path": str(old_path), "sha256": sha256_file(old_path)},
@@ -1686,10 +1696,11 @@ def main():
         "evaluation_only": True,
     }
     metrics = {
-        "schema_version": 1,
+        "schema_version": 2,
         "provenance": provenance, "validation": validation,
-        "transition": {"zero_based_from_task": 1, "zero_based_to_task": 2,
-                       "old_classes": [0, 19], "current_classes": [20, 29]},
+        "transition": {"zero_based_from_task": old_task, "zero_based_to_task": new_task,
+                       "old_classes": [0, old_total - 1],
+                       "current_classes": [old_total, new_total - 1]},
         "RQ1": rq1, "RQ2": rq2, "RQ3": rq3, "RQ4": rq4,
         "RQ5_projector_residual": rq5_projector_residual,
         "RQ6_ssca_kernel_sweep": rq6_ssca,
@@ -1702,7 +1713,7 @@ def main():
     with open(metrics_path, "w", encoding="utf-8") as handle:
         json.dump(metrics, handle, indent=2, sort_keys=True, allow_nan=False)
         handle.write("\n")
-    rows = [per_class[class_id] for class_id in range(30)]
+    rows = [per_class[class_id] for class_id in all_classes]
     fieldnames = sorted(set().union(*(row.keys() for row in rows)))
     preferred = ["class_id", "original_class_id", "task_id", "support", "n_oracle"]
     fieldnames = preferred + [name for name in fieldnames if name not in preferred]
@@ -1731,7 +1742,7 @@ def main():
     rq5_delta = rq5_current["residual_delta"]
     rq5_drift = rq5_current["true_drift_d"]
     rq5_decomposition = rq5_current["error_decomposition"]
-    rq5_parameter_delta = rq5_projector_residual["P1_to_P2_parameter_delta"]
+    rq5_parameter_delta = rq5_projector_residual["old_to_new_parameter_delta"]
     print("RQ5 current delta RMS/mean/median={:.6g}/{:.6g}/{:.6g}, "
           "negative={:.3%}".format(
               rq5_delta["rms"], rq5_delta["elementwise_mean"],
@@ -1744,22 +1755,23 @@ def main():
               rq5_decomposition["directly_measured_projector_mse"],
               rq5_decomposition["residual_energy"],
               rq5_decomposition["cross_term_2E_d_dot_delta"]))
-    print("RQ5 P1->P2 relative parameter change={:.6g}, identical={}".format(
-        rq5_parameter_delta["relative_parameter_delta_vs_task1"],
+    print("RQ5 {} projector relative parameter change={:.6g}, identical={}".format(
+        transition_label,
+        rq5_parameter_delta["relative_parameter_delta_vs_old"],
         rq5_parameter_delta["identical"]))
-    print("RQ2 final-P2 signed cosine mean={:.6g}, mean_abs={:.6g}, negative={:.3%}".format(
+    print("RQ2 final-new-projector signed cosine mean={:.6g}, mean_abs={:.6g}, negative={:.3%}".format(
         rq2["aggregate"]["mean"], rq2["aggregate"]["mean_abs"],
         rq2["aggregate"]["negative_fraction"]))
     print("RQ3 old covariance relative Frobenius mean={:.6g}, current sanity mean={:.6g}".format(
-        rq3["aggregates"]["old_task2_vs_oracle"]["relative_frobenius"]["mean"],
-        rq3["aggregates"]["current_task2_vs_oracle_sanity"]
+        rq3["aggregates"]["old_new_vs_oracle"]["relative_frobenius"]["mean"],
+        rq3["aggregates"]["current_new_vs_oracle_sanity"]
         ["relative_frobenius"]["mean"]))
     no_shift_summary = rq1["comparison_summary"]["no_shift"]
-    stored_summary = rq1["comparison_summary"]["historical_stored_task2_ssca"]
+    stored_summary = rq1["comparison_summary"]["historical_stored_new_ssca"]
     print("RQ1 no-shift old-mean L2 mean/median/max={:.6g}/{:.6g}/{:.6g}".format(
         no_shift_summary["l2_mean"], no_shift_summary["l2_median"],
         no_shift_summary["l2_max"]))
-    print("Historical task2 SSCA old-mean L2 mean/median/max={:.6g}/{:.6g}/{:.6g}".format(
+    print("Historical new-checkpoint SSCA old-mean L2 mean/median/max={:.6g}/{:.6g}/{:.6g}".format(
         stored_summary["l2_mean"], stored_summary["l2_median"],
         stored_summary["l2_max"]))
     rq6_official = rq6_ssca["official_sigma_4_floor_1e_5"]
