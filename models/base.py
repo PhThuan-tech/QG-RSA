@@ -60,6 +60,45 @@ class BaseLearner(object):
         return (epoch + 1) % interval == 0
 
 
+    @staticmethod
+    def _minimal_pd_covariance(covariance, max_relative_jitter=1e-3):
+        """Return the smallest decade jitter that makes float32 CA Cholesky pass.
+
+        This numerical fallback is called only after the unchanged
+        MultivariateNormal path rejects an analytically PSD covariance. It does
+        not mutate the stored class statistic.
+        """
+        symmetric = 0.5 * (covariance + covariance.transpose(-1, -2))
+        scale = max(float(symmetric.diagonal().abs().mean()), 1e-12)
+        minimum_eigenvalue = float(
+            torch.linalg.eigvalsh(symmetric.double()).min().detach().cpu()
+        )
+        roundoff_margin = 10.0 * torch.finfo(symmetric.dtype).eps * scale
+        jitter = max(roundoff_margin - minimum_eigenvalue, roundoff_margin)
+        identity = torch.eye(
+            symmetric.shape[-1], dtype=symmetric.dtype, device=symmetric.device
+        )
+        for attempt in range(1, 9):
+            relative_jitter = jitter / scale
+            if relative_jitter > max_relative_jitter:
+                break
+            candidate = symmetric + jitter * identity
+            _, info = torch.linalg.cholesky_ex(candidate, check_errors=False)
+            if int(info.item()) == 0:
+                return candidate, {
+                    "required": True,
+                    "jitter": float(jitter),
+                    "relative_jitter": float(relative_jitter),
+                    "pre_min_eigenvalue_float64": minimum_eigenvalue,
+                    "attempts": attempt,
+                }
+            jitter *= 10.0
+        raise RuntimeError(
+            "CA covariance needs relative jitter above {:.3e}; refusing a "
+            "substantive covariance modification".format(max_relative_jitter)
+        )
+
+
     def _stage2_compact_classifier(self, task_size, ca_epochs=5):
         for p in self._network.fc.parameters():
             p.requires_grad = True
@@ -80,6 +119,21 @@ class BaseLearner(object):
 
         self._network.eval()
 
+        allow_pd_fallback = bool(
+            self.args.get("ca_covariance_pd_fallback", False)
+        )
+        max_relative_jitter = float(
+            self.args.get("ca_pd_max_relative_jitter", 1e-3)
+        )
+        stabilized_covariances = {}
+        stabilization_records = []
+        self.ca_covariance_stabilization = {
+            "enabled": allow_pd_fallback,
+            "max_relative_jitter": max_relative_jitter,
+            "fallback_count": 0,
+            "classes": stabilization_records,
+        }
+
         eval_interval = self.args.get("ca_eval_interval", 0)
         for epoch in range(run_epochs):
             losses = 0.
@@ -93,8 +147,40 @@ class BaseLearner(object):
                 cls_mean = torch.tensor(self._class_means[c_id], dtype=torch.float64).to(self._device) * (
                             0.9 + decay)
 
-                cls_cov = self._class_covs[c_id].to(self._device)
-                m = MultivariateNormal(cls_mean.float(), cls_cov.float())
+                cls_cov = self._class_covs[c_id].to(self._device).float()
+                covariance_for_sampling = stabilized_covariances.get(c_id, cls_cov)
+                try:
+                    m = MultivariateNormal(
+                        cls_mean.float(), covariance_for_sampling
+                    )
+                except ValueError:
+                    if not allow_pd_fallback or c_id in stabilized_covariances:
+                        raise
+                    covariance_for_sampling, diagnostic = (
+                        self._minimal_pd_covariance(
+                            cls_cov,
+                            max_relative_jitter=max_relative_jitter,
+                        )
+                    )
+                    diagnostic["class_id"] = int(c_id)
+                    stabilized_covariances[c_id] = covariance_for_sampling
+                    stabilization_records.append(diagnostic)
+                    self.ca_covariance_stabilization["fallback_count"] = len(
+                        stabilization_records
+                    )
+                    logging.warning(
+                        "CA_COVARIANCE_PD_FALLBACK task=%d class=%d "
+                        "jitter=%.9g relative=%.9g min_eig=%.9g attempts=%d",
+                        self._cur_task,
+                        c_id,
+                        diagnostic["jitter"],
+                        diagnostic["relative_jitter"],
+                        diagnostic["pre_min_eigenvalue_float64"],
+                        diagnostic["attempts"],
+                    )
+                    m = MultivariateNormal(
+                        cls_mean.float(), covariance_for_sampling
+                    )
                 sampled_data_single = m.sample(sample_shape=(num_sampled_pcls,))
                 sampled_data.append(sampled_data_single)
                 sampled_label.extend([c_id] * num_sampled_pcls)
@@ -139,6 +225,11 @@ class BaseLearner(object):
                 losses += loss.item()
 
             scheduler.step()
+            if hasattr(self, "_write_progress"):
+                self._write_progress(
+                    "CA", epoch + 1, run_epochs,
+                    ca_loss=float(losses / self._total_classes),
+                )
             if self._should_eval_epoch(epoch, run_epochs, eval_interval):
                 test_acc_msg = "{:.3f}".format(
                     self._compute_accuracy(self._network, self.test_loader)
@@ -159,6 +250,15 @@ class BaseLearner(object):
         }
         metadata["ae_residual_mode"] = self.args.get(
             "ae_residual_mode", "sigmoid")
+        for key in (
+            "bicyc_mode", "lambda_bi", "lambda_cycle",
+            "transport_stage1_lr", "transport_stage1_weight_decay",
+            "transport_stage2_epochs", "transport_stage2_lr",
+            "transport_stage2_weight_decay", "transport_init_seed",
+            "ca_covariance_pd_fallback", "ca_pd_max_relative_jitter",
+        ):
+            if key in self.args:
+                metadata[key] = self.args[key]
         return metadata
 
     def save_checkpoint(self, filepath):
@@ -212,6 +312,13 @@ class BaseLearner(object):
             checkpoint["cnn_curve"] = self.cnn_curve
         if hasattr(self, "nme_curve"):
             checkpoint["nme_curve"] = self.nme_curve
+        if hasattr(self, "_checkpoint_extra_state"):
+            extra_state = self._checkpoint_extra_state()
+            overlap = set(checkpoint).intersection(extra_state)
+            if overlap:
+                raise ValueError("Extra checkpoint state overwrites keys: {}".format(
+                    sorted(overlap)))
+            checkpoint.update(extra_state)
 
         checkpoint_dir = os.path.dirname(filepath)
         if checkpoint_dir:
@@ -347,6 +454,21 @@ class BaseLearner(object):
         y_pred, y_true = self._eval_cnn(self.test_loader)
         cnn_accy = self._evaluate(y_pred, y_true)
         return cnn_accy
+
+    def eval_task_detailed(self):
+        """Return grouped/top-k metrics and deterministic per-class Top-1."""
+        y_pred, y_true = self._eval_cnn(self.test_loader)
+        metrics = self._evaluate(y_pred, y_true)
+        predicted = y_pred[:, 0]
+        per_class = {}
+        for class_id in range(self._total_classes):
+            mask = y_true == class_id
+            if np.any(mask):
+                per_class[str(class_id)] = float(np.around(
+                    (predicted[mask] == y_true[mask]).mean() * 100,
+                    decimals=2,
+                ))
+        return {"metrics": metrics, "per_class_top1": per_class}
 
     def incremental_train(self):
         pass
