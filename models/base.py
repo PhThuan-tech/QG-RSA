@@ -354,15 +354,27 @@ class BaseLearner(object):
             saved_metadata = dict(saved_metadata)
             saved_metadata["ae_residual_mode"] = "sigmoid"
         current_metadata = self._checkpoint_run_metadata()
-        mismatches = [
-            "{} (checkpoint={!r}, current={!r})".format(
-                key, saved_metadata[key], current_metadata[key]
+        mismatches = []
+        for key in current_metadata:
+            if key == "format_version" or key not in saved_metadata:
+                continue
+            if saved_metadata[key] == current_metadata[key]:
+                continue
+            rescue_disables_unused_fallback = (
+                self.args.get("ca_sampling_mode") == "sample_source_then_affine"
+                and key == "ca_covariance_pd_fallback"
+                and saved_metadata[key] is True
+                and current_metadata[key] is False
             )
-            for key in current_metadata
-            if key != "format_version"
-            and key in saved_metadata
-            and saved_metadata[key] != current_metadata[key]
-        ]
+            if rescue_disables_unused_fallback:
+                logging.info(
+                    "[NUMERICAL IMPLEMENTATION FIX] Rescue mode disables the "
+                    "historical ValueError-only covariance fallback; source "
+                    "sampling must pass without repair.")
+                continue
+            mismatches.append(
+                "{} (checkpoint={!r}, current={!r})".format(
+                    key, saved_metadata[key], current_metadata[key]))
         if mismatches:
             raise ValueError("Checkpoint does not match this experiment: " + ", ".join(mismatches))
 
@@ -397,8 +409,10 @@ class BaseLearner(object):
             else self._network
         )
         self._rebuild_classifier(network, self.task_sizes)
+        strict_checkpoint_load = bool(
+            self.args.get("strict_checkpoint_load", False))
         missing_keys, unexpected_keys = network.load_state_dict(
-            checkpoint["model_state_dict"], strict=False
+            checkpoint["model_state_dict"], strict=strict_checkpoint_load
         )
         if missing_keys:
             logging.warning("Missing keys while loading checkpoint: %s", missing_keys)
@@ -411,6 +425,21 @@ class BaseLearner(object):
             self._class_covs = checkpoint["class_covs"].cpu()
         elif "class_variances" in checkpoint:
             self._class_covs = torch.diag_embed(checkpoint["class_variances"].cpu())
+        if strict_checkpoint_load:
+            if "task_sizes" not in checkpoint or "class_order" not in checkpoint:
+                raise ValueError(
+                    "Strict rescue resume requires explicit task_sizes and class_order")
+            expected_shape = (self._total_classes, self.feature_dim)
+            expected_cov_shape = (
+                self._total_classes, self.feature_dim, self.feature_dim)
+            if not hasattr(self, "_class_means") or self._class_means.shape != expected_shape:
+                raise ValueError("Strict rescue resume class-mean shape mismatch")
+            if not hasattr(self, "_class_covs") or tuple(self._class_covs.shape) != expected_cov_shape:
+                raise ValueError("Strict rescue resume covariance shape mismatch")
+            if not np.isfinite(self._class_means).all():
+                raise ValueError("Strict rescue resume class means contain NaN/Inf")
+            if not torch.isfinite(self._class_covs).all():
+                raise ValueError("Strict rescue resume covariances contain NaN/Inf")
         if "radius" in checkpoint:
             radius = checkpoint["radius"]
             self.radius = radius.item() if torch.is_tensor(radius) else radius

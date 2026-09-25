@@ -51,6 +51,107 @@ def _write_csv_atomic(path, fieldnames, rows):
     os.replace(temporary, path)
 
 
+def _finalize_ca_rescue(model, pre_ca, post_ca):
+    rescue = getattr(model, "ca_rescue_diagnostics", None)
+    if not rescue:
+        return None
+    epochs = rescue.get("epochs", [])
+    protocol = rescue.get("ca_protocol", {})
+    expected_epochs = int(model.args["ca_epochs"])
+    expected_batches = int(model._total_classes)
+    ca_completed_exactly = (
+        len(epochs) == expected_epochs
+        and protocol.get("epochs") == expected_epochs
+        and protocol.get("batches_per_epoch") == expected_batches
+        and all(item.get("batch_count") == expected_batches for item in epochs)
+    )
+    preflight = rescue.get("pre_optimization_gate", {})
+    all_samples_finite = (
+        preflight.get("all_samples_finite") is True
+        and all(item.get("synthetic_sample_finite_fraction") == 1.0
+                for item in epochs)
+    )
+    all_losses_finite = bool(epochs) and all(
+        item.get("loss_finite") is True for item in epochs)
+    all_gradients_finite = bool(epochs) and all(
+        item.get("gradient_finite_fraction_min") == 1.0 for item in epochs)
+    all_classifiers_finite = bool(epochs) and all(
+        item.get("classifier_finite_fraction_min") == 1.0
+        and item.get("classifier_finite_fraction_after_epoch") == 1.0
+        for item in epochs)
+    post_top1 = float(post_ca["metrics"]["top1"])
+    # This reporting-only threshold cannot affect optimization.  Fifty percent
+    # separates a functioning classifier from the historical 3.33% chance-level
+    # collapse without requiring B1 to match or beat B0.
+    accuracy_noncollapse_threshold = 50.0
+    accuracy_no_longer_collapsed = post_top1 > accuracy_noncollapse_threshold
+    gates = {
+        "ca_completed_exact_epoch_and_batch_counts": ca_completed_exactly,
+        "all_ca_synthetic_samples_finite": all_samples_finite,
+        "all_ca_losses_finite": all_losses_finite,
+        "all_ca_gradients_finite": all_gradients_finite,
+        "classifier_remained_finite": all_classifiers_finite,
+        "post_ca_top1_no_longer_collapsed": accuracy_no_longer_collapsed,
+        "post_ca_top1_noncollapse_threshold": accuracy_noncollapse_threshold,
+        "historical_failed_top1": 3.33,
+        "covariance_fallback_disabled": (
+            model.ca_covariance_stabilization.get("enabled") is False),
+        "covariance_fallback_count_zero": (
+            model.ca_covariance_stabilization.get("fallback_count") == 0),
+    }
+    passed = all(gates[key] for key in (
+        "ca_completed_exact_epoch_and_batch_counts",
+        "all_ca_synthetic_samples_finite", "all_ca_losses_finite",
+        "all_ca_gradients_finite", "classifier_remained_finite",
+        "post_ca_top1_no_longer_collapsed",
+        "covariance_fallback_disabled", "covariance_fallback_count_zero",
+    ))
+    rescue["pre_ca"] = copy.deepcopy(pre_ca)
+    rescue["post_ca"] = copy.deepcopy(post_ca)
+    rescue["metric_summary"] = {
+        "pre_top1": float(pre_ca["metrics"]["top1"]),
+        "pre_top5": float(pre_ca["metrics"]["top5"]),
+        "pre_old_top1": pre_ca["metrics"]["grouped"]["old"],
+        "pre_new_top1": pre_ca["metrics"]["grouped"]["new"],
+        "post_top1": post_top1,
+        "post_top5": float(post_ca["metrics"]["top5"]),
+        "post_old_top1": post_ca["metrics"]["grouped"]["old"],
+        "post_new_top1": post_ca["metrics"]["grouped"]["new"],
+        "top1_change_pp": post_top1 - float(pre_ca["metrics"]["top1"]),
+    }
+    rescue["gate"] = {"status": "RESCUE PASS" if passed else "RESCUE FAIL", **gates}
+    rescue["status"] = "RESCUE_PASS" if passed else "RESCUE_FAIL"
+    rescue["conclusion"] = (
+        "[INFERENCE] In this controlled task2 rerun, the historical 3.33% "
+        "collapse is attributable to numerical factorization of transported "
+        "covariances rather than Stage-I representation collapse. This does "
+        "not establish BiCyc superiority."
+        if passed else
+        "[INFERENCE] The numerical rescue did not pass; no causal rescue "
+        "conclusion and no matched-arm rerun are authorized."
+    )
+    rescue["matched_reruns"] = {
+        "B0_B2_B3_executed": False,
+        "status": "PREPARE_ONLY_AFTER_PASS" if passed else "BLOCKED_BY_B1_GATE",
+    }
+    model.ca_rescue_diagnostics = rescue
+    if getattr(model, "_current_transport_record", None) is not None:
+        model._current_transport_record["ca_rescue"] = copy.deepcopy(rescue)
+    model._write_ca_rescue_report()
+    if not passed:
+        _write_json_atomic(model.args.get("metrics_output"), {
+            "status": "FAIL",
+            "arm": model.args.get("arm"),
+            "mode": model.bicyc_mode,
+            "task": int(model._cur_task),
+            "pre_ca": copy.deepcopy(pre_ca),
+            "post_ca": copy.deepcopy(post_ca),
+            "ca_rescue": copy.deepcopy(rescue),
+            "checkpoint_saved": False,
+        })
+    return passed
+
+
 def _write_arm_outputs(args, payload):
     records = payload["task_records"]
     task_rows = []
@@ -243,6 +344,13 @@ def _train(args):
     if args.get("resume", False):
         resume_path = args.get("resume_path") or find_latest_checkpoint(checkpoint_dir)
         if resume_path and os.path.isfile(resume_path):
+            expected_resume_hash = args.get("ca_rescue_source_task1_sha256")
+            if expected_resume_hash is not None:
+                observed_resume_hash = _sha256_file(resume_path)
+                if observed_resume_hash != expected_resume_hash:
+                    raise RuntimeError(
+                        "Rescue source checkpoint SHA256 mismatch: {} != {}".format(
+                            observed_resume_hash, expected_resume_hash))
             completed_task = model.load_checkpoint(resume_path)
             start_task = completed_task + 1
             logging.info("Resuming experiment from task %d", start_task)
@@ -275,6 +383,10 @@ def _train(args):
         model.incremental_train(data_manager)
         post_ca = model.eval_task_detailed()
         pre_ca = copy.deepcopy(model.pre_ca_metrics[str(model._cur_task)])
+        rescue_gate = _finalize_ca_rescue(model, pre_ca, post_ca)
+        if rescue_gate is False:
+            raise RuntimeError(
+                "B1 numerical rescue gate failed; no task2 boundary checkpoint saved")
         transport = copy.deepcopy(model._current_transport_record)
         record = {
             "arm": args["arm"],

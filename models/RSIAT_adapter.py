@@ -1,4 +1,5 @@
 import copy
+import hashlib
 import json
 import logging
 import os
@@ -8,6 +9,7 @@ import numpy as np
 import torch
 from torch import nn, optim
 from torch.nn import functional as F
+from torch.distributions.multivariate_normal import MultivariateNormal
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
@@ -23,6 +25,16 @@ from utils.bicyc_transport import (
     same_input_feature_pair,
     tensor_mapping_sha256,
     weighted_bicyc_loss,
+)
+from utils.ca_rescue import (
+    affine_distribution_diagnostic,
+    capture_rng_state,
+    environment_record,
+    feature_summary,
+    parameter_finite_fraction,
+    restore_rng_state,
+    sample_source_then_affine,
+    tensor_finite_fraction,
 )
 from utils.inc_net import SimpleVitNet
 from utils.loss import AngularPenaltySMLoss
@@ -105,6 +117,22 @@ class Learner(BaseLearner):
         self.experiment_records = []
         self._latest_stage1_history = []
         self._current_transport_record = None
+        self.ca_sampling_mode = self.args.get(
+            "ca_sampling_mode", "analytic_transport")
+        if self.ca_sampling_mode not in (
+            "analytic_transport", "sample_source_then_affine"
+        ):
+            raise ValueError(
+                "Unknown ca_sampling_mode: {}".format(self.ca_sampling_mode))
+        if (self.ca_sampling_mode == "sample_source_then_affine"
+                and bool(self.args.get("ca_covariance_pd_fallback", False))):
+            raise ValueError(
+                "CA rescue forbids covariance fallback/repair; set "
+                "ca_covariance_pd_fallback=false")
+        self.ca_rescue_diagnostics = None
+        self._ca_source_old_means = None
+        self._ca_source_old_covs = None
+        self._ca_source_statistics_task = None
 
     # ---------------- checkpoint state ----------------
 
@@ -126,6 +154,9 @@ class Learner(BaseLearner):
                 key: value.detach().cpu()
                 for key, value in self.backward_transport.state_dict().items()
             }
+        if getattr(self, "ca_rescue_diagnostics", None) is not None:
+            payload["ca_rescue_diagnostics"] = copy.deepcopy(
+                self.ca_rescue_diagnostics)
         return payload
 
     def _transport_seed(self, task, which):
@@ -135,6 +166,8 @@ class Learner(BaseLearner):
         self.transport_history = copy.deepcopy(checkpoint.get("transport_history", []))
         self.pre_ca_metrics = copy.deepcopy(checkpoint.get("pre_ca_metrics", {}))
         self.experiment_records = copy.deepcopy(checkpoint.get("experiment_records", []))
+        self.ca_rescue_diagnostics = copy.deepcopy(
+            checkpoint.get("ca_rescue_diagnostics"))
         self.transport_initial_hashes = copy.deepcopy(
             checkpoint.get("transport_initial_hashes", {})
         )
@@ -373,6 +406,12 @@ class Learner(BaseLearner):
     def _analytic_transport_old_statistics(self):
         old_means = np.array(self._class_means[:self._known_classes], copy=True)
         old_covs = self._class_covs[:self._known_classes].detach().cpu().clone()
+        if self.ca_sampling_mode == "sample_source_then_affine":
+            # These are the exact stored task-(t-1) moments.  Keep them before
+            # the analytic transport overwrites the learner's old statistics.
+            self._ca_source_old_means = np.array(old_means, copy=True)
+            self._ca_source_old_covs = old_covs.clone()
+            self._ca_source_statistics_task = int(self._cur_task)
         means_new, covs_new = analytic_affine_gaussian_transport(
             old_means, old_covs, self.forward_transport
         )
@@ -396,6 +435,624 @@ class Learner(BaseLearner):
             "finite": bool(torch.isfinite(means_new).all() and torch.isfinite(covs_new).all()),
             "extra_shrinkage": False,
         }
+
+    # ---------------- CA numerical rescue ----------------
+
+    @staticmethod
+    def _cpu_state_dict(module):
+        return {
+            key: value.detach().cpu()
+            for key, value in module.state_dict().items()
+        }
+
+    @staticmethod
+    def _sha256_file(path):
+        digest = hashlib.sha256()
+        with open(path, "rb") as handle:
+            for chunk in iter(lambda: handle.read(8 * 1024 * 1024), b""):
+                digest.update(chunk)
+        return digest.hexdigest()
+
+    @staticmethod
+    def _loader_seed_metadata(loader):
+        generator = getattr(loader, "generator", None)
+        generator_state = None
+        if generator is not None:
+            generator_state = generator.get_state().cpu()
+        return {
+            "dataset_type": type(loader.dataset).__name__,
+            "dataset_length": len(loader.dataset),
+            "batch_size": loader.batch_size,
+            "num_workers": loader.num_workers,
+            "pin_memory": bool(loader.pin_memory),
+            "persistent_workers": bool(getattr(loader, "persistent_workers", False)),
+            "sampler_type": type(loader.sampler).__name__,
+            "batch_sampler_type": type(loader.batch_sampler).__name__,
+            "worker_init_fn": repr(loader.worker_init_fn),
+            "generator_state": generator_state,
+            "note": (
+                "The historical task1 checkpoint did not store worker/process RNG. "
+                "This metadata describes the controlled task2 rerun only."
+            ),
+        }
+
+    def _write_ca_rescue_report(self):
+        path = self.args.get("ca_rescue_report_path")
+        if not path or self.ca_rescue_diagnostics is None:
+            return
+        path = os.path.abspath(path)
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        temporary = path + ".tmp"
+        with open(temporary, "w") as handle:
+            json.dump(self.ca_rescue_diagnostics, handle, indent=2, sort_keys=True)
+            handle.write("\n")
+        os.replace(temporary, path)
+
+    def _save_exact_pre_ca_snapshot(self, pre_ca):
+        path = self.args.get("ca_rescue_pre_ca_checkpoint")
+        if not path:
+            raise RuntimeError("ca_rescue_pre_ca_checkpoint is required")
+        if self._cur_task != 2 or self._known_classes != 20 or self._total_classes != 30:
+            raise RuntimeError("B1 rescue snapshot requires task2 cur=2 known=20 total=30")
+        if self.bicyc_mode != "forward" or self.backward_transport is not None:
+            raise RuntimeError("B1 rescue requires forward-only A with no D/cycle")
+        if self._ca_source_statistics_task != self._cur_task:
+            raise RuntimeError("Source task-(t-1) statistics were not captured")
+        network = self._network.module if isinstance(self._network, nn.DataParallel) else self._network
+        if not hasattr(network.fc, "old_state_dict"):
+            raise RuntimeError("Classifier backup is absent at CA entry")
+        rng_state = capture_rng_state()
+        network_state = self._cpu_state_dict(network)
+        classifier_state = self._cpu_state_dict(network.fc)
+        classifier_backup = {
+            key: value.detach().cpu()
+            for key, value in network.fc.old_state_dict.items()
+        }
+        a_state = self._cpu_state_dict(self.forward_transport)
+        old_p_state = self._cpu_state_dict(self.old_ae)
+        class_means = torch.as_tensor(self._class_means).detach().cpu()
+        class_covariances = self._class_covs.detach().cpu()
+        source_old_means = torch.as_tensor(
+            self._ca_source_old_means, dtype=torch.float64).cpu()
+        source_old_covariances = self._ca_source_old_covs.detach().cpu()
+        snapshot = {
+            "format_version": 1,
+            "capture_stage": "task2_pre_ca_after_eval_before_ca",
+            "labels": ["[CONTROLLED REPRODUCTION]", "[NUMERICAL IMPLEMENTATION FIX]"],
+            "ca_sampling_mode": self.ca_sampling_mode,
+            "cur_task": int(self._cur_task),
+            "known_classes": int(self._known_classes),
+            "total_classes": int(self._total_classes),
+            "task_sizes": list(self.task_sizes),
+            "class_order": list(self.class_order),
+            "network_state_dict": network_state,
+            "classifier_state_dict": classifier_state,
+            "classifier_backup_state_dict": classifier_backup,
+            "forward_transport_state_dict": a_state,
+            "old_p_state_dict": old_p_state,
+            "class_means": class_means,
+            "class_covariances": class_covariances,
+            "source_old_means": source_old_means,
+            "source_old_covariances": source_old_covariances,
+            "rng_state": rng_state,
+            "loader_seed_metadata": {
+                "train": self._loader_seed_metadata(self.train_loader),
+                "test": self._loader_seed_metadata(self.test_loader),
+            },
+            "seed": int(self.args["seed"]),
+            "batch_size": int(self.batch_size),
+            "pre_ca": copy.deepcopy(pre_ca),
+            "environment": environment_record(),
+            "state_hashes": {
+                "network": tensor_mapping_sha256(network_state),
+                "classifier": tensor_mapping_sha256(classifier_state),
+                "classifier_backup": tensor_mapping_sha256(classifier_backup),
+                "A": tensor_mapping_sha256(a_state),
+                "old_P": tensor_mapping_sha256(old_p_state),
+                "class_means": tensor_mapping_sha256({"means": class_means}),
+                "class_covariances": tensor_mapping_sha256({
+                    "covariances": class_covariances}),
+                "source_means": tensor_mapping_sha256({
+                    "means": source_old_means}),
+                "source_covariances": tensor_mapping_sha256({
+                    "covariances": source_old_covariances}),
+            },
+        }
+        path = os.path.abspath(path)
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        temporary = path + ".tmp"
+        torch.save(snapshot, temporary)
+        os.replace(temporary, path)
+        return {
+            "path": path,
+            "sha256": self._sha256_file(path),
+            "state_hashes": copy.deepcopy(snapshot["state_hashes"]),
+            "capture_stage": snapshot["capture_stage"],
+        }
+
+    def _restore_exact_pre_ca_snapshot(
+            self, path, expected_file_sha256, expected_state_hashes):
+        observed_file_sha256 = self._sha256_file(path)
+        if observed_file_sha256 != expected_file_sha256:
+            raise RuntimeError(
+                "Pre-CA snapshot file SHA256 changed before restore")
+        snapshot = torch.load(path, map_location="cpu", weights_only=False)
+        if snapshot.get("capture_stage") != "task2_pre_ca_after_eval_before_ca":
+            raise RuntimeError("Not an exact task2 pre-CA rescue snapshot")
+        expected_metadata = {
+            "cur_task": int(self._cur_task),
+            "known_classes": int(self._known_classes),
+            "total_classes": int(self._total_classes),
+            "task_sizes": list(self.task_sizes),
+            "class_order": list(self.class_order),
+            "seed": int(self.args["seed"]),
+            "batch_size": int(self.batch_size),
+            "ca_sampling_mode": self.ca_sampling_mode,
+        }
+        for key, expected in expected_metadata.items():
+            if snapshot.get(key) != expected:
+                raise RuntimeError(
+                    "Pre-CA snapshot metadata mismatch for {}".format(key))
+        tensors = {
+            "class_means": snapshot["class_means"],
+            "class_covariances": snapshot["class_covariances"],
+            "source_old_means": snapshot["source_old_means"],
+            "source_old_covariances": snapshot["source_old_covariances"],
+        }
+        expected_shapes = {
+            "class_means": (30, self.feature_dim),
+            "class_covariances": (30, self.feature_dim, self.feature_dim),
+            "source_old_means": (20, self.feature_dim),
+            "source_old_covariances": (20, self.feature_dim, self.feature_dim),
+        }
+        for key, tensor in tensors.items():
+            if tuple(tensor.shape) != expected_shapes[key]:
+                raise RuntimeError(
+                    "Pre-CA snapshot shape mismatch for {}".format(key))
+            if not bool(torch.isfinite(tensor).all()):
+                raise RuntimeError(
+                    "Pre-CA snapshot contains NaN/Inf in {}".format(key))
+        serialized_hashes = {
+            "network": tensor_mapping_sha256(snapshot["network_state_dict"]),
+            "classifier": tensor_mapping_sha256(snapshot["classifier_state_dict"]),
+            "classifier_backup": tensor_mapping_sha256(
+                snapshot["classifier_backup_state_dict"]),
+            "A": tensor_mapping_sha256(snapshot["forward_transport_state_dict"]),
+            "old_P": tensor_mapping_sha256(snapshot["old_p_state_dict"]),
+            "class_means": tensor_mapping_sha256({
+                "means": snapshot["class_means"]}),
+            "class_covariances": tensor_mapping_sha256({
+                "covariances": snapshot["class_covariances"]}),
+            "source_means": tensor_mapping_sha256({
+                "means": snapshot["source_old_means"]}),
+            "source_covariances": tensor_mapping_sha256({
+                "covariances": snapshot["source_old_covariances"]}),
+        }
+        if serialized_hashes != expected_state_hashes:
+            raise RuntimeError(
+                "Pre-CA snapshot content does not match caller-held hashes")
+        network = self._network.module if isinstance(self._network, nn.DataParallel) else self._network
+        result = network.load_state_dict(snapshot["network_state_dict"], strict=True)
+        if result.missing_keys or result.unexpected_keys:
+            raise RuntimeError("Strict pre-CA network restore failed: {}".format(result))
+        network.fc.load_state_dict(snapshot["classifier_state_dict"], strict=True)
+        classifier_devices = {
+            key: value.device for key, value in network.fc.state_dict().items()}
+        network.fc.old_state_dict = {
+            key: value.detach().to(classifier_devices[key]).clone()
+            for key, value in snapshot["classifier_backup_state_dict"].items()}
+        self.forward_transport.load_state_dict(
+            snapshot["forward_transport_state_dict"], strict=True)
+        self.old_ae.load_state_dict(snapshot["old_p_state_dict"], strict=True)
+        self._class_means = snapshot["class_means"].cpu().numpy()
+        self._class_covs = snapshot["class_covariances"].cpu()
+        self._ca_source_old_means = snapshot["source_old_means"].cpu().numpy()
+        self._ca_source_old_covs = snapshot["source_old_covariances"].cpu()
+        self._ca_source_statistics_task = int(snapshot["cur_task"])
+        network.to(self._device)
+        self.forward_transport.to(self._device)
+        self.old_ae.to(self._device)
+        restored_hashes = {
+            "network": tensor_mapping_sha256(self._cpu_state_dict(network)),
+            "classifier": tensor_mapping_sha256(self._cpu_state_dict(network.fc)),
+            "classifier_backup": tensor_mapping_sha256(network.fc.old_state_dict),
+            "A": module_state_sha256(self.forward_transport),
+            "old_P": module_state_sha256(self.old_ae),
+            "class_means": tensor_mapping_sha256({
+                "means": torch.as_tensor(self._class_means)}),
+            "class_covariances": tensor_mapping_sha256({
+                "covariances": self._class_covs}),
+            "source_means": tensor_mapping_sha256({
+                "means": torch.as_tensor(self._ca_source_old_means)}),
+            "source_covariances": tensor_mapping_sha256({
+                "covariances": self._ca_source_old_covs}),
+        }
+        for key, value in restored_hashes.items():
+            if value != expected_state_hashes[key]:
+                raise RuntimeError("Strict pre-CA restore hash mismatch: {}".format(key))
+        restore_rng_state(snapshot["rng_state"])
+        return {
+            "status": "PASS",
+            "strict": True,
+            "file_sha256": observed_file_sha256,
+            "restored_hashes": restored_hashes,
+        }
+
+    @staticmethod
+    def _numeric_summary(values):
+        array = np.asarray(values, dtype=np.float64)
+        return {
+            "min": float(array.min()),
+            "median": float(np.median(array)),
+            "mean": float(array.mean()),
+            "max": float(array.max()),
+        }
+
+    @torch.no_grad()
+    def _build_rescue_ca_epoch(self, task_size, num_sampled_pcls=256,
+                               collect_distribution_diagnostics=False):
+        if self.forward_transport is None:
+            raise RuntimeError("sample-source-then-affine requires A")
+        if self._ca_source_old_means is None or self._ca_source_old_covs is None:
+            raise RuntimeError("Source statistics are unavailable")
+        previous_mode = self.forward_transport.training
+        self.forward_transport.eval()
+        sampled_data = []
+        sampled_label = []
+        per_class = []
+        equivalence = []
+        try:
+            for class_id in range(self._total_classes):
+                task_id = class_id // task_size
+                alpha = (task_id + 1) / (self._cur_task + 1) * 0.1 + 0.9
+                target_mean = torch.tensor(
+                    self._class_means[class_id], dtype=torch.float64,
+                    device=self._device) * alpha
+                if class_id < self._known_classes:
+                    result = sample_source_then_affine(
+                        self._ca_source_old_means[class_id],
+                        self._ca_source_old_covs[class_id],
+                        target_mean,
+                        self.forward_transport,
+                        num_sampled_pcls,
+                    )
+                    samples = result["ca_samples"]
+                    source_health = {
+                        "scale_tril_finite": result["source_scale_tril_finite"],
+                        "scale_tril_diagonal_min": result[
+                            "source_scale_tril_diagonal_min"],
+                        "scale_tril_diagonal_max": result[
+                            "source_scale_tril_diagonal_max"],
+                    }
+                    if collect_distribution_diagnostics:
+                        diagnostic = affine_distribution_diagnostic(
+                            result["source_samples"], result["raw_transformed"],
+                            self._ca_source_old_means[class_id],
+                            self._ca_source_old_covs[class_id],
+                            self.forward_transport,
+                        )
+                        weight = self.forward_transport.weight.detach().cpu().double()
+                        bias = self.forward_transport.bias.detach().cpu().double()
+                        source_mean = torch.as_tensor(
+                            self._ca_source_old_means[class_id], dtype=torch.float64)
+                        source_cov = self._ca_source_old_covs[class_id].double()
+                        analytic_mean = source_mean @ weight.T + bias
+                        analytic_cov = weight @ source_cov @ weight.T
+                        stored_mean = torch.as_tensor(
+                            self._class_means[class_id], dtype=torch.float64)
+                        stored_cov = self._class_covs[class_id].double()
+                        diagnostic.update({
+                            "class_id": int(class_id),
+                            "stored_analytic_mean_relative_l2_error": float(
+                                torch.linalg.vector_norm(stored_mean - analytic_mean)
+                                / max(float(torch.linalg.vector_norm(analytic_mean)), 1e-12)),
+                            "stored_analytic_covariance_relative_frobenius_error": float(
+                                torch.linalg.matrix_norm(stored_cov - analytic_cov)
+                                / max(float(torch.linalg.matrix_norm(analytic_cov)), 1e-12)),
+                        })
+                        equivalence.append(diagnostic)
+                else:
+                    covariance = self._class_covs[class_id].to(
+                        self._device).float()
+                    distribution = MultivariateNormal(
+                        target_mean.float(), covariance)
+                    if not bool(torch.isfinite(distribution.scale_tril).all()):
+                        raise RuntimeError(
+                            "Current-class Gaussian factor is non-finite: {}".format(
+                                class_id))
+                    samples = distribution.sample((num_sampled_pcls,))
+                    source_health = None
+                summary = feature_summary(samples)
+                if summary["sample_finite_fraction"] != 1.0:
+                    raise RuntimeError(
+                        "Rescue samples are non-finite for class {}".format(
+                            class_id))
+                per_class.append({
+                    "class_id": int(class_id),
+                    "split": "old" if class_id < self._known_classes else "new",
+                    "mean_multiplier": float(alpha),
+                    "features": summary,
+                    "source_factorization": source_health,
+                })
+                sampled_data.append(samples)
+                sampled_label.extend([class_id] * num_sampled_pcls)
+            features = torch.cat(sampled_data, dim=0).float().to(self._device)
+            targets = torch.tensor(sampled_label).long().to(self._device)
+            permutation = torch.randperm(features.size(0))
+            features = features[permutation]
+            targets = targets[permutation]
+        finally:
+            self.forward_transport.train(previous_mode)
+        aggregate = feature_summary(features)
+        equivalence_summary = None
+        if equivalence:
+            equivalence_summary = {
+                key: self._numeric_summary([item[key] for item in equivalence])
+                for key in (
+                    "empirical_mean_relative_l2_error",
+                    "empirical_covariance_relative_frobenius_error",
+                    "stored_analytic_mean_relative_l2_error",
+                    "stored_analytic_covariance_relative_frobenius_error",
+                    "sample_transform_max_abs_error_float64_recompute",
+                )
+            }
+        return features, targets, {
+            "aggregate": aggregate,
+            "per_class": per_class,
+            "affine_distribution_equivalence": equivalence,
+            "affine_distribution_equivalence_summary": equivalence_summary,
+            "mean_policy": (
+                "raw A(u) is verified diagnostically; CA uses "
+                "alpha*(W mu+b)+W*(u-mu) to preserve the historical "
+                "task-age mean scaling exactly"
+            ),
+        }
+
+    def _prepare_ca_rescue(self, pre_ca):
+        if self.ca_sampling_mode != "sample_source_then_affine":
+            return
+        expected = float(self.args.get("ca_rescue_expected_pre_ca_top1", 96.27))
+        tolerance = float(self.args.get("ca_rescue_pre_ca_tolerance_pp", 0.20))
+        observed = float(pre_ca["metrics"]["top1"])
+        difference = abs(observed - expected)
+        self.ca_rescue_diagnostics = {
+            "status": "PRE_CA_CAPTURED",
+            "labels": ["[CONTROLLED REPRODUCTION]", "[NUMERICAL IMPLEMENTATION FIX]"],
+            "scientific_claim_scope": (
+                "Task2-only controlled rerun from exact task1 boundary; not an "
+                "exact replay because historical task2 RNG/optimizer state was not saved."
+            ),
+            "sampling_fix": (
+                "factorize stored source covariance, sample source Gaussian, "
+                "apply affine residual; never factorize W Sigma W^T for old classes"
+            ),
+            "pre_ca": copy.deepcopy(pre_ca),
+            "pre_ca_gate": {
+                "expected_top1": expected,
+                "observed_top1": observed,
+                "absolute_difference_pp": difference,
+                "tolerance_pp": tolerance,
+                "status": "PASS" if difference <= tolerance else "FAIL",
+            },
+            "environment": environment_record(),
+            "environment_label": "[ENVIRONMENT DEVIATION]",
+            "controlled_resume": {
+                "source_checkpoint": os.path.abspath(self.args["resume_path"]),
+                "source_checkpoint_sha256": self.args.get(
+                    "ca_rescue_source_task1_sha256"),
+                "historical_task2_rng_available": False,
+                "historical_task2_optimizer_scheduler_available": False,
+            },
+            "training_scope": {
+                "resumed_completed_task": 1,
+                "rerun_tasks": [2],
+                "task0_rerun": False,
+                "task1_rerun": False,
+                "B0_B2_B3_run": False,
+            },
+            "method_changes": {
+                "covariance_clipping": False,
+                "jitter_tuning": False,
+                "eigenvalue_repair": False,
+                "gradient_clipping": False,
+                "new_hyperparameters": False,
+                "historical_mean_scaling_preserved": True,
+            },
+            "epochs": [],
+        }
+        snapshot = self._save_exact_pre_ca_snapshot(pre_ca)
+        self.ca_rescue_diagnostics["pre_ca_checkpoint"] = snapshot
+        self._write_ca_rescue_report()
+        if difference > tolerance:
+            self.ca_rescue_diagnostics["status"] = "FAIL_PRE_CA_REPRODUCTION_MISMATCH"
+            self._write_ca_rescue_report()
+            raise RuntimeError(
+                "B1 pre-CA reproduction mismatch: observed {:.2f}, expected {:.2f}, "
+                "difference {:.2f} pp > {:.2f} pp".format(
+                    observed, expected, difference, tolerance))
+        restore = self._restore_exact_pre_ca_snapshot(
+            snapshot["path"], snapshot["sha256"], snapshot["state_hashes"])
+        self.ca_rescue_diagnostics["strict_pre_ca_reload"] = restore
+        with preserve_global_rng_state():
+            _, _, preflight = self._build_rescue_ca_epoch(
+                self.task_sizes[-1], collect_distribution_diagnostics=True)
+        self.ca_rescue_diagnostics["pre_optimization_synthetic_check"] = preflight
+        finite = preflight["aggregate"]["sample_finite_fraction"] == 1.0
+        source_healthy = all(
+            row["source_factorization"] is None
+            or row["source_factorization"]["scale_tril_finite"]
+            for row in preflight["per_class"])
+        equivalence = preflight["affine_distribution_equivalence_summary"]
+        equivalence_tolerances = {
+            "stored_analytic_mean_relative_l2_error_max": 1e-10,
+            "stored_analytic_covariance_relative_frobenius_error_max": 1e-6,
+            "sample_transform_max_abs_error_float64_recompute_max": 1e-4,
+        }
+        equivalence_exact = (
+            equivalence is not None
+            and equivalence["stored_analytic_mean_relative_l2_error"]["max"]
+            <= equivalence_tolerances[
+                "stored_analytic_mean_relative_l2_error_max"]
+            and equivalence[
+                "stored_analytic_covariance_relative_frobenius_error"]["max"]
+            <= equivalence_tolerances[
+                "stored_analytic_covariance_relative_frobenius_error_max"]
+            and equivalence[
+                "sample_transform_max_abs_error_float64_recompute"]["max"]
+            <= equivalence_tolerances[
+                "sample_transform_max_abs_error_float64_recompute_max"]
+        )
+        self.ca_rescue_diagnostics["pre_optimization_gate"] = {
+            "all_samples_finite": finite,
+            "all_source_factors_finite": source_healthy,
+            "stored_transport_and_affine_equivalence": equivalence_exact,
+            "equivalence_tolerances": equivalence_tolerances,
+            "status": (
+                "PASS" if finite and source_healthy and equivalence_exact
+                else "FAIL"),
+        }
+        if not finite or not source_healthy or not equivalence_exact:
+            self.ca_rescue_diagnostics["status"] = "FAIL_SYNTHETIC_PREFLIGHT"
+            self._write_ca_rescue_report()
+            raise RuntimeError("B1 rescue synthetic preflight failed")
+        self.ca_rescue_diagnostics["status"] = "PRE_CA_GATE_PASS"
+        self._write_ca_rescue_report()
+
+    def _stage2_compact_classifier(self, task_size, ca_epochs=5):
+        if self.ca_sampling_mode != "sample_source_then_affine":
+            return super()._stage2_compact_classifier(task_size, ca_epochs)
+        if int(ca_epochs) != int(self.args["ca_epochs"]):
+            raise RuntimeError("Rescue CA epoch count differs from locked config")
+        if int(task_size) != int(self.task_sizes[-1]):
+            raise RuntimeError("Rescue CA task size differs from task metadata")
+        if bool(self.args.get("ca_covariance_pd_fallback", False)):
+            raise RuntimeError("Rescue CA forbids covariance repair/fallback")
+        network = self._network.module if isinstance(self._network, nn.DataParallel) else self._network
+        for parameter in network.fc.parameters():
+            parameter.requires_grad = True
+        parameters = [parameter for parameter in network.fc.parameters()
+                      if parameter.requires_grad]
+        optimizer = optim.SGD(
+            [{"params": parameters, "lr": self.init_lr,
+              "weight_decay": self.weight_decay}],
+            lr=self.init_lr, momentum=0.9, weight_decay=self.weight_decay)
+        scheduler = optim.lr_scheduler.CosineAnnealingLR(
+            optimizer=optimizer, T_max=ca_epochs)
+        self._network.to(self._device)
+        self._network.eval()
+        self.ca_covariance_stabilization = {
+            "enabled": False,
+            "mode": "sample_source_then_affine",
+            "fallback_count": 0,
+            "classes": [],
+        }
+        num_sampled_pcls = 256
+        self.ca_rescue_diagnostics["ca_protocol"] = {
+            "epochs": int(ca_epochs),
+            "classes": int(self._total_classes),
+            "samples_per_class_per_epoch": num_sampled_pcls,
+            "batches_per_epoch": int(self._total_classes),
+            "batch_size": num_sampled_pcls,
+            "optimizer": "SGD",
+            "learning_rate": float(self.init_lr),
+            "momentum": 0.9,
+            "weight_decay": float(self.weight_decay),
+            "scheduler": "CosineAnnealingLR",
+            "scheduler_T_max": int(ca_epochs),
+            "covariance_fallback_enabled": False,
+            "gradient_clipping": False,
+        }
+        for epoch in range(ca_epochs):
+            features, targets, sampling = self._build_rescue_ca_epoch(
+                task_size, num_sampled_pcls,
+                collect_distribution_diagnostics=False)
+            losses = []
+            gradient_fraction_min = 1.0
+            classifier_fraction_min = parameter_finite_fraction(network.fc)
+            for batch in range(self._total_classes):
+                inputs = features[
+                    batch * num_sampled_pcls:(batch + 1) * num_sampled_pcls]
+                batch_targets = targets[
+                    batch * num_sampled_pcls:(batch + 1) * num_sampled_pcls]
+                outputs = self._network.ca_forward(inputs)
+                logits = self.args["scale"] * outputs["logits"]
+                if self.logit_norm is not None:
+                    per_task_norm = []
+                    previous = 0
+                    current = 0
+                    for task_index in range(self._cur_task + 1):
+                        current += self.task_sizes[task_index]
+                        norm = torch.norm(
+                            logits[:, previous:current], p=2, dim=-1,
+                            keepdim=True) + 1e-7
+                        per_task_norm.append(norm)
+                        previous = current
+                    norms = torch.cat(per_task_norm, dim=-1).mean(
+                        dim=-1, keepdim=True)
+                    decoupled = torch.div(
+                        logits[:, :self._total_classes], norms) / self.logit_norm
+                    loss = F.cross_entropy(decoupled, batch_targets)
+                else:
+                    loss = F.cross_entropy(
+                        logits[:, :self._total_classes], batch_targets)
+                if not bool(torch.isfinite(loss)):
+                    self.ca_rescue_diagnostics["status"] = "FAIL_NONFINITE_CA_LOSS"
+                    self.ca_rescue_diagnostics["first_ca_failure"] = {
+                        "epoch": epoch + 1, "batch": batch,
+                        "stage": "loss_before_backward"}
+                    self._write_ca_rescue_report()
+                    raise RuntimeError("Non-finite rescue CA loss")
+                optimizer.zero_grad()
+                loss.backward()
+                gradient_fraction = parameter_finite_fraction(
+                    network.fc, gradients=True)
+                gradient_fraction_min = min(
+                    gradient_fraction_min, gradient_fraction)
+                if gradient_fraction != 1.0:
+                    self.ca_rescue_diagnostics["status"] = "FAIL_NONFINITE_CA_GRADIENT"
+                    self.ca_rescue_diagnostics["first_ca_failure"] = {
+                        "epoch": epoch + 1, "batch": batch,
+                        "stage": "gradient_after_backward"}
+                    self._write_ca_rescue_report()
+                    raise RuntimeError("Non-finite rescue CA gradient")
+                optimizer.step()
+                classifier_fraction = parameter_finite_fraction(network.fc)
+                classifier_fraction_min = min(
+                    classifier_fraction_min, classifier_fraction)
+                if classifier_fraction != 1.0:
+                    self.ca_rescue_diagnostics["status"] = "FAIL_NONFINITE_CLASSIFIER"
+                    self.ca_rescue_diagnostics["first_ca_failure"] = {
+                        "epoch": epoch + 1, "batch": batch,
+                        "stage": "classifier_after_optimizer"}
+                    self._write_ca_rescue_report()
+                    raise RuntimeError("Non-finite rescue CA classifier")
+                losses.append(float(loss.detach()))
+            scheduler.step()
+            epoch_record = {
+                "epoch": epoch + 1,
+                "batch_count": int(self._total_classes),
+                "loss_mean": float(np.mean(losses)),
+                "loss_min": float(np.min(losses)),
+                "loss_max": float(np.max(losses)),
+                "loss_finite": True,
+                "synthetic_sample_finite_fraction": sampling[
+                    "aggregate"]["sample_finite_fraction"],
+                "gradient_finite_fraction_min": gradient_fraction_min,
+                "classifier_finite_fraction_min": classifier_fraction_min,
+                "classifier_finite_fraction_after_epoch": (
+                    parameter_finite_fraction(network.fc)),
+                "learning_rate_after_epoch": float(
+                    optimizer.param_groups[0]["lr"]),
+            }
+            self.ca_rescue_diagnostics["epochs"].append(epoch_record)
+            self.ca_rescue_diagnostics["status"] = "CA_RUNNING"
+            self._write_ca_rescue_report()
+            self._write_progress(
+                "CA_RESCUE", epoch + 1, ca_epochs,
+                ca_loss=epoch_record["loss_mean"])
+            logging.info("CA_RESCUE %s", json.dumps(epoch_record, sort_keys=True))
+        self.ca_rescue_diagnostics["status"] = "CA_COMPLETE_PENDING_EVALUATION"
+        self._write_ca_rescue_report()
 
     def incremental_train(self, data_manager):
         task_started = time.time()
@@ -539,12 +1196,19 @@ class Learner(BaseLearner):
         self.pre_ca_metrics[str(self._cur_task)] = copy.deepcopy(pre_ca)
         record["pre_ca"] = copy.deepcopy(pre_ca)
 
+        if self.ca_sampling_mode == "sample_source_then_affine":
+            self._prepare_ca_rescue(pre_ca)
+            record["ca_rescue"] = copy.deepcopy(self.ca_rescue_diagnostics)
+
         if self._cur_task > 0 and self.args["ca_epochs"] > 0 and self.args["ca"] is True:
             self._write_progress("CA", 0, self.args["ca_epochs"])
             self._stage2_compact_classifier(task_size, self.args["ca_epochs"])
             record["ca_covariance_stabilization"] = copy.deepcopy(
                 self.ca_covariance_stabilization
             )
+            if self.ca_sampling_mode == "sample_source_then_affine":
+                record["ca_rescue"] = copy.deepcopy(
+                    self.ca_rescue_diagnostics)
             if len(self._multiple_gpus) > 1:
                 self._network = self._network.module
                 self._network_module_ptr = self._network
