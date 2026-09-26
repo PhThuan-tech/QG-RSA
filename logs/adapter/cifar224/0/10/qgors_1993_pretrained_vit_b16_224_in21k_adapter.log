@@ -1,0 +1,505 @@
+2026-09-22 13:08:32,186 [trainer.py] => config: /kaggle/working/qgors_full.json
+2026-09-22 13:08:32,186 [trainer.py] => prefix: qgors
+2026-09-22 13:08:32,187 [trainer.py] => dataset: cifar224
+2026-09-22 13:08:32,187 [trainer.py] => save_checkpoints: True
+2026-09-22 13:08:32,187 [trainer.py] => resume: True
+2026-09-22 13:08:32,187 [trainer.py] => isolate_runs: True
+2026-09-22 13:08:32,187 [trainer.py] => keep_last_checkpoint: True
+2026-09-22 13:08:32,187 [trainer.py] => compact_diagonal_checkpoint: False
+2026-09-22 13:08:32,187 [trainer.py] => eval_interval: 0
+2026-09-22 13:08:32,187 [trainer.py] => ca_eval_interval: 0
+2026-09-22 13:08:32,187 [trainer.py] => num_workers: 4
+2026-09-22 13:08:32,187 [trainer.py] => stats_num_workers: 2
+2026-09-22 13:08:32,187 [trainer.py] => pin_memory: True
+2026-09-22 13:08:32,187 [trainer.py] => persistent_workers: True
+2026-09-22 13:08:32,187 [trainer.py] => shuffle: True
+2026-09-22 13:08:32,187 [trainer.py] => ssca: True
+2026-09-22 13:08:32,187 [trainer.py] => ca: True
+2026-09-22 13:08:32,187 [trainer.py] => init_cls: 10
+2026-09-22 13:08:32,187 [trainer.py] => increment: 10
+2026-09-22 13:08:32,187 [trainer.py] => model_name: adapter
+2026-09-22 13:08:32,187 [trainer.py] => convnet_type: pretrained_vit_b16_224_in21k_adapter
+2026-09-22 13:08:32,187 [trainer.py] => device: [device(type='cuda', index=0)]
+2026-09-22 13:08:32,187 [trainer.py] => seed: 1993
+2026-09-22 13:08:32,187 [trainer.py] => init_epochs: 10
+2026-09-22 13:08:32,187 [trainer.py] => warmup_epoch: 7
+2026-09-22 13:08:32,187 [trainer.py] => inc_epochs: 30
+2026-09-22 13:08:32,188 [trainer.py] => ca_epochs: 10
+2026-09-22 13:08:32,188 [trainer.py] => init_lr: 0.018461273665041644
+2026-09-22 13:08:32,188 [trainer.py] => batch_size: 64
+2026-09-22 13:08:32,188 [trainer.py] => weight_decay: 0.0001714081878951529
+2026-09-22 13:08:32,188 [trainer.py] => min_lr: 0
+2026-09-22 13:08:32,188 [trainer.py] => ffn_num: 64
+2026-09-22 13:08:32,188 [trainer.py] => optimizer: sgd
+2026-09-22 13:08:32,188 [trainer.py] => projector_type: quantum
+2026-09-22 13:08:32,188 [trainer.py] => qg_num_qubits: 4
+2026-09-22 13:08:32,188 [trainer.py] => qg_num_layers: 2
+2026-09-22 13:08:32,188 [trainer.py] => qg_gate_amplitude: 0.5
+2026-09-22 13:08:32,188 [trainer.py] => qg_backend: default.qubit
+2026-09-22 13:08:32,188 [trainer.py] => scale: 40.0
+2026-09-22 13:08:32,188 [trainer.py] => margin: 0.1
+2026-09-22 13:08:32,188 [trainer.py] => alpha: 0.5
+2026-09-22 13:08:32,188 [trainer.py] => rs_margin: 0.3
+2026-09-22 13:08:32,188 [trainer.py] => lambda_rs: 0.2
+2026-09-22 13:08:32,188 [trainer.py] => beta: 1.0
+2026-09-22 13:08:32,188 [trainer.py] => gamma: 0.4
+2026-09-22 13:08:32,188 [trainer.py] => ae_code_dims: 256
+2026-09-22 13:08:32,188 [trainer.py] => ae_init_lr: 0.0005611742230603744
+2026-09-22 13:08:32,188 [trainer.py] => ae_weight_decay: 0.0029339295871570244
+2026-09-22 13:08:32,188 [trainer.py] => output_root: /kaggle/working/QGORS_runs
+2026-09-22 13:08:32,189 [trainer.py] => max_tasks_per_run: 3
+2026-09-22 13:09:08,896 [trainer.py] => config: /kaggle/working/qgors_full.json
+2026-09-22 13:09:08,897 [trainer.py] => prefix: qgors
+2026-09-22 13:09:08,897 [trainer.py] => dataset: cifar224
+2026-09-22 13:09:08,897 [trainer.py] => save_checkpoints: True
+2026-09-22 13:09:08,897 [trainer.py] => resume: True
+2026-09-22 13:09:08,897 [trainer.py] => isolate_runs: True
+2026-09-22 13:09:08,897 [trainer.py] => keep_last_checkpoint: True
+2026-09-22 13:09:08,897 [trainer.py] => compact_diagonal_checkpoint: False
+2026-09-22 13:09:08,897 [trainer.py] => eval_interval: 0
+2026-09-22 13:09:08,897 [trainer.py] => ca_eval_interval: 0
+2026-09-22 13:09:08,897 [trainer.py] => num_workers: 4
+2026-09-22 13:09:08,897 [trainer.py] => stats_num_workers: 2
+2026-09-22 13:09:08,897 [trainer.py] => pin_memory: True
+2026-09-22 13:09:08,897 [trainer.py] => persistent_workers: True
+2026-09-22 13:09:08,897 [trainer.py] => shuffle: True
+2026-09-22 13:09:08,897 [trainer.py] => ssca: True
+2026-09-22 13:09:08,897 [trainer.py] => ca: True
+2026-09-22 13:09:08,897 [trainer.py] => init_cls: 10
+2026-09-22 13:09:08,898 [trainer.py] => increment: 10
+2026-09-22 13:09:08,898 [trainer.py] => model_name: adapter
+2026-09-22 13:09:08,898 [trainer.py] => convnet_type: pretrained_vit_b16_224_in21k_adapter
+2026-09-22 13:09:08,898 [trainer.py] => device: [device(type='cuda', index=0)]
+2026-09-22 13:09:08,898 [trainer.py] => seed: 1993
+2026-09-22 13:09:08,898 [trainer.py] => init_epochs: 10
+2026-09-22 13:09:08,898 [trainer.py] => warmup_epoch: 7
+2026-09-22 13:09:08,898 [trainer.py] => inc_epochs: 30
+2026-09-22 13:09:08,898 [trainer.py] => ca_epochs: 10
+2026-09-22 13:09:08,898 [trainer.py] => init_lr: 0.018461273665041644
+2026-09-22 13:09:08,898 [trainer.py] => batch_size: 64
+2026-09-22 13:09:08,898 [trainer.py] => weight_decay: 0.0001714081878951529
+2026-09-22 13:09:08,898 [trainer.py] => min_lr: 0
+2026-09-22 13:09:08,898 [trainer.py] => ffn_num: 64
+2026-09-22 13:09:08,899 [trainer.py] => optimizer: sgd
+2026-09-22 13:09:08,899 [trainer.py] => projector_type: quantum
+2026-09-22 13:09:08,899 [trainer.py] => qg_num_qubits: 4
+2026-09-22 13:09:08,899 [trainer.py] => qg_num_layers: 2
+2026-09-22 13:09:08,899 [trainer.py] => qg_gate_amplitude: 0.5
+2026-09-22 13:09:08,899 [trainer.py] => qg_backend: default.qubit
+2026-09-22 13:09:08,899 [trainer.py] => scale: 40.0
+2026-09-22 13:09:08,899 [trainer.py] => margin: 0.1
+2026-09-22 13:09:08,899 [trainer.py] => alpha: 0.5
+2026-09-22 13:09:08,899 [trainer.py] => rs_margin: 0.3
+2026-09-22 13:09:08,899 [trainer.py] => lambda_rs: 0.2
+2026-09-22 13:09:08,899 [trainer.py] => beta: 1.0
+2026-09-22 13:09:08,899 [trainer.py] => gamma: 0.4
+2026-09-22 13:09:08,899 [trainer.py] => ae_code_dims: 256
+2026-09-22 13:09:08,899 [trainer.py] => ae_init_lr: 0.0005611742230603744
+2026-09-22 13:09:08,899 [trainer.py] => ae_weight_decay: 0.0029339295871570244
+2026-09-22 13:09:08,900 [trainer.py] => output_root: /kaggle/working/QGORS_runs
+2026-09-22 13:09:08,900 [trainer.py] => max_tasks_per_run: 3
+2026-09-22 13:09:10,821 [data_manager.py] => [68, 56, 78, 8, 23, 84, 90, 65, 74, 76, 40, 89, 3, 92, 55, 9, 26, 80, 43, 38, 58, 70, 77, 1, 85, 19, 17, 50, 28, 53, 13, 81, 45, 82, 6, 59, 83, 16, 15, 44, 91, 41, 72, 60, 79, 52, 20, 10, 31, 54, 37, 95, 14, 71, 96, 98, 97, 2, 64, 66, 42, 22, 35, 86, 24, 34, 87, 21, 99, 0, 88, 27, 18, 94, 11, 12, 47, 25, 30, 46, 62, 69, 36, 61, 7, 63, 75, 5, 32, 4, 51, 48, 73, 93, 39, 67, 29, 49, 57, 33]
+2026-09-22 13:09:15,077 [_builder.py] => Loading pretrained weights from Hugging Face hub (timm/vit_base_patch16_224.augreg_in21k)
+2026-09-22 13:09:15,385 [_client.py] => HTTP Request: HEAD https://huggingface.co/timm/vit_base_patch16_224.augreg_in21k/resolve/main/model.safetensors "HTTP/1.1 302 Found"
+2026-09-22 13:09:15,683 [_client.py] => HTTP Request: GET https://huggingface.co/api/models/timm/vit_base_patch16_224.augreg_in21k/xet-read-token/bb70896cd6bffdd579c3d4f7284f39d0c4ab46c3 "HTTP/1.1 200 OK"
+2026-09-22 13:09:23,266 [_hub.py] => [timm/vit_base_patch16_224.augreg_in21k] Safe alternative available for 'pytorch_model.bin' (as 'model.safetensors'). Loading weights using safetensors.
+2026-09-22 13:09:23,369 [trainer.py] => Resume enabled but no checkpoint was found. Starting from task 0.
+2026-09-22 13:09:23,370 [trainer.py] => This run will process tasks [0, 3).
+2026-09-22 13:09:23,370 [trainer.py] => All params: 86988288
+2026-09-22 13:09:23,371 [trainer.py] => Trainable params: 1189632
+2026-09-22 13:09:23,372 [RSIAT_adapter.py] => Learning on 0-10
+2026-09-22 13:09:23,843 [toolkit.py] => All params: 86251776
+2026-09-22 13:09:23,844 [toolkit.py] => Trainable params: 1197312
+2026-09-22 13:31:03,156 [RSIAT_adapter.py] => Task 0, Epoch 10/10 => Loss 0.744, Loss_c 0.624, Losses_rt 0.120, Train_accy 94.56, Test_accy 98.80
+2026-09-22 13:32:28,038 [trainer.py] => CNN: {'total': 98.8, '00-09': 98.8, 'old': 0.0, 'new': 98.8}
+2026-09-22 13:32:28,718 [base.py] => Saved checkpoint: /kaggle/working/QGORS_runs/ckpt/qgors/cifar224/10_10/seed_1993/task_0.pkl
+2026-09-22 13:32:28,734 [trainer.py] => CNN top1 curve: [98.8]
+2026-09-22 13:32:28,734 [trainer.py] => CNN top5 curve: [100.0]
+2026-09-22 13:32:28,734 [trainer.py] => Average Accuracy (CNN): 98.8
+2026-09-22 13:32:28,735 [trainer.py] => All params: 86995968
+2026-09-22 13:32:28,736 [trainer.py] => Trainable params: 1197312
+2026-09-22 13:32:30,969 [RSIAT_adapter.py] => Learning on 10-20
+2026-09-22 13:33:38,710 [toolkit.py] => All params: 87140252
+2026-09-22 13:33:38,711 [toolkit.py] => Trainable params: 1341596
+2026-09-22 15:13:30,898 [RSIAT_adapter.py] => Task 1, Epoch 30/30 => Loss 1.181, Loss_c 0.796, Losses_rt 0.384, Train_accy 85.72, Test_accy 97.30 => scale_mean 1.0000, scale_std 0.0000, scale_min 0.9999, scale_max 1.0001, residual_norm 13.8422
+2026-09-22 15:15:49,828 [base.py] => CA Task 1 => Loss 0.010, Test_accy skipped
+2026-09-22 15:15:49,934 [base.py] => CA Task 1 => Loss 0.006, Test_accy skipped
+2026-09-22 15:15:50,041 [base.py] => CA Task 1 => Loss 0.006, Test_accy skipped
+2026-09-22 15:15:50,141 [base.py] => CA Task 1 => Loss 0.006, Test_accy skipped
+2026-09-22 15:15:50,240 [base.py] => CA Task 1 => Loss 0.006, Test_accy skipped
+2026-09-22 15:15:50,338 [base.py] => CA Task 1 => Loss 0.006, Test_accy skipped
+2026-09-22 15:15:50,444 [base.py] => CA Task 1 => Loss 0.005, Test_accy skipped
+2026-09-22 15:15:50,545 [base.py] => CA Task 1 => Loss 0.007, Test_accy skipped
+2026-09-22 15:15:50,648 [base.py] => CA Task 1 => Loss 0.006, Test_accy skipped
+2026-09-22 15:16:17,857 [base.py] => CA Task 1 => Loss 0.007, Test_accy 97.550
+2026-09-22 15:16:45,085 [trainer.py] => CNN: {'total': 97.55, '00-09': 98.1, '10-19': 97.0, 'old': 98.1, 'new': 97.0}
+2026-09-22 15:16:45,767 [base.py] => Saved checkpoint: /kaggle/working/QGORS_runs/ckpt/qgors/cifar224/10_10/seed_1993/task_1.pkl
+2026-09-22 15:16:45,826 [trainer.py] => Removed superseded checkpoint: /kaggle/working/QGORS_runs/ckpt/qgors/cifar224/10_10/seed_1993/task_0.pkl
+2026-09-22 15:16:45,827 [trainer.py] => CNN top1 curve: [98.8, 97.55]
+2026-09-22 15:16:45,827 [trainer.py] => CNN top5 curve: [100.0, 99.8]
+2026-09-22 15:16:45,827 [trainer.py] => Average Accuracy (CNN): 98.175
+2026-09-22 15:16:45,828 [trainer.py] => All params: 87003648
+2026-09-22 15:16:45,829 [trainer.py] => Trainable params: 1204992
+2026-09-22 15:16:45,831 [RSIAT_adapter.py] => Learning on 20-30
+2026-09-22 15:17:53,682 [toolkit.py] => All params: 87147932
+2026-09-22 15:17:53,683 [toolkit.py] => Trainable params: 1349276
+2026-09-23 02:40:09,660 [trainer.py] => config: /content/qgors_full.json
+2026-09-23 02:40:10,819 [trainer.py] => prefix: qgors
+2026-09-23 02:40:10,820 [trainer.py] => dataset: cifar224
+2026-09-23 02:40:10,820 [trainer.py] => save_checkpoints: True
+2026-09-23 02:40:10,821 [trainer.py] => resume: True
+2026-09-23 02:40:10,821 [trainer.py] => isolate_runs: True
+2026-09-23 02:40:10,821 [trainer.py] => keep_last_checkpoint: True
+2026-09-23 02:40:10,821 [trainer.py] => compact_diagonal_checkpoint: False
+2026-09-23 02:40:10,822 [trainer.py] => eval_interval: 0
+2026-09-23 02:40:10,822 [trainer.py] => ca_eval_interval: 0
+2026-09-23 02:40:10,822 [trainer.py] => num_workers: 2
+2026-09-23 02:40:10,822 [trainer.py] => stats_num_workers: 2
+2026-09-23 02:40:10,822 [trainer.py] => pin_memory: True
+2026-09-23 02:40:10,822 [trainer.py] => persistent_workers: True
+2026-09-23 02:40:10,822 [trainer.py] => shuffle: True
+2026-09-23 02:40:10,823 [trainer.py] => ssca: True
+2026-09-23 02:40:10,823 [trainer.py] => ca: True
+2026-09-23 02:40:10,823 [trainer.py] => init_cls: 10
+2026-09-23 02:40:10,823 [trainer.py] => increment: 10
+2026-09-23 02:40:10,823 [trainer.py] => model_name: adapter
+2026-09-23 02:40:10,824 [trainer.py] => convnet_type: pretrained_vit_b16_224_in21k_adapter
+2026-09-23 02:40:10,824 [trainer.py] => device: [device(type='cuda', index=0)]
+2026-09-23 02:40:10,824 [trainer.py] => seed: 1993
+2026-09-23 02:40:10,824 [trainer.py] => init_epochs: 10
+2026-09-23 02:40:10,824 [trainer.py] => warmup_epoch: 7
+2026-09-23 02:40:10,824 [trainer.py] => inc_epochs: 30
+2026-09-23 02:40:10,825 [trainer.py] => ca_epochs: 10
+2026-09-23 02:40:10,825 [trainer.py] => init_lr: 0.018461273665041644
+2026-09-23 02:40:10,825 [trainer.py] => batch_size: 64
+2026-09-23 02:40:10,825 [trainer.py] => weight_decay: 0.0001714081878951529
+2026-09-23 02:40:10,825 [trainer.py] => min_lr: 0
+2026-09-23 02:40:10,825 [trainer.py] => ffn_num: 64
+2026-09-23 02:40:10,826 [trainer.py] => optimizer: sgd
+2026-09-23 02:40:10,826 [trainer.py] => projector_type: quantum
+2026-09-23 02:40:10,826 [trainer.py] => qg_num_qubits: 4
+2026-09-23 02:40:10,826 [trainer.py] => qg_num_layers: 2
+2026-09-23 02:40:10,826 [trainer.py] => qg_gate_amplitude: 0.5
+2026-09-23 02:40:10,826 [trainer.py] => qg_backend: default.qubit
+2026-09-23 02:40:10,826 [trainer.py] => scale: 40.0
+2026-09-23 02:40:10,827 [trainer.py] => margin: 0.1
+2026-09-23 02:40:10,827 [trainer.py] => alpha: 0.5
+2026-09-23 02:40:10,827 [trainer.py] => rs_margin: 0.3
+2026-09-23 02:40:10,827 [trainer.py] => lambda_rs: 0.2
+2026-09-23 02:40:10,827 [trainer.py] => beta: 1.0
+2026-09-23 02:40:10,828 [trainer.py] => gamma: 0.4
+2026-09-23 02:40:10,828 [trainer.py] => ae_code_dims: 256
+2026-09-23 02:40:10,828 [trainer.py] => ae_init_lr: 0.0005611742230603744
+2026-09-23 02:40:10,828 [trainer.py] => ae_weight_decay: 0.0029339295871570244
+2026-09-23 02:40:10,828 [trainer.py] => output_root: /content/drive/MyDrive/QGORS_runs
+2026-09-23 02:40:13,656 [data_manager.py] => [68, 56, 78, 8, 23, 84, 90, 65, 74, 76, 40, 89, 3, 92, 55, 9, 26, 80, 43, 38, 58, 70, 77, 1, 85, 19, 17, 50, 28, 53, 13, 81, 45, 82, 6, 59, 83, 16, 15, 44, 91, 41, 72, 60, 79, 52, 20, 10, 31, 54, 37, 95, 14, 71, 96, 98, 97, 2, 64, 66, 42, 22, 35, 86, 24, 34, 87, 21, 99, 0, 88, 27, 18, 94, 11, 12, 47, 25, 30, 46, 62, 69, 36, 61, 7, 63, 75, 5, 32, 4, 51, 48, 73, 93, 39, 67, 29, 49, 57, 33]
+2026-09-23 02:40:17,548 [_builder.py] => Loading pretrained weights from Hugging Face hub (timm/vit_base_patch16_224.augreg_in21k)
+2026-09-23 02:40:17,728 [_client.py] => HTTP Request: GET https://huggingface.co/api/agent-harnesses "HTTP/1.1 200 OK"
+2026-09-23 02:40:17,835 [_client.py] => HTTP Request: HEAD https://huggingface.co/timm/vit_base_patch16_224.augreg_in21k/resolve/main/model.safetensors "HTTP/1.1 302 Found"
+2026-09-23 02:40:17,836 [_http.py] => Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+2026-09-23 02:40:18,003 [_client.py] => HTTP Request: GET https://huggingface.co/api/models/timm/vit_base_patch16_224.augreg_in21k/xet-read-token/bb70896cd6bffdd579c3d4f7284f39d0c4ab46c3 "HTTP/1.1 200 OK"
+2026-09-23 02:40:21,094 [_hub.py] => [timm/vit_base_patch16_224.augreg_in21k] Safe alternative available for 'pytorch_model.bin' (as 'model.safetensors'). Loading weights using safetensors.
+2026-09-23 02:40:36,373 [base.py] => Loaded checkpoint /content/drive/MyDrive/QGORS_runs/ckpt/qgors/cifar224/10_10/seed_1993/task_1.pkl; completed task=1, known_classes=20, total_classes=20
+2026-09-23 02:40:36,375 [trainer.py] => Resuming experiment from task 2
+2026-09-23 02:40:36,376 [trainer.py] => All params: 87003648
+2026-09-23 02:40:36,377 [trainer.py] => Trainable params: 1204992
+2026-09-23 02:40:36,378 [RSIAT_adapter.py] => Learning on 20-30
+2026-09-23 02:41:32,638 [toolkit.py] => All params: 87147932
+2026-09-23 02:41:32,639 [toolkit.py] => Trainable params: 1349276
+2026-09-23 04:21:25,220 [RSIAT_adapter.py] => Task 2, Epoch 30/30 => Loss 0.794, Loss_c 0.434, Losses_rt 0.361, Train_accy 90.92, Test_accy 96.30 => scale_mean 1.0000, scale_std 0.0000, scale_min 0.9999, scale_max 1.0003, residual_norm 13.8179
+2026-09-23 04:23:45,944 [base.py] => CA Task 2 => Loss 0.028, Test_accy skipped
+2026-09-23 04:23:46,116 [base.py] => CA Task 2 => Loss 0.024, Test_accy skipped
+2026-09-23 04:23:46,278 [base.py] => CA Task 2 => Loss 0.020, Test_accy skipped
+2026-09-23 04:23:46,440 [base.py] => CA Task 2 => Loss 0.015, Test_accy skipped
+2026-09-23 04:23:46,607 [base.py] => CA Task 2 => Loss 0.019, Test_accy skipped
+2026-09-23 04:23:46,770 [base.py] => CA Task 2 => Loss 0.015, Test_accy skipped
+2026-09-23 04:23:46,935 [base.py] => CA Task 2 => Loss 0.017, Test_accy skipped
+2026-09-23 04:23:47,107 [base.py] => CA Task 2 => Loss 0.018, Test_accy skipped
+2026-09-23 04:23:47,272 [base.py] => CA Task 2 => Loss 0.016, Test_accy skipped
+2026-09-23 04:24:27,660 [base.py] => CA Task 2 => Loss 0.015, Test_accy 96.930
+2026-09-23 04:25:07,790 [trainer.py] => CNN: {'total': 96.93, '00-09': 97.5, '10-19': 95.5, '20-29': 97.8, 'old': 96.5, 'new': 97.8}
+2026-09-23 04:25:09,294 [base.py] => Saved checkpoint: /content/drive/MyDrive/QGORS_runs/ckpt/qgors/cifar224/10_10/seed_1993/task_2.pkl
+2026-09-23 04:25:09,353 [trainer.py] => Removed superseded checkpoint: /content/drive/MyDrive/QGORS_runs/ckpt/qgors/cifar224/10_10/seed_1993/task_1.pkl
+2026-09-23 04:25:09,354 [trainer.py] => CNN top1 curve: [98.8, 97.55, 96.93]
+2026-09-23 04:25:09,354 [trainer.py] => CNN top5 curve: [100.0, 99.8, 99.63]
+2026-09-23 04:25:09,354 [trainer.py] => Average Accuracy (CNN): 97.75999999999999
+2026-09-23 04:25:09,356 [trainer.py] => All params: 87011328
+2026-09-23 04:25:09,357 [trainer.py] => Trainable params: 1212672
+2026-09-23 04:25:09,358 [RSIAT_adapter.py] => Learning on 30-40
+2026-09-23 04:26:16,380 [toolkit.py] => All params: 87155612
+2026-09-23 04:26:16,381 [toolkit.py] => Trainable params: 1356956
+2026-09-23 06:06:24,002 [RSIAT_adapter.py] => Task 3, Epoch 30/30 => Loss 1.050, Loss_c 0.686, Losses_rt 0.364, Train_accy 80.98, Test_accy 95.10 => scale_mean 1.0000, scale_std 0.0001, scale_min 0.9998, scale_max 1.0004, residual_norm 13.7920
+2026-09-23 06:08:44,745 [base.py] => CA Task 3 => Loss 0.039, Test_accy skipped
+2026-09-23 06:08:44,990 [base.py] => CA Task 3 => Loss 0.029, Test_accy skipped
+2026-09-23 06:08:45,228 [base.py] => CA Task 3 => Loss 0.027, Test_accy skipped
+2026-09-23 06:08:45,526 [base.py] => CA Task 3 => Loss 0.031, Test_accy skipped
+2026-09-23 06:08:45,819 [base.py] => CA Task 3 => Loss 0.025, Test_accy skipped
+2026-09-23 06:08:46,096 [base.py] => CA Task 3 => Loss 0.026, Test_accy skipped
+2026-09-23 06:08:46,371 [base.py] => CA Task 3 => Loss 0.026, Test_accy skipped
+2026-09-23 06:08:46,666 [base.py] => CA Task 3 => Loss 0.026, Test_accy skipped
+2026-09-23 06:08:46,995 [base.py] => CA Task 3 => Loss 0.023, Test_accy skipped
+2026-09-23 06:09:40,891 [base.py] => CA Task 3 => Loss 0.025, Test_accy 96.080
+2026-09-23 06:10:34,180 [trainer.py] => CNN: {'total': 96.08, '00-09': 96.6, '10-19': 94.7, '20-29': 97.2, '30-39': 95.8, 'old': 96.17, 'new': 95.8}
+2026-09-23 06:10:35,735 [base.py] => Saved checkpoint: /content/drive/MyDrive/QGORS_runs/ckpt/qgors/cifar224/10_10/seed_1993/task_3.pkl
+2026-09-23 06:10:35,751 [trainer.py] => Removed superseded checkpoint: /content/drive/MyDrive/QGORS_runs/ckpt/qgors/cifar224/10_10/seed_1993/task_2.pkl
+2026-09-23 06:10:35,752 [trainer.py] => CNN top1 curve: [98.8, 97.55, 96.93, 96.08]
+2026-09-23 06:10:35,752 [trainer.py] => CNN top5 curve: [100.0, 99.8, 99.63, 99.6]
+2026-09-23 06:10:35,752 [trainer.py] => Average Accuracy (CNN): 97.34
+2026-09-23 06:10:35,754 [trainer.py] => All params: 87019008
+2026-09-23 06:10:35,755 [trainer.py] => Trainable params: 1220352
+2026-09-23 06:10:35,756 [RSIAT_adapter.py] => Learning on 40-50
+2026-09-23 06:11:42,825 [toolkit.py] => All params: 87163292
+2026-09-23 06:11:42,826 [toolkit.py] => Trainable params: 1364636
+2026-09-23 07:52:11,279 [RSIAT_adapter.py] => Task 4, Epoch 30/30 => Loss 0.786, Loss_c 0.434, Losses_rt 0.353, Train_accy 86.98, Test_accy 94.70 => scale_mean 1.0000, scale_std 0.0001, scale_min 0.9998, scale_max 1.0005, residual_norm 13.7680
+2026-09-23 07:54:35,217 [base.py] => CA Task 4 => Loss 0.044, Test_accy skipped
+2026-09-23 07:54:35,545 [base.py] => CA Task 4 => Loss 0.044, Test_accy skipped
+2026-09-23 07:54:35,879 [base.py] => CA Task 4 => Loss 0.040, Test_accy skipped
+2026-09-23 07:54:36,220 [base.py] => CA Task 4 => Loss 0.040, Test_accy skipped
+2026-09-23 07:54:36,541 [base.py] => CA Task 4 => Loss 0.039, Test_accy skipped
+2026-09-23 07:54:36,868 [base.py] => CA Task 4 => Loss 0.035, Test_accy skipped
+2026-09-23 07:54:37,203 [base.py] => CA Task 4 => Loss 0.035, Test_accy skipped
+2026-09-23 07:54:37,531 [base.py] => CA Task 4 => Loss 0.037, Test_accy skipped
+2026-09-23 07:54:37,865 [base.py] => CA Task 4 => Loss 0.035, Test_accy skipped
+2026-09-23 07:55:44,890 [base.py] => CA Task 4 => Loss 0.036, Test_accy 95.000
+2026-09-23 07:56:51,320 [trainer.py] => CNN: {'total': 95.0, '00-09': 95.8, '10-19': 93.4, '20-29': 96.5, '30-39': 95.0, '40-49': 94.3, 'old': 95.18, 'new': 94.3}
+2026-09-23 07:56:54,782 [base.py] => Saved checkpoint: /content/drive/MyDrive/QGORS_runs/ckpt/qgors/cifar224/10_10/seed_1993/task_4.pkl
+2026-09-23 07:56:54,799 [trainer.py] => Removed superseded checkpoint: /content/drive/MyDrive/QGORS_runs/ckpt/qgors/cifar224/10_10/seed_1993/task_3.pkl
+2026-09-23 07:56:54,799 [trainer.py] => CNN top1 curve: [98.8, 97.55, 96.93, 96.08, 95.0]
+2026-09-23 07:56:54,799 [trainer.py] => CNN top5 curve: [100.0, 99.8, 99.63, 99.6, 99.46]
+2026-09-23 07:56:54,800 [trainer.py] => Average Accuracy (CNN): 96.872
+2026-09-23 07:56:54,801 [trainer.py] => All params: 87026688
+2026-09-23 07:56:54,803 [trainer.py] => Trainable params: 1228032
+2026-09-23 07:56:54,804 [RSIAT_adapter.py] => Learning on 50-60
+2026-09-23 07:58:01,966 [toolkit.py] => All params: 87170972
+2026-09-23 07:58:01,967 [toolkit.py] => Trainable params: 1372316
+2026-09-24 09:32:02,444 [trainer.py] => config: /content/qgors_full.json
+2026-09-24 09:32:02,937 [trainer.py] => prefix: qgors
+2026-09-24 09:32:02,937 [trainer.py] => dataset: cifar224
+2026-09-24 09:32:02,938 [trainer.py] => save_checkpoints: True
+2026-09-24 09:32:02,938 [trainer.py] => resume: True
+2026-09-24 09:32:02,938 [trainer.py] => isolate_runs: True
+2026-09-24 09:32:02,938 [trainer.py] => keep_last_checkpoint: True
+2026-09-24 09:32:02,938 [trainer.py] => compact_diagonal_checkpoint: False
+2026-09-24 09:32:02,939 [trainer.py] => eval_interval: 0
+2026-09-24 09:32:02,939 [trainer.py] => ca_eval_interval: 0
+2026-09-24 09:32:02,939 [trainer.py] => num_workers: 2
+2026-09-24 09:32:02,939 [trainer.py] => stats_num_workers: 2
+2026-09-24 09:32:02,939 [trainer.py] => pin_memory: True
+2026-09-24 09:32:02,939 [trainer.py] => persistent_workers: True
+2026-09-24 09:32:02,939 [trainer.py] => shuffle: True
+2026-09-24 09:32:02,940 [trainer.py] => ssca: True
+2026-09-24 09:32:02,940 [trainer.py] => ca: True
+2026-09-24 09:32:02,940 [trainer.py] => init_cls: 10
+2026-09-24 09:32:02,940 [trainer.py] => increment: 10
+2026-09-24 09:32:02,940 [trainer.py] => model_name: adapter
+2026-09-24 09:32:02,940 [trainer.py] => convnet_type: pretrained_vit_b16_224_in21k_adapter
+2026-09-24 09:32:02,940 [trainer.py] => device: [device(type='cuda', index=0)]
+2026-09-24 09:32:02,941 [trainer.py] => seed: 1993
+2026-09-24 09:32:02,941 [trainer.py] => init_epochs: 10
+2026-09-24 09:32:02,941 [trainer.py] => warmup_epoch: 7
+2026-09-24 09:32:02,941 [trainer.py] => inc_epochs: 30
+2026-09-24 09:32:02,941 [trainer.py] => ca_epochs: 10
+2026-09-24 09:32:02,941 [trainer.py] => init_lr: 0.018461273665041644
+2026-09-24 09:32:02,942 [trainer.py] => batch_size: 64
+2026-09-24 09:32:02,942 [trainer.py] => weight_decay: 0.0001714081878951529
+2026-09-24 09:32:02,942 [trainer.py] => min_lr: 0
+2026-09-24 09:32:02,942 [trainer.py] => ffn_num: 64
+2026-09-24 09:32:02,942 [trainer.py] => optimizer: sgd
+2026-09-24 09:32:02,942 [trainer.py] => projector_type: quantum
+2026-09-24 09:32:02,943 [trainer.py] => qg_num_qubits: 4
+2026-09-24 09:32:02,943 [trainer.py] => qg_num_layers: 2
+2026-09-24 09:32:02,943 [trainer.py] => qg_gate_amplitude: 0.5
+2026-09-24 09:32:02,943 [trainer.py] => qg_backend: default.qubit
+2026-09-24 09:32:02,943 [trainer.py] => scale: 40.0
+2026-09-24 09:32:02,944 [trainer.py] => margin: 0.1
+2026-09-24 09:32:02,944 [trainer.py] => alpha: 0.5
+2026-09-24 09:32:02,945 [trainer.py] => rs_margin: 0.3
+2026-09-24 09:32:02,946 [trainer.py] => lambda_rs: 0.2
+2026-09-24 09:32:02,947 [trainer.py] => beta: 1.0
+2026-09-24 09:32:02,947 [trainer.py] => gamma: 0.4
+2026-09-24 09:32:02,947 [trainer.py] => ae_code_dims: 256
+2026-09-24 09:32:02,947 [trainer.py] => ae_init_lr: 0.0005611742230603744
+2026-09-24 09:32:02,947 [trainer.py] => ae_weight_decay: 0.0029339295871570244
+2026-09-24 09:32:02,947 [trainer.py] => output_root: /content/drive/MyDrive/QGORS_runs
+2026-09-24 09:32:05,668 [data_manager.py] => [68, 56, 78, 8, 23, 84, 90, 65, 74, 76, 40, 89, 3, 92, 55, 9, 26, 80, 43, 38, 58, 70, 77, 1, 85, 19, 17, 50, 28, 53, 13, 81, 45, 82, 6, 59, 83, 16, 15, 44, 91, 41, 72, 60, 79, 52, 20, 10, 31, 54, 37, 95, 14, 71, 96, 98, 97, 2, 64, 66, 42, 22, 35, 86, 24, 34, 87, 21, 99, 0, 88, 27, 18, 94, 11, 12, 47, 25, 30, 46, 62, 69, 36, 61, 7, 63, 75, 5, 32, 4, 51, 48, 73, 93, 39, 67, 29, 49, 57, 33]
+2026-09-24 09:32:08,904 [_builder.py] => Loading pretrained weights from Hugging Face hub (timm/vit_base_patch16_224.augreg_in21k)
+2026-09-24 09:32:09,050 [_client.py] => HTTP Request: GET https://huggingface.co/api/agent-harnesses "HTTP/1.1 200 OK"
+2026-09-24 09:32:09,143 [_client.py] => HTTP Request: HEAD https://huggingface.co/timm/vit_base_patch16_224.augreg_in21k/resolve/main/model.safetensors "HTTP/1.1 302 Found"
+2026-09-24 09:32:09,280 [_client.py] => HTTP Request: GET https://huggingface.co/api/models/timm/vit_base_patch16_224.augreg_in21k/xet-read-token/bb70896cd6bffdd579c3d4f7284f39d0c4ab46c3 "HTTP/1.1 200 OK"
+2026-09-24 09:32:12,297 [_hub.py] => [timm/vit_base_patch16_224.augreg_in21k] Safe alternative available for 'pytorch_model.bin' (as 'model.safetensors'). Loading weights using safetensors.
+2026-09-24 09:32:22,538 [base.py] => Loaded checkpoint /content/drive/MyDrive/QGORS_runs/ckpt/qgors/cifar224/10_10/seed_1993/task_4.pkl; completed task=4, known_classes=50, total_classes=50
+2026-09-24 09:32:22,539 [trainer.py] => Resuming experiment from task 5
+2026-09-24 09:32:22,540 [trainer.py] => All params: 87026688
+2026-09-24 09:32:22,542 [trainer.py] => Trainable params: 1228032
+2026-09-24 09:32:22,542 [RSIAT_adapter.py] => Learning on 50-60
+2026-09-24 09:33:23,278 [toolkit.py] => All params: 87170972
+2026-09-24 09:33:23,279 [toolkit.py] => Trainable params: 1372316
+2026-09-24 11:24:18,680 [RSIAT_adapter.py] => Task 5, Epoch 30/30 => Loss 0.920, Loss_c 0.558, Losses_rt 0.362, Train_accy 85.58, Test_accy 94.38 => scale_mean 1.0000, scale_std 0.0001, scale_min 0.9997, scale_max 1.0007, residual_norm 13.7360
+2026-09-24 11:26:59,913 [base.py] => CA Task 5 => Loss 0.046, Test_accy skipped
+2026-09-24 11:27:00,426 [base.py] => CA Task 5 => Loss 0.046, Test_accy skipped
+2026-09-24 11:27:00,891 [base.py] => CA Task 5 => Loss 0.042, Test_accy skipped
+2026-09-24 11:27:01,359 [base.py] => CA Task 5 => Loss 0.042, Test_accy skipped
+2026-09-24 11:27:01,870 [base.py] => CA Task 5 => Loss 0.043, Test_accy skipped
+2026-09-24 11:27:02,297 [base.py] => CA Task 5 => Loss 0.042, Test_accy skipped
+2026-09-24 11:27:02,696 [base.py] => CA Task 5 => Loss 0.044, Test_accy skipped
+2026-09-24 11:27:03,107 [base.py] => CA Task 5 => Loss 0.037, Test_accy skipped
+2026-09-24 11:27:03,505 [base.py] => CA Task 5 => Loss 0.035, Test_accy skipped
+2026-09-24 11:28:32,416 [base.py] => CA Task 5 => Loss 0.039, Test_accy 94.580
+2026-09-24 11:30:00,970 [trainer.py] => CNN: {'total': 94.58, '00-09': 94.9, '10-19': 93.6, '20-29': 95.8, '30-39': 94.9, '40-49': 94.1, '50-59': 94.2, 'old': 94.66, 'new': 94.2}
+2026-09-24 11:30:02,562 [base.py] => Saved checkpoint: /content/drive/MyDrive/QGORS_runs/ckpt/qgors/cifar224/10_10/seed_1993/task_5.pkl
+2026-09-24 11:30:02,622 [trainer.py] => Removed superseded checkpoint: /content/drive/MyDrive/QGORS_runs/ckpt/qgors/cifar224/10_10/seed_1993/task_4.pkl
+2026-09-24 11:30:02,623 [trainer.py] => CNN top1 curve: [98.8, 97.55, 96.93, 96.08, 95.0, 94.58]
+2026-09-24 11:30:02,623 [trainer.py] => CNN top5 curve: [100.0, 99.8, 99.63, 99.6, 99.46, 99.5]
+2026-09-24 11:30:02,623 [trainer.py] => Average Accuracy (CNN): 96.49000000000001
+2026-09-24 11:30:02,625 [trainer.py] => All params: 87034368
+2026-09-24 11:30:02,626 [trainer.py] => Trainable params: 1235712
+2026-09-24 11:30:02,627 [RSIAT_adapter.py] => Learning on 60-70
+2026-09-24 11:31:16,611 [toolkit.py] => All params: 87178652
+2026-09-24 11:31:16,612 [toolkit.py] => Trainable params: 1379996
+2026-09-24 13:22:26,144 [RSIAT_adapter.py] => Task 6, Epoch 30/30 => Loss 0.798, Loss_c 0.448, Losses_rt 0.350, Train_accy 86.58, Test_accy 94.00 => scale_mean 1.0000, scale_std 0.0001, scale_min 0.9997, scale_max 1.0010, residual_norm 13.6996
+2026-09-24 13:25:05,378 [base.py] => CA Task 6 => Loss 0.051, Test_accy skipped
+2026-09-24 13:25:05,903 [base.py] => CA Task 6 => Loss 0.044, Test_accy skipped
+2026-09-24 13:25:06,409 [base.py] => CA Task 6 => Loss 0.043, Test_accy skipped
+2026-09-24 13:25:06,942 [base.py] => CA Task 6 => Loss 0.045, Test_accy skipped
+2026-09-24 13:25:07,492 [base.py] => CA Task 6 => Loss 0.044, Test_accy skipped
+2026-09-24 13:25:08,008 [base.py] => CA Task 6 => Loss 0.046, Test_accy skipped
+2026-09-24 13:25:08,511 [base.py] => CA Task 6 => Loss 0.041, Test_accy skipped
+2026-09-24 13:25:09,031 [base.py] => CA Task 6 => Loss 0.044, Test_accy skipped
+2026-09-24 13:25:09,645 [base.py] => CA Task 6 => Loss 0.042, Test_accy skipped
+2026-09-24 13:26:53,057 [base.py] => CA Task 6 => Loss 0.042, Test_accy 94.140
+2026-09-24 13:28:36,650 [trainer.py] => CNN: {'total': 94.14, '00-09': 94.0, '10-19': 93.6, '20-29': 95.5, '30-39': 94.4, '40-49': 93.9, '50-59': 92.6, '60-69': 95.0, 'old': 94.0, 'new': 95.0}
+2026-09-24 13:28:44,323 [base.py] => Saved checkpoint: /content/drive/MyDrive/QGORS_runs/ckpt/qgors/cifar224/10_10/seed_1993/task_6.pkl
+2026-09-24 13:28:44,344 [trainer.py] => Removed superseded checkpoint: /content/drive/MyDrive/QGORS_runs/ckpt/qgors/cifar224/10_10/seed_1993/task_5.pkl
+2026-09-24 13:28:44,345 [trainer.py] => CNN top1 curve: [98.8, 97.55, 96.93, 96.08, 95.0, 94.58, 94.14]
+2026-09-24 13:28:44,346 [trainer.py] => CNN top5 curve: [100.0, 99.8, 99.63, 99.6, 99.46, 99.5, 99.56]
+2026-09-24 13:28:44,346 [trainer.py] => Average Accuracy (CNN): 96.15428571428572
+2026-09-24 13:28:44,351 [trainer.py] => All params: 87042048
+2026-09-24 13:28:44,353 [trainer.py] => Trainable params: 1243392
+2026-09-24 13:28:44,355 [RSIAT_adapter.py] => Learning on 70-80
+2026-09-24 13:29:58,733 [toolkit.py] => All params: 87186332
+2026-09-24 13:29:58,734 [toolkit.py] => Trainable params: 1387676
+2026-09-25 00:19:05,908 [trainer.py] => config: /content/qgors_full.json
+2026-09-25 00:19:06,650 [trainer.py] => prefix: qgors
+2026-09-25 00:19:06,651 [trainer.py] => dataset: cifar224
+2026-09-25 00:19:06,651 [trainer.py] => save_checkpoints: True
+2026-09-25 00:19:06,651 [trainer.py] => resume: True
+2026-09-25 00:19:06,651 [trainer.py] => isolate_runs: True
+2026-09-25 00:19:06,651 [trainer.py] => keep_last_checkpoint: True
+2026-09-25 00:19:06,652 [trainer.py] => compact_diagonal_checkpoint: False
+2026-09-25 00:19:06,652 [trainer.py] => eval_interval: 0
+2026-09-25 00:19:06,652 [trainer.py] => ca_eval_interval: 0
+2026-09-25 00:19:06,652 [trainer.py] => num_workers: 2
+2026-09-25 00:19:06,652 [trainer.py] => stats_num_workers: 2
+2026-09-25 00:19:06,652 [trainer.py] => pin_memory: True
+2026-09-25 00:19:06,652 [trainer.py] => persistent_workers: True
+2026-09-25 00:19:06,652 [trainer.py] => shuffle: True
+2026-09-25 00:19:06,653 [trainer.py] => ssca: True
+2026-09-25 00:19:06,653 [trainer.py] => ca: True
+2026-09-25 00:19:06,653 [trainer.py] => init_cls: 10
+2026-09-25 00:19:06,653 [trainer.py] => increment: 10
+2026-09-25 00:19:06,653 [trainer.py] => model_name: adapter
+2026-09-25 00:19:06,653 [trainer.py] => convnet_type: pretrained_vit_b16_224_in21k_adapter
+2026-09-25 00:19:06,653 [trainer.py] => device: [device(type='cuda', index=0)]
+2026-09-25 00:19:06,654 [trainer.py] => seed: 1993
+2026-09-25 00:19:06,654 [trainer.py] => init_epochs: 10
+2026-09-25 00:19:06,654 [trainer.py] => warmup_epoch: 7
+2026-09-25 00:19:06,654 [trainer.py] => inc_epochs: 30
+2026-09-25 00:19:06,654 [trainer.py] => ca_epochs: 10
+2026-09-25 00:19:06,654 [trainer.py] => init_lr: 0.018461273665041644
+2026-09-25 00:19:06,655 [trainer.py] => batch_size: 64
+2026-09-25 00:19:06,655 [trainer.py] => weight_decay: 0.0001714081878951529
+2026-09-25 00:19:06,655 [trainer.py] => min_lr: 0
+2026-09-25 00:19:06,655 [trainer.py] => ffn_num: 64
+2026-09-25 00:19:06,655 [trainer.py] => optimizer: sgd
+2026-09-25 00:19:06,655 [trainer.py] => projector_type: quantum
+2026-09-25 00:19:06,655 [trainer.py] => qg_num_qubits: 4
+2026-09-25 00:19:06,656 [trainer.py] => qg_num_layers: 2
+2026-09-25 00:19:06,656 [trainer.py] => qg_gate_amplitude: 0.5
+2026-09-25 00:19:06,656 [trainer.py] => qg_backend: default.qubit
+2026-09-25 00:19:06,656 [trainer.py] => scale: 40.0
+2026-09-25 00:19:06,656 [trainer.py] => margin: 0.1
+2026-09-25 00:19:06,656 [trainer.py] => alpha: 0.5
+2026-09-25 00:19:06,656 [trainer.py] => rs_margin: 0.3
+2026-09-25 00:19:06,657 [trainer.py] => lambda_rs: 0.2
+2026-09-25 00:19:06,657 [trainer.py] => beta: 1.0
+2026-09-25 00:19:06,657 [trainer.py] => gamma: 0.4
+2026-09-25 00:19:06,657 [trainer.py] => ae_code_dims: 256
+2026-09-25 00:19:06,657 [trainer.py] => ae_init_lr: 0.0005611742230603744
+2026-09-25 00:19:06,657 [trainer.py] => ae_weight_decay: 0.0029339295871570244
+2026-09-25 00:19:06,657 [trainer.py] => output_root: /content/drive/MyDrive/QGORS_runs
+2026-09-25 00:19:10,109 [data_manager.py] => [68, 56, 78, 8, 23, 84, 90, 65, 74, 76, 40, 89, 3, 92, 55, 9, 26, 80, 43, 38, 58, 70, 77, 1, 85, 19, 17, 50, 28, 53, 13, 81, 45, 82, 6, 59, 83, 16, 15, 44, 91, 41, 72, 60, 79, 52, 20, 10, 31, 54, 37, 95, 14, 71, 96, 98, 97, 2, 64, 66, 42, 22, 35, 86, 24, 34, 87, 21, 99, 0, 88, 27, 18, 94, 11, 12, 47, 25, 30, 46, 62, 69, 36, 61, 7, 63, 75, 5, 32, 4, 51, 48, 73, 93, 39, 67, 29, 49, 57, 33]
+2026-09-25 00:19:13,678 [_builder.py] => Loading pretrained weights from Hugging Face hub (timm/vit_base_patch16_224.augreg_in21k)
+2026-09-25 00:19:13,821 [_client.py] => HTTP Request: GET https://huggingface.co/api/agent-harnesses "HTTP/1.1 200 OK"
+2026-09-25 00:19:13,913 [_client.py] => HTTP Request: HEAD https://huggingface.co/timm/vit_base_patch16_224.augreg_in21k/resolve/main/model.safetensors "HTTP/1.1 302 Found"
+2026-09-25 00:19:13,914 [_http.py] => Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+2026-09-25 00:19:14,062 [_client.py] => HTTP Request: GET https://huggingface.co/api/models/timm/vit_base_patch16_224.augreg_in21k/xet-read-token/bb70896cd6bffdd579c3d4f7284f39d0c4ab46c3 "HTTP/1.1 200 OK"
+2026-09-25 00:19:16,765 [_hub.py] => [timm/vit_base_patch16_224.augreg_in21k] Safe alternative available for 'pytorch_model.bin' (as 'model.safetensors'). Loading weights using safetensors.
+2026-09-25 00:19:33,941 [base.py] => Loaded checkpoint /content/drive/MyDrive/QGORS_runs/ckpt/qgors/cifar224/10_10/seed_1993/task_6.pkl; completed task=6, known_classes=70, total_classes=70
+2026-09-25 00:19:33,942 [trainer.py] => Resuming experiment from task 7
+2026-09-25 00:19:33,943 [trainer.py] => All params: 87042048
+2026-09-25 00:19:33,944 [trainer.py] => Trainable params: 1243392
+2026-09-25 00:19:33,945 [RSIAT_adapter.py] => Learning on 70-80
+2026-09-25 00:20:30,065 [toolkit.py] => All params: 87186332
+2026-09-25 00:20:30,066 [toolkit.py] => Trainable params: 1387676
+2026-09-25 01:55:54,968 [RSIAT_adapter.py] => Task 7, Epoch 30/30 => Loss 0.906, Loss_c 0.556, Losses_rt 0.350, Train_accy 77.60, Test_accy 92.02 => scale_mean 1.0001, scale_std 0.0002, scale_min 0.9996, scale_max 1.0014, residual_norm 13.6314
+2026-09-25 01:58:16,272 [base.py] => CA Task 7 => Loss 0.078, Test_accy skipped
+2026-09-25 01:58:16,929 [base.py] => CA Task 7 => Loss 0.074, Test_accy skipped
+2026-09-25 01:58:17,568 [base.py] => CA Task 7 => Loss 0.070, Test_accy skipped
+2026-09-25 01:58:18,211 [base.py] => CA Task 7 => Loss 0.066, Test_accy skipped
+2026-09-25 01:58:18,938 [base.py] => CA Task 7 => Loss 0.065, Test_accy skipped
+2026-09-25 01:58:19,673 [base.py] => CA Task 7 => Loss 0.066, Test_accy skipped
+2026-09-25 01:58:20,496 [base.py] => CA Task 7 => Loss 0.060, Test_accy skipped
+2026-09-25 01:58:21,246 [base.py] => CA Task 7 => Loss 0.061, Test_accy skipped
+2026-09-25 01:58:22,073 [base.py] => CA Task 7 => Loss 0.060, Test_accy skipped
+2026-09-25 02:00:03,195 [base.py] => CA Task 7 => Loss 0.064, Test_accy 92.600
+2026-09-25 02:01:44,261 [trainer.py] => CNN: {'total': 92.6, '00-09': 93.0, '10-19': 92.8, '20-29': 95.5, '30-39': 94.4, '40-49': 91.8, '50-59': 90.1, '60-69': 94.1, '70-79': 89.1, 'old': 93.1, 'new': 89.1}
+2026-09-25 02:01:51,971 [base.py] => Saved checkpoint: /content/drive/MyDrive/QGORS_runs/ckpt/qgors/cifar224/10_10/seed_1993/task_7.pkl
+2026-09-25 02:01:52,000 [trainer.py] => Removed superseded checkpoint: /content/drive/MyDrive/QGORS_runs/ckpt/qgors/cifar224/10_10/seed_1993/task_6.pkl
+2026-09-25 02:01:52,001 [trainer.py] => CNN top1 curve: [98.8, 97.55, 96.93, 96.08, 95.0, 94.58, 94.14, 92.6]
+2026-09-25 02:01:52,001 [trainer.py] => CNN top5 curve: [100.0, 99.8, 99.63, 99.6, 99.46, 99.5, 99.56, 99.52]
+2026-09-25 02:01:52,001 [trainer.py] => Average Accuracy (CNN): 95.71
+2026-09-25 02:01:52,003 [trainer.py] => All params: 87049728
+2026-09-25 02:01:52,005 [trainer.py] => Trainable params: 1251072
+2026-09-25 02:01:52,006 [RSIAT_adapter.py] => Learning on 80-90
+2026-09-25 02:02:55,515 [toolkit.py] => All params: 87194012
+2026-09-25 02:02:55,516 [toolkit.py] => Trainable params: 1395356
+2026-09-25 03:38:53,663 [RSIAT_adapter.py] => Task 8, Epoch 30/30 => Loss 0.845, Loss_c 0.499, Losses_rt 0.346, Train_accy 79.86, Test_accy 91.72 => scale_mean 1.0001, scale_std 0.0003, scale_min 0.9996, scale_max 1.0027, residual_norm 13.3690
+2026-09-25 03:41:13,983 [base.py] => CA Task 8 => Loss 0.077, Test_accy skipped
+2026-09-25 03:41:14,893 [base.py] => CA Task 8 => Loss 0.070, Test_accy skipped
+2026-09-25 03:41:15,802 [base.py] => CA Task 8 => Loss 0.068, Test_accy skipped
+2026-09-25 03:41:16,570 [base.py] => CA Task 8 => Loss 0.067, Test_accy skipped
+2026-09-25 03:41:17,322 [base.py] => CA Task 8 => Loss 0.063, Test_accy skipped
+2026-09-25 03:41:18,076 [base.py] => CA Task 8 => Loss 0.063, Test_accy skipped
+2026-09-25 03:41:18,832 [base.py] => CA Task 8 => Loss 0.060, Test_accy skipped
+2026-09-25 03:41:19,589 [base.py] => CA Task 8 => Loss 0.062, Test_accy skipped
+2026-09-25 03:41:20,338 [base.py] => CA Task 8 => Loss 0.059, Test_accy skipped
+2026-09-25 03:43:13,945 [base.py] => CA Task 8 => Loss 0.062, Test_accy 92.230
+2026-09-25 03:45:07,555 [trainer.py] => CNN: {'total': 92.23, '00-09': 92.5, '10-19': 92.3, '20-29': 95.3, '30-39': 94.2, '40-49': 89.6, '50-59': 90.3, '60-69': 93.0, '70-79': 90.2, '80-89': 92.7, 'old': 92.18, 'new': 92.7}
+2026-09-25 03:45:15,747 [base.py] => Saved checkpoint: /content/drive/MyDrive/QGORS_runs/ckpt/qgors/cifar224/10_10/seed_1993/task_8.pkl
+2026-09-25 03:45:15,764 [trainer.py] => Removed superseded checkpoint: /content/drive/MyDrive/QGORS_runs/ckpt/qgors/cifar224/10_10/seed_1993/task_7.pkl
+2026-09-25 03:45:15,764 [trainer.py] => CNN top1 curve: [98.8, 97.55, 96.93, 96.08, 95.0, 94.58, 94.14, 92.6, 92.23]
+2026-09-25 03:45:15,764 [trainer.py] => CNN top5 curve: [100.0, 99.8, 99.63, 99.6, 99.46, 99.5, 99.56, 99.52, 99.33]
+2026-09-25 03:45:15,764 [trainer.py] => Average Accuracy (CNN): 95.32333333333332
+2026-09-25 03:45:15,766 [trainer.py] => All params: 87057408
+2026-09-25 03:45:15,768 [trainer.py] => Trainable params: 1258752
+2026-09-25 03:45:15,769 [RSIAT_adapter.py] => Learning on 90-100
+2026-09-25 03:46:19,525 [toolkit.py] => All params: 87201692
+2026-09-25 03:46:19,526 [toolkit.py] => Trainable params: 1403036
+2026-09-25 05:22:02,873 [RSIAT_adapter.py] => Task 9, Epoch 30/30 => Loss 0.849, Loss_c 0.565, Losses_rt 0.284, Train_accy 80.36, Test_accy 91.81 => scale_mean 1.0003, scale_std 0.0008, scale_min 0.9995, scale_max 1.0077, residual_norm 12.2354
+2026-09-25 05:24:23,242 [base.py] => CA Task 9 => Loss 0.065, Test_accy skipped
+2026-09-25 05:24:24,129 [base.py] => CA Task 9 => Loss 0.062, Test_accy skipped
+2026-09-25 05:24:25,017 [base.py] => CA Task 9 => Loss 0.062, Test_accy skipped
+2026-09-25 05:24:25,908 [base.py] => CA Task 9 => Loss 0.057, Test_accy skipped
+2026-09-25 05:24:26,831 [base.py] => CA Task 9 => Loss 0.062, Test_accy skipped
+2026-09-25 05:24:27,731 [base.py] => CA Task 9 => Loss 0.058, Test_accy skipped
+2026-09-25 05:24:28,708 [base.py] => CA Task 9 => Loss 0.059, Test_accy skipped
+2026-09-25 05:24:29,776 [base.py] => CA Task 9 => Loss 0.058, Test_accy skipped
+2026-09-25 05:24:30,829 [base.py] => CA Task 9 => Loss 0.056, Test_accy skipped
+2026-09-25 05:26:34,166 [base.py] => CA Task 9 => Loss 0.056, Test_accy 91.950
+2026-09-25 05:28:38,096 [trainer.py] => CNN: {'total': 91.95, '00-09': 91.1, '10-19': 92.0, '20-29': 95.2, '30-39': 93.7, '40-49': 89.0, '50-59': 89.4, '60-69': 92.8, '70-79': 89.7, '80-89': 93.3, '90-99': 93.3, 'old': 91.8, 'new': 93.3}
+2026-09-25 05:28:40,573 [base.py] => Saved checkpoint: /content/drive/MyDrive/QGORS_runs/ckpt/qgors/cifar224/10_10/seed_1993/task_9.pkl
+2026-09-25 05:28:40,590 [trainer.py] => Removed superseded checkpoint: /content/drive/MyDrive/QGORS_runs/ckpt/qgors/cifar224/10_10/seed_1993/task_8.pkl
+2026-09-25 05:28:40,590 [trainer.py] => CNN top1 curve: [98.8, 97.55, 96.93, 96.08, 95.0, 94.58, 94.14, 92.6, 92.23, 91.95]
+2026-09-25 05:28:40,590 [trainer.py] => CNN top5 curve: [100.0, 99.8, 99.63, 99.6, 99.46, 99.5, 99.56, 99.52, 99.33, 99.25]
+2026-09-25 05:28:40,591 [trainer.py] => Average Accuracy (CNN): 94.986
+2026-09-25 05:28:40,755 [trainer.py] => Average Seed Accuracy (CNN): 94.986
