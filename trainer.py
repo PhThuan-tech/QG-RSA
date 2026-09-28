@@ -171,7 +171,10 @@ def _write_arm_outputs(args, payload):
                 "top5": metrics["top5"],
                 "old_top1": metrics["grouped"]["old"],
                 "new_top1": metrics["grouped"]["new"],
+                "A_t": (metrics["top1"] if stage == "post_ca" else None),
                 "ca_gain_top1": record.get("ca_gain_top1"),
+                "all_metrics_finite": record.get(
+                    "boundary_metrics", {}).get("all_metrics_finite"),
                 "runtime_seconds": record.get("runtime_seconds", 0.0),
             })
             for class_id, accuracy in evaluation["per_class_top1"].items():
@@ -186,7 +189,8 @@ def _write_arm_outputs(args, payload):
     _write_csv_atomic(
         args.get("task_metrics_output"),
         ["arm", "mode", "task", "stage", "top1", "top5",
-         "old_top1", "new_top1", "ca_gain_top1", "runtime_seconds"],
+         "old_top1", "new_top1", "A_t", "ca_gain_top1",
+         "all_metrics_finite", "runtime_seconds"],
         task_rows,
     )
     _write_csv_atomic(
@@ -227,10 +231,15 @@ def _write_arm_outputs(args, payload):
             "A_singular_max": A.get("singular_max"),
             "A_condition_number": A.get("condition_number"),
             "D_weight_fro": D.get("weight_frobenius_norm"),
+            "D_t_state_sha256": (transport.get("D_t_final") or {}).get(
+                "state_sha256"),
             "ca_pd_fallback_count": ca_stabilization.get("fallback_count", 0),
             "ca_pd_max_relative_jitter_used": max(
                 (item["relative_jitter"] for item in ca_classes), default=0.0),
             "final_epoch_L_align": stage1[-1]["align"] if stage1 else None,
+            "final_epoch_L_fwd": stage1[-1].get("loss_fwd") if stage1 else None,
+            "final_epoch_L_back": stage1[-1].get("loss_back") if stage1 else None,
+            "final_epoch_L_bialign": stage1[-1].get("bialign") if stage1 else None,
             "final_epoch_L_orth": stage1[-1]["orth"] if stage1 else None,
             "final_epoch_L_cls": stage1[-1]["classification"] if stage1 else None,
             "final_epoch_L_A": stage1[-1]["loss_a"] if stage1 else None,
@@ -247,8 +256,10 @@ def _write_arm_outputs(args, payload):
             "cycle_new_after_stage1", "cycle_old_after_stage1",
             "A_weight_fro", "A_bias_l2", "A_singular_min",
             "A_singular_median", "A_singular_max", "A_condition_number",
-            "D_weight_fro", "ca_pd_fallback_count",
-            "ca_pd_max_relative_jitter_used", "final_epoch_L_align", "final_epoch_L_orth",
+            "D_weight_fro", "D_t_state_sha256", "ca_pd_fallback_count",
+            "ca_pd_max_relative_jitter_used", "final_epoch_L_align",
+            "final_epoch_L_fwd", "final_epoch_L_back",
+            "final_epoch_L_bialign", "final_epoch_L_orth",
             "final_epoch_L_cls", "final_epoch_L_A", "final_epoch_L_D",
             "final_epoch_cycle_new", "final_epoch_cycle_old",
         ],
@@ -285,6 +296,13 @@ def _common_task0_record(args):
     report_path = args.get("common_task0_report")
     if not report_path:
         return None
+    expected_report_hash = args.get("common_task0_report_sha256")
+    if expected_report_hash is not None:
+        observed_report_hash = _sha256_file(report_path)
+        if observed_report_hash != expected_report_hash:
+            raise RuntimeError(
+                "Common task0 report SHA256 mismatch: {} != {}".format(
+                    observed_report_hash, expected_report_hash))
     with open(report_path) as handle:
         report = json.load(handle)
     if report.get("status") != "PASS":
@@ -301,6 +319,15 @@ def _common_task0_record(args):
         "runtime_seconds": 0.0,
         "checkpoint": copy.deepcopy(report["destination"]),
         "common_task0": True,
+        "boundary_metrics": {
+            "A_t": float(evaluated["metrics"]["top1"]),
+            "pre_ca_top1": float(evaluated["metrics"]["top1"]),
+            "post_ca_top1": float(evaluated["metrics"]["top1"]),
+            "old_top1": evaluated["metrics"]["grouped"]["old"],
+            "new_top1": evaluated["metrics"]["grouped"]["new"],
+            "ca_gain_top1": 0.0,
+            "all_metrics_finite": True,
+        },
     }
 
 
@@ -344,12 +371,14 @@ def _train(args):
     if args.get("resume", False):
         resume_path = args.get("resume_path") or find_latest_checkpoint(checkpoint_dir)
         if resume_path and os.path.isfile(resume_path):
-            expected_resume_hash = args.get("ca_rescue_source_task1_sha256")
+            expected_resume_hash = (
+                args.get("resume_sha256")
+                or args.get("ca_rescue_source_task1_sha256"))
             if expected_resume_hash is not None:
                 observed_resume_hash = _sha256_file(resume_path)
                 if observed_resume_hash != expected_resume_hash:
                     raise RuntimeError(
-                        "Rescue source checkpoint SHA256 mismatch: {} != {}".format(
+                        "Resume source checkpoint SHA256 mismatch: {} != {}".format(
                             observed_resume_hash, expected_resume_hash))
             completed_task = model.load_checkpoint(resume_path)
             start_task = completed_task + 1
@@ -388,19 +417,40 @@ def _train(args):
             raise RuntimeError(
                 "B1 numerical rescue gate failed; no task2 boundary checkpoint saved")
         transport = copy.deepcopy(model._current_transport_record)
+        pre_metrics = pre_ca["metrics"]
+        post_metrics = post_ca["metrics"]
+        numeric_boundary_values = [
+            pre_metrics["top1"], pre_metrics["top5"],
+            post_metrics["top1"], post_metrics["top5"],
+            post_metrics["grouped"]["old"], post_metrics["grouped"]["new"],
+        ]
+        all_metrics_finite = all(
+            value is None or np.isfinite(float(value))
+            for value in numeric_boundary_values)
+        ca_gain_top1 = post_metrics["top1"] - pre_metrics["top1"]
         record = {
             "arm": args["arm"],
             "mode": args["bicyc_mode"],
             "task": int(model._cur_task),
             "pre_ca": pre_ca,
             "post_ca": copy.deepcopy(post_ca),
-            "ca_gain_top1": (
-                post_ca["metrics"]["top1"] - pre_ca["metrics"]["top1"]),
+            "ca_gain_top1": ca_gain_top1,
+            "boundary_metrics": {
+                "A_t": float(post_metrics["top1"]),
+                "pre_ca_top1": float(pre_metrics["top1"]),
+                "post_ca_top1": float(post_metrics["top1"]),
+                "old_top1": post_metrics["grouped"]["old"],
+                "new_top1": post_metrics["grouped"]["new"],
+                "ca_gain_top1": float(ca_gain_top1),
+                "all_metrics_finite": bool(all_metrics_finite),
+            },
             "transport": transport,
             "runtime_seconds": time.time() - task_started,
             "checkpoint": None,
             "common_task0": False,
         }
+        if not all_metrics_finite:
+            raise RuntimeError("Non-finite task-boundary evaluation metric")
         model.experiment_records.append(record)
         model.after_task()
         cnn_accy = post_ca["metrics"]
@@ -426,12 +476,16 @@ def _train(args):
                 if os.path.isfile(previous):
                     os.remove(previous)
 
+        mode = args["bicyc_mode"]
+        implementation_label = (
+            "[IMPLEMENTATION ADAPTATION] RSIAT BiAlign"
+            if mode == "bialign" else
+            "[CONTROL] official RSIAT"
+            if mode == "official" else
+            "[IMPLEMENTATION ADAPTATION] RSIAT + BiCyc-style transport")
         payload = {
             "status": "RUNNING" if task + 1 < end_task else "PASS",
-            "implementation_label": (
-                "[IMPLEMENTATION ADAPTATION] RSIAT + BiCyc-style "
-                "bidirectional/cycle transport"
-            ),
+            "implementation_label": implementation_label,
             "arm": args["arm"],
             "mode": args["bicyc_mode"],
             "seed": args["seed"],
@@ -440,6 +494,12 @@ def _train(args):
             "end_task_exclusive": end_task,
             "task_records": model.experiment_records,
             "cnn_curve": cnn_curve,
+            "accuracy_summary": {
+                "A_t": list(cnn_curve["top1"]),
+                "average_accuracy": float(np.mean(cnn_curve["top1"])),
+                "final_accuracy": float(cnn_curve["top1"][-1]),
+                "definition": "A_bar=mean(A_0..A_9); A_B=A_9",
+            },
             "checkpoint_dir": checkpoint_dir,
             "checkpoints": checkpoints,
             "runtime_seconds": time.time() - run_started,

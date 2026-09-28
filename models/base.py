@@ -255,6 +255,8 @@ class BaseLearner(object):
             "transport_stage1_lr", "transport_stage1_weight_decay",
             "transport_stage2_epochs", "transport_stage2_lr",
             "transport_stage2_weight_decay", "transport_init_seed",
+            "bialign_reverse_hidden_dim", "bialign_init_seed",
+            "stats_batch_size",
             "ca_covariance_pd_fallback", "ca_pd_max_relative_jitter",
         ):
             if key in self.args:
@@ -581,9 +583,10 @@ class BaseLearner(object):
             data, targets, idx_dataset = data_manager.get_dataset(np.arange(class_idx, class_idx + 1), source='train',
                                                                   mode='test', ret_data=True)
             stats_workers = int(self.args.get("stats_num_workers", 4))
+            stats_batch_size = int(self.args.get("stats_batch_size", batch_size))
             idx_loader = DataLoader(
                 idx_dataset,
-                batch_size=batch_size,
+                batch_size=stats_batch_size,
                 shuffle=False,
                 num_workers=stats_workers,
                 pin_memory=self.args.get("pin_memory", self._device.type == "cuda"),
