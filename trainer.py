@@ -103,6 +103,7 @@ def _train(args):
     print()
     cnn_curve = getattr(model, "cnn_curve", {"top1": [], "top5": []})
     nme_curve = getattr(model, "nme_curve", {"top1": [], "top5": []})
+    task_accuracy_matrix = getattr(model, "task_accuracy_matrix", [])
     if start_task >= data_manager.nb_tasks:
         if cnn_curve["top1"]:
             return sum(cnn_curve["top1"]) / len(cnn_curve["top1"])
@@ -130,8 +131,27 @@ def _train(args):
 
         cnn_curve["top1"].append(cnn_accy["top1"])
         cnn_curve["top5"].append(cnn_accy["top5"])
+        task_accuracy_matrix.append(cnn_accy.get("task_accuracies", []))
         model.cnn_curve = cnn_curve
         model.nme_curve = nme_curve
+        model.task_accuracy_matrix = task_accuracy_matrix
+
+        if len(task_accuracy_matrix) > 1:
+            current_row = task_accuracy_matrix[-1]
+            old_task_count = len(current_row) - 1
+            backward_transfer = np.mean([
+                current_row[index] - task_accuracy_matrix[index][index]
+                for index in range(old_task_count)
+            ])
+            forgetting = np.mean([
+                max(row[index] for row in task_accuracy_matrix[index:-1])
+                - current_row[index]
+                for index in range(old_task_count)
+            ])
+            logging.info(
+                "Continual metrics after task %d: BWT=%.4f, forgetting=%.4f, task_acc=%s",
+                task, backward_transfer, forgetting, current_row,
+            )
 
         if args.get("save_checkpoints", True):
             checkpoint_path = os.path.join(checkpoint_dir, "task_{}.pkl".format(task))

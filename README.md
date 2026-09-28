@@ -61,6 +61,45 @@ Optionally set `"resume_path"` to a specific `task_N.pkl`, `"keep_last_checkpoin
 
 For a Google Colab smoke test that verifies data loading, training, checkpoint creation, and resume at task 1, use [RSIAT_Colab.ipynb](RSIAT_Colab.ipynb).
 
+### QKSR projected local metric
+
+The QKSR implementation is self-contained in PyTorch and does not require
+PennyLane, Qiskit, or any additional environment setup.  The full CUB pilot
+configuration is `exps/adapter_cub.json`; the paired RSIAT control is
+`exps/adapter_cub_baseline.json`:
+
+```bash
+python main.py --config=exps/adapter_cub_baseline.json
+python main.py --config=exps/adapter_cub.json
+```
+
+The metric supports `pqk`, `pqk_no_cnot`, `pqk_random_frozen`, `rbf_proj`,
+`mlp_small`, and `mlp_cap` through `q_kernel_type`.  Gamma calibration uses a
+fixed deterministic subset of the task's training data.  Set `val_ratio` above
+zero only during hyperparameter tuning; keep it at zero for the locked final
+training runs.
+
+Run the dataset-independent circuit, RDM, kernel, gradient, and RNG checks with:
+
+```bash
+python -m unittest tests.test_quantum_kernel -v
+```
+
+On CPU the CUDA RNG check is skipped.  Run the same command once in Colab to
+exercise it on the target GPU runtime before starting a long experiment.
+
+After tuning and locking the common settings, generate the minimum A–E
+ablation files without editing JSON by hand:
+
+```bash
+python scripts/generate_qksr_ablation_configs.py \
+  --source exps/adapter_cub.json \
+  --output-dir exps/qksr_ablation
+```
+
+Use a separate output directory for exploratory configs and commit the locked
+JSON files before confirmatory test runs, as required by the v3.1 protocol.
+
 ## Citation
 
 If you find this useful in your research, please consider citing:

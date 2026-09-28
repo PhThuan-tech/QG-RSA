@@ -1,5 +1,5 @@
 {
-    "prefix": "all",
+    "prefix": "baseline",
     "dataset": "cub",
     "save_checkpoints": true,
     "resume": false,
@@ -24,7 +24,7 @@
     "seed": [1993],
 
     "init_epochs": 20,
-    "warmup_epoch":9,
+    "warmup_epoch": 9,
     "inc_epochs": 30,
     "ca_epochs": 10,
     "init_lr": 0.03773856474362839,
@@ -45,8 +45,8 @@
     "ae_init_lr": 0.09988605662355629,
     "ae_weight_decay": 9.418584598386518e-05,
 
-    "use_quantum_kernel_base": true,
-    "use_quantum_kernel_inc": true,
+    "use_quantum_kernel_base": false,
+    "use_quantum_kernel_inc": false,
     "q_kernel_type": "pqk",
     "q_kernel_order": 1,
     "q_order2_weight": 1.0,

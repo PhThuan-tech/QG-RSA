@@ -135,6 +135,62 @@ class DataManager(object):
             train_data, train_targets, trsf, self.use_path
         ), DummyDataset(val_data, val_targets, trsf, self.use_path)
 
+    def get_dataset_with_validation(self, indices, val_ratio, seed):
+        """Return a deterministic stratified train/validation split.
+
+        Training samples retain training augmentation.  Validation samples use
+        the deterministic test transform so hyperparameter selection and QKSR
+        calibration do not depend on random crops or flips.
+        """
+        val_ratio = float(val_ratio)
+        if not 0.0 < val_ratio < 1.0:
+            raise ValueError("val_ratio must be in (0, 1).")
+
+        rng = np.random.default_rng(int(seed))
+        train_data, train_targets = [], []
+        val_data, val_targets = [], []
+        for idx in indices:
+            class_data, class_targets = self._select(
+                self._train_data, self._train_targets, low_range=idx, high_range=idx + 1
+            )
+            if len(class_data) < 2:
+                raise ValueError(
+                    "Class {} needs at least two samples for validation splitting.".format(idx)
+                )
+            val_count = int(round(len(class_data) * val_ratio))
+            val_count = min(max(val_count, 1), len(class_data) - 1)
+            permutation = rng.permutation(len(class_data))
+            val_indices = permutation[:val_count]
+            train_indices = permutation[val_count:]
+            train_data.append(class_data[train_indices])
+            train_targets.append(class_targets[train_indices])
+            val_data.append(class_data[val_indices])
+            val_targets.append(class_targets[val_indices])
+
+        train_transform = transforms.Compose([*self._train_trsf, *self._common_trsf])
+        val_transform = transforms.Compose([*self._test_trsf, *self._common_trsf])
+        return (
+            DummyDataset(
+                np.concatenate(train_data),
+                np.concatenate(train_targets),
+                train_transform,
+                self.use_path,
+            ),
+            DummyDataset(
+                np.concatenate(val_data),
+                np.concatenate(val_targets),
+                val_transform,
+                self.use_path,
+            ),
+        )
+
+    def get_eval_view(self, dataset):
+        """Create a deterministic-transform view over an existing dataset."""
+        if not isinstance(dataset, DummyDataset):
+            raise TypeError("get_eval_view expects a DummyDataset.")
+        eval_transform = transforms.Compose([*self._test_trsf, *self._common_trsf])
+        return DummyDataset(dataset.images, dataset.labels, eval_transform, dataset.use_path)
+
     def _setup_data(self, dataset_name, shuffle, seed):
         idata = _get_idata(dataset_name)
         idata.download_data()

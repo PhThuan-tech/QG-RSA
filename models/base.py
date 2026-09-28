@@ -152,7 +152,12 @@ class BaseLearner(object):
 
     def _checkpoint_run_metadata(self):
         """Return the fields that must not change when resuming a run."""
-        keys = ("dataset", "seed", "init_cls", "increment", "model_name", "convnet_type")
+        keys = (
+            "dataset", "seed", "init_cls", "increment", "model_name", "convnet_type",
+            "use_quantum_kernel_base", "use_quantum_kernel_inc", "q_kernel_type",
+            "q_kernel_order", "q_num_qubits", "q_num_layers", "q_reupload",
+            "q_gamma_mode", "q_inc_train_mode", "inc_loss_mode", "q_inc_pair",
+        )
         return {
             "format_version": 1,
             **{key: self.args.get(key) for key in keys if key in self.args},
@@ -205,10 +210,20 @@ class BaseLearner(object):
                 key: value.detach().cpu()
                 for key, value in self.old_ae.state_dict().items()
             }
+        if hasattr(self, "quantum_kernel") and self.quantum_kernel is not None:
+            checkpoint["quantum_kernel_state_dict"] = {
+                key: value.detach().cpu()
+                for key, value in self.quantum_kernel.state_dict().items()
+            }
+            checkpoint["quantum_kernel_inc_mode"] = getattr(
+                self.quantum_kernel, "_inc_mode", "trainable"
+            )
         if hasattr(self, "cnn_curve"):
             checkpoint["cnn_curve"] = self.cnn_curve
         if hasattr(self, "nme_curve"):
             checkpoint["nme_curve"] = self.nme_curve
+        if hasattr(self, "task_accuracy_matrix"):
+            checkpoint["task_accuracy_matrix"] = self.task_accuracy_matrix
 
         checkpoint_dir = os.path.dirname(filepath)
         if checkpoint_dir:
@@ -305,6 +320,8 @@ class BaseLearner(object):
             self.cnn_curve = checkpoint["cnn_curve"]
         if "nme_curve" in checkpoint:
             self.nme_curve = checkpoint["nme_curve"]
+        if "task_accuracy_matrix" in checkpoint:
+            self.task_accuracy_matrix = checkpoint["task_accuracy_matrix"]
         if "class_order" in checkpoint:
             self.class_order = list(checkpoint["class_order"])
 
@@ -334,6 +351,24 @@ class BaseLearner(object):
             (y_pred.T == np.tile(y_true, (self.topk, 1))).sum() * 100 / len(y_true),
             decimals=2,
         ))
+
+        top1_predictions = y_pred.T[0]
+        task_accuracies = []
+        lower = 0
+        for task_size in getattr(self, "task_sizes", []):
+            upper = lower + task_size
+            indices = np.where(np.logical_and(y_true >= lower, y_true < upper))[0]
+            task_accuracy = (
+                float("nan")
+                if len(indices) == 0
+                else float(np.around(
+                    (top1_predictions[indices] == y_true[indices]).mean() * 100,
+                    decimals=2,
+                ))
+            )
+            task_accuracies.append(task_accuracy)
+            lower = upper
+        ret["task_accuracies"] = task_accuracies
 
         return ret
 

@@ -1,5 +1,6 @@
 import copy
 import logging
+import time
 import numpy as np
 import torch
 from torch import nn
@@ -7,13 +8,14 @@ from torch.serialization import load
 from tqdm import tqdm
 from torch import optim
 from torch.nn import functional as F
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, Subset
 from utils.inc_net import SimpleVitNet
 from torch.distributions.multivariate_normal import MultivariateNormal
 from models.base import BaseLearner
 from utils.toolkit import count_parameters, log_count_parameter, target2onehot, tensor2numpy
 from utils.loss import AngularPenaltySMLoss
 from utils.toolkit import AutoencoderSigmoid
+from utils.quantum_kernel import QuantumKernelModule
 import math
 num_workers = 8
 
@@ -44,6 +46,56 @@ class Learner(BaseLearner):
         self.rs_loss_func = RS_Loss(self.args["alpha"], self.args["rs_margin"])
         self.old_ae = None
 
+        self.use_quantum_kernel_base = bool(
+            args.get("use_quantum_kernel_base", False)
+        )
+        self.use_quantum_kernel_inc = bool(
+            args.get("use_quantum_kernel_inc", False)
+        )
+        if self.use_quantum_kernel_inc:
+            inc_train_mode = args.get("q_inc_train_mode", "frozen")
+            if inc_train_mode not in {"frozen", "trainable"}:
+                raise ValueError("q_inc_train_mode must be 'frozen' or 'trainable'.")
+            if (
+                inc_train_mode == "trainable"
+                and args.get("q_gamma_mode", "bounded_learned") != "bounded_learned"
+            ):
+                raise ValueError(
+                    "Trainable incremental QKSR requires q_gamma_mode='bounded_learned'."
+                )
+        if int(args.get("q_calib_samples", 512)) < 2:
+            raise ValueError("q_calib_samples must be at least 2.")
+        if not 0.0 < float(args.get("rs_margin_quantile", 0.9)) < 1.0:
+            raise ValueError("rs_margin_quantile must be in (0, 1).")
+        for margin_key, default in (("rs_margin_q", 0.5), ("rs_margin_inc", 0.3)):
+            margin_value = float(args.get(margin_key, default))
+            if not 0.0 <= margin_value <= 1.0:
+                raise ValueError("{} must be in [0, 1].".format(margin_key))
+        self.quantum_kernel = None
+        self.q_calibration_loader = None
+        self.q_calibration_indices = []
+        if self.use_quantum_kernel_base or self.use_quantum_kernel_inc:
+            init_seed = int(args.get("q_init_seed", 1234))
+            # QuantumKernelModule only initializes CPU tensors.  Forking the CPU
+            # generator keeps the paired baseline training RNG unchanged.
+            with torch.random.fork_rng(devices=[]):
+                torch.random.default_generator.manual_seed(init_seed)
+                self.quantum_kernel = QuantumKernelModule(
+                    input_dim=768,
+                    num_qubits=int(args.get("q_num_qubits", 8)),
+                    num_layers=int(args.get("q_num_layers", 2)),
+                    kernel_type=args.get("q_kernel_type", "pqk"),
+                    kernel_order=int(args.get("q_kernel_order", 1)),
+                    order2_weight=float(args.get("q_order2_weight", 1.0)),
+                    reupload=bool(args.get("q_reupload", False)),
+                    gamma_mode=args.get("q_gamma_mode", "bounded_learned"),
+                    dtype=args.get("q_dtype", "float32"),
+                    init_seed=init_seed,
+                ).to(self._device)
+            logging.info(
+                "QKSR parameter counts: %s", self.quantum_kernel.parameter_counts()
+            )
+
     def _after_load_checkpoint(self, checkpoint):
         """Restore learner-specific state after BaseLearner restores the network."""
         if self._cur_task >= 1:
@@ -58,6 +110,20 @@ class Learner(BaseLearner):
                 )
             self.old_ae.load_state_dict(checkpoint["old_ae_state_dict"])
             self.old_ae.to(self._device)
+
+        if self.quantum_kernel is not None:
+            state_dict = checkpoint.get("quantum_kernel_state_dict")
+            if state_dict is None:
+                raise ValueError(
+                    "Checkpoint is missing quantum_kernel_state_dict for a QKSR run."
+                )
+            self.quantum_kernel.load_state_dict(state_dict)
+            if self._cur_task >= 1 and self.use_quantum_kernel_inc:
+                self.quantum_kernel.set_inc_mode(
+                    self.args.get("q_inc_train_mode", "frozen")
+                )
+            elif self._cur_task >= 1:
+                self.quantum_kernel.set_inc_mode("frozen")
 
         self._network_module_ptr = self._network
         self.old_network_module_ptr = self._old_network
@@ -103,8 +169,30 @@ class Learner(BaseLearner):
         self._network_module_ptr = self._network
         logging.info("Learning on {}-{}".format(self._known_classes, self._total_classes))
     
-        train_dataset = data_manager.get_dataset(np.arange(self._known_classes, self._total_classes), source="train",
-                                                 mode="train")
+        current_classes = np.arange(self._known_classes, self._total_classes)
+        val_ratio = float(self.args.get("val_ratio", 0.0) or 0.0)
+        self.val_loader = None
+        if val_ratio > 0.0:
+            split_seed = int(self.args["seed"]) + self._cur_task
+            train_dataset, val_dataset = data_manager.get_dataset_with_validation(
+                current_classes, val_ratio=val_ratio, seed=split_seed
+            )
+            self.val_loader = DataLoader(
+                val_dataset,
+                batch_size=self.batch_size,
+                shuffle=False,
+                num_workers=self.num_workers,
+                pin_memory=self.pin_memory,
+                persistent_workers=self.persistent_workers,
+            )
+            logging.info(
+                "Task %d validation split: train=%d, validation=%d, ratio=%.4f",
+                self._cur_task, len(train_dataset), len(val_dataset), val_ratio,
+            )
+        else:
+            train_dataset = data_manager.get_dataset(
+                current_classes, source="train", mode="train"
+            )
 
         self.train_dataset = train_dataset
         print("The number of training dataset:", len(self.train_dataset))
@@ -128,6 +216,44 @@ class Learner(BaseLearner):
             persistent_workers=self.persistent_workers,
         )
 
+        # Gamma calibration uses the same training samples but deterministic
+        # evaluation transforms.  A private generator prevents RNG drift.
+        if self.quantum_kernel is not None:
+            calibration_dataset = data_manager.get_eval_view(train_dataset)
+            calibration_count = min(
+                int(self.args.get("q_calib_samples", 512)), len(calibration_dataset)
+            )
+            if calibration_count < 2:
+                raise ValueError("QKSR gamma calibration requires at least two samples.")
+            generator = torch.Generator(device="cpu")
+            generator.manual_seed(
+                int(self.args.get("q_init_seed", 1234)) + self._cur_task
+            )
+            indices = torch.randperm(len(calibration_dataset), generator=generator)[
+                :calibration_count
+            ].tolist()
+            self.q_calibration_indices = indices
+            self.q_calibration_loader = DataLoader(
+                Subset(calibration_dataset, indices),
+                batch_size=self.batch_size,
+                shuffle=False,
+                num_workers=0,
+                pin_memory=self.pin_memory,
+                generator=generator,
+            )
+            logging.info(
+                "QKSR calibration task=%d samples=%d indices=%s",
+                self._cur_task, calibration_count, indices,
+            )
+
+            if self._cur_task == 0:
+                mode = "trainable" if self.use_quantum_kernel_base else "frozen"
+            elif self.use_quantum_kernel_inc:
+                mode = self.args.get("q_inc_train_mode", "frozen")
+            else:
+                mode = "frozen"
+            self.quantum_kernel.set_inc_mode(mode)
+
         if len(self._multiple_gpus) > 1:
             print('Multiple GPUs')
             self._network = nn.DataParallel(self._network, self._multiple_gpus)
@@ -137,7 +263,8 @@ class Learner(BaseLearner):
             self._network.to(self._device)
             train_embeddings_old, _ = self.extract_features(self.train_loader, self._network, None)
 
-        self._train(self.train_loader, self.test_loader)
+        evaluation_loader = self.val_loader if self.val_loader is not None else self.test_loader
+        self._train(self.train_loader, evaluation_loader)
         
         if len(self._multiple_gpus) > 1:
             self._network = self._network.module
@@ -158,50 +285,160 @@ class Learner(BaseLearner):
             if len(self._multiple_gpus) > 1:
                 self._network = self._network.module
 
+    def _quantum_used_this_task(self):
+        return (
+            self._cur_task == 0 and self.use_quantum_kernel_base
+        ) or (
+            self._cur_task > 0 and self.use_quantum_kernel_inc
+        )
+
+    def _quantum_trainable_this_task(self):
+        if self.quantum_kernel is None or not self._quantum_used_this_task():
+            return False
+        if self._cur_task == 0:
+            return True
+        return self.args.get("q_inc_train_mode", "frozen") == "trainable"
+
+    def _calibrate_quantum_kernel(self):
+        if (
+            self.quantum_kernel is None
+            or not self._quantum_used_this_task()
+            or bool(self.quantum_kernel.gamma_initialized.item())
+        ):
+            return
+        if self.q_calibration_loader is None:
+            raise RuntimeError("QKSR calibration loader has not been initialized.")
+
+        network_was_training = self._network.training
+        old_ae_was_training = self.old_ae.training if self.old_ae is not None else False
+        self._network.eval()
+        if self.old_ae is not None:
+            self.old_ae.eval()
+
+        features = []
+        with torch.no_grad():
+            for _, inputs, _ in self.q_calibration_loader:
+                inputs = inputs.to(self._device, non_blocking=True)
+                if self._cur_task == 0:
+                    encoded = self._network_module_ptr.extract_vector(inputs)
+                else:
+                    encoded = self.old_network_module_ptr.extract_vector(inputs)
+                    encoded = self.old_ae(encoded)
+                features.append(encoded)
+            features = torch.cat(features, dim=0)
+
+            if self._cur_task == 0:
+                gamma0 = self.quantum_kernel.calibrate_gamma(
+                    features, exclude_diagonal=True
+                )
+            else:
+                prototypes = torch.from_numpy(
+                    self._class_means[:self._known_classes]
+                ).float().to(self._device, non_blocking=True)
+                prototypes = self.old_ae(prototypes)
+                gamma0 = self.quantum_kernel.calibrate_gamma(
+                    prototypes, features, exclude_diagonal=False
+                )
+
+        if network_was_training:
+            self._network.train()
+        if self.old_ae is not None and old_ae_was_training:
+            self.old_ae.train()
+        logging.info(
+            "QKSR gamma calibrated at task %d: gamma0=%.8g, mode=%s",
+            self._cur_task, gamma0, self.args.get("q_gamma_mode", "bounded_learned"),
+        )
+
+    def _quantum_param_groups(self, adapter_lr):
+        if not self._quantum_trainable_this_task():
+            return []
+        return self.quantum_kernel.param_groups(
+            adapter_lr=adapter_lr,
+            weight_decay=self.weight_decay,
+            metric_lr_mult=self.args.get("q_metric_lr_mult", 0.1),
+        )
+
     def _train(self, train_loader, test_loader):
         self._network.to(self._device)
+        self._calibrate_quantum_kernel()
+
         if self._cur_task == 0:
             self.tuned_epochs = self.args["init_epochs"]
+            adapter_lr = 0.01
             param_groups = [
-                {'params': self._network.convnet.blocks[-1].parameters(), 'lr': 0.01,
+                {'params': self._network.convnet.blocks[-1].parameters(), 'lr': adapter_lr,
                  'weight_decay': self.args['weight_decay']},
-                {'params': self._network.convnet.blocks[:-1].parameters(), 'lr': 0.01,
+                {'params': self._network.convnet.blocks[:-1].parameters(), 'lr': adapter_lr,
                  'weight_decay': self.args['weight_decay']},
-                {'params': self._network.fc.parameters(), 'lr': 0.01, 'weight_decay': self.args['weight_decay']}
+                {'params': self._network.fc.parameters(), 'lr': adapter_lr,
+                 'weight_decay': self.args['weight_decay']}
             ]
+            quantum_groups = self._quantum_param_groups(adapter_lr)
+            param_groups.extend(quantum_groups)
 
             if self.args['optimizer'] == 'sgd':
-                optimizer = optim.SGD(param_groups, momentum=0.9, lr=self.init_lr, weight_decay=self.weight_decay)
+                optimizer = optim.SGD(
+                    param_groups, momentum=0.9, lr=self.init_lr,
+                    weight_decay=self.weight_decay,
+                )
             elif self.args['optimizer'] == 'adam':
-                optimizer = optim.AdamW(self._network.parameters(), lr=self.init_lr, weight_decay=self.weight_decay)
-                
-            scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=self.tuned_epochs, eta_min=self.min_lr)
-            log_count_parameter(param_groups)
-            self._init_train(train_loader, test_loader, optimizer, scheduler, self.args['warmup_epoch'])
+                if quantum_groups:
+                    optimizer = optim.AdamW(
+                        [{'params': self._network.parameters(), 'lr': self.init_lr,
+                          'weight_decay': self.weight_decay}] + quantum_groups
+                    )
+                else:
+                    optimizer = optim.AdamW(
+                        self._network.parameters(), lr=self.init_lr,
+                        weight_decay=self.weight_decay,
+                    )
+            else:
+                raise ValueError("Unknown optimizer {}".format(self.args['optimizer']))
         else:
             self.tuned_epochs = self.args['inc_epochs']
-            param_groups = []
-            param_groups.append(
-                {'params': self._network.convnet.parameters(), 'lr': self.init_lr, 'weight_decay': self.weight_decay})
-            param_groups.append(
-                {'params': self._network.fc.parameters(), 'lr': self.init_lr, 'weight_decay': self.weight_decay})
-            param_groups.append(
-                {'params': self.old_ae.parameters(), 'lr': self.args['ae_init_lr'], 'weight_decay': self.args['ae_weight_decay']})
-            
+            adapter_lr = self.init_lr
+            param_groups = [
+                {'params': self._network.convnet.parameters(), 'lr': adapter_lr,
+                 'weight_decay': self.weight_decay},
+                {'params': self._network.fc.parameters(), 'lr': adapter_lr,
+                 'weight_decay': self.weight_decay},
+                {'params': self.old_ae.parameters(), 'lr': self.args['ae_init_lr'],
+                 'weight_decay': self.args['ae_weight_decay']},
+            ]
+            quantum_groups = self._quantum_param_groups(adapter_lr)
+            param_groups.extend(quantum_groups)
+
             if self.args['optimizer'] == 'sgd':
                 optimizer = optim.SGD(param_groups, momentum=0.9)
             elif self.args['optimizer'] == 'adam':
-                optimizer = optim.AdamW(self._network.parameters(), lr=self.init_lr, weight_decay=self.weight_decay)
+                if self.use_quantum_kernel_inc:
+                    # QKSR's incremental objective requires old_ae to update.
+                    optimizer = optim.AdamW(param_groups)
+                else:
+                    # Preserve the original baseline behavior bit-for-bit.
+                    optimizer = optim.AdamW(
+                        self._network.parameters(), lr=self.init_lr,
+                        weight_decay=self.weight_decay,
+                    )
+            else:
+                raise ValueError("Unknown optimizer {}".format(self.args['optimizer']))
 
-            scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=self.tuned_epochs, eta_min=self.min_lr)
-            log_count_parameter(param_groups)
-            self._init_train(train_loader, test_loader, optimizer, scheduler, self.args['warmup_epoch'])
+        scheduler = optim.lr_scheduler.CosineAnnealingLR(
+            optimizer, T_max=self.tuned_epochs, eta_min=self.min_lr
+        )
+        log_count_parameter(optimizer.param_groups)
+        self._init_train(
+            train_loader, test_loader, optimizer, scheduler, self.args['warmup_epoch']
+        )
 
     def _init_train(self, train_loader, test_loader, optimizer, scheduler, warmup_epoch):
         prog_bar = tqdm(range(self.tuned_epochs))
         eval_interval = self.args.get("eval_interval", 0)
+        if self._device.type == "cuda":
+            torch.cuda.reset_peak_memory_stats(self._device)
         
         for _, epoch in enumerate(prog_bar):
+            epoch_start = time.perf_counter()
             self._network.train()
             losses = 0.0
             losses_c, losses_rt = 0.0, 0.0
@@ -222,6 +459,7 @@ class Learner(BaseLearner):
                 correct += preds.eq(targets.expand_as(preds)).cpu().sum()
                 total += len(targets)
             scheduler.step()
+            epoch_seconds = time.perf_counter() - epoch_start
 
             train_acc = np.around(tensor2numpy(correct) * 100 / total, decimals=2)
             if self._should_eval_epoch(epoch, self.tuned_epochs, eval_interval):
@@ -230,7 +468,7 @@ class Learner(BaseLearner):
                 )
             else:
                 test_acc_msg = "skipped"
-            info = "Task {}, Epoch {}/{} => Loss {:.3f}, Loss_c {:.3f}, Losses_rt {:.3f}, Train_accy {:.2f}, Test_accy {}".format(
+            info = "Task {}, Epoch {}/{} => Loss {:.3f}, Loss_c {:.3f}, Losses_rt {:.3f}, Train_accy {:.2f}, Test_accy {}, Time {:.2f}s".format(
                 self._cur_task,
                 epoch + 1,
                 self.tuned_epochs,
@@ -239,19 +477,54 @@ class Learner(BaseLearner):
                 losses_rt/len(train_loader),
                 train_acc,
                 test_acc_msg,
+                epoch_seconds,
             )
             prog_bar.set_description(info)
+            if self.quantum_kernel is not None and self._quantum_used_this_task():
+                logging.info(
+                    "QKSR diagnostics task=%d epoch=%d gamma=%.8g gradients=%s kernel=%s",
+                    self._cur_task,
+                    epoch + 1,
+                    float(self.quantum_kernel.gamma.detach().item()),
+                    self.quantum_kernel.gradient_health(),
+                    self.quantum_kernel.last_kernel_stats(),
+                )
         logging.info(info)
+        if self._device.type == "cuda":
+            logging.info(
+                "Task %d peak GPU memory: %.2f MiB",
+                self._cur_task,
+                torch.cuda.max_memory_allocated(self._device) / (1024 ** 2),
+            )
 
     def _inc_loss(self, features, features_old):
         features_old = self.old_ae(features_old)
         loss_align = nn.MSELoss()(features, features_old)
-        features_old_norm = F.normalize(features_old, p=2, dim=1)
         protos = torch.from_numpy(self._class_means).float().to(self._device,non_blocking=True)
         protos = self.old_ae(protos)
-        protos = F.normalize(protos, p=2, dim=1)
-        similarity = torch.matmul(protos, features_old_norm.t())
-        loss_orth = similarity.sum() / (similarity.shape[0]*similarity.shape[1])
+
+        if self.use_quantum_kernel_inc:
+            pair_mode = self.args.get("q_inc_pair", "old_proj")
+            if pair_mode == "old_proj":
+                comparison_features = features_old
+            elif pair_mode == "current":
+                comparison_features = features
+            else:
+                raise ValueError("q_inc_pair must be 'old_proj' or 'current'.")
+            similarity = self.quantum_kernel(protos, comparison_features)
+            inc_loss_mode = self.args.get("inc_loss_mode", "mean")
+            if inc_loss_mode == "mean":
+                loss_orth = similarity.mean()
+            elif inc_loss_mode == "margin":
+                margin = float(self.args.get("rs_margin_inc", 0.3))
+                loss_orth = F.relu(similarity - margin).mean()
+            else:
+                raise ValueError("inc_loss_mode must be 'mean' or 'margin'.")
+        else:
+            features_old_norm = F.normalize(features_old, p=2, dim=1)
+            protos = F.normalize(protos, p=2, dim=1)
+            similarity = torch.matmul(protos, features_old_norm.t())
+            loss_orth = similarity.sum() / (similarity.shape[0]*similarity.shape[1])
         return self.args["beta"] * loss_align + self.args["gamma"] * loss_orth
         
     def _compute_rt_loss(self, inputs, targets, epoch=None, warmup_epoch=10):     
@@ -262,7 +535,17 @@ class Learner(BaseLearner):
 
         if self._cur_task == 0:
             lambda_rs = self.args["lambda_rs"] * min(1.0, epoch / warmup_epoch)
-            loss_base = lambda_rs * self.rs_loss_func(features, targets)
+            quantum_module = (
+                self.quantum_kernel if self.use_quantum_kernel_base else None
+            )
+            loss_base = lambda_rs * self.rs_loss_func(
+                features,
+                targets,
+                quantum_kernel_module=quantum_module,
+                margin_override=float(self.args.get("rs_margin_q", 0.5)),
+                margin_mode=self.args.get("rs_margin_q_mode", "fixed"),
+                margin_quantile=float(self.args.get("rs_margin_quantile", 0.9)),
+            )
             return logits, loss_c, loss_base
         
         features_old = self.old_network_module_ptr.extract_vector(inputs)
@@ -275,18 +558,41 @@ class RS_Loss(nn.Module):
         self.lamda = lamda
         self.margin = margin
 
-    def forward(self, features, labels):
+    def forward(
+        self,
+        features,
+        labels,
+        quantum_kernel_module=None,
+        margin_override=None,
+        margin_mode="fixed",
+        margin_quantile=0.9,
+    ):
         device = features.device
-        features = F.normalize(features, p=2, dim=1)
         labels = labels[:, None]
         mask = torch.eq(labels, labels.t()).float().to(device)
         eye = torch.eye(mask.size(0), device=device)
         mask_pos = mask - eye
         mask_neg = 1.0 - mask
-        dot_prod = torch.matmul(features, features.t())
+        if quantum_kernel_module is None:
+            features = F.normalize(features, p=2, dim=1)
+            dot_prod = torch.matmul(features, features.t())
+            margin = self.margin
+        else:
+            dot_prod = quantum_kernel_module(features)
+            margin = self.margin if margin_override is None else margin_override
+            if margin_mode == "quantile":
+                if not 0.0 < margin_quantile < 1.0:
+                    raise ValueError("rs_margin_quantile must be in (0, 1).")
+                negative_values = dot_prod[mask_neg.bool()]
+                if negative_values.numel() > 0:
+                    margin = torch.quantile(
+                        negative_values.detach(), margin_quantile
+                    )
+            elif margin_mode != "fixed":
+                raise ValueError("rs_margin_q_mode must be 'fixed' or 'quantile'.")
 
         pos_loss = F.relu(1.0 - dot_prod) * mask_pos
-        neg_loss = F.relu(dot_prod - self.margin) * mask_neg
+        neg_loss = F.relu(dot_prod - margin) * mask_neg
         loss = pos_loss.sum() / (mask_pos.sum() + 1e-6) + \
                self.lamda * neg_loss.sum() / (mask_neg.sum() + 1e-6)
 
