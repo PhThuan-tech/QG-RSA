@@ -69,17 +69,20 @@ def bialign_loss_terms(z_new, z_old, forward_projector, reverse_projector):
 
 
 def bialign_cycle_loss_terms(
-        z_new, z_old, forward_projector, reverse_projector):
+        z_new, z_old, forward_projector, reverse_projector,
+        stop_gradient_cycle_new=False):
     """Add cycle consistency to the unchanged BiAlign terms.
 
-    ``cycle_new`` updates P_t, D_t, and the current representation. The
-    ``cycle_old`` path updates only P_t and D_t because the old representation
-    is detached. The frozen old model therefore never receives gradients.
+    The default path preserves validated BiAlign+Cycle behavior: ``cycle_new``
+    updates P_t, D_t, and the current representation. With
+    ``stop_gradient_cycle_new=True``, z_new is detached *before* D_t so the
+    cycle updates P_t/D_t only. Targets and ``cycle_old`` are unchanged.
     """
     terms = bialign_loss_terms(
         z_new, z_old, forward_projector, reverse_projector)
     detached_old = z_old.detach()
-    reversed_new = reverse_projector(z_new)
+    cycle_new_input = z_new.detach() if stop_gradient_cycle_new else z_new
+    reversed_new = reverse_projector(cycle_new_input)
     cycle_new = F.mse_loss(
         forward_projector(reversed_new), z_new.detach())
     cycle_old = F.mse_loss(
@@ -90,6 +93,42 @@ def bialign_cycle_loss_terms(
         "loss_cycle": cycle_new + cycle_old,
     })
     return terms
+
+
+def loss_gradient_records(loss, modules):
+    """Measure per-module gradients for one loss without accumulating .grad."""
+    trainable = {}
+    flat_parameters = []
+    for name, module in modules.items():
+        parameters = [] if module is None else [
+            parameter for parameter in module.parameters()
+            if parameter.requires_grad
+        ]
+        trainable[name] = parameters
+        flat_parameters.extend(parameters)
+
+    gradients = torch.autograd.grad(
+        loss, flat_parameters, retain_graph=True, allow_unused=True)
+    records = {}
+    offset = 0
+    for name, parameters in trainable.items():
+        module_gradients = gradients[offset:offset + len(parameters)]
+        offset += len(parameters)
+        present = [gradient for gradient in module_gradients
+                   if gradient is not None]
+        all_finite = all(bool(torch.isfinite(gradient).all())
+                         for gradient in present)
+        squared_norm = sum(
+            (gradient.detach().double().pow(2).sum()
+             for gradient in present),
+            start=loss.detach().new_zeros((), dtype=torch.double),
+        )
+        records[name] = {
+            "has_gradient": bool(present),
+            "l2_norm": float(torch.sqrt(squared_norm).cpu()),
+            "all_finite": bool(all_finite),
+        }
+    return records
 
 
 def module_gradient_record(module):

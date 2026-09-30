@@ -247,7 +247,8 @@ def _write_arm_outputs(args, payload):
             "final_epoch_cycle_new": stage1[-1]["cycle_new"] if stage1 else None,
             "final_epoch_cycle_old": stage1[-1]["cycle_old"] if stage1 else None,
         })
-        if args.get("bicyc_mode") in ("bialign", "bialign_cycle"):
+        if args.get("bicyc_mode") in (
+                "bialign", "bialign_cycle", "bialign_cycle_sg"):
             transport_rows[-1].update({
                 "final_epoch_cycle": (
                     stage1[-1].get("cycle") if stage1 else None),
@@ -268,7 +269,8 @@ def _write_arm_outputs(args, payload):
         "final_epoch_L_cls", "final_epoch_L_A", "final_epoch_L_D",
         "final_epoch_cycle_new", "final_epoch_cycle_old",
     ]
-    if args.get("bicyc_mode") in ("bialign", "bialign_cycle"):
+    if args.get("bicyc_mode") in (
+            "bialign", "bialign_cycle", "bialign_cycle_sg"):
         transport_fields.extend(["final_epoch_cycle", "lambda_cycle"])
     _write_csv_atomic(
         args.get("transport_metrics_output"),
@@ -492,6 +494,10 @@ def _train(args):
             if mode == "bialign" else
             "[IMPLEMENTATION ADAPTATION] RSIAT BiAlign + cycle"
             if mode == "bialign_cycle" else
+            "[IMPLEMENTATION ABLATION] BiAlign + Cycle with stop-gradient "
+            "cycle inputs; cycle regularizes P_t/D_t only and does not "
+            "directly update current representation"
+            if mode == "bialign_cycle_sg" else
             "[CONTROL] official RSIAT"
             if mode == "official" else
             "[IMPLEMENTATION ADAPTATION] RSIAT + BiCyc-style transport")
