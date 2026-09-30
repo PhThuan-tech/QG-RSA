@@ -15,6 +15,7 @@ from tqdm import tqdm
 
 from models.base import BaseLearner
 from utils.bialign import (
+    bialign_cycle_loss_terms,
     bialign_loss_terms,
     make_identity_reverse_projector,
     module_gradient_record,
@@ -47,17 +48,19 @@ from utils.toolkit import AutoencoderSigmoid, log_count_parameter, tensor2numpy
 
 num_workers = 8
 BIALIGN_MODE = "bialign"
+BIALIGN_CYCLE_MODE = "bialign_cycle"
+BIALIGN_MODES = (BIALIGN_MODE, BIALIGN_CYCLE_MODE)
 TRACK_B_TRANSPORT_MODES = ("forward", "bidirectional", "cycle")
-VALID_EXPERIMENT_MODES = VALID_MODES + (BIALIGN_MODE,)
+VALID_EXPERIMENT_MODES = VALID_MODES + BIALIGN_MODES
 
 
 class Learner(BaseLearner):
     """RSIAT with isolated optional transport or BiAlign experiment modes.
 
     [IMPLEMENTATION ADAPTATION] ``bialign`` replaces only RSIAT's incremental
-    alignment term. It reuses old_ae as P_t and adds a lightweight D_t; it does
-    not activate the dedicated Track-B affine maps, Stage II, or statistics
-    transport.
+    alignment term. ``bialign_cycle`` minimally adds cycle consistency using
+    the same P_t and D_t. Neither mode activates the dedicated Track-B affine
+    maps, Stage II, or statistics transport.
     """
 
     def __init__(self, args):
@@ -201,6 +204,10 @@ class Learner(BaseLearner):
         a_state = checkpoint.get("forward_transport_state_dict")
         d_state = checkpoint.get("backward_transport_state_dict")
         reverse_state = checkpoint.get("bialign_reverse_projector_state_dict")
+        if (self.bicyc_mode == BIALIGN_CYCLE_MODE
+                and (a_state is not None or d_state is not None)):
+            raise ValueError(
+                "BiAlign-cycle checkpoint contains unexpected Track-B A/D state")
         if a_state is not None:
             self.forward_transport = make_deterministic_affine(
                 self.feature_dim, self._transport_seed(self._cur_task, "A"), self._device
@@ -226,7 +233,8 @@ class Learner(BaseLearner):
             if (self.bicyc_mode in ("bidirectional", "cycle")
                     and self.backward_transport is None):
                 raise ValueError("Bidirectional transport checkpoint is missing D")
-            if self.bicyc_mode == BIALIGN_MODE and self.reverse_projector is None:
+            if (self.bicyc_mode in BIALIGN_MODES
+                    and self.reverse_projector is None):
                 raise ValueError("BiAlign checkpoint is missing reverse projector D_t")
 
     def _after_load_checkpoint(self, checkpoint):
@@ -290,7 +298,7 @@ class Learner(BaseLearner):
         if self._cur_task <= 0 or self.bicyc_mode == "official":
             return
 
-        if self.bicyc_mode == BIALIGN_MODE:
+        if self.bicyc_mode in BIALIGN_MODES:
             # [IMPLEMENTATION ADAPTATION] D_t is transition-specific. Reset it
             # to the exact identity for each old->new representation transition
             # while preserving global RNG state for matched-arm comparability.
@@ -327,7 +335,7 @@ class Learner(BaseLearner):
             }
 
     def _uses_official_statistics_path(self):
-        return self.bicyc_mode in ("official", BIALIGN_MODE)
+        return self.bicyc_mode == "official" or self.bicyc_mode in BIALIGN_MODES
 
     def extract_features(self, trainloader, model, args):
         model = model.eval()
@@ -1157,6 +1165,11 @@ class Learner(BaseLearner):
             implementation_label = (
                 "[IMPLEMENTATION ADAPTATION] RSIAT BiAlign: L_align replaced "
                 "by L_fwd + L_back; official SSCA/CA retained")
+        elif self.bicyc_mode == BIALIGN_CYCLE_MODE:
+            implementation_label = (
+                "[IMPLEMENTATION ADAPTATION] RSIAT BiAlign + cycle: "
+                "L_fwd + L_back + lambda_cycle*(L_cycle_new + L_cycle_old); "
+                "official SSCA/CA retained")
         elif self.bicyc_mode in TRACK_B_TRANSPORT_MODES:
             implementation_label = (
                 "[IMPLEMENTATION ADAPTATION] RSIAT + BiCyc-style "
@@ -1186,7 +1199,9 @@ class Learner(BaseLearner):
                 "bialign_reverse_weight_decay": self.args["ae_weight_decay"],
                 "bialign_reverse_lifecycle": (
                     "identity_reset_each_incremental_transition"),
-                "cycle_loss_enabled": False if self.bicyc_mode == BIALIGN_MODE else None,
+                "cycle_loss_enabled": (
+                    self.bicyc_mode == BIALIGN_CYCLE_MODE
+                    if self.bicyc_mode in BIALIGN_MODES else None),
             },
             "paired_before_stage1": None,
             "paired_after_stage1": None,
@@ -1235,7 +1250,7 @@ class Learner(BaseLearner):
                 if self.args["ssca"] is True:
                     old_class_mean += gap
                     self._class_means[:self._known_classes] = old_class_mean
-                if self.bicyc_mode == BIALIGN_MODE:
+                if self.bicyc_mode in BIALIGN_MODES:
                     record["D_t_final"] = {
                         "state_sha256": module_state_sha256(self.reverse_projector),
                         "parameter_count": int(sum(
@@ -1395,6 +1410,8 @@ class Learner(BaseLearner):
                 "total", "classification", "rsiat", "align", "orth",
                 "loss_fwd", "loss_back", "bialign",
                 "loss_a", "loss_d", "cycle_new", "cycle_old", "transport")}
+            if self.bicyc_mode in BIALIGN_MODES:
+                sums["cycle"] = 0.0
             correct, total = 0, 0
             gradient_norms = None
             for _, inputs, targets in train_loader:
@@ -1429,7 +1446,7 @@ class Learner(BaseLearner):
                         raise RuntimeError("Non-finite Stage-I gradient norm record")
                     if gradient_norms["old_model"]["has_gradient"]:
                         raise RuntimeError("Frozen old model received a gradient")
-                    if self.bicyc_mode == BIALIGN_MODE:
+                    if self.bicyc_mode in BIALIGN_MODES:
                         missing = [
                             name for name in ("current_adapter", "P_t", "D_t")
                             if not gradient_norms[name]["has_gradient"]
@@ -1447,6 +1464,8 @@ class Learner(BaseLearner):
                             "bialign", "loss_a", "loss_d", "cycle_new",
                             "cycle_old", "transport"):
                     sums[key] += float(details[key].detach())
+                if self.bicyc_mode in BIALIGN_MODES:
+                    sums["cycle"] += float(details["cycle"].detach())
                 _, preds = torch.max(logits, dim=1)
                 correct += preds.eq(targets.expand_as(preds)).cpu().sum()
                 total += len(targets)
@@ -1455,6 +1474,10 @@ class Learner(BaseLearner):
             count = len(train_loader)
             epoch_record = {"epoch": epoch + 1}
             epoch_record.update({key: value / count for key, value in sums.items()})
+            if self.bicyc_mode in BIALIGN_MODES:
+                epoch_record["lambda_cycle"] = (
+                    self.lambda_cycle
+                    if self.bicyc_mode == BIALIGN_CYCLE_MODE else 0.0)
             epoch_record["train_accuracy"] = float(
                 np.around(tensor2numpy(correct) * 100 / total, decimals=2))
             epoch_record["learning_rates"] = [
@@ -1467,19 +1490,25 @@ class Learner(BaseLearner):
                 epoch_record["test_accuracy"] = None
             history.append(epoch_record)
             logging.info("RSIAT_STAGE1 %s", json.dumps(epoch_record, sort_keys=True))
+            progress_fields = {
+                "total_loss": epoch_record["total"],
+                "loss_cos": epoch_record["classification"],
+                "loss_fwd": epoch_record["loss_fwd"],
+                "loss_back": epoch_record["loss_back"],
+                "loss_bialign": epoch_record["bialign"],
+                "loss_orth": epoch_record["orth"],
+                "loss_a": epoch_record["loss_a"],
+                "loss_d": epoch_record["loss_d"],
+                "cycle_new": epoch_record["cycle_new"],
+                "cycle_old": epoch_record["cycle_old"],
+            }
+            if self.bicyc_mode in BIALIGN_MODES:
+                progress_fields.update({
+                    "cycle": epoch_record["cycle"],
+                    "lambda_cycle": epoch_record["lambda_cycle"],
+                })
             self._write_progress(
-                "STAGE1", epoch + 1, self.tuned_epochs,
-                total_loss=epoch_record["total"],
-                loss_cos=epoch_record["classification"],
-                loss_fwd=epoch_record["loss_fwd"],
-                loss_back=epoch_record["loss_back"],
-                loss_bialign=epoch_record["bialign"],
-                loss_orth=epoch_record["orth"],
-                loss_a=epoch_record["loss_a"],
-                loss_d=epoch_record["loss_d"],
-                cycle_new=epoch_record["cycle_new"],
-                cycle_old=epoch_record["cycle_old"],
-            )
+                "STAGE1", epoch + 1, self.tuned_epochs, **progress_fields)
             info = (
                 "Task {}, Epoch {}/{} => Loss {:.3f}, L_cos {:.3f}, "
                 "RSIAT {:.3f}, L_fwd {:.3f}, L_back {:.3f}, "
@@ -1496,6 +1525,9 @@ class Learner(BaseLearner):
                 "skipped" if epoch_record["test_accuracy"] is None
                 else "{:.2f}".format(epoch_record["test_accuracy"]),
             )
+            if self.bicyc_mode in BIALIGN_MODES:
+                info += ", Cycle {:.3f}, lambda_cycle {:.3f}".format(
+                    epoch_record["cycle"], epoch_record["lambda_cycle"])
             prog_bar.set_description(info)
         self._latest_stage1_history = history
         logging.info(info)
@@ -1533,6 +1565,24 @@ class Learner(BaseLearner):
             + self.args["gamma"] * loss_orth)
         return loss, terms, loss_orth
 
+    def _bialign_cycle_loss_components(self, features, features_old):
+        terms = bialign_cycle_loss_terms(
+            features, features_old, self.old_ae, self.reverse_projector)
+        # Keep RSIAT L_orth identical to plain BiAlign. Only the explicit
+        # lambda_cycle * L_cycle term is added in this mode.
+        features_old_norm = F.normalize(terms["mapped_old"], p=2, dim=1)
+        protos = torch.from_numpy(self._class_means).float().to(
+            self._device, non_blocking=True)
+        protos = self.old_ae(protos)
+        protos = F.normalize(protos, p=2, dim=1)
+        similarity = torch.matmul(protos, features_old_norm.t())
+        loss_orth = similarity.sum() / (similarity.shape[0] * similarity.shape[1])
+        loss = (
+            self.args["beta"] * terms["loss_bialign"]
+            + self.args["gamma"] * loss_orth
+            + self.lambda_cycle * terms["loss_cycle"])
+        return loss, terms, loss_orth
+
     def _compute_rt_loss(self, inputs, targets, epoch=None, warmup_epoch=10):
         loss_cos = AngularPenaltySMLoss(
             loss_type="cosface", eps=1e-7,
@@ -1545,12 +1595,15 @@ class Learner(BaseLearner):
             zero = features.new_zeros(())
             lambda_rs = self.args["lambda_rs"] * min(1.0, epoch / warmup_epoch)
             loss_base = lambda_rs * self.rs_loss_func(features, targets)
-            return logits, loss_c, loss_base, {
+            details = {
                 "align": zero, "orth": zero,
                 "loss_fwd": zero, "loss_back": zero, "bialign": zero,
                 "loss_a": zero, "loss_d": zero, "cycle_new": zero,
                 "cycle_old": zero, "transport": zero,
             }
+            if self.bicyc_mode in BIALIGN_MODES:
+                details["cycle"] = zero
+            return logits, loss_c, loss_base, details
 
         # This helper guarantees z_new/z_old consume the exact same augmented x.
         features, features_old = same_input_feature_pair(
@@ -1577,6 +1630,24 @@ class Learner(BaseLearner):
                 "loss_d": zero,
                 "cycle_new": zero,
                 "cycle_old": zero,
+                "cycle": zero,
+                "transport": zero,
+            }
+
+        if self.bicyc_mode == BIALIGN_CYCLE_MODE:
+            loss_rsiat, bialign_terms, loss_orth = (
+                self._bialign_cycle_loss_components(features, features_old))
+            return logits, loss_c, loss_rsiat, {
+                "align": bialign_terms["loss_fwd"],
+                "orth": loss_orth,
+                "loss_fwd": bialign_terms["loss_fwd"],
+                "loss_back": bialign_terms["loss_back"],
+                "bialign": bialign_terms["loss_bialign"],
+                "loss_a": zero,
+                "loss_d": zero,
+                "cycle_new": bialign_terms["cycle_new"],
+                "cycle_old": bialign_terms["cycle_old"],
+                "cycle": bialign_terms["loss_cycle"],
                 "transport": zero,
             }
 

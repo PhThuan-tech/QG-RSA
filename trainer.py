@@ -247,22 +247,32 @@ def _write_arm_outputs(args, payload):
             "final_epoch_cycle_new": stage1[-1]["cycle_new"] if stage1 else None,
             "final_epoch_cycle_old": stage1[-1]["cycle_old"] if stage1 else None,
         })
+        if args.get("bicyc_mode") in ("bialign", "bialign_cycle"):
+            transport_rows[-1].update({
+                "final_epoch_cycle": (
+                    stage1[-1].get("cycle") if stage1 else None),
+                "lambda_cycle": (
+                    stage1[-1].get("lambda_cycle") if stage1 else None),
+            })
+    transport_fields = [
+        "arm", "mode", "task", "A_initial_sha256", "D_initial_sha256",
+        "A_mse_before_stage1", "A_mse_after_stage1", "A_mse_after_stage2",
+        "D_mse_before_stage1", "D_mse_after_stage1",
+        "cycle_new_after_stage1", "cycle_old_after_stage1",
+        "A_weight_fro", "A_bias_l2", "A_singular_min",
+        "A_singular_median", "A_singular_max", "A_condition_number",
+        "D_weight_fro", "D_t_state_sha256", "ca_pd_fallback_count",
+        "ca_pd_max_relative_jitter_used", "final_epoch_L_align",
+        "final_epoch_L_fwd", "final_epoch_L_back",
+        "final_epoch_L_bialign", "final_epoch_L_orth",
+        "final_epoch_L_cls", "final_epoch_L_A", "final_epoch_L_D",
+        "final_epoch_cycle_new", "final_epoch_cycle_old",
+    ]
+    if args.get("bicyc_mode") in ("bialign", "bialign_cycle"):
+        transport_fields.extend(["final_epoch_cycle", "lambda_cycle"])
     _write_csv_atomic(
         args.get("transport_metrics_output"),
-        [
-            "arm", "mode", "task", "A_initial_sha256", "D_initial_sha256",
-            "A_mse_before_stage1", "A_mse_after_stage1", "A_mse_after_stage2",
-            "D_mse_before_stage1", "D_mse_after_stage1",
-            "cycle_new_after_stage1", "cycle_old_after_stage1",
-            "A_weight_fro", "A_bias_l2", "A_singular_min",
-            "A_singular_median", "A_singular_max", "A_condition_number",
-            "D_weight_fro", "D_t_state_sha256", "ca_pd_fallback_count",
-            "ca_pd_max_relative_jitter_used", "final_epoch_L_align",
-            "final_epoch_L_fwd", "final_epoch_L_back",
-            "final_epoch_L_bialign", "final_epoch_L_orth",
-            "final_epoch_L_cls", "final_epoch_L_A", "final_epoch_L_D",
-            "final_epoch_cycle_new", "final_epoch_cycle_old",
-        ],
+        transport_fields,
         transport_rows,
     )
     _write_json_atomic(args.get("metrics_output"), payload)
@@ -480,6 +490,8 @@ def _train(args):
         implementation_label = (
             "[IMPLEMENTATION ADAPTATION] RSIAT BiAlign"
             if mode == "bialign" else
+            "[IMPLEMENTATION ADAPTATION] RSIAT BiAlign + cycle"
+            if mode == "bialign_cycle" else
             "[CONTROL] official RSIAT"
             if mode == "official" else
             "[IMPLEMENTATION ADAPTATION] RSIAT + BiCyc-style transport")

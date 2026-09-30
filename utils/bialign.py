@@ -1,8 +1,8 @@
 """BiAlign-only modules and loss terms.
 
 This is an [IMPLEMENTATION ADAPTATION] of the bidirectional-alignment idea,
-not a full BiCyc implementation. In particular, this module contains no cycle
-objective and no statistics transport.
+not a full BiCyc implementation. The optional cycle objective reuses the same
+P_t and D_t; this module contains no statistics transport.
 """
 
 import torch
@@ -66,6 +66,30 @@ def bialign_loss_terms(z_new, z_old, forward_projector, reverse_projector):
         "loss_back": loss_back,
         "loss_bialign": loss_fwd + loss_back,
     }
+
+
+def bialign_cycle_loss_terms(
+        z_new, z_old, forward_projector, reverse_projector):
+    """Add cycle consistency to the unchanged BiAlign terms.
+
+    ``cycle_new`` updates P_t, D_t, and the current representation. The
+    ``cycle_old`` path updates only P_t and D_t because the old representation
+    is detached. The frozen old model therefore never receives gradients.
+    """
+    terms = bialign_loss_terms(
+        z_new, z_old, forward_projector, reverse_projector)
+    detached_old = z_old.detach()
+    reversed_new = reverse_projector(z_new)
+    cycle_new = F.mse_loss(
+        forward_projector(reversed_new), z_new.detach())
+    cycle_old = F.mse_loss(
+        reverse_projector(terms["mapped_old"]), detached_old)
+    terms.update({
+        "cycle_new": cycle_new,
+        "cycle_old": cycle_old,
+        "loss_cycle": cycle_new + cycle_old,
+    })
+    return terms
 
 
 def module_gradient_record(module):
