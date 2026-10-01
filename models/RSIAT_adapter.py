@@ -14,14 +14,15 @@ from models.base import BaseLearner
 from utils.toolkit import count_parameters, log_count_parameter, target2onehot, tensor2numpy
 from utils.loss import AngularPenaltySMLoss
 from utils.toolkit import AutoencoderSigmoid
+from KeepLora.keeplora_controller import KeepLoRAController
 import math
 num_workers = 8
 
 class Learner(BaseLearner):
     def __init__(self, args):
         super().__init__(args)
-        if 'adapter' not in args["convnet_type"]:
-            raise NotImplementedError('Adapter requires Adapter backbone')
+        if not any(token in args["convnet_type"] for token in ("adapter", "keeplora")):
+            raise NotImplementedError("RSIAT requires an adapter or KeepLoRA backbone")
         self._network = SimpleVitNet(args, True)
         self.batch_size = args["batch_size"]
         self.num_workers = int(args.get("num_workers", num_workers))
@@ -43,6 +44,7 @@ class Learner(BaseLearner):
         self.task_sizes = []
         self.rs_loss_func = RS_Loss(self.args["alpha"], self.args["rs_margin"])
         self.old_ae = None
+        self._uses_keeplora = "keeplora" in args["convnet_type"].lower()
 
     def _after_load_checkpoint(self, checkpoint):
         """Restore learner-specific state after BaseLearner restores the network."""
@@ -63,12 +65,85 @@ class Learner(BaseLearner):
         self.old_network_module_ptr = self._old_network
 
     def after_task(self):
+        if self._uses_keeplora:
+            self._finalize_keeplora_task()
         self._known_classes = self._total_classes
         self._old_network = self._network.copy().freeze()
         if hasattr(self._old_network,"module"):
             self.old_network_module_ptr = self._old_network.module
         else:
             self.old_network_module_ptr = self._old_network
+
+    def _keeplora_convnet(self):
+        network = self._network.module if isinstance(self._network, nn.DataParallel) else self._network
+        return network, network.convnet
+
+    def _initialize_keeplora_task(self, train_loader):
+        """Build a residual-space KeepLoRA update from the task's first gradients."""
+        network, convnet = self._keeplora_convnet()
+        targets = list(convnet.named_keeplora_targets())
+        if not targets:
+            return
+
+        weights = [weight for _, weight, _ in targets]
+        for weight in weights:
+            weight.requires_grad_(True)
+        gradients = {name: torch.zeros_like(weight) for name, weight, _ in targets}
+        # KeepLoRA estimates its initialization gradient over the task loader.
+        # A positive limit remains available for quick smoke experiments.
+        batches = int(self.args.get("keeplora_grad_batches", 0))
+        seen_batches = 0
+        loss_cos = AngularPenaltySMLoss(
+            loss_type="cosface", eps=1e-7, s=self.args["scale"], m=self.args["margin"]
+        )
+        # Match KeepLoRA's gradient-estimation pass. The standard RSIAT ViT
+        # config has zero dropout, but retaining train mode keeps this path
+        # correct if that setting is ever changed.
+        network.train()
+        for batch_index, (_, inputs, targets_label) in enumerate(train_loader):
+            if batches > 0 and batch_index >= batches:
+                break
+            seen_batches += 1
+            inputs = inputs.to(self._device, non_blocking=True)
+            targets_label = targets_label.to(self._device, non_blocking=True)
+            features = network.extract_vector(inputs)
+            logits = network.fc(features)["logits"]
+            loss = loss_cos(
+                logits[:, self._known_classes:], targets_label - self._known_classes
+            )
+            current_grads = torch.autograd.grad(loss, weights, allow_unused=True)
+            for (name, _, _), gradient in zip(targets, current_grads):
+                if gradient is not None:
+                    gradients[name].add_(gradient)
+
+        if seen_batches == 0:
+            raise RuntimeError("KeepLoRA requires at least one batch to initialize a task.")
+        for name in gradients:
+            gradients[name].div_(seen_batches)
+
+        for weight in weights:
+            weight.requires_grad_(False)
+        KeepLoRAController(convnet, logging.info).initialize_from_gradients(gradients)
+        network.zero_grad(set_to_none=True)
+        logging.info(
+            "Initialized KeepLoRA from %d gradient batch(es) for task %d.",
+            seen_batches, self._cur_task,
+        )
+
+    def _finalize_keeplora_task(self):
+        """Persist task directions, then merge the task-local update into the ViT."""
+        network, convnet = self._keeplora_convnet()
+        controller = KeepLoRAController(convnet, logging.info)
+        controller.begin_feature_collection()
+        network.eval()
+        max_batches = int(self.args.get("keeplora_feature_batches", 0))
+        with torch.no_grad():
+            for batch_index, (_, inputs, _) in enumerate(self.keeplora_accum_loader):
+                if max_batches > 0 and batch_index >= max_batches:
+                    break
+                network.extract_vector(inputs.to(self._device, non_blocking=True))
+        controller.finish_task()
+        logging.info("Merged KeepLoRA update and saved feature subspaces for task %d.", self._cur_task)
 
 
     def extract_features(self, trainloader, model, args):
@@ -118,6 +193,19 @@ class Learner(BaseLearner):
             pin_memory=self.pin_memory,
             persistent_workers=self.persistent_workers,
         )
+        # KeepLoRA's framework uses a separate shuffled, drop-last loader for
+        # its gradient-estimation and feature-subspace passes.  The primary
+        # RSIAT training loader remains unchanged.
+        if self._uses_keeplora:
+            self.keeplora_accum_loader = DataLoader(
+                train_dataset,
+                batch_size=self.batch_size,
+                shuffle=True,
+                drop_last=True,
+                num_workers=self.num_workers,
+                pin_memory=self.pin_memory,
+                persistent_workers=self.persistent_workers,
+            )
         test_dataset = data_manager.get_dataset(np.arange(0, self._total_classes), source="test", mode="test")
         self.test_loader = DataLoader(
             test_dataset,
@@ -160,6 +248,8 @@ class Learner(BaseLearner):
 
     def _train(self, train_loader, test_loader):
         self._network.to(self._device)
+        if self._uses_keeplora:
+            self._initialize_keeplora_task(self.keeplora_accum_loader)
         if self._cur_task == 0:
             self.tuned_epochs = self.args["init_epochs"]
             param_groups = [

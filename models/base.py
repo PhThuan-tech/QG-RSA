@@ -152,9 +152,14 @@ class BaseLearner(object):
 
     def _checkpoint_run_metadata(self):
         """Return the fields that must not change when resuming a run."""
-        keys = ("dataset", "seed", "init_cls", "increment", "model_name", "convnet_type")
+        keys = (
+            "dataset", "seed", "init_cls", "increment", "model_name", "convnet_type",
+            "ffn_num", "keeplora_rank", "keeplora_alpha", "keeplora_targets",
+            "keeplora_weight_threshold", "keeplora_feature_threshold",
+            "keeplora_feature_samples", "keeplora_grad_batches", "keeplora_feature_batches",
+        )
         return {
-            "format_version": 1,
+            "format_version": 2,
             **{key: self.args.get(key) for key in keys if key in self.args},
         }
 
@@ -241,6 +246,15 @@ class BaseLearner(object):
     def _validate_checkpoint(self, checkpoint):
         saved_metadata = checkpoint.get("run_metadata", {})
         current_metadata = self._checkpoint_run_metadata()
+        if saved_metadata.get("format_version", 1) >= 2:
+            missing_metadata = [
+                key for key in current_metadata
+                if key != "format_version" and key not in saved_metadata
+            ]
+            if missing_metadata:
+                raise ValueError(
+                    "Checkpoint is missing run metadata: {}".format(missing_metadata)
+                )
         mismatches = [
             "{} (checkpoint={!r}, current={!r})".format(
                 key, saved_metadata[key], current_metadata[key]

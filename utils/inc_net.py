@@ -52,6 +52,65 @@ def get_convnet(args, pretrained=False):
             return model.eval()
         else:
             raise NotImplementedError("Inconsistent model name and model type")
+    elif '_keeplora' in name:
+        if args["model_name"] != "keeplora":
+            raise NotImplementedError("KeepLoRA backbone requires model_name='keeplora'")
+        from easydict import EasyDict
+        from network import vision_transformer_keeplora
+
+        targets = tuple(args.get("keeplora_targets", ["q", "k", "v", "o"]))
+        valid_targets = {"q", "k", "v", "o"}
+        if not targets or len(set(targets)) != len(targets) or not set(targets).issubset(valid_targets):
+            raise ValueError("keeplora_targets must be a non-empty, unique subset of q, k, v, o")
+        rank = int(args.get("keeplora_rank", 32))
+        alpha = float(args.get("keeplora_alpha", 32))
+        weight_threshold = float(args.get("keeplora_weight_threshold", 0.85))
+        feature_threshold = float(args.get("keeplora_feature_threshold", 0.99))
+        feature_samples = int(args.get("keeplora_feature_samples", 0))
+        if rank < 1 or alpha <= 0:
+            raise ValueError("keeplora_rank and keeplora_alpha must be positive")
+        if not 0 < weight_threshold <= 1 or not 0 < feature_threshold <= 1:
+            raise ValueError("KeepLoRA subspace thresholds must be in (0, 1]")
+        if feature_samples < 0:
+            raise ValueError("keeplora_feature_samples must be non-negative")
+        for key in ("keeplora_grad_batches", "keeplora_feature_batches"):
+            if int(args.get(key, 0)) < 0:
+                raise ValueError("{} must be non-negative".format(key))
+
+        tuning_config = EasyDict(
+            # Disable RSIAT's AdaptFormer branch. KeepLoRA is the only PEFT path.
+            ffn_adapt=False,
+            ffn_option="parallel",
+            ffn_adapter_layernorm_option="none",
+            ffn_adapter_init_option="lora",
+            ffn_adapter_scalar="0.1",
+            ffn_num=args.get("ffn_num", 64),
+            d_model=768,
+            vpt_on=False,
+            vpt_num=0,
+            keeplora_rank=rank,
+            keeplora_alpha=alpha,
+            keeplora_targets=targets,
+            # KeepLoRA's paper config uses eps_w=0.85 for PTM weights and
+            # eps_f=0.99 for accumulated task-feature directions.
+            keeplora_weight_threshold=weight_threshold,
+            keeplora_feature_threshold=feature_threshold,
+            keeplora_feature_samples=feature_samples,
+        )
+        if name == "pretrained_vit_b16_224_keeplora":
+            model = vision_transformer_keeplora.vit_base_patch16_224_keeplora(
+                num_classes=0, global_pool=False, drop_path_rate=0.0,
+                tuning_config=tuning_config, keeplora_config=tuning_config,
+            )
+        elif name == "pretrained_vit_b16_224_in21k_keeplora":
+            model = vision_transformer_keeplora.vit_base_patch16_224_in21k_keeplora(
+                num_classes=0, global_pool=False, drop_path_rate=0.0,
+                tuning_config=tuning_config, keeplora_config=tuning_config,
+            )
+        else:
+            raise NotImplementedError("Unknown type {}".format(name))
+        model.out_dim = 768
+        return model.eval()
 
     else:
         raise NotImplementedError("Unknown type {}".format(name))

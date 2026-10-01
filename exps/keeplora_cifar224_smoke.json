@@ -1,10 +1,10 @@
 {
-    "prefix": "smoke",
+    "prefix": "keeplora_smoke",
     "dataset": "cifar224",
     "save_checkpoints": true,
     "resume": false,
     "isolate_runs": true,
-    "keep_last_checkpoint": true,   
+    "keep_last_checkpoint": true,
     "compact_diagonal_checkpoint": false,
     "max_tasks_per_run": 1,
     "eval_interval": 0,
@@ -18,8 +18,8 @@
     "ca": true,
     "init_cls": 10,
     "increment": 10,
-    "model_name": "adapter",
-    "convnet_type": "pretrained_vit_b16_224_in21k_adapter",
+    "model_name": "keeplora",
+    "convnet_type": "pretrained_vit_b16_224_in21k_keeplora",
     "device": ["0"],
     "seed": [1993],
 
@@ -43,5 +43,14 @@
     "gamma": 0.4,
     "ae_code_dims": 256,
     "ae_init_lr": 0.0005611742230603744,
-    "ae_weight_decay": 0.0029339295871570244
+    "ae_weight_decay": 0.0029339295871570244,
+
+    "keeplora_rank": 32,
+    "keeplora_alpha": 32,
+    "keeplora_targets": ["q", "k", "v", "o"],
+    "keeplora_weight_threshold": 0.85,
+    "keeplora_feature_threshold": 0.99,
+    "keeplora_feature_samples": 2048,
+    "keeplora_grad_batches": 1,
+    "keeplora_feature_batches": 4
 }

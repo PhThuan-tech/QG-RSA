@@ -64,6 +64,7 @@ class Attention(nn.Module):
         attn_weights = nn.functional.softmax(attn_weights, dim=-1)
         attn_probs = self.attn_drop(attn_weights)
         attn_output = torch.bmm(attn_probs, v)
+        #Hoàn thành tính Attention(Q, K, V) và reshape lại output
 
         attn_output = attn_output.view(B, self.num_heads, N, self.head_dim)
         attn_output = attn_output.transpose(1, 2)
@@ -164,6 +165,7 @@ class Block(nn.Module):
     def forward(self, x):
         x = x + self.drop_path(self.attn(self.norm1(x)))
         
+        #Đoạn này của Adapter, nếu config.ffn_adapt = True và layer_id <= 12 thì sẽ thực hiện thêm một bước xử lý với adaptmlp. Nếu config.ffn_option = 'parallel' thì sẽ tính toán adapt_x từ adaptmlp(x) và lưu lại để cộng vào x sau khi qua MLP. Nếu config.ffn_option = 'sequential' thì sẽ thực hiện adaptmlp(x) trực tiếp sau MLP.
         if self.config.ffn_adapt and self.config.ffn_option == 'parallel' and self.layer_id <= 12:
             adapt_x = self.adaptmlp(x, add_residual=False)
 
@@ -172,8 +174,9 @@ class Block(nn.Module):
         x = self.drop_path(self.mlp_drop(self.fc2(x)))
 
         """
-         Change the inserted layers
+         Change the inserted layers 
         """
+        #Đoạn này của Adapter, nếu config.ffn_adapt = True và layer_id <= 12 thì sẽ thực hiện thêm một bước xử lý với adaptmlp. Nếu config.ffn_option = 'parallel' thì sẽ tính toán adapt_x từ adaptmlp(x) và lưu lại để cộng vào x sau khi qua MLP. Nếu config.ffn_option = 'sequential' thì sẽ thực hiện adaptmlp(x) trực tiếp sau MLP.
         if self.config.ffn_adapt and self.layer_id <= 12:
             if self.config.ffn_option == 'sequential':
                 x = self.adaptmlp(x)

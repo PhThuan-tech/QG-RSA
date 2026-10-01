@@ -59,6 +59,54 @@ Optionally set `"resume_path"` to a specific `task_N.pkl`, `"keep_last_checkpoin
 
 `eval_interval: 0` and `ca_eval_interval: 0` evaluate only the final epoch of each training stage. This avoids repeated full validation passes without changing gradients, optimizer steps, or the cosine scheduler. Set either value to a positive number when intermediate validation curves are needed. `num_workers`, `stats_num_workers`, `pin_memory`, and `persistent_workers` configure data loading; the provided values are suitable starting points for a GPU runtime.
 
+### Semantic-shift diagnostics
+
+After each incremental task, the existing RSIAT log records `feature_shift` and
+`prototype_drift` diagnostics. `sample_drift_mean_norm` is the mean per-sample
+feature displacement, while `sample_drift_norm_mean` is the norm of the mean
+displacement vector. Prototype and SSC fields report the old-class prototype
+shift before and after the existing semantic-shift compensation; they are
+observational metrics only and do not affect training or compensation.
+
+### KeepLoRA replacement
+
+The KeepLoRA smoke configuration keeps the RSIAT learner, cosine classifier,
+representation-steering loss, residual autoencoder alignment, prototype update,
+and CIL evaluation protocol. It disables the parallel AdaptFormer adapter and
+instead applies KeepLoRA to the ViT attention Q/K/V/output projections.
+
+At the start of every task, the implementation projects the cosine-loss gradient
+away from the pre-trained weight principal subspace and prior task feature
+subspaces, then initializes a frozen A and trainable B. At task completion the
+update is merged into the ViT and the new feature directions are saved in the
+regular RSIAT checkpoint. Run:
+
+    python main.py --config ./exps/keeplora_cifar224_smoke.json
+
+The matched full benchmark configurations are:
+
+    python main.py --config ./exps/keeplora_cifar224.json
+    python main.py --config ./exps/keeplora_cub.json
+    python main.py --config ./exps/keeplora_imageneta.json
+    python main.py --config ./exps/keeplora_imagenetr.json
+    python main.py --config ./exps/keeplora_omnibench.json
+    python main.py --config ./exps/keeplora_vtab.json
+
+For a comparison with RSIAT, keep the dataset split, seed, epochs, classifier
+alignment settings, and losses identical; vary only model_name, convnet_type,
+and the keeplora settings. The default rank 32 matches the rough
+trainable-parameter budget of RSIAT's bottleneck-64 adapter over Q/K/V/O.
+For a full KeepLoRA experiment, omit the optional batch limits or set
+keeplora_grad_batches and keeplora_feature_batches to 0, which processes every
+batch in the current task. The paper-derived starting thresholds are 0.85 for
+the PTM weight principal subspace and 0.99 for task-feature subspaces.
+Feature accumulation uses a fixed-size second-moment matrix, whose left
+singular vectors match those of the full activation matrix; it therefore
+processes a whole task without retaining every ViT token in memory.
+Accumulation is enabled only during the explicit end-of-task feature pass, so
+the RSIAT training loop has no feature-statistics overhead. KeepLoRA checkpoint
+metadata records every PEFT setting and rejects incompatible resumes.
+
 For a Google Colab smoke test that verifies data loading, training, checkpoint creation, and resume at task 1, use [RSIAT_Colab.ipynb](RSIAT_Colab.ipynb).
 
 ## Citation
