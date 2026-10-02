@@ -95,7 +95,8 @@ The matched full benchmark configurations are:
 For a comparison with RSIAT, keep the dataset split, seed, epochs, classifier
 alignment settings, and losses identical; vary only model_name, convnet_type,
 and the keeplora settings. The default rank 32 matches the rough
-trainable-parameter budget of RSIAT's bottleneck-64 adapter over Q/K/V/O.
+trainable-parameter budget of RSIAT's bottleneck-64 adapter over Q/K/V/O;
+alpha 2 preserves the original KeepLoRA scaling of 1/16 at that rank.
 For a full KeepLoRA experiment, omit the optional batch limits or set
 keeplora_grad_batches and keeplora_feature_batches to 0, which processes every
 batch in the current task. The paper-derived starting thresholds are 0.85 for

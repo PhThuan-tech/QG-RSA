@@ -63,7 +63,7 @@ def get_convnet(args, pretrained=False):
         if not targets or len(set(targets)) != len(targets) or not set(targets).issubset(valid_targets):
             raise ValueError("keeplora_targets must be a non-empty, unique subset of q, k, v, o")
         rank = int(args.get("keeplora_rank", 32))
-        alpha = float(args.get("keeplora_alpha", 32))
+        alpha = float(args.get("keeplora_alpha", 2))
         weight_threshold = float(args.get("keeplora_weight_threshold", 0.85))
         feature_threshold = float(args.get("keeplora_feature_threshold", 0.99))
         feature_samples = int(args.get("keeplora_feature_samples", 0))
@@ -260,5 +260,4 @@ class SimpleVitNet(BaseNet):
         gamma = meanold / meannew
         print("alignweights,gamma=", gamma)
         self.fc.heads[increment][0].weight.data[-increment:, :] *= gamma
-
 

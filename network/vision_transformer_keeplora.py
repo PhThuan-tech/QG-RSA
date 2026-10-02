@@ -1,5 +1,7 @@
 """RSIAT's ViT with KeepLoRA attention updates and no AdaptFormer branch."""
 
+import logging
+
 import torch
 import torch.nn as nn
 import timm
@@ -134,7 +136,58 @@ def _make_keeplora_vit(pretrained_model_name, **kwargs):
         elif "mlp.fc" in key:
             state_dict[key.replace("mlp.", "")] = state_dict.pop(key)
 
+    expected_missing_keeplora_keys = {
+        name for name in model.state_dict() if ".attn.keeplora." in name
+    }
     message = model.load_state_dict(state_dict, strict=False)
+    missing_keys = set(message.missing_keys)
+    unexpected_keys = set(message.unexpected_keys)
+    actual_missing_keeplora_keys = missing_keys & expected_missing_keeplora_keys
+    other_missing_keys = missing_keys - expected_missing_keeplora_keys
+
+    logging.info(
+        "Pretrained state_dict load: missing_keys_count=%d, unexpected_keys_count=%d",
+        len(missing_keys),
+        len(unexpected_keys),
+    )
+    logging.info(
+        "Expected missing KeepLoRA keys (%d): %s",
+        len(expected_missing_keeplora_keys),
+        sorted(expected_missing_keeplora_keys),
+    )
+    logging.info(
+        "Actual missing KeepLoRA keys (%d): %s",
+        len(actual_missing_keeplora_keys),
+        sorted(actual_missing_keeplora_keys),
+    )
+    logging.info(
+        "Unexpected keys (%d): %s",
+        len(unexpected_keys),
+        sorted(unexpected_keys),
+    )
+    logging.info(
+        "Other missing keys (%d): %s",
+        len(other_missing_keys),
+        sorted(other_missing_keys),
+    )
+
+    if (
+        actual_missing_keeplora_keys != expected_missing_keeplora_keys
+        or other_missing_keys
+        or unexpected_keys
+    ):
+        raise RuntimeError(
+            "Pretrained ViT checkpoint does not match the model. "
+            "Expected missing KeepLoRA keys: {}. Actual missing KeepLoRA keys: {}. "
+            "Other missing keys: {}. Unexpected keys: {}."
+            .format(
+                sorted(expected_missing_keeplora_keys),
+                sorted(actual_missing_keeplora_keys),
+                sorted(other_missing_keys),
+                sorted(unexpected_keys),
+            )
+        )
+
     for name, parameter in model.named_parameters():
         parameter.requires_grad_(name in message.missing_keys and "keeplora" in name)
     model.initialize_keeplora_principal_subspaces()

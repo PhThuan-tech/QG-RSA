@@ -42,7 +42,7 @@
     "ae_init_lr": 0.09988605662355629,
     "ae_weight_decay": 9.418584598386518e-05,
     "keeplora_rank": 32,
-    "keeplora_alpha": 32,
+    "keeplora_alpha": 2,
     "keeplora_targets": ["q", "k", "v", "o"],
     "keeplora_weight_threshold": 0.85,
     "keeplora_feature_threshold": 0.99,
