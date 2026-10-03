@@ -20,8 +20,10 @@ class KeepLoRAController:
                     bases[0] if len(bases) == 1 else torch.cat(bases, dim=1)
                 ]
 
-    def initialize_from_gradients(self, gradients):
-        self.convnet.initialize_keeplora_from_gradients(gradients)
+    def initialize_from_gradients(self, gradients, verify_invariance=False):
+        return self.convnet.initialize_keeplora_from_gradients(
+            gradients, verify_invariance=verify_invariance
+        )
 
     def begin_feature_collection(self):
         self.convnet.begin_keeplora_feature_collection()

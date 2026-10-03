@@ -56,15 +56,17 @@ class KeepLoRA(nn.Module):
     def initialize_from_gradient(self, gradient):
         if gradient is None:
             self.reset_parameters()
-            return
+            return 0.0, 0.0
         projected = gradient.detach().transpose(0, 1).float()
+        gradient_norm = torch.linalg.vector_norm(projected).item()
         basis = self._knowledge_basis()
         if basis is not None:
             basis = basis.to(projected.device, dtype=projected.dtype)
             projected = projected - basis @ (basis.transpose(0, 1) @ projected)
+        projected_gradient_norm = torch.linalg.vector_norm(projected).item()
         if torch.count_nonzero(projected) == 0:
             self.reset_parameters()
-            return
+            return gradient_norm, projected_gradient_norm
         # Match KeepLoRA's gradient-initialization path: a low-rank SVD is
         # sufficient because only rank columns are retained for A/B.
         sketch_rank = min(4 * self.rank, min(projected.shape))
@@ -79,6 +81,7 @@ class KeepLoRA(nn.Module):
                 self.lora_B.dtype
             )
         )
+        return gradient_norm, projected_gradient_norm
 
     def get_delta_weight(self):
         return self.scaling * (self.lora_A @ self.lora_B).transpose(0, 1)

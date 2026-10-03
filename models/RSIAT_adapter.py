@@ -45,6 +45,12 @@ class Learner(BaseLearner):
         self.rs_loss_func = RS_Loss(self.args["alpha"], self.args["rs_margin"])
         self.old_ae = None
         self._uses_keeplora = "keeplora" in args["convnet_type"].lower()
+        self.keeplora_init_mode = str(args.get("keeplora_init_mode", "cosine")).lower()
+        if self.keeplora_init_mode not in ("cosine", "full_rsiat"):
+            raise ValueError(
+                "keeplora_init_mode must be 'cosine' or 'full_rsiat', got {!r}."
+                .format(self.keeplora_init_mode)
+            )
 
     def _after_load_checkpoint(self, checkpoint):
         """Restore learner-specific state after BaseLearner restores the network."""
@@ -79,7 +85,7 @@ class Learner(BaseLearner):
         return network, network.convnet
 
     def _initialize_keeplora_task(self, train_loader):
-        """Build a residual-space KeepLoRA update from the task's first gradients."""
+        """Initialize KeepLoRA from the configured RSIAT loss gradient."""
         network, convnet = self._keeplora_convnet()
         targets = list(convnet.named_keeplora_targets())
         if not targets:
@@ -96,39 +102,151 @@ class Learner(BaseLearner):
         loss_cos = AngularPenaltySMLoss(
             loss_type="cosface", eps=1e-7, s=self.args["scale"], m=self.args["margin"]
         )
-        # Match KeepLoRA's gradient-estimation pass. The standard RSIAT ViT
-        # config has zero dropout, but retaining train mode keeps this path
-        # correct if that setting is ever changed.
+        verify_invariance = bool(
+            self.args.get("keeplora_verify_init_invariance", False)
+        )
+        probe_inputs = None
+        reference_features = None
+        reference_logits = None
+        loss_sums = {}
+        total_loss_sum = 0.0
+
         network.train()
-        for batch_index, (_, inputs, targets_label) in enumerate(train_loader):
-            if batches > 0 and batch_index >= batches:
-                break
-            seen_batches += 1
-            inputs = inputs.to(self._device, non_blocking=True)
-            targets_label = targets_label.to(self._device, non_blocking=True)
-            features = network.extract_vector(inputs)
-            logits = network.fc(features)["logits"]
-            loss = loss_cos(
-                logits[:, self._known_classes:], targets_label - self._known_classes
-            )
-            current_grads = torch.autograd.grad(loss, weights, allow_unused=True)
-            for (name, _, _), gradient in zip(targets, current_grads):
-                if gradient is not None:
-                    gradients[name].add_(gradient)
+        try:
+            for batch_index, (_, inputs, targets_label) in enumerate(train_loader):
+                if batches > 0 and batch_index >= batches:
+                    break
+                seen_batches += 1
+                inputs = inputs.to(self._device, non_blocking=True)
+                targets_label = targets_label.to(self._device, non_blocking=True)
+
+                if verify_invariance and probe_inputs is None:
+                    probe_inputs = inputs.detach().clone()
+                    network.eval()
+                    with torch.no_grad():
+                        reference_features = network.extract_vector(probe_inputs)
+                        reference_logits = network.fc(reference_features)["logits"]
+                    network.train()
+
+                _, loss, loss_components = self._keeplora_initialization_loss(
+                    network, inputs, targets_label, loss_cos
+                )
+                current_grads = torch.autograd.grad(loss, weights, allow_unused=True)
+                for (name, _, _), gradient in zip(targets, current_grads):
+                    if gradient is not None:
+                        gradients[name].add_(gradient)
+                for name, value in loss_components.items():
+                    loss_sums[name] = loss_sums.get(name, 0.0) + value.detach().item()
+                total_loss_sum += loss.detach().item()
+        finally:
+            for weight in weights:
+                weight.requires_grad_(False)
 
         if seen_batches == 0:
             raise RuntimeError("KeepLoRA requires at least one batch to initialize a task.")
         for name in gradients:
             gradients[name].div_(seen_batches)
 
-        for weight in weights:
-            weight.requires_grad_(False)
-        KeepLoRAController(convnet, logging.info).initialize_from_gradients(gradients)
+        controller = KeepLoRAController(convnet, logging.info)
+        gradient_stats = controller.initialize_from_gradients(
+            gradients, verify_invariance=verify_invariance
+        )
         network.zero_grad(set_to_none=True)
         logging.info(
-            "Initialized KeepLoRA from %d gradient batch(es) for task %d.",
-            seen_batches, self._cur_task,
+            "KeepLoRA initialization mode=%s, task=%d, gradient_batches=%d, "
+            "full_initialization_loss=%.6f",
+            self.keeplora_init_mode,
+            self._cur_task,
+            seen_batches,
+            total_loss_sum / seen_batches,
         )
+        for name, total in loss_sums.items():
+            logging.info(
+                "KeepLoRA initialization task=%d mean_%s=%.6f",
+                self._cur_task,
+                name,
+                total / seen_batches,
+            )
+        for name, stats in gradient_stats.items():
+            logging.info(
+                "KeepLoRA initialization task=%d target=%s "
+                "gradient_norm_before_projection=%.6f "
+                "gradient_norm_after_projection=%.6f",
+                self._cur_task,
+                name,
+                stats["gradient_norm_before_projection"],
+                stats["gradient_norm_after_projection"],
+            )
+            if verify_invariance:
+                logging.info(
+                    "KeepLoRA initialization task=%d target=%s "
+                    "weight_merge_max_abs_error=%.8g",
+                    self._cur_task,
+                    name,
+                    stats["weight_merge_max_abs_error"],
+                )
+
+        if self.keeplora_init_mode == "full_rsiat" and self._cur_task > 0:
+            logging.info(
+                "L_orth is included in the scalar full RSIAT initialization loss; "
+                "its direct gradient with respect to current KeepLoRA weights "
+                "may be zero under the existing RSIAT computational graph."
+            )
+
+        if verify_invariance:
+            network.eval()
+            with torch.no_grad():
+                actual_features = network.extract_vector(probe_inputs)
+                actual_logits = network.fc(actual_features)["logits"]
+            network.train()
+            feature_error = (actual_features - reference_features).abs().max().item()
+            logit_error = (actual_logits - reference_logits).abs().max().item()
+            logging.info(
+                "KeepLoRA initialization forward invariance task=%d "
+                "feature_max_abs_error=%.8g logit_max_abs_error=%.8g",
+                self._cur_task,
+                feature_error,
+                logit_error,
+            )
+            if not torch.allclose(
+                actual_features, reference_features, rtol=1e-4, atol=1e-5
+            ) or not torch.allclose(
+                actual_logits, reference_logits, rtol=1e-4, atol=1e-5
+            ):
+                raise RuntimeError(
+                    "KeepLoRA initialization changed the model output beyond "
+                    "the configured numerical tolerance."
+                )
+
+    def _keeplora_initialization_loss(self, network, inputs, targets, loss_cos):
+        features = network.extract_vector(inputs)
+        logits = network.fc(features)["logits"]
+        loss_c = loss_cos(
+            logits[:, self._known_classes:], targets - self._known_classes
+        )
+        components = {"L_cos": loss_c}
+
+        if self.keeplora_init_mode == "cosine":
+            components["L_init"] = loss_c
+            return logits, loss_c, components
+
+        if self._cur_task == 0:
+            loss_rs = self.rs_loss_func(features, targets)
+            full_loss = loss_c + self.args["lambda_rs"] * loss_rs
+            components["L_RS"] = loss_rs
+        else:
+            features_old = self.old_network_module_ptr.extract_vector(inputs)
+            loss_align, loss_orth = self._inc_loss_components(features, features_old)
+            full_loss = (
+                loss_c
+                + self.args["beta"] * loss_align
+                + self.args["gamma"] * loss_orth
+            )
+            components["L_align"] = loss_align
+            components["L_orth"] = loss_orth
+
+        components["L_init"] = full_loss
+        return logits, full_loss, components
 
     def _finalize_keeplora_task(self):
         """Persist task directions, then merge the task-local update into the ViT."""
@@ -334,6 +452,10 @@ class Learner(BaseLearner):
         logging.info(info)
 
     def _inc_loss(self, features, features_old):
+        loss_align, loss_orth = self._inc_loss_components(features, features_old)
+        return self.args["beta"] * loss_align + self.args["gamma"] * loss_orth
+
+    def _inc_loss_components(self, features, features_old):
         features_old = self.old_ae(features_old)
         loss_align = nn.MSELoss()(features, features_old)
         features_old_norm = F.normalize(features_old, p=2, dim=1)
@@ -342,7 +464,7 @@ class Learner(BaseLearner):
         protos = F.normalize(protos, p=2, dim=1)
         similarity = torch.matmul(protos, features_old_norm.t())
         loss_orth = similarity.sum() / (similarity.shape[0]*similarity.shape[1])
-        return self.args["beta"] * loss_align + self.args["gamma"] * loss_orth
+        return loss_align, loss_orth
         
     def _compute_rt_loss(self, inputs, targets, epoch=None, warmup_epoch=10):     
         loss_cos=AngularPenaltySMLoss(loss_type='cosface', eps=1e-7, s=self.args["scale"], m=self.args["margin"])

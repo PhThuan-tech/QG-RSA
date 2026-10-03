@@ -91,12 +91,37 @@ class KeepLoRAVisionTransformer(VisionTransformer):
                 weight, self.keeplora_config.keeplora_weight_threshold
             )
 
-    def initialize_keeplora_from_gradients(self, gradients):
+    def initialize_keeplora_from_gradients(self, gradients, verify_invariance=False):
+        gradient_stats = {}
         for name, weight, adapter in self.named_keeplora_targets():
-            adapter.initialize_from_gradient(gradients.get(name))
+            gradient_norm, projected_gradient_norm = adapter.initialize_from_gradient(
+                gradients.get(name)
+            )
             # KeepLoRA starts from a non-zero SVD update; cancel it in W so
             # the first task forward pass is exactly the previous model.
+            original_weight = weight.detach().clone() if verify_invariance else None
             adapter.subtract_from(weight)
+            stats = {
+                "gradient_norm_before_projection": gradient_norm,
+                "gradient_norm_after_projection": projected_gradient_norm,
+            }
+            if verify_invariance:
+                effective_weight = weight.detach() + adapter.get_delta_weight().to(
+                    weight.device, dtype=weight.dtype
+                )
+                max_abs_error = (
+                    effective_weight - original_weight
+                ).abs().max().item()
+                if not torch.allclose(
+                    effective_weight, original_weight, rtol=1e-4, atol=1e-5
+                ):
+                    raise RuntimeError(
+                        "KeepLoRA subtract initialization is not invariant for {} "
+                        "(maximum absolute error {}).".format(name, max_abs_error)
+                    )
+                stats["weight_merge_max_abs_error"] = max_abs_error
+            gradient_stats[name] = stats
+        return gradient_stats
 
     def begin_keeplora_feature_collection(self):
         for _, _, adapter in self.named_keeplora_targets():

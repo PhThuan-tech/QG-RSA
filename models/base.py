@@ -160,6 +160,9 @@ class BaseLearner(object):
         )
         return {
             "format_version": 2,
+            "keeplora_init_mode": str(
+                self.args.get("keeplora_init_mode", "cosine")
+            ).lower(),
             **{key: self.args.get(key) for key in keys if key in self.args},
         }
 
@@ -247,9 +250,12 @@ class BaseLearner(object):
         saved_metadata = checkpoint.get("run_metadata", {})
         current_metadata = self._checkpoint_run_metadata()
         if saved_metadata.get("format_version", 1) >= 2:
+            optional_metadata_keys = {"keeplora_init_mode"}
             missing_metadata = [
                 key for key in current_metadata
-                if key != "format_version" and key not in saved_metadata
+                if key != "format_version"
+                and key not in optional_metadata_keys
+                and key not in saved_metadata
             ]
             if missing_metadata:
                 raise ValueError(

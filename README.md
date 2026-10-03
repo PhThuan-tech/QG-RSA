@@ -75,11 +75,11 @@ representation-steering loss, residual autoencoder alignment, prototype update,
 and CIL evaluation protocol. It disables the parallel AdaptFormer adapter and
 instead applies KeepLoRA to the ViT attention Q/K/V/output projections.
 
-At the start of every task, the implementation projects the cosine-loss gradient
-away from the pre-trained weight principal subspace and prior task feature
-subspaces, then initializes a frozen A and trainable B. At task completion the
-update is merged into the ViT and the new feature directions are saved in the
-regular RSIAT checkpoint. Run:
+By default, at the start of every task the implementation projects the
+cosine-loss gradient away from the pre-trained weight principal subspace and
+prior task feature subspaces, then initializes a frozen A and trainable B. At
+task completion the update is merged into the ViT and the new feature
+directions are saved in the regular RSIAT checkpoint. Run:
 
     python main.py --config ./exps/keeplora_cifar224_smoke.json
 
@@ -107,6 +107,29 @@ processes a whole task without retaining every ViT token in memory.
 Accumulation is enabled only during the explicit end-of-task feature pass, so
 the RSIAT training loop has no feature-statistics overhead. KeepLoRA checkpoint
 metadata records every PEFT setting and rejects incompatible resumes.
+
+### KeepLoRA full-RSIAT initialization experiment (E1)
+
+E1 changes only the loss used to estimate the KeepLoRA initialization
+gradient. Task 0 uses `L_cos + lambda_RS * L_RS` with the full configured
+coefficient, and later tasks use `L_cos + beta * L_align + gamma * L_orth`.
+The normal RSIAT training loss, including its task-0 warmup schedule, remains
+unchanged. Configurations without `keeplora_init_mode` retain the original
+cosine-only initialization behavior.
+
+Run the isolated CIFAR-100 E1 experiment with:
+
+    python main.py --config ./exps/keeplora_cifar224_fullinit.json
+
+It uses the same training and KeepLoRA settings as `keeplora_cifar224.json`,
+sets `resume: false`, and uses a separate `keeplora_fullinit` checkpoint
+prefix. `keeplora_cifar224_fullinit_smoke.json` is a one-task, one-epoch
+smoke configuration with one gradient batch. The logs include the
+initialization loss components, per-target gradient norms before and after
+residual-subspace projection, and optional forward-invariance diagnostics.
+`L_orth` is included in the scalar initialization objective, but under RSIAT's
+existing graph its direct gradient with respect to current KeepLoRA weights
+can be zero; its formula is not altered.
 
 For a Google Colab smoke test that verifies data loading, training, checkpoint creation, and resume at task 1, use [RSIAT_Colab.ipynb](RSIAT_Colab.ipynb).
 
