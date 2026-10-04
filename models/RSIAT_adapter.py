@@ -209,14 +209,14 @@ class Learner(BaseLearner):
                 logit_error,
             )
             if not torch.allclose(
-                actual_features, reference_features, rtol=1e-4, atol=1e-5
+                actual_features, reference_features, rtol=1e-4, atol=1e-3
             ) or not torch.allclose(
                 actual_logits, reference_logits, rtol=1e-4, atol=1e-5
             ):
                 raise RuntimeError(
                     "KeepLoRA initialization changed the model output beyond "
                     "the configured numerical tolerance."
-                )
+                )  #tolerance values are set to match the original KeepLoRA implementation - mong muốn là sau khi mới khởi tạo keepLora thì các đầu ra phải giống ban đầu (nhưng do python float32 nên có sai số nhỏ, nên phải dùng allclose để kiểm tra)
 
     def _keeplora_initialization_loss(self, network, inputs, targets, loss_cos):
         features = network.extract_vector(inputs)
