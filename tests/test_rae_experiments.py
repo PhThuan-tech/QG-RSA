@@ -156,13 +156,14 @@ class RAEExperimentTests(unittest.TestCase):
                 "per_task",
             ),
             "adapter_cifar224_zero_rae.json": (None, "shared"),
+            "adapter_cifar224_zero_rae_pertask.json": (None, "per_task"),
         }
         for filename, expected in configs.items():
             with self.subTest(filename=filename):
                 config = json.loads((ROOT / "exps" / filename).read_text())
                 self.assertTrue(config["rae_zero_init"])
                 self.assertEqual(config["rae_lifecycle"], expected[1])
-                if filename == "adapter_cifar224_zero_rae.json":
+                if filename.startswith("adapter_cifar224_zero_rae"):
                     self.assertEqual(config["model_name"], "adapter")
                     self.assertNotIn("keeplora", config["convnet_type"].lower())
                 if expected[0] is not None:

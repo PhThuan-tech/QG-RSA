@@ -147,11 +147,13 @@ The three controlled CIFAR-100 configurations are:
     python main.py --config ./exps/keeplora_cifar224_fullinit.json
     python main.py --config ./exps/keeplora_cifar224_fullinit_pertask_rae.json
     python main.py --config ./exps/adapter_cifar224_zero_rae.json
+    python main.py --config ./exps/adapter_cifar224_zero_rae_pertask.json
 
 They correspond respectively to E1 (full-RSIAT KeepLoRA with zero/shared RAE),
 E2 (full-RSIAT KeepLoRA with zero/per-task RAE), and E3 (Adapter baseline with
-zero/shared RAE). At each incremental task, the log reports the RAE generation,
-lifecycle, residual ratio `||AE(x)||/||x||`, and identity error
+zero/shared RAE). The fourth configuration is E4 (Adapter baseline with
+zero/per-task RAE). At each incremental task, the log reports the RAE
+generation, lifecycle, residual ratio `||AE(x)||/||x||`, and identity error
 `||P(x)-x||/||x||` on a small deterministic batch. Checkpoints continue to
 store the active `old_ae_state_dict`; when resuming a completed task it is
 restored, and a per-task run creates a new projector when the next task starts.
