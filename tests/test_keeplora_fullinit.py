@@ -91,6 +91,19 @@ class TinyNetwork:
         return {"logits": self.classifier(features)}
 
 
+class GradientTinyNetwork(nn.Module):
+    def __init__(self, class_count=4):
+        super().__init__()
+        self.encoder = nn.Linear(4, 4, bias=False)
+        self.classifier = nn.Linear(4, class_count)
+
+    def extract_vector(self, inputs):
+        return self.encoder(inputs)
+
+    def fc(self, features):
+        return {"logits": self.classifier(features)}
+
+
 class FixedCosineLoss:
     def __call__(self, logits, targets):
         return logits.square().mean() + targets.float().mean() * 0.0
@@ -140,6 +153,53 @@ class FullRsiatInitializationLossTests(unittest.TestCase):
         self.assertTrue(torch.allclose(actual, expected))
         self.assertTrue(torch.allclose(components["L_RS"], expected_rs))
         self.assertTrue(torch.allclose(components["L_init"], expected))
+
+    def test_task_zero_full_rsiat_gradient_differs_from_cosine_only(self):
+        torch.manual_seed(19)
+        inputs = torch.randn(6, 4)
+        targets = torch.tensor([0, 0, 1, 1, 2, 2])
+        network = GradientTinyNetwork(class_count=3)
+        learner = self.make_learner(task=0, mode="full_rsiat")
+
+        logits, full_loss, components = Learner._keeplora_initialization_loss(
+            learner, network, inputs, targets, self.cosine
+        )
+        cosine_only = self.cosine(logits, targets)
+
+        grad_full = torch.autograd.grad(
+            full_loss, network.encoder.weight, retain_graph=True
+        )[0]
+        grad_cosine = torch.autograd.grad(
+            cosine_only, network.encoder.weight, retain_graph=True
+        )[0]
+        grad_rs = torch.autograd.grad(
+            learner.args["lambda_rs"] * components["L_RS"],
+            network.encoder.weight,
+        )[0]
+
+        grad_difference = grad_full - grad_cosine
+        rs_norm = grad_rs.norm().item()
+        difference_norm = grad_difference.norm().item()
+        self.assertGreater(
+            rs_norm,
+            1e-8,
+            msg=f"L_RS contribution is unexpectedly zero: norm={rs_norm}",
+        )
+        self.assertGreater(
+            difference_norm,
+            1e-8,
+            msg=(
+                "Full RSIAT gradient is numerically identical to "
+                f"cosine-only gradient: difference_norm={difference_norm}"
+            ),
+        )
+        self.assertTrue(
+            torch.allclose(grad_difference, grad_rs, rtol=1e-5, atol=1e-7),
+            msg=(
+                "The difference between full and cosine-only gradients "
+                "does not match the weighted RS gradient."
+            ),
+        )
 
     def test_incremental_task_uses_cosine_alignment_and_orthogonality(self):
         learner = self.make_learner(task=1)
