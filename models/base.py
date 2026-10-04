@@ -6,9 +6,11 @@ import torch
 from torch import nn
 from torch import optim
 from torch.nn import functional as F
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, Subset
 from torch.distributions.multivariate_normal import MultivariateNormal
 from utils.toolkit import tensor2numpy, accuracy
+from utils.reproducibility import capture_rng_state, restore_rng_state
+from utils.statistics_transport import estimate_gaussian_statistics
 from scipy.spatial.distance import cdist
 import time
 EPSILON = 1e-8
@@ -16,6 +18,34 @@ batch_size = 64
 
 
 class BaseLearner(object):
+    # Missing fields in pre-improvement checkpoints mean legacy behavior.
+    _CHECKPOINT_PROTOCOL_DEFAULTS = {
+        "q_inc_weight": 1.0,
+        "q_inc_warmup_epochs": 0,
+        "ssca_feature_mode": "legacy",
+        "ae_type": "legacy_sigmoid",
+        "ae_reset_each_task": False,
+        "ae_init_seed": 1234,
+        "q_detach_prototypes": False,
+        "relation_distill_weight": 0.0,
+        "relation_temperature": 0.2,
+        "statistics_transport": "legacy",
+        "transport_rank": 32,
+        "transport_ridge": 0.01,
+        "transport_max_change": 0.25,
+        "transport_support_scale": 1.0,
+        "transport_support_floor": 0.05,
+        "stats_cov_shrinkage": 0.0,
+        "base_adapter_lr": 0.01,
+        "compact_diagonal_checkpoint": False,
+        "val_ratio": 0.0,
+        "rs_margin_inc": 0.3,
+        "rs_margin_q": 0.5,
+        "rs_margin_q_mode": "fixed",
+        "rs_margin_quantile": 0.9,
+        "q_order2_weight": 1.0,
+    }
+
     def __init__(self, args):
         self.args = args
         self._cur_task = -1
@@ -79,6 +109,7 @@ class BaseLearner(object):
             self._network = nn.DataParallel(self._network, self._multiple_gpus)
 
         self._network.eval()
+        network_module = self._network.module if isinstance(self._network, nn.DataParallel) else self._network
 
         eval_interval = self.args.get("ca_eval_interval", 0)
         for epoch in range(run_epochs):
@@ -112,7 +143,7 @@ class BaseLearner(object):
                 tgt = targets[_iter * num_sampled_pcls:(_iter + 1) * num_sampled_pcls]
 
                 # -stage two only use classifiers
-                outputs = self._network.ca_forward(inp)
+                outputs = network_module.ca_forward(inp)
                 logits = self.args['scale'] * outputs['logits']
 
                 if self.logit_norm is not None:
@@ -141,12 +172,13 @@ class BaseLearner(object):
             scheduler.step()
             if self._should_eval_epoch(epoch, run_epochs, eval_interval):
                 test_acc_msg = "{:.3f}".format(
-                    self._compute_accuracy(self._network, self.test_loader)
+                    self._compute_accuracy(self._network, self._evaluation_loader())
                 )
             else:
                 test_acc_msg = "skipped"
-            info = 'CA Task {} => Loss {:.3f}, Test_accy {}'.format(
-                self._cur_task, losses / self._total_classes, test_acc_msg)
+            metric_label = "Validation_accy" if getattr(self, "seen_val_loader", None) is not None else "Test_accy"
+            info = 'CA Task {} => Loss {:.3f}, {} {}'.format(
+                self._cur_task, losses / self._total_classes, metric_label, test_acc_msg)
             logging.info(info)
 
 
@@ -159,8 +191,12 @@ class BaseLearner(object):
             "q_gamma_mode", "q_inc_train_mode", "inc_loss_mode", "q_inc_pair",
         )
         return {
-            "format_version": 1,
+            "format_version": 3,
             **{key: self.args.get(key) for key in keys if key in self.args},
+            **{
+                key: self.args.get(key, default)
+                for key, default in self._CHECKPOINT_PROTOCOL_DEFAULTS.items()
+            },
         }
 
     def save_checkpoint(self, filepath):
@@ -177,6 +213,7 @@ class BaseLearner(object):
             else self._network
         )
         checkpoint = {
+            "rng_state": capture_rng_state(),
             "run_metadata": self._checkpoint_run_metadata(),
             "cur_task": self._cur_task,
             "known_classes": self._known_classes,
@@ -222,6 +259,8 @@ class BaseLearner(object):
             checkpoint["cnn_curve"] = self.cnn_curve
         if hasattr(self, "nme_curve"):
             checkpoint["nme_curve"] = self.nme_curve
+        if hasattr(self, "stage_metrics"):
+            checkpoint["stage_metrics"] = self.stage_metrics
         if hasattr(self, "task_accuracy_matrix"):
             checkpoint["task_accuracy_matrix"] = self.task_accuracy_matrix
 
@@ -254,7 +293,12 @@ class BaseLearner(object):
             network.update_fc(task_size)
 
     def _validate_checkpoint(self, checkpoint):
-        saved_metadata = checkpoint.get("run_metadata", {})
+        saved_metadata = {
+            **self._CHECKPOINT_PROTOCOL_DEFAULTS,
+            **checkpoint.get("run_metadata", {}),
+        }
+        if "compact_diagonal_checkpoint" not in checkpoint.get("run_metadata", {}):
+            saved_metadata["compact_diagonal_checkpoint"] = "class_variances" in checkpoint
         current_metadata = self._checkpoint_run_metadata()
         mismatches = [
             "{} (checkpoint={!r}, current={!r})".format(
@@ -302,10 +346,9 @@ class BaseLearner(object):
         missing_keys, unexpected_keys = network.load_state_dict(
             checkpoint["model_state_dict"], strict=False
         )
-        if missing_keys:
-            logging.warning("Missing keys while loading checkpoint: %s", missing_keys)
-        if unexpected_keys:
-            logging.warning("Unexpected keys while loading checkpoint: %s", unexpected_keys)
+        if missing_keys or unexpected_keys:
+            raise ValueError("Task checkpoint has incompatible network weights: missing={}, unexpected={}".format(
+                missing_keys, unexpected_keys))
 
         if "class_means" in checkpoint:
             self._class_means = checkpoint["class_means"].cpu().numpy()
@@ -322,6 +365,8 @@ class BaseLearner(object):
             self.nme_curve = checkpoint["nme_curve"]
         if "task_accuracy_matrix" in checkpoint:
             self.task_accuracy_matrix = checkpoint["task_accuracy_matrix"]
+        if "stage_metrics" in checkpoint:
+            self.stage_metrics = checkpoint["stage_metrics"]
         if "class_order" in checkpoint:
             self.class_order = list(checkpoint["class_order"])
 
@@ -331,6 +376,14 @@ class BaseLearner(object):
 
         if hasattr(self, "_after_load_checkpoint"):
             self._after_load_checkpoint(checkpoint)
+
+        # Rebuilding heads/autoencoder consumes RNG; restore only AFTER it.
+        if "rng_state" in checkpoint:
+            restore_rng_state(checkpoint["rng_state"])
+        else:
+            logging.warning(
+                "Legacy checkpoint has no RNG state; resumed run is not strictly paired."
+            )
 
         logging.info(
             "Loaded checkpoint %s; completed task=%d, known_classes=%d, total_classes=%d",
@@ -348,7 +401,7 @@ class BaseLearner(object):
         ret["grouped"] = grouped
         ret["top1"] = grouped["total"]
         ret["top{}".format(self.topk)] = float(np.around(
-            (y_pred.T == np.tile(y_true, (self.topk, 1))).sum() * 100 / len(y_true),
+            (y_pred.T == np.tile(y_true, (y_pred.shape[1], 1))).sum() * 100 / len(y_true),
             decimals=2,
         ))
 
@@ -372,8 +425,30 @@ class BaseLearner(object):
 
         return ret
 
+    def _evaluation_loader(self):
+        return getattr(self, "seen_val_loader", None) or self.test_loader
+
+    def _record_stage_accuracy(self, stage):
+        if not self.args.get("record_stage_metrics", False):
+            return None
+        source = self._evaluation_loader()
+        # Evaluation cannot advance training/replay RNG, even with workers.
+        loader = DataLoader(
+            source.dataset, batch_size=source.batch_size, shuffle=False, num_workers=0,
+            generator=torch.Generator().manual_seed(int(self.args["seed"]) + self._cur_task),
+        )
+        predicted, actual = self._eval_cnn(loader)
+        result = self._evaluate(predicted, actual)
+        if not hasattr(self, "stage_metrics"):
+            self.stage_metrics = []
+        self.stage_metrics.append({"task": self._cur_task, "stage": stage, "metrics": result})
+        logging.info("Stage metrics task=%d stage=%s split=%s accuracy=%s", self._cur_task, stage,
+                     "validation" if getattr(self, "seen_val_loader", None) is not None else "test",
+                     result["grouped"])
+        return result
+
     def eval_task(self):
-        y_pred, y_true = self._eval_cnn(self.test_loader)
+        y_pred, y_true = self._eval_cnn(self._evaluation_loader())
         cnn_accy = self._evaluate(y_pred, y_true)
         return cnn_accy
 
@@ -410,7 +485,7 @@ class BaseLearner(object):
             with torch.no_grad():
                 outputs = self._network(inputs)["logits"]
             predicts = torch.topk(
-                outputs, k=self.topk, dim=1, largest=True, sorted=True
+                outputs, k=min(self.topk, outputs.shape[1]), dim=1, largest=True, sorted=True
             )[
                 1
             ]  # [bs, topk]
@@ -420,6 +495,7 @@ class BaseLearner(object):
         return np.concatenate(y_pred), np.concatenate(y_true)  # [N, topk]
 
 
+    @torch.no_grad()
     def _extract_vectors(self, loader):
         self._network.eval()
         vectors, targets = [], []
@@ -439,6 +515,19 @@ class BaseLearner(object):
 
         return np.concatenate(vectors), np.concatenate(targets)
 
+    def _class_statistics_dataset(self, data_manager, class_idx):
+        if float(self.args.get("val_ratio", 0.0) or 0.0) > 0:
+            # CA samples from these statistics. Held-out validation features
+            # must not enter training through class means/covariances.
+            train_view = data_manager.get_eval_view(self.train_dataset)
+            indices = np.flatnonzero(np.asarray(train_view.labels) == class_idx).tolist()
+            if not indices:
+                raise ValueError("No training samples for class statistics: {}".format(class_idx))
+            return Subset(train_view, indices)
+        return data_manager.get_dataset(
+            np.arange(class_idx, class_idx + 1), source="train", mode="test"
+        )
+
     def _compute_class_mean(self, data_manager, check_diff=False, oracle=False):
         if hasattr(self, '_class_means') and self._class_means is not None and not check_diff:
             ori_classes = self._class_means.shape[0]
@@ -456,8 +545,7 @@ class BaseLearner(object):
         radius = []
         for class_idx in range(self._known_classes, self._total_classes):
 
-            data, targets, idx_dataset = data_manager.get_dataset(np.arange(class_idx, class_idx + 1), source='train',
-                                                                  mode='test', ret_data=True)
+            idx_dataset = self._class_statistics_dataset(data_manager, class_idx)
             stats_workers = int(self.args.get("stats_num_workers", 4))
             idx_loader = DataLoader(
                 idx_dataset,
@@ -468,11 +556,15 @@ class BaseLearner(object):
                 persistent_workers=stats_workers > 0 and self.args.get("persistent_workers", True),
             )
             vectors, _ = self._extract_vectors(idx_loader)
-            class_mean = np.mean(vectors, axis=0)
+            mean, class_cov = estimate_gaussian_statistics(
+                vectors, shrinkage=float(self.args.get("stats_cov_shrinkage", 0.0))
+            )
+            class_mean = mean.cpu().numpy()
+            if len(vectors) < 2:
+                logging.warning("Class %d has one training image; using jitter-only covariance.", class_idx)
             if self._cur_task == 0:
-                cov = np.cov(vectors.T)+ np.eye(class_mean.shape[-1]) * 1e-4
-                radius.append(np.trace(cov) /768)
-            class_cov = torch.cov(torch.tensor(vectors, dtype=torch.float64).T) + torch.eye(class_mean.shape[-1]) * 1e-3
+                cov = class_cov.cpu().numpy() - np.eye(len(class_mean)) * 9e-4
+                radius.append(np.trace(cov) / self.feature_dim)
 
             self._class_means[class_idx, :] = class_mean
             self._class_covs[class_idx, ...] = class_cov

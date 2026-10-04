@@ -106,3 +106,30 @@ class AutoencoderSigmoid(BaseAttention):
             nn.GELU(),
             nn.Linear(64, input_dims),
             nn.Sigmoid())
+
+
+class SignedResidualAutoencoder(BaseAttention):
+    """Identity-initialized mapper with positive AND negative residuals.
+
+    Same hidden widths/parameter count as the legacy sigmoid mapper. Removing
+    the output sigmoid avoids a forced +0.5 shift and one-sided drift.
+    """
+    def __init__(self, input_dims=768, code_dims=384):
+        super().__init__()
+        self.encoder = nn.Sequential(
+            nn.Linear(input_dims, 64), nn.GELU(),
+            nn.Linear(64, code_dims), nn.GELU(),
+        )
+        self.decoder = nn.Sequential(
+            nn.Linear(code_dims, 64), nn.GELU(), nn.Linear(64, input_dims),
+        )
+        nn.init.zeros_(self.decoder[-1].weight)
+        nn.init.zeros_(self.decoder[-1].bias)
+
+
+def make_drift_projector(input_dims, code_dims, projector_type="legacy_sigmoid"):
+    if projector_type == "legacy_sigmoid":
+        return AutoencoderSigmoid(input_dims, code_dims)
+    if projector_type == "signed_residual":
+        return SignedResidualAutoencoder(input_dims, code_dims)
+    raise ValueError("ae_type must be 'legacy_sigmoid' or 'signed_residual'.")

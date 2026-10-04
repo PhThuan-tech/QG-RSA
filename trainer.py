@@ -124,6 +124,7 @@ def _train(args):
         )
         
         model.incremental_train(data_manager)
+        logging.info("Evaluation split: %s", "validation" if getattr(model, "seen_val_loader", None) is not None else "test")
         cnn_accy = model.eval_task()
         model.after_task()
      

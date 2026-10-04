@@ -312,6 +312,20 @@ class VisionTransformer(nn.Module):
         return x
 
 
+def validate_backbone_load(message):
+    """Never silently train random backbone layers after a partial load."""
+    unexpected_missing = [
+        key for key in message.missing_keys
+        if ".adaptmlp." not in key and not key.startswith(("head.", "head_dist."))
+    ]
+    if unexpected_missing or message.unexpected_keys:
+        raise ValueError(
+            "Pretrained backbone is incompatible: missing={}, unexpected={}. "
+            "Use matching ViT-B/16 weights; only new adapters/heads may be missing."
+            .format(unexpected_missing, list(message.unexpected_keys))
+        )
+
+
 def vit_base_patch16_224_adapter(pretrained=False, **kwargs):
     model = VisionTransformer(patch_size=16, embed_dim=768, depth=12, num_heads=12, mlp_ratio=4, qkv_bias=True,
                               norm_layer=partial(nn.LayerNorm, eps=1e-6), **kwargs)
@@ -341,6 +355,7 @@ def vit_base_patch16_224_adapter(pretrained=False, **kwargs):
             state_dict[key.replace('mlp.', '')] = fc_weight
 
     msg = model.load_state_dict(state_dict, strict=False)
+    validate_backbone_load(msg)
 
     for name, p in model.named_parameters():
         if name in msg.missing_keys:
@@ -380,6 +395,7 @@ def vit_base_patch16_224_in21k_adapter(pretrained=False, **kwargs):
             state_dict[key.replace('mlp.', '')] = fc_weight
 
     msg = model.load_state_dict(state_dict, strict=False)
+    validate_backbone_load(msg)
 
     for name, p in model.named_parameters():
         if name in msg.missing_keys:

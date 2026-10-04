@@ -8,14 +8,15 @@ from torch.serialization import load
 from tqdm import tqdm
 from torch import optim
 from torch.nn import functional as F
-from torch.utils.data import DataLoader, Subset
+from torch.utils.data import DataLoader, Subset, ConcatDataset
 from utils.inc_net import SimpleVitNet
 from torch.distributions.multivariate_normal import MultivariateNormal
 from models.base import BaseLearner
 from utils.toolkit import count_parameters, log_count_parameter, target2onehot, tensor2numpy
-from utils.loss import AngularPenaltySMLoss
-from utils.toolkit import AutoencoderSigmoid
+from utils.loss import AngularPenaltySMLoss, prototype_relation_kl
+from utils.toolkit import make_drift_projector
 from utils.quantum_kernel import QuantumKernelModule
+from utils.statistics_transport import transport_gaussian_statistics
 import math
 num_workers = 8
 
@@ -45,6 +46,7 @@ class Learner(BaseLearner):
         self.task_sizes = []
         self.rs_loss_func = RS_Loss(self.args["alpha"], self.args["rs_margin"])
         self.old_ae = None
+        self._validate_retention_options()
 
         self.use_quantum_kernel_base = bool(
             args.get("use_quantum_kernel_base", False)
@@ -53,6 +55,16 @@ class Learner(BaseLearner):
             args.get("use_quantum_kernel_inc", False)
         )
         if self.use_quantum_kernel_inc:
+            if args.get("q_inc_pair", "old_proj") not in {"old_proj", "current"}:
+                raise ValueError("q_inc_pair must be 'old_proj' or 'current'.")
+            if args.get("inc_loss_mode", "mean") not in {"mean", "margin"}:
+                raise ValueError("inc_loss_mode must be 'mean' or 'margin'.")
+            weight = float(args.get("q_inc_weight", 1.0))
+            if not math.isfinite(weight) or weight < 0:
+                raise ValueError("q_inc_weight must be finite and nonnegative.")
+            warmup = args.get("q_inc_warmup_epochs", 0)
+            if int(warmup) != warmup or warmup < 0:
+                raise ValueError("q_inc_warmup_epochs must be a nonnegative integer.")
             inc_train_mode = args.get("q_inc_train_mode", "frozen")
             if inc_train_mode not in {"frozen", "trainable"}:
                 raise ValueError("q_inc_train_mode must be 'frozen' or 'trainable'.")
@@ -71,6 +83,8 @@ class Learner(BaseLearner):
             margin_value = float(args.get(margin_key, default))
             if not 0.0 <= margin_value <= 1.0:
                 raise ValueError("{} must be in [0, 1].".format(margin_key))
+        if args.get("ssca_feature_mode", "legacy") not in {"legacy", "paired_eval"}:
+            raise ValueError("ssca_feature_mode must be 'legacy' or 'paired_eval'.")
         self.quantum_kernel = None
         self.q_calibration_loader = None
         self.q_calibration_indices = []
@@ -81,7 +95,7 @@ class Learner(BaseLearner):
             with torch.random.fork_rng(devices=[]):
                 torch.random.default_generator.manual_seed(init_seed)
                 self.quantum_kernel = QuantumKernelModule(
-                    input_dim=768,
+                    input_dim=self._network.feature_dim,
                     num_qubits=int(args.get("q_num_qubits", 8)),
                     num_layers=int(args.get("q_num_layers", 2)),
                     kernel_type=args.get("q_kernel_type", "pqk"),
@@ -99,10 +113,7 @@ class Learner(BaseLearner):
     def _after_load_checkpoint(self, checkpoint):
         """Restore learner-specific state after BaseLearner restores the network."""
         if self._cur_task >= 1:
-            self.old_ae = AutoencoderSigmoid(
-                input_dims=768,
-                code_dims=self.args["ae_code_dims"],
-            )
+            self.old_ae = self._new_drift_projector()
             if "old_ae_state_dict" not in checkpoint:
                 raise ValueError(
                     "Checkpoint is missing old_ae_state_dict required to resume task {}."
@@ -127,6 +138,52 @@ class Learner(BaseLearner):
 
         self._network_module_ptr = self._network
         self.old_network_module_ptr = self._old_network
+
+    def _validate_retention_options(self):
+        if self.args.get("ae_type", "legacy_sigmoid") not in {"legacy_sigmoid", "signed_residual"}:
+            raise ValueError("Invalid ae_type.")
+        for key, default in (("relation_distill_weight", 0.0), ("stats_cov_shrinkage", 0.0)):
+            value = float(self.args.get(key, default))
+            if not math.isfinite(value) or value < 0 or (key == "stats_cov_shrinkage" and value > 1):
+                raise ValueError("Invalid {}".format(key))
+        temperature = float(self.args.get("relation_temperature", 0.2))
+        if not math.isfinite(temperature) or temperature <= 0:
+            raise ValueError("relation_temperature must be positive and finite.")
+        transport = self.args.get("statistics_transport", "legacy")
+        if transport not in {"legacy", "guarded_ridge"}:
+            raise ValueError("statistics_transport must be 'legacy' or 'guarded_ridge'.")
+        if transport != "legacy" and (
+            self.args.get("ssca_feature_mode", "legacy") != "paired_eval" or not self.args.get("ssca", False)
+        ):
+            raise ValueError("Guarded statistics transport requires SSCA and paired_eval features.")
+        if transport != "legacy" and self.args.get("compact_diagonal_checkpoint", False):
+            raise ValueError("Covariance transport requires full-covariance checkpoints, not diagonal compaction.")
+        if transport != "legacy":
+            rank = self.args.get("transport_rank", 32)
+            ridge = float(self.args.get("transport_ridge", 0.01))
+            change = float(self.args.get("transport_max_change", 0.25))
+            support = float(self.args.get("transport_support_scale", 1.0))
+            floor = float(self.args.get("transport_support_floor", 0.05))
+            if int(rank) != rank or rank < 1 or not math.isfinite(ridge) or ridge <= 0:
+                raise ValueError("Invalid transport rank/ridge.")
+            if not 0 < change < 1 or not math.isfinite(support) or support <= 0 or not 0 <= floor <= 1:
+                raise ValueError("Invalid transport change/support limit.")
+        if self.args.get("q_detach_prototypes", False) and self.args.get("q_inc_pair", "old_proj") != "current":
+            raise ValueError("q_detach_prototypes requires q_inc_pair='current'.")
+        base_lr = self.args.get("base_adapter_lr")
+        if base_lr is not None and (not math.isfinite(float(base_lr)) or float(base_lr) <= 0):
+            raise ValueError("base_adapter_lr must be positive and finite.")
+
+    def _new_drift_projector(self):
+        projector_type = self.args.get("ae_type", "legacy_sigmoid")
+        def construct():
+            return make_drift_projector(self._network.feature_dim, self.args["ae_code_dims"], projector_type)
+        if projector_type == "legacy_sigmoid" and not self.args.get("ae_reset_each_task", False):
+            return construct()
+        # New ablations must not change backbone/head initialization RNG.
+        with torch.random.fork_rng(devices=[]):
+            torch.random.default_generator.manual_seed(int(self.args.get("ae_init_seed", 1234)) + self._cur_task)
+            return construct()
 
     def after_task(self):
         self._known_classes = self._total_classes
@@ -154,12 +211,34 @@ class Learner(BaseLearner):
         label_list = torch.cat(label_list, dim=0)
         return embedding_list, label_list
 
+    def _build_ssca_loader(self, data_manager, train_dataset):
+        """Opt-in matched images/views; legacy remains reproducible as a control.
+
+        Displacement requires row i before/after training to describe the same
+        image. A shuffled, augmented training loader does not satisfy this.
+        Use only the actual training subset (never validation/test images).
+        """
+        mode = self.args.get("ssca_feature_mode", "legacy")
+        if mode == "legacy":
+            return self.train_loader
+        if mode != "paired_eval":
+            raise ValueError("ssca_feature_mode must be 'legacy' or 'paired_eval'.")
+        generator = torch.Generator(device="cpu")
+        generator.manual_seed(int(self.args["seed"]) + self._cur_task)
+        return DataLoader(
+            data_manager.get_eval_view(train_dataset),
+            batch_size=self.batch_size,
+            shuffle=False,
+            num_workers=0,
+            pin_memory=self.pin_memory,
+            generator=generator,
+        )
+
     def incremental_train(self, data_manager):
         self._cur_task += 1
         
-        if self._cur_task == 1:
-            self.old_ae = AutoencoderSigmoid(input_dims=768, code_dims=self.args["ae_code_dims"])
-            self.old_ae.to(self._device)
+        if self._cur_task == 1 or (self._cur_task > 1 and self.args.get("ae_reset_each_task", False)):
+            self.old_ae = self._new_drift_projector().to(self._device)
             
         task_size = data_manager.get_task_size(self._cur_task)
         self.task_sizes.append(task_size)
@@ -172,6 +251,7 @@ class Learner(BaseLearner):
         current_classes = np.arange(self._known_classes, self._total_classes)
         val_ratio = float(self.args.get("val_ratio", 0.0) or 0.0)
         self.val_loader = None
+        self.seen_val_loader = None
         if val_ratio > 0.0:
             split_seed = int(self.args["seed"]) + self._cur_task
             train_dataset, val_dataset = data_manager.get_dataset_with_validation(
@@ -184,6 +264,22 @@ class Learner(BaseLearner):
                 num_workers=self.num_workers,
                 pin_memory=self.pin_memory,
                 persistent_workers=self.persistent_workers,
+            )
+            # Recreate the SAME held-out partitions for earlier seen tasks.
+            # Used only for evaluation; old images never enter model updates.
+            validation_parts = []
+            lower = 0
+            for task_index, size in enumerate(self.task_sizes):
+                _, held_out = data_manager.get_dataset_with_validation(
+                    np.arange(lower, lower + size), val_ratio=val_ratio,
+                    seed=int(self.args["seed"]) + task_index,
+                )
+                validation_parts.append(held_out)
+                lower += size
+            self.seen_val_loader = DataLoader(
+                ConcatDataset(validation_parts), batch_size=self.batch_size, shuffle=False,
+                num_workers=0, pin_memory=self.pin_memory,
+                generator=torch.Generator().manual_seed(int(self.args["seed"]) + self._cur_task),
             )
             logging.info(
                 "Task %d validation split: train=%d, validation=%d, ratio=%.4f",
@@ -261,9 +357,13 @@ class Learner(BaseLearner):
       
         if self._cur_task >0:
             self._network.to(self._device)
-            train_embeddings_old, _ = self.extract_features(self.train_loader, self._network, None)
+            drift_loader = self._build_ssca_loader(data_manager, train_dataset)
+            logging.info("SSCA feature mode: %s", self.args.get("ssca_feature_mode", "legacy"))
+            train_embeddings_old, drift_labels_old = self.extract_features(
+                drift_loader, self._network_module_ptr, None
+            )
 
-        evaluation_loader = self.val_loader if self.val_loader is not None else self.test_loader
+        evaluation_loader = self._evaluation_loader()
         self._train(self.train_loader, evaluation_loader)
         
         if len(self._multiple_gpus) > 1:
@@ -271,19 +371,48 @@ class Learner(BaseLearner):
 
       
         if self._cur_task >0:
-            train_embeddings_new, _ = self.extract_features(self.train_loader, self._network, None)
-            old_class_mean = self._class_means[:self._known_classes]
-            gap = self.displacement(train_embeddings_old, train_embeddings_new, old_class_mean, 4.0)
-            if self.args['ssca'] is True:
-                old_class_mean +=gap
-                self._class_means[:self._known_classes] = old_class_mean
+            train_embeddings_new, drift_labels_new = self.extract_features(
+                drift_loader, self._network_module_ptr, None
+            )
+            if self.args.get("ssca_feature_mode", "legacy") == "paired_eval":
+                if not torch.equal(drift_labels_old, drift_labels_new):
+                    raise RuntimeError("SSCA before/after rows are not aligned.")
+            if self.args.get("statistics_transport", "legacy") == "guarded_ridge":
+                self._transport_old_statistics(train_embeddings_old, train_embeddings_new)
+            else:
+                old_class_mean = self._class_means[:self._known_classes]
+                gap = self.displacement(train_embeddings_old, train_embeddings_new, old_class_mean, 4.0)
+                if self.args['ssca'] is True:
+                    old_class_mean +=gap
+                    self._class_means[:self._known_classes] = old_class_mean
 
         self._network.fc.backup()
         self._compute_class_mean(data_manager, check_diff=False, oracle=False)
+        pre_ca = self._record_stage_accuracy("pre_ca")
         if self._cur_task>0 and self.args['ca_epochs']>0 and self.args['ca'] is True:
             self._stage2_compact_classifier(task_size, self.args['ca_epochs'])
             if len(self._multiple_gpus) > 1:
                 self._network = self._network.module
+        post_ca = self._record_stage_accuracy("post_ca")
+        if pre_ca is not None:
+            logging.info("CA accuracy delta task=%d total=%.4f old=%.4f new=%.4f", self._cur_task,
+                         post_ca["grouped"]["total"] - pre_ca["grouped"]["total"],
+                         post_ca["grouped"]["old"] - pre_ca["grouped"]["old"],
+                         post_ca["grouped"]["new"] - pre_ca["grouped"]["new"])
+
+    def _transport_old_statistics(self, before, after):
+        means, covariance, info = transport_gaussian_statistics(
+            self._class_means[:self._known_classes], self._class_covs[:self._known_classes],
+            before.to(self._device), after.to(self._device),
+            rank=int(self.args.get("transport_rank", 32)), ridge=float(self.args.get("transport_ridge", 0.01)),
+            max_change=float(self.args.get("transport_max_change", 0.25)),
+            support_scale=float(self.args.get("transport_support_scale", 1.0)),
+            support_floor=float(self.args.get("transport_support_floor", 0.05)),
+            seed=int(self.args["seed"]) + self._cur_task,
+        )
+        self._class_means[:self._known_classes] = means
+        self._class_covs[:self._known_classes] = covariance
+        logging.info("Statistics transport task=%d: %s", self._cur_task, info)
 
     def _quantum_used_this_task(self):
         return (
@@ -319,7 +448,7 @@ class Learner(BaseLearner):
         with torch.no_grad():
             for _, inputs, _ in self.q_calibration_loader:
                 inputs = inputs.to(self._device, non_blocking=True)
-                if self._cur_task == 0:
+                if self._cur_task == 0 or self.args.get("q_inc_pair", "old_proj") == "current":
                     encoded = self._network_module_ptr.extract_vector(inputs)
                 else:
                     encoded = self.old_network_module_ptr.extract_vector(inputs)
@@ -364,7 +493,7 @@ class Learner(BaseLearner):
 
         if self._cur_task == 0:
             self.tuned_epochs = self.args["init_epochs"]
-            adapter_lr = 0.01
+            adapter_lr = float(self.args.get("base_adapter_lr", 0.01))
             param_groups = [
                 {'params': self._network.convnet.blocks[-1].parameters(), 'lr': adapter_lr,
                  'weight_decay': self.args['weight_decay']},
@@ -411,8 +540,12 @@ class Learner(BaseLearner):
             if self.args['optimizer'] == 'sgd':
                 optimizer = optim.SGD(param_groups, momentum=0.9)
             elif self.args['optimizer'] == 'adam':
-                if self.use_quantum_kernel_inc:
-                    # QKSR's incremental objective requires old_ae to update.
+                if (self.use_quantum_kernel_inc
+                        or self.args.get("ae_type", "legacy_sigmoid") != "legacy_sigmoid"
+                        or self.args.get("ae_reset_each_task", False)
+                        or self.args.get("relation_distill_weight", 0.0) > 0):
+                    # Opt-in retention controls need the same projector updates,
+                    # including the matched non-quantum AdamW control.
                     optimizer = optim.AdamW(param_groups)
                 else:
                     # Preserve the original baseline behavior bit-for-bit.
@@ -443,6 +576,8 @@ class Learner(BaseLearner):
             losses = 0.0
             losses_c, losses_rt = 0.0, 0.0
             correct, total = 0, 0
+            if self.quantum_kernel is not None and self._quantum_used_this_task():
+                self.quantum_kernel.reset_epoch_diagnostics()
 
             for i, (_, inputs, targets) in enumerate(train_loader):
                 inputs = inputs.to(self._device, non_blocking=True)
@@ -451,6 +586,8 @@ class Learner(BaseLearner):
                 loss = loss_c + loss_rt
                 optimizer.zero_grad()
                 loss.backward()
+                if self.quantum_kernel is not None and self._quantum_used_this_task():
+                    self.quantum_kernel.record_gradient_health()
                 optimizer.step()
                 losses += loss.item()
                 losses_c += loss_c.item()
@@ -468,7 +605,8 @@ class Learner(BaseLearner):
                 )
             else:
                 test_acc_msg = "skipped"
-            info = "Task {}, Epoch {}/{} => Loss {:.3f}, Loss_c {:.3f}, Losses_rt {:.3f}, Train_accy {:.2f}, Test_accy {}, Time {:.2f}s".format(
+            metric_label = "Validation_accy" if getattr(self, "seen_val_loader", None) is not None else "Test_accy"
+            info = "Task {}, Epoch {}/{} => Loss {:.3f}, Loss_c {:.3f}, Losses_rt {:.3f}, Train_accy {:.2f}, {} {}, Time {:.2f}s".format(
                 self._cur_task,
                 epoch + 1,
                 self.tuned_epochs,
@@ -476,18 +614,20 @@ class Learner(BaseLearner):
                 losses_c/len(train_loader),
                 losses_rt/len(train_loader),
                 train_acc,
+                metric_label,
                 test_acc_msg,
                 epoch_seconds,
             )
             prog_bar.set_description(info)
             if self.quantum_kernel is not None and self._quantum_used_this_task():
                 logging.info(
-                    "QKSR diagnostics task=%d epoch=%d gamma=%.8g gradients=%s kernel=%s",
+                    "QKSR diagnostics task=%d epoch=%d gamma=%.8g gradients_epoch=%s kernel_epoch=%s inc_weight=%.8g",
                     self._cur_task,
                     epoch + 1,
                     float(self.quantum_kernel.gamma.detach().item()),
-                    self.quantum_kernel.gradient_health(),
-                    self.quantum_kernel.last_kernel_stats(),
+                    self.quantum_kernel.epoch_gradient_health(),
+                    self.quantum_kernel.epoch_kernel_stats(),
+                    self._quantum_inc_weight(epoch) if self._cur_task > 0 else 0.0,
                 )
         logging.info(info)
         if self._device.type == "cuda":
@@ -497,7 +637,15 @@ class Learner(BaseLearner):
                 torch.cuda.max_memory_allocated(self._device) / (1024 ** 2),
             )
 
-    def _inc_loss(self, features, features_old):
+    def _quantum_inc_weight(self, epoch=0):
+        weight = float(self.args.get("q_inc_weight", 1.0))
+        warmup = int(self.args.get("q_inc_warmup_epochs", 0))
+        if warmup:
+            weight *= min(1.0, (max(0, epoch or 0) + 1) / warmup)
+        return weight
+
+    def _inc_loss(self, features, features_old, epoch=0):
+        previous_features = features_old
         features_old = self.old_ae(features_old)
         loss_align = nn.MSELoss()(features, features_old)
         protos = torch.from_numpy(self._class_means).float().to(self._device,non_blocking=True)
@@ -511,7 +659,8 @@ class Learner(BaseLearner):
                 comparison_features = features
             else:
                 raise ValueError("q_inc_pair must be 'old_proj' or 'current'.")
-            similarity = self.quantum_kernel(protos, comparison_features)
+            quantum_prototypes = protos.detach() if self.args.get("q_detach_prototypes", False) else protos
+            similarity = self.quantum_kernel(quantum_prototypes, comparison_features)
             inc_loss_mode = self.args.get("inc_loss_mode", "mean")
             if inc_loss_mode == "mean":
                 loss_orth = similarity.mean()
@@ -525,7 +674,18 @@ class Learner(BaseLearner):
             protos = F.normalize(protos, p=2, dim=1)
             similarity = torch.matmul(protos, features_old_norm.t())
             loss_orth = similarity.sum() / (similarity.shape[0]*similarity.shape[1])
-        return self.args["beta"] * loss_align + self.args["gamma"] * loss_orth
+        # Do not rescale alignment or the original cosine-based RSIAT loss.
+        inc_weight = self._quantum_inc_weight(epoch) if self.use_quantum_kernel_inc else 1.0
+        loss = self.args["beta"] * loss_align + self.args["gamma"] * inc_weight * loss_orth
+        relation_weight = float(self.args.get("relation_distill_weight", 0.0))
+        if relation_weight:
+            relation = prototype_relation_kl(
+                features, previous_features, protos,
+                torch.from_numpy(self._class_means).float().to(self._device),
+                temperature=float(self.args.get("relation_temperature", 0.2)),
+            )
+            loss = loss + relation_weight * relation
+        return loss
         
     def _compute_rt_loss(self, inputs, targets, epoch=None, warmup_epoch=10):     
         loss_cos=AngularPenaltySMLoss(loss_type='cosface', eps=1e-7, s=self.args["scale"], m=self.args["margin"])
@@ -534,7 +694,8 @@ class Learner(BaseLearner):
         loss_c=loss_cos(logits[:, self._known_classes:], targets - self._known_classes)
 
         if self._cur_task == 0:
-            lambda_rs = self.args["lambda_rs"] * min(1.0, epoch / warmup_epoch)
+            progress = min(1.0, (epoch or 0) / warmup_epoch) if warmup_epoch > 0 else 1.0
+            lambda_rs = self.args["lambda_rs"] * progress
             quantum_module = (
                 self.quantum_kernel if self.use_quantum_kernel_base else None
             )
@@ -549,7 +710,7 @@ class Learner(BaseLearner):
             return logits, loss_c, loss_base
         
         features_old = self.old_network_module_ptr.extract_vector(inputs)
-        loss_inc = self._inc_loss(features, features_old)
+        loss_inc = self._inc_loss(features, features_old, epoch=epoch)
         return logits, loss_c, loss_inc
     
 class RS_Loss(nn.Module):

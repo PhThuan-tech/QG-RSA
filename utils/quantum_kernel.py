@@ -239,6 +239,7 @@ class QuantumKernelModule(nn.Module):
         self.init_seed = int(init_seed)
         self._inc_mode = "trainable"
         self._last_kernel: Optional[Tensor] = None
+        self._epoch_diagnostics = None
 
         # Only the CPU generator is touched, and its state is restored.  Module
         # construction therefore cannot shift either training or CUDA RNG.
@@ -333,7 +334,90 @@ class QuantumKernelModule(nn.Module):
         rep_b = rep_a if b is None else self.encode(b)
         result = self.kernel(rep_a, rep_b)
         self._last_kernel = result.detach()
+        self._record_kernel_stats(result.detach(), self_kernel=b is None)
         return result
+
+    def reset_epoch_diagnostics(self) -> None:
+        """Enable bounded-memory diagnostics without changing the training RNG."""
+        self._epoch_diagnostics = {
+            "batches": 0, "empty_batches": 0, "pairs": 0,
+            "sum": None, "squared_sum": None, "min": None, "max": None,
+            "histogram": None, "gradients": {},
+        }
+
+    @torch.no_grad()
+    def _record_kernel_stats(self, kernel: Tensor, self_kernel: bool) -> None:
+        stats = self._epoch_diagnostics
+        if stats is None:
+            return
+        stats["batches"] += 1
+        # The trivial K(x_i,x_i)=1 can hide collapsed off-diagonal values.
+        # Even square CROSS kernels still include every pair.
+        if self_kernel:
+            mask = ~torch.eye(kernel.shape[0], dtype=torch.bool, device=kernel.device)
+            values = kernel[mask]
+        else:
+            values = kernel.reshape(-1)
+        if not values.numel():
+            stats["empty_batches"] += 1
+            return
+        stats["pairs"] += values.numel()
+        values = values.to(torch.float64)
+        batch_sum = values.sum()
+        squared_sum = values.square().sum()
+        histogram = torch.histc(values.float(), bins=10, min=0.0, max=1.0).to(torch.int64)
+        if stats["sum"] is None:
+            stats.update({
+                "sum": batch_sum, "squared_sum": squared_sum,
+                "min": values.min(), "max": values.max(), "histogram": histogram,
+            })
+        else:
+            stats["sum"] += batch_sum
+            stats["squared_sum"] += squared_sum
+            stats["min"] = torch.minimum(stats["min"], values.min())
+            stats["max"] = torch.maximum(stats["max"], values.max())
+            stats["histogram"] += histogram
+
+    @torch.no_grad()
+    def record_gradient_health(self) -> None:
+        """Record after backward; defer device synchronization until epoch end."""
+        if self._epoch_diagnostics is None:
+            return
+        gradients = self._epoch_diagnostics["gradients"]
+        for name, parameter in self.named_parameters():
+            if parameter.grad is None:
+                continue
+            value = parameter.grad.detach().abs().mean()
+            if name not in gradients:
+                gradients[name] = [value, 1]
+            else:
+                gradients[name][0] += value
+                gradients[name][1] += 1
+
+    def epoch_gradient_health(self) -> Dict[str, float]:
+        if self._epoch_diagnostics is None:
+            return {}
+        return {
+            name: float((total / count).item())
+            for name, (total, count) in self._epoch_diagnostics["gradients"].items()
+        }
+
+    def epoch_kernel_stats(self) -> Dict[str, object]:
+        stats = self._epoch_diagnostics
+        if stats is None:
+            return {}
+        summary = {key: stats[key] for key in ("batches", "empty_batches", "pairs")}
+        if not stats["pairs"]:
+            return summary
+        mean = stats["sum"] / stats["pairs"]
+        variance = (stats["squared_sum"] / stats["pairs"] - mean.square()).clamp_min(0.0)
+        summary.update({
+            "min": float(stats["min"].item()), "mean": float(mean.item()),
+            "std": float(variance.sqrt().item()), "max": float(stats["max"].item()),
+            "histogram_10_bins_0_1": stats["histogram"].tolist(),
+            "self_diagonal_excluded": True,
+        })
+        return summary
 
     @torch.no_grad()
     def calibrate_gamma(
