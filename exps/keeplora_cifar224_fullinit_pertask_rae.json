@@ -1,5 +1,5 @@
 {
-    "prefix": "keeplora_fullinit",
+    "prefix": "keeplora_fullinit_pertask_rae",
     "dataset": "cifar224",
     "save_checkpoints": true,
     "resume": false,
@@ -21,7 +21,6 @@
     "convnet_type": "pretrained_vit_b16_224_in21k_keeplora",
     "device": ["0"],
     "seed": [1993],
-
     "init_epochs": 10,
     "warmup_epoch": 7,
     "inc_epochs": 30,
@@ -32,7 +31,6 @@
     "min_lr": 0,
     "ffn_num": 64,
     "optimizer": "sgd",
-
     "scale": 40.0,
     "margin": 0.1,
     "alpha": 0.5,
@@ -43,7 +41,6 @@
     "ae_code_dims": 256,
     "ae_init_lr": 0.0005611742230603744,
     "ae_weight_decay": 0.0029339295871570244,
-
     "keeplora_rank": 32,
     "keeplora_alpha": 2,
     "keeplora_targets": ["q", "k", "v", "o"],
@@ -55,5 +52,5 @@
     "keeplora_init_mode": "full_rsiat",
     "keeplora_verify_init_invariance": true,
     "rae_zero_init": true,
-    "rae_lifecycle": "shared"
+    "rae_lifecycle": "per_task"
 }

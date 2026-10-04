@@ -44,6 +44,16 @@ class Learner(BaseLearner):
         self.task_sizes = []
         self.rs_loss_func = RS_Loss(self.args["alpha"], self.args["rs_margin"])
         self.old_ae = None
+        self.rae_zero_init = bool(args.get("rae_zero_init", False))
+        self.rae_lifecycle = str(args.get("rae_lifecycle", "shared")).lower()
+        if self.rae_lifecycle not in ("shared", "per_task"):
+            raise ValueError(
+                "rae_lifecycle must be 'shared' or 'per_task', got {!r}."
+                .format(self.rae_lifecycle)
+            )
+        self.rae_generation = 0
+        self.rae_task_id = None
+        self._rae_last_state_snapshot = None
         self._uses_keeplora = "keeplora" in args["convnet_type"].lower()
         self.keeplora_init_mode = str(args.get("keeplora_init_mode", "cosine")).lower()
         if self.keeplora_init_mode not in ("cosine", "full_rsiat"):
@@ -58,6 +68,7 @@ class Learner(BaseLearner):
             self.old_ae = AutoencoderSigmoid(
                 input_dims=768,
                 code_dims=self.args["ae_code_dims"],
+                zero_residual=self.rae_zero_init,
             )
             if "old_ae_state_dict" not in checkpoint:
                 raise ValueError(
@@ -66,6 +77,11 @@ class Learner(BaseLearner):
                 )
             self.old_ae.load_state_dict(checkpoint["old_ae_state_dict"])
             self.old_ae.to(self._device)
+            self.rae_generation = int(
+                checkpoint.get("rae_generation", self.rae_generation + 1)
+            )
+            self.rae_task_id = checkpoint.get("rae_task_id", self._cur_task)
+            self._rae_last_state_snapshot = self._rae_state_snapshot()
 
         self._network_module_ptr = self._network
         self.old_network_module_ptr = self._old_network
@@ -73,6 +89,8 @@ class Learner(BaseLearner):
     def after_task(self):
         if self._uses_keeplora:
             self._finalize_keeplora_task()
+        if self.old_ae is not None:
+            self._rae_last_state_snapshot = self._rae_state_snapshot()
         self._known_classes = self._total_classes
         self._old_network = self._network.copy().freeze()
         if hasattr(self._old_network,"module"):
@@ -83,6 +101,153 @@ class Learner(BaseLearner):
     def _keeplora_convnet(self):
         network = self._network.module if isinstance(self._network, nn.DataParallel) else self._network
         return network, network.convnet
+
+    def _create_rae(self, task_id):
+        self.old_ae = AutoencoderSigmoid(
+            input_dims=768,
+            code_dims=self.args["ae_code_dims"],
+            zero_residual=self.rae_zero_init,
+        ).to(self._device)
+        self.rae_generation += 1
+        self.rae_task_id = task_id
+        self._rae_last_state_snapshot = None
+
+    def _prepare_rae_for_task(self):
+        if self._cur_task >= 1 and (
+            self.old_ae is None or self.rae_lifecycle == "per_task"
+        ):
+            self._create_rae(self._cur_task)
+        elif self._cur_task >= 1 and self.old_ae is not None:
+            same_state = (
+                self._rae_last_state_snapshot is None
+                or self._rae_state_matches_snapshot()
+            )
+            logging.info(
+                "RAE mode=%s task_id=%d projector_generation_id=%d "
+                "shared_projector_reused=true same_state_as_previous_task=%s "
+                "object_id=%d",
+                self._rae_mode(),
+                self._cur_task,
+                self.rae_generation,
+                same_state,
+                id(self.old_ae),
+            )
+
+    def _rae_mode(self):
+        if self.rae_zero_init and self.rae_lifecycle == "shared":
+            if not self._uses_keeplora:
+                return "zero_shared_baseline"
+            return "zero_shared"
+        return "{}_{}".format(
+            "zero" if self.rae_zero_init else "random",
+            self.rae_lifecycle,
+        )
+
+    def _rae_state_snapshot(self):
+        if self.old_ae is None:
+            return None
+        return {
+            name: tensor.detach().cpu().clone()
+            for name, tensor in self.old_ae.state_dict().items()
+        }
+
+    def _rae_state_matches_snapshot(self):
+        if self.old_ae is None or self._rae_last_state_snapshot is None:
+            return False
+        current = self.old_ae.state_dict()
+        return (
+            current.keys() == self._rae_last_state_snapshot.keys()
+            and all(
+                torch.equal(
+                    tensor.detach().cpu(),
+                    self._rae_last_state_snapshot[name],
+                )
+                for name, tensor in current.items()
+            )
+        )
+
+    def _diagnose_rae_initialization(self, train_loader):
+        if self.old_ae is None or self._cur_task < 1:
+            return
+        cpu_rng_state = torch.get_rng_state()
+        cuda_rng_state = (
+            torch.cuda.get_rng_state_all() if torch.cuda.is_available() else None
+        )
+        try:
+            _, inputs, _ = next(iter(train_loader))
+        finally:
+            torch.set_rng_state(cpu_rng_state)
+            if cuda_rng_state is not None:
+                torch.cuda.set_rng_state_all(cuda_rng_state)
+        inputs = inputs[:8].to(self._device, non_blocking=True)
+        was_training = self.old_ae.training
+        self.old_ae.eval()
+        reference = self._old_network.extract_vector(inputs)
+        with torch.no_grad():
+            residual = self.old_ae.decoder(self.old_ae.encoder(reference))
+            denominator = torch.linalg.vector_norm(reference).clamp_min(1e-12)
+            residual_ratio = torch.linalg.vector_norm(residual) / denominator
+            identity_error = torch.linalg.vector_norm(residual) / denominator
+
+        align_loss = None
+        align_gradient_norm = None
+        orth_gradient_norm = None
+        representative_name = None
+        representative_weight = None
+        current_features = self._network_module_ptr.extract_vector(inputs)
+        align_loss, orth_loss = self._inc_loss_components(
+            current_features, reference
+        )
+        if self._uses_keeplora:
+            _, convnet = self._keeplora_convnet()
+            targets = list(convnet.named_keeplora_targets())
+            if targets:
+                representative_name, representative_weight, _ = targets[0]
+                was_requires_grad = representative_weight.requires_grad
+                representative_weight.requires_grad_(True)
+                try:
+                    align_gradient = torch.autograd.grad(
+                        align_loss,
+                        representative_weight,
+                        allow_unused=True,
+                        retain_graph=True,
+                    )[0]
+                    orth_gradient = torch.autograd.grad(
+                        orth_loss,
+                        representative_weight,
+                        allow_unused=True,
+                    )[0]
+                    align_gradient_norm = (
+                        0.0
+                        if align_gradient is None
+                        else align_gradient.detach().norm().item()
+                    )
+                    orth_gradient_norm = (
+                        0.0
+                        if orth_gradient is None
+                        else orth_gradient.detach().norm().item()
+                    )
+                finally:
+                    representative_weight.requires_grad_(was_requires_grad)
+        if was_training:
+            self.old_ae.train()
+        logging.info(
+            "RAE mode=%s task_id=%d projector_generation_id=%d "
+            "initial_residual_ratio=%.8g initial_identity_error=%.8g "
+            "initial_L_align=%s initial_grad_norm_L_align=%s "
+            "initial_grad_norm_L_orth=%s representative_weight=%s "
+            "object_id=%d",
+            self._rae_mode(),
+            self._cur_task,
+            self.rae_generation,
+            residual_ratio.item(),
+            identity_error.item(),
+            "n/a" if align_loss is None else "%.8g" % align_loss.detach().item(),
+            "n/a" if align_gradient_norm is None else "%.8g" % align_gradient_norm,
+            "n/a" if orth_gradient_norm is None else "%.8g" % orth_gradient_norm,
+            representative_name or "n/a",
+            id(self.old_ae),
+        )
 
     def _initialize_keeplora_task(self, train_loader):
         """Initialize KeepLoRA from the configured RSIAT loss gradient."""
@@ -284,9 +449,7 @@ class Learner(BaseLearner):
     def incremental_train(self, data_manager):
         self._cur_task += 1
         
-        if self._cur_task == 1:
-            self.old_ae = AutoencoderSigmoid(input_dims=768, code_dims=self.args["ae_code_dims"])
-            self.old_ae.to(self._device)
+        self._prepare_rae_for_task()
             
         task_size = data_manager.get_task_size(self._cur_task)
         self.task_sizes.append(task_size)
@@ -343,6 +506,7 @@ class Learner(BaseLearner):
             self._network.to(self._device)
             train_embeddings_old, _ = self.extract_features(self.train_loader, self._network, None)
 
+        self._diagnose_rae_initialization(self.train_loader)
         self._train(self.train_loader, self.test_loader)
         
         if len(self._multiple_gpus) > 1:

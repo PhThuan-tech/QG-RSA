@@ -163,6 +163,8 @@ class BaseLearner(object):
             "keeplora_init_mode": str(
                 self.args.get("keeplora_init_mode", "cosine")
             ).lower(),
+            "rae_zero_init": bool(self.args.get("rae_zero_init", False)),
+            "rae_lifecycle": str(self.args.get("rae_lifecycle", "shared")).lower(),
             **{key: self.args.get(key) for key in keys if key in self.args},
         }
 
@@ -213,6 +215,8 @@ class BaseLearner(object):
                 key: value.detach().cpu()
                 for key, value in self.old_ae.state_dict().items()
             }
+            checkpoint["rae_generation"] = int(getattr(self, "rae_generation", 0))
+            checkpoint["rae_task_id"] = getattr(self, "rae_task_id", None)
         if hasattr(self, "cnn_curve"):
             checkpoint["cnn_curve"] = self.cnn_curve
         if hasattr(self, "nme_curve"):
@@ -250,7 +254,9 @@ class BaseLearner(object):
         saved_metadata = checkpoint.get("run_metadata", {})
         current_metadata = self._checkpoint_run_metadata()
         if saved_metadata.get("format_version", 1) >= 2:
-            optional_metadata_keys = {"keeplora_init_mode"}
+            optional_metadata_keys = {
+                "keeplora_init_mode", "rae_zero_init", "rae_lifecycle"
+            }
             missing_metadata = [
                 key for key in current_metadata
                 if key != "format_version"

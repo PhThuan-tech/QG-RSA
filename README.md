@@ -131,6 +131,31 @@ residual-subspace projection, and optional forward-invariance diagnostics.
 existing graph its direct gradient with respect to current KeepLoRA weights
 can be zero; its formula is not altered.
 
+### Controlled RAE initialization experiments
+
+The RAE controls are independent of the RSIAT and KeepLoRA objectives:
+
+- `rae_zero_init: true` keeps the hidden dimensions but makes the residual
+  branch exactly zero at construction, so the projector starts as identity.
+- `rae_lifecycle: "shared"` preserves the current lifecycle: one RAE is
+  created at the first incremental task and reused afterward.
+- `rae_lifecycle: "per_task"` creates a fresh zero-initialized RAE before
+  each incremental task's KeepLoRA initialization and normal training.
+
+The three controlled CIFAR-100 configurations are:
+
+    python main.py --config ./exps/keeplora_cifar224_fullinit.json
+    python main.py --config ./exps/keeplora_cifar224_fullinit_pertask_rae.json
+    python main.py --config ./exps/adapter_cifar224_zero_rae.json
+
+They correspond respectively to E1 (full-RSIAT KeepLoRA with zero/shared RAE),
+E2 (full-RSIAT KeepLoRA with zero/per-task RAE), and E3 (Adapter baseline with
+zero/shared RAE). At each incremental task, the log reports the RAE generation,
+lifecycle, residual ratio `||AE(x)||/||x||`, and identity error
+`||P(x)-x||/||x||` on a small deterministic batch. Checkpoints continue to
+store the active `old_ae_state_dict`; when resuming a completed task it is
+restored, and a per-task run creates a new projector when the next task starts.
+
 For a Google Colab smoke test that verifies data loading, training, checkpoint creation, and resume at task 1, use [RSIAT_Colab.ipynb](RSIAT_Colab.ipynb).
 
 ## Citation
