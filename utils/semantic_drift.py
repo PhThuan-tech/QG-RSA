@@ -188,7 +188,6 @@ class SemanticDriftObserver:
             pre_features, pre_labels, pre_ids = self._pre
             post_features, post_labels, post_ids = self._post
             self._validate_pair(pre_labels, post_labels, pre_ids, post_ids)
-            metrics = _pair_metrics(pre_features, post_features)
             old_limit = self.learner._known_classes
             old_mask = pre_labels < old_limit
             new_mask = ~old_mask
@@ -212,13 +211,19 @@ class SemanticDriftObserver:
                 "evaluation": {},
             }
             if self.flags["compute_sample_metrics"]:
+                metrics = _pair_metrics(pre_features, post_features)
                 result["old_sample_drift"] = self._group_summary(metrics, old_mask)
                 result["new_task_shift"] = self._group_summary(metrics, new_mask)
                 result["old_new_drift_ratio"] = self._drift_ratios(
                     metrics, old_mask, new_mask
                 )
                 self._add_class_metrics(
-                    result, pre_features, post_features, pre_labels, old_mask
+                    result,
+                    pre_features,
+                    post_features,
+                    pre_labels,
+                    old_mask,
+                    pre_ids,
                 )
             self._add_geometry_metrics(
                 result, pre_features, post_features, pre_labels, old_mask, new_mask
@@ -257,8 +262,9 @@ class SemanticDriftObserver:
             ratios[name] = float(old_values.mean() / (denominator + 1e-12))
         return ratios
 
-    def _add_class_metrics(self, result, pre, post, labels, mask):
+    def _add_class_metrics(self, result, pre, post, labels, mask, sample_ids):
         records = {}
+        per_sample = []
         for class_id in torch.unique(labels[mask]).tolist():
             class_mask = labels == class_id
             values = _pair_metrics(pre[class_mask], post[class_mask])
@@ -272,6 +278,23 @@ class SemanticDriftObserver:
                 "abs_log_norm_ratio": _summary(values["abs_log_norm_ratio"]),
                 "angle_deg": _summary(values["angle_deg"]),
             }
+            if self.flags["save_per_sample"]:
+                selected_indices = torch.where(class_mask)[0]
+                for row, index in enumerate(selected_indices.tolist()):
+                    per_sample.append(
+                        {
+                            "sample_id": int(sample_ids[index]),
+                            "class_id": int(class_id),
+                            "cosine": float(values["cosine"][row]),
+                            "l2": float(values["l2"][row]),
+                            "relative_l2": float(values["relative_l2"][row]),
+                            "norm_ratio": float(values["norm_ratio"][row]),
+                            "abs_log_norm_ratio": float(
+                                values["abs_log_norm_ratio"][row]
+                            ),
+                            "angle_deg": float(values["angle_deg"][row]),
+                        }
+                    )
         values = {
             key: np.array([record[key]["mean"] for record in records.values()])
             for key in ("sample_cosine", "sample_relative_l2")
@@ -281,6 +304,8 @@ class SemanticDriftObserver:
         }
         if self.flags["save_per_class"]:
             result["old_sample_drift"]["per_class"] = records
+        if self.flags["save_per_sample"]:
+            result["old_sample_drift"]["per_sample"] = per_sample
 
     def _add_geometry_metrics(self, result, pre, post, labels, old_mask, new_mask):
         old_ids = [int(value) for value in torch.unique(labels[old_mask]).tolist()]
@@ -354,8 +379,8 @@ class SemanticDriftObserver:
                 for index, class_id in enumerate(old_ids)
             ]
         )
-        dispersion_ratio = dispersion_post / (dispersion_pre + 1e-12)
         if self.flags["compute_distribution_metrics"]:
+            dispersion_ratio = dispersion_post / (dispersion_pre + 1e-12)
             distribution = {
                 "trace_ratio": _summary(trace_ratio.numpy()),
                 "diagonal_covariance_drift": _summary(diag_drift.numpy()),

@@ -235,6 +235,17 @@ class SemanticDriftTests(unittest.TestCase):
         self.assertIn("old_distribution_drift", observer._task_result)
         self.assertNotIn("_old_probe_covariances", observer._task_result)
 
+    def test_per_sample_serialization_is_opt_in(self):
+        learner = make_flagged_learner(save_per_sample=True)
+        observer = SemanticDriftObserver(learner)
+        dataset = ProbeDataset()
+        observer.prepare(dataset, IdentityModel())
+        observer.measure_post(dataset, IdentityModel())
+        self.assertEqual(
+            len(observer._task_result["old_sample_drift"]["per_sample"]),
+            2,
+        )
+
 
 if __name__ == "__main__":
     unittest.main()
