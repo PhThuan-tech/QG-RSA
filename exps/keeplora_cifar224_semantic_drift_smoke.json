@@ -4,7 +4,7 @@
   "save_checkpoints": false,
   "resume": false,
   "isolate_runs": true,
-  "max_tasks_per_run": 1,
+  "max_tasks_per_run": 2,
   "eval_interval": 0,
   "ca_eval_interval": 0,
   "num_workers": 2,
@@ -52,6 +52,15 @@
     "enabled": true,
     "probe_source": "test",
     "probe_mode": "test",
-    "max_samples_per_class": 4
+    "max_samples_per_class": 4,
+    "compute_sample_metrics": true,
+    "compute_prototype_metrics": true,
+    "compute_distribution_metrics": true,
+    "compute_separation_metrics": true,
+    "compute_relational_metrics": true,
+    "compute_ssca_diagnostic": true,
+    "compute_full_covariance": false,
+    "save_per_class": true,
+    "save_per_sample": false
   }
 }

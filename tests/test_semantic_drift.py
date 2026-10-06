@@ -55,6 +55,12 @@ def make_learner(enabled=True):
     return learner
 
 
+def make_flagged_learner(**flags):
+    learner = make_learner()
+    learner.args["semantic_drift"].update(flags)
+    return learner
+
+
 class SemanticDriftTests(unittest.TestCase):
     def test_pair_metrics_identity_orthogonal_opposite(self):
         identity = _pair_metrics(torch.tensor([[1.0, 0.0]]), torch.tensor([[1.0, 0.0]]))
@@ -171,6 +177,7 @@ class SemanticDriftTests(unittest.TestCase):
 
     def test_memory_and_evaluation_diagnostics_are_recorded(self):
         learner = make_learner()
+        learner.args["semantic_drift"]["compute_full_covariance"] = True
         learner.args["increment"] = 1
         learner._class_covs = torch.eye(2).repeat(2, 1, 1)
         observer = SemanticDriftObserver(learner)
@@ -191,6 +198,42 @@ class SemanticDriftTests(unittest.TestCase):
         self.assertIn("stored_covariance_vs_empirical_post_relative_frobenius", memory)
         self.assertIn("effective_ca_mean_vs_empirical_post", memory)
         self.assertEqual(observer._task_result["evaluation"]["old_class_accuracy"], 40.0)
+
+    def test_metric_flags_gate_computation_and_serialization(self):
+        learner = make_flagged_learner(
+            compute_sample_metrics=False,
+            compute_prototype_metrics=False,
+            compute_distribution_metrics=False,
+            compute_separation_metrics=False,
+            compute_relational_metrics=False,
+            compute_ssca_diagnostic=False,
+            save_per_class=False,
+            save_per_sample=False,
+        )
+        observer = SemanticDriftObserver(learner)
+        dataset = ProbeDataset()
+        observer.prepare(dataset, IdentityModel())
+        observer.measure_post(dataset, IdentityModel())
+        observer.record_ssca(
+            np.zeros((2, 2), dtype=np.float32),
+            np.ones((2, 2), dtype=np.float32),
+        )
+        result = observer._task_result
+        self.assertEqual(result["old_sample_drift"], {})
+        self.assertEqual(result["new_task_shift"], {})
+        self.assertEqual(result["old_prototype_drift"], {})
+        self.assertEqual(result["old_distribution_drift"], {})
+        self.assertEqual(result["old_relational_drift"], {})
+        self.assertEqual(result["old_new_separation"], {})
+        self.assertEqual(result["ssca_diagnostic"], {})
+
+    def test_default_distribution_path_does_not_store_full_covariance(self):
+        observer = SemanticDriftObserver(make_learner())
+        dataset = ProbeDataset()
+        observer.prepare(dataset, IdentityModel())
+        observer.measure_post(dataset, IdentityModel())
+        self.assertIn("old_distribution_drift", observer._task_result)
+        self.assertNotIn("_old_probe_covariances", observer._task_result)
 
 
 if __name__ == "__main__":

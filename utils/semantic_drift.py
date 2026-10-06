@@ -80,6 +80,17 @@ class SemanticDriftObserver:
         self.learner = learner
         self.config = dict(learner.args.get("semantic_drift", {}))
         self.enabled = bool(self.config.get("enabled", False))
+        self.flags = {
+            "compute_sample_metrics": bool(self.config.get("compute_sample_metrics", True)),
+            "compute_prototype_metrics": bool(self.config.get("compute_prototype_metrics", True)),
+            "compute_distribution_metrics": bool(self.config.get("compute_distribution_metrics", True)),
+            "compute_separation_metrics": bool(self.config.get("compute_separation_metrics", True)),
+            "compute_relational_metrics": bool(self.config.get("compute_relational_metrics", True)),
+            "compute_ssca_diagnostic": bool(self.config.get("compute_ssca_diagnostic", True)),
+            "save_per_class": bool(self.config.get("save_per_class", True)),
+            "save_per_sample": bool(self.config.get("save_per_sample", False)),
+            "compute_full_covariance": bool(self.config.get("compute_full_covariance", False)),
+        }
         self._pre = None
         self._post = None
         self._task_result = None
@@ -189,11 +200,9 @@ class SemanticDriftObserver:
                 ),
                 "old_probe": self._probe_info(pre_labels, old_mask),
                 "new_probe": self._probe_info(pre_labels, new_mask),
-                "old_sample_drift": self._group_summary(metrics, old_mask),
-                "new_task_shift": self._group_summary(metrics, new_mask),
-                "old_new_drift_ratio": self._drift_ratios(
-                    metrics, old_mask, new_mask
-                ),
+                "old_sample_drift": {},
+                "new_task_shift": {},
+                "old_new_drift_ratio": {},
                 "old_prototype_drift": {},
                 "old_distribution_drift": {},
                 "old_relational_drift": {},
@@ -202,16 +211,17 @@ class SemanticDriftObserver:
                 "prototype_memory_diagnostic": {},
                 "evaluation": {},
             }
+            if self.flags["compute_sample_metrics"]:
+                result["old_sample_drift"] = self._group_summary(metrics, old_mask)
+                result["new_task_shift"] = self._group_summary(metrics, new_mask)
+                result["old_new_drift_ratio"] = self._drift_ratios(
+                    metrics, old_mask, new_mask
+                )
+                self._add_class_metrics(
+                    result, pre_features, post_features, pre_labels, old_mask
+                )
             self._add_geometry_metrics(
-                result,
-                pre_features,
-                post_features,
-                pre_labels,
-                old_mask,
-                new_mask,
-            )
-            self._add_class_metrics(
-                result, pre_features, post_features, pre_labels, old_mask
+                result, pre_features, post_features, pre_labels, old_mask, new_mask
             )
             self._task_result = result
         finally:
@@ -262,49 +272,72 @@ class SemanticDriftObserver:
                 "abs_log_norm_ratio": _summary(values["abs_log_norm_ratio"]),
                 "angle_deg": _summary(values["angle_deg"]),
             }
-        result["old_sample_drift"]["per_class"] = records
+        values = {
+            key: np.array([record[key]["mean"] for record in records.values()])
+            for key in ("sample_cosine", "sample_relative_l2")
+        }
+        result["old_sample_drift"]["heterogeneity"] = {
+            key: _summary(value) for key, value in values.items()
+        }
+        if self.flags["save_per_class"]:
+            result["old_sample_drift"]["per_class"] = records
 
     def _add_geometry_metrics(self, result, pre, post, labels, old_mask, new_mask):
         old_ids = [int(value) for value in torch.unique(labels[old_mask]).tolist()]
         new_ids = [int(value) for value in torch.unique(labels[new_mask]).tolist()]
-        old_pre, old_post, old_cov_pre, old_cov_post = [], [], [], []
+        old_pre, old_post = [], []
+        old_cov_pre, old_cov_post = [], []
         for class_id in old_ids:
             selected = labels == class_id
-            mean_pre, cov_pre = _mean_covariance(pre[selected])
-            mean_post, cov_post = _mean_covariance(post[selected])
+            mean_pre = pre[selected].mean(dim=0)
+            mean_post = post[selected].mean(dim=0)
             old_pre.append(mean_pre)
             old_post.append(mean_post)
-            old_cov_pre.append(cov_pre)
-            old_cov_post.append(cov_post)
+            if self.flags["compute_distribution_metrics"] and self.flags["compute_full_covariance"]:
+                _, cov_pre = _mean_covariance(pre[selected])
+                _, cov_post = _mean_covariance(post[selected])
+                old_cov_pre.append(cov_pre)
+                old_cov_post.append(cov_post)
         if not old_ids:
             return
         old_pre = torch.stack(old_pre)
         old_post = torch.stack(old_post)
-        proto = _pair_metrics(old_pre, old_post)
-        result["old_prototype_drift"] = {
-            "cosine": _summary(proto["cosine"]),
-            "l2": _summary(proto["l2"]),
-            "relative_l2": _summary(proto["relative_l2"]),
-            "norm_ratio": _summary(proto["norm_ratio"]),
-            "per_class": {
-                str(class_id): {
-                    "class_id": class_id,
-                    "prototype_cosine_drift": float(proto["cosine"][index]),
-                    "prototype_l2": float(proto["l2"][index]),
-                    "prototype_relative_l2": float(proto["relative_l2"][index]),
-                    "prototype_norm_ratio": float(proto["norm_ratio"][index]),
+        if self.flags["compute_prototype_metrics"]:
+            proto = _pair_metrics(old_pre, old_post)
+            result["old_prototype_drift"] = {
+                "cosine": _summary(proto["cosine"]),
+                "l2": _summary(proto["l2"]),
+                "relative_l2": _summary(proto["relative_l2"]),
+                "norm_ratio": _summary(proto["norm_ratio"]),
+            }
+            if self.flags["save_per_class"]:
+                result["old_prototype_drift"]["per_class"] = {
+                    str(class_id): {
+                        "class_id": class_id,
+                        "prototype_cosine_drift": float(proto["cosine"][index]),
+                        "prototype_l2": float(proto["l2"][index]),
+                        "prototype_relative_l2": float(proto["relative_l2"][index]),
+                        "prototype_norm_ratio": float(proto["norm_ratio"][index]),
+                    }
+                    for index, class_id in enumerate(old_ids)
                 }
-                for index, class_id in enumerate(old_ids)
-            },
-        }
-        trace_pre = torch.tensor(
-            [torch.trace(value) for value in old_cov_pre]
-        )
-        trace_post = torch.tensor(
-            [torch.trace(value) for value in old_cov_post]
-        )
-        diag_pre = torch.stack([torch.diagonal(value) for value in old_cov_pre])
-        diag_post = torch.stack([torch.diagonal(value) for value in old_cov_post])
+        if self.flags["compute_distribution_metrics"]:
+            variances_pre = torch.stack([
+                pre[labels == class_id].var(dim=0, unbiased=False)
+                for class_id in old_ids
+            ])
+            variances_post = torch.stack([
+                post[labels == class_id].var(dim=0, unbiased=False)
+                for class_id in old_ids
+            ])
+            trace_pre = variances_pre.sum(dim=1)
+            trace_post = variances_post.sum(dim=1)
+            diag_drift = torch.linalg.vector_norm(
+                variances_post - variances_pre, dim=1
+            ) / (torch.linalg.vector_norm(variances_pre, dim=1) + 1e-12)
+            trace_ratio = trace_post / (trace_pre + 1e-12)
+        else:
+            trace_pre = trace_post = diag_drift = trace_ratio = None
         dispersion_pre = torch.tensor(
             [
                 ((pre[labels == class_id] - old_pre[index]) ** 2)
@@ -321,41 +354,36 @@ class SemanticDriftObserver:
                 for index, class_id in enumerate(old_ids)
             ]
         )
-        diag_drift = torch.linalg.vector_norm(
-            diag_post - diag_pre, dim=1
-        ) / (torch.linalg.vector_norm(diag_pre, dim=1) + 1e-12)
-        trace_ratio = trace_post / (trace_pre + 1e-12)
         dispersion_ratio = dispersion_post / (dispersion_pre + 1e-12)
-        result["old_distribution_drift"] = {
-            "trace_ratio": _summary(trace_ratio.numpy()),
-            "diagonal_covariance_drift": _summary(diag_drift.numpy()),
-            "within_class_dispersion_ratio": _summary(dispersion_ratio.numpy()),
-            "per_class": {
-                str(class_id): {
-                    "class_id": class_id,
-                    "trace_ratio": float(trace_ratio[index]),
-                    "diagonal_covariance_drift": float(diag_drift[index]),
-                    "within_class_dispersion_ratio": float(
-                        dispersion_ratio[index]
-                    ),
+        if self.flags["compute_distribution_metrics"]:
+            distribution = {
+                "trace_ratio": _summary(trace_ratio.numpy()),
+                "diagonal_covariance_drift": _summary(diag_drift.numpy()),
+                "within_class_dispersion_ratio": _summary(dispersion_ratio.numpy()),
+            }
+            if self.flags["save_per_class"]:
+                distribution["per_class"] = {
+                    str(class_id): {
+                        "class_id": class_id,
+                        "trace_ratio": float(trace_ratio[index]),
+                        "diagonal_covariance_drift": float(diag_drift[index]),
+                        "within_class_dispersion_ratio": float(dispersion_ratio[index]),
+                    }
+                    for index, class_id in enumerate(old_ids)
                 }
-                for index, class_id in enumerate(old_ids)
-            },
-        }
-        self._add_relational_metrics(result, old_pre, old_post, old_ids)
-        self._add_separation_metrics(
-            result, old_pre, old_post, pre, post, labels, old_ids, new_ids
-        )
-        result["_old_probe_means"] = {
-            "pre": old_pre.numpy().tolist(),
-            "post": old_post.numpy().tolist(),
-            "class_ids": old_ids,
-        }
-        result["_old_probe_covariances"] = {
-            "pre": [value.numpy().tolist() for value in old_cov_pre],
-            "post": [value.numpy().tolist() for value in old_cov_post],
-            "class_ids": old_ids,
-        }
+            result["old_distribution_drift"] = distribution
+        if self.flags["compute_relational_metrics"]:
+            self._add_relational_metrics(result, old_pre, old_post, old_ids)
+        if self.flags["compute_separation_metrics"]:
+            self._add_separation_metrics(
+                result, old_pre, old_post, pre, post, labels, old_ids, new_ids
+            )
+        if self.flags["compute_full_covariance"]:
+            result["_old_probe_covariances"] = {
+                "pre": [value.numpy().tolist() for value in old_cov_pre],
+                "post": [value.numpy().tolist() for value in old_cov_post],
+                "class_ids": old_ids,
+            }
 
     def _add_relational_metrics(self, result, pre_means, post_means, class_ids):
         if len(class_ids) < 2:
@@ -418,7 +446,12 @@ class SemanticDriftObserver:
         }
 
     def record_ssca(self, means_before, means_after):
-        if not self.enabled or self._task_result is None or self._pre is None:
+        if (
+            not self.enabled
+            or not self.flags["compute_ssca_diagnostic"]
+            or self._task_result is None
+            or self._pre is None
+        ):
             return
         pre_features, pre_labels, _ = self._pre
         post_features, post_labels, _ = self._post
