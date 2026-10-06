@@ -179,3 +179,40 @@ If you find this useful in your research, please consider citing:
 This repo is based on [PILOT](https://github.com/LAMDA-CL/LAMDA-PILOT) and [SSIAT](https://github.com/HAIV-Lab/SSIAT).
 
 Thanks for their wonderful work!!!
+## Optional semantic-drift diagnostics
+
+The opt-in `semantic_drift` configuration observes representation changes without
+changing training, losses, optimizer state, CA, SSCA, displacement, or
+checkpoint compatibility. It captures deterministic test probes with
+`shuffle=false`, validates sample IDs and labels between the frozen pre-task
+network and the trained network, and writes one JSON file per incremental task
+plus `summary.csv` under `semantic_drift/<prefix>/`.
+
+The six ready-to-run configurations are:
+
+- `exps/adapter_cifar224_semantic_drift.json`
+- `exps/keeplora_cifar224_semantic_drift.json`
+- `exps/adapter_cifar224_semantic_drift_nossca.json`
+- `exps/keeplora_cifar224_semantic_drift_nossca.json`
+- `exps/adapter_cifar224_semantic_drift_noca.json`
+- `exps/keeplora_cifar224_semantic_drift_noca.json`
+
+The primary pair keeps the existing Adapter and KeepLoRA settings with both
+SSCA and CA enabled. The ablations disable one correction at a time. These are
+diagnostics only; do not compare their metrics to a run with different data,
+seed, optimizer, or schedule.
+
+Each task JSON also includes old/new sample and prototype drift, covariance and
+within-class dispersion changes, old-old relational drift, old-new centroid
+separation, SSCA direction/magnitude/error diagnostics, prototype-memory
+mismatch, effective CA mean scaling, evaluation (overall/old/new), and the
+trainable-parameter audit. The observer uses `torch.no_grad()`, restores model
+mode and RNG state, and never calls backward or an optimizer step. The existing
+shuffled training loader used by displacement is intentionally unchanged.
+
+Optional plots A-G can be generated from a run directory:
+
+    python tools/plot_semantic_drift.py semantic_drift/<prefix>/summary.csv
+
+The script reads the per-task JSON files beside `summary.csv` and writes
+`semantic_drift_plots.png`.

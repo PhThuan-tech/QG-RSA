@@ -14,6 +14,7 @@ from models.base import BaseLearner
 from utils.toolkit import count_parameters, log_count_parameter, target2onehot, tensor2numpy
 from utils.loss import AngularPenaltySMLoss
 from utils.toolkit import AutoencoderSigmoid
+from utils.semantic_drift import SemanticDriftObserver
 from KeepLora.keeplora_controller import KeepLoRAController
 import math
 num_workers = 8
@@ -35,6 +36,7 @@ class Learner(BaseLearner):
         self.weight_decay = args["weight_decay"] if args["weight_decay"] is not None else 0.0005
         self.min_lr = args['min_lr'] if args['min_lr'] is not None else 1e-8
         self.args = args
+        self.semantic_drift = SemanticDriftObserver(self)
 
         self._old_most_sentive = []
         self._update_grads = {}
@@ -135,7 +137,7 @@ class Learner(BaseLearner):
 
     def _rae_mode(self):
         if self.rae_zero_init and self.rae_lifecycle == "shared":
-            if not self._uses_keeplora:
+            if not getattr(self, "_uses_keeplora", False):
                 return "zero_shared_baseline"
             return "zero_shared"
         return "{}_{}".format(
@@ -501,7 +503,14 @@ class Learner(BaseLearner):
             print('Multiple GPUs')
             self._network = nn.DataParallel(self._network, self._multiple_gpus)
 
-      
+        if self.semantic_drift.enabled:
+            self.semantic_drift.record_parameter_audit(self._network)
+
+        if self._cur_task > 0 and self.semantic_drift.enabled:
+            self.semantic_drift.prepare(
+                self.test_loader.dataset, self.old_network_module_ptr
+            )
+
         if self._cur_task >0:
             self._network.to(self._device)
             train_embeddings_old, _ = self.extract_features(self.train_loader, self._network, None)
@@ -512,14 +521,28 @@ class Learner(BaseLearner):
         if len(self._multiple_gpus) > 1:
             self._network = self._network.module
 
-      
-        if self._cur_task >0:
-            train_embeddings_new, _ = self.extract_features(self.train_loader, self._network, None)
+        if self._cur_task > 0 and self.semantic_drift.enabled:
+            self.semantic_drift.measure_post(
+                self.test_loader.dataset, self._network
+            )
+
+        if self._cur_task > 0:
+            train_embeddings_new, _ = self.extract_features(
+                self.train_loader, self._network, None
+            )
+            means_before_ssca = self._class_means.copy()
             old_class_mean = self._class_means[:self._known_classes]
-            gap = self.displacement(train_embeddings_old, train_embeddings_new, old_class_mean, 4.0)
-            if self.args['ssca'] is True:
-                old_class_mean +=gap
+            gap = self.displacement(
+                train_embeddings_old, train_embeddings_new, old_class_mean, 4.0
+            )
+            if self.args["ssca"] is True:
+                old_class_mean += gap
                 self._class_means[:self._known_classes] = old_class_mean
+            if self.semantic_drift.enabled:
+                self.semantic_drift.record_ssca(
+                    means_before_ssca, self._class_means
+                )
+                self.semantic_drift.write_task()
 
         self._network.fc.backup()
         self._compute_class_mean(data_manager, check_diff=False, oracle=False)
