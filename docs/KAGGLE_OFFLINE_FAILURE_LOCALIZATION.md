@@ -152,9 +152,10 @@ tuning should occur between preflight and execution.
     FAILED.json             # only when a started run fails
 ```
 
-One console line per task shows variant/seed/task, completed training and CA
-epochs, pre/post total/old/new accuracy, post-CA forgetting and task time. Base
-task has no CA, so pre/post coincide and old accuracy/forgetting are `n/a`.
+One console line per task shows variant/seed/task, running Average Accuracy,
+post-CA Top-1 and Top-5. A final line reports Average Accuracy, Final Top-1 and
+Final Top-5 after the checkpoint is saved. Epoch counts, pre/post old/new accuracy,
+forgetting and timing remain in CSV/JSON. Base task has no CA, so pre/post coincide.
 No per-batch losses, kernel histograms, gradient diagnostics or progress bars
 are printed. New diagnostics remain available in JSON. No old output is repaired
 or overwritten. Checkpoints are saved only after the final task; full covariance
@@ -167,7 +168,8 @@ All accuracies are percentages, forgetting is in percentage points. With tasks
 accuracy on the class range of task `i` evaluated after task `t`.
 
 - `average_incremental_accuracy = mean(a_t)`, including the base task.
-- `final_accuracy = a_(T-1)`.
+- `final_accuracy = final_top1 = a_(T-1)`; `final_top5` is post-CA top-5 at the final task.
+- `post_ca_top5` records top-5 for every completed task.
 - `F_t = mean_i<t(max_(s=i..t-1) a[s,i] - a[t,i])`; base forgetting is undefined.
 - `average_forgetting = mean(F_1..F_(T-1))`. `final_forgetting = F_(T-1)` is also
   exported to distinguish the two common reporting conventions. Gains can yield
@@ -184,6 +186,23 @@ observed effect of classifier alignment in each task. All variants keep SSCA
 enabled: this matrix cannot establish SSCA's independent causal effect or a
 quantum-specific advantage. Those would need additional experiments, outside
 this request. No aggregate comparison report is generated here.
+
+## Recover top-5 for an older completed run
+
+Older exports omitted top-5 even though evaluation computed it. Do not interrupt
+an ongoing run. Once its final checkpoint and `run_summary.json` exist, use the
+updated source in the same offline environment:
+
+```bash
+python scripts/run_failure_localization.py --evaluate-final /kaggle/working/<study>/runs/A0_1993
+```
+
+This evaluates the final checkpoint without training and writes a unique
+`final_evaluation_<id>.json` containing Average Accuracy, Final Top-1 and Final
+Top-5. Existing logs, summaries and checkpoints are unchanged. Saved asset paths
+must still be available; recovered top-1 must match the saved final accuracy.
+The collection script includes these recovery files. A partial `tasks.jsonl`
+cannot provide final accuracy or recover missing top-5 by itself.
 
 ## Files to send back
 

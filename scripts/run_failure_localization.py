@@ -21,7 +21,7 @@ sys.path.insert(0, str(REPO_ROOT))
 # Set before importing timm/Hugging Face, including in spawned subprocesses.
 os.environ.update({"HF_HUB_OFFLINE": "1", "TRANSFORMERS_OFFLINE": "1", "HF_DATASETS_OFFLINE": "1"})
 
-from utils.failure_localization import SEEDS, VARIANTS, TaskRecorder, build_configs, validate_configs, write_json, task_line
+from utils.failure_localization import SEEDS, VARIANTS, TaskRecorder, build_configs, validate_configs, write_json, task_line, final_line
 from utils.offline_assets import resolve_data_root, resolve_weights, extract_cifar_archive, sha256_file, no_network
 
 
@@ -246,7 +246,8 @@ def execute_run(config, directory, expected_order, expected_tasks):
                 task_seconds = time.perf_counter() - task_start
                 diagnostic = model.task_diagnostics[-1] if task > 0 else None
                 row = recorder.add(task, args, result, diagnostic, timings, task_seconds)
-                model.cnn_curve = {"top1": [r["post_ca_total"] for r in recorder.rows], "top5": []}
+                model.cnn_curve = {"top1": [r["post_ca_total"] for r in recorder.rows],
+                                   "top5": [r["post_ca_top5"] for r in recorder.rows]}
                 model.task_accuracy_matrix = recorder.post_matrix
                 if task == 0:
                     base_hash = {"network": state_digest(model._network),
@@ -258,6 +259,7 @@ def execute_run(config, directory, expected_order, expected_tasks):
             summary.update({"base_state_sha256": base_hash, "checkpoint_seconds": time.perf_counter() - checkpoint_start,
                             "final_checkpoint": "final_task.pkl", "status": "complete"})
             write_json(directory / "run_summary.json", summary)
+            print(final_line(summary), file=console, flush=True)
         return summary
     except Exception as error:
         logging.exception("Failure localization run did not complete.")
@@ -299,11 +301,56 @@ def run_study(study, variants, seeds):
                     saved["class_orders"][str(config["seed"][0])], saved["task_sizes"])
 
 
+def evaluate_final(directory):
+    """Recover final top-1/top-5 from a completed older run, without training."""
+    import torch
+    from torch.utils.data import DataLoader
+    from data.data_manager import DataManager
+    from trainer import _set_random, _set_device
+    from utils.model_factory import get_model
+
+    directory = Path(directory).resolve()
+    manifest = json.loads((directory / "run_manifest.json").read_text(encoding="utf-8"))
+    summary = json.loads((directory / "run_summary.json").read_text(encoding="utf-8"))
+    checkpoint = directory / summary["final_checkpoint"]
+    destination = directory / ("final_evaluation_" + uuid.uuid4().hex[:8] + ".json")
+    args = copy.deepcopy(manifest["config"])
+    args["seed"] = args["seed"][0]
+    with no_network(), redirect_stdout(io.StringIO()), redirect_stderr(io.StringIO()):
+        _set_random(args["seed"])
+        _set_device(args)
+        manager = DataManager(args["dataset"], args["shuffle"], args["seed"], args["init_cls"], args["increment"],
+                              data_root=args["data_root"], offline=True)
+        if list(manager._class_order) != manifest["class_order"]:
+            raise ValueError("Class order differs from the completed run.")
+        model = get_model(args["model_name"], args)
+        model.class_order = list(manager._class_order)
+        model.load_checkpoint(str(checkpoint))
+        if model._cur_task != manager.nb_tasks - 1 or model._total_classes != manager.get_total_classnum():
+            raise ValueError("Checkpoint is not from the final task.")
+        dataset = manager.get_dataset(range(model._total_classes), source="test", mode="test")
+        model.test_loader = DataLoader(dataset, batch_size=args["batch_size"], shuffle=False, num_workers=0,
+                                      generator=torch.Generator().manual_seed(args["seed"]))
+        model.evaluation_loader = model.test_loader
+        result = model.eval_task()
+        if result["top1"] != summary["final_accuracy"]:
+            raise ValueError("Re-evaluated top-1 differs from the saved final accuracy; check assets/runtime.")
+    recovered = {"variant": summary["variant"], "seed": summary["seed"],
+                 "average_incremental_accuracy": summary["average_incremental_accuracy"],
+                 "final_top1": result["top1"], "final_top5": result["top5"],
+                 "checkpoint": str(checkpoint), "evaluation_only": True}
+    write_json(destination, recovered)
+    print(final_line(recovered))
+    print("Saved evaluation (historical files unchanged): {}".format(destination))
+    return recovered
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     modes = parser.add_mutually_exclusive_group(required=True)
     modes.add_argument("--prepare-only", action="store_true")
     modes.add_argument("--run-study", type=Path)
+    modes.add_argument("--evaluate-final", type=Path)
     parser.add_argument("--dataset", choices=("cifar224", "imageneta", "imagenetr"), default="cifar224")
     parser.add_argument("--source")
     parser.add_argument("--input-root", default="/kaggle/input")
@@ -317,8 +364,10 @@ def main():
     try:
         if args.prepare_only:
             prepare(args)
-        else:
+        elif args.run_study:
             run_study(args.run_study, args.variants, args.seeds)
+        else:
+            evaluate_final(args.evaluate_final)
     except Exception as error:
         print("Offline study stopped: {}".format(error), file=sys.stderr)
         return 1

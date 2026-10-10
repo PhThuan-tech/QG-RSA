@@ -274,15 +274,17 @@ class FailureLocalizationTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             recorder = TaskRecorder(directory, "A0", 1993)
             config = {"init_epochs": 10, "inc_epochs": 30, "ca_epochs": 10, "ca": True}
-            base = {"grouped": {"total": 80., "old": 0., "new": 80.}, "task_accuracies": [80.]}
+            base = {"top5": 98., "grouped": {"total": 80., "old": 0., "new": 80.}, "task_accuracies": [80.]}
             first = recorder.add(0, config, base, None, {"adapter": 2.}, 3.)
             self.assertIsNone(first["pre_ca_old"])
-            post = {"grouped": {"total": 82.5, "old": 75., "new": 90.}, "task_accuracies": [75., 90.]}
+            post = {"top5": 99., "grouped": {"total": 82.5, "old": 75., "new": 90.}, "task_accuracies": [75., 90.]}
             pre = {"grouped": {"total": 78., "old": 70., "new": 86.}, "task_accuracies": [70., 86.]}
             diagnostic = {"pre_ca": pre, "post_ca": post, "ca_applied": True}
             second = recorder.add(1, config, post, diagnostic, {"adapter": 3., "ca": 1.}, 5.)
             summary = recorder.summary(2, 10.)
             self.assertEqual(summary["average_incremental_accuracy"], 81.25)
+            self.assertEqual(summary["final_top1"], 82.5)
+            self.assertEqual(summary["final_top5"], 99.)
             self.assertEqual(summary["average_forgetting"], 5.)
             self.assertEqual(summary["training_seconds"], 6.)
             self.assertEqual(summary["total_task_seconds"], 8.)
@@ -298,8 +300,16 @@ class FailureLocalizationTests(unittest.TestCase):
 
     def test_runner_produces_only_final_checkpoint_and_short_task_logs(self):
         manager = make_manager()
+        rng = np.random.default_rng(49)
+        manager._train_data = rng.integers(0, 256, (120, 2, 2, 3), dtype=np.uint8)
+        manager._train_targets = np.repeat(np.arange(15), 8)
+        manager._test_data = rng.integers(0, 256, (60, 2, 2, 3), dtype=np.uint8)
+        manager._test_targets = np.repeat(np.arange(15), 4)
+        manager._class_order = list(range(15))
+        manager._increments = [5, 5, 5]
         template = make_learner(val_ratio=0.).args
-        template.update(device=[0], model_name="adapter", shuffle=True, data_root="/uploaded", pretrained_path="/uploaded/weights.pth")
+        template.update(device=[0], model_name="adapter", shuffle=True, init_cls=5, increment=5,
+                        data_root="/uploaded", pretrained_path="/uploaded/weights.pth")
         configs = build_configs(template)
         expected = manager._class_order
         summaries = {}
@@ -308,7 +318,7 @@ class FailureLocalizationTests(unittest.TestCase):
             learner.args = args
             learner.use_quantum_kernel_base = args["use_quantum_kernel_base"]
             learner.use_quantum_kernel_inc = args["use_quantum_kernel_inc"]
-            learner.topk = 2
+            learner.topk = 5
             return learner
         with tempfile.TemporaryDirectory() as directory, \
              patch("data.data_manager.DataManager", return_value=manager), \
@@ -319,17 +329,27 @@ class FailureLocalizationTests(unittest.TestCase):
                 destination = Path(directory) / config["prefix"]
                 output = io.StringIO()
                 with redirect_stdout(output):
-                    summary = runner.execute_run(config, destination, expected, [2, 2, 2])
+                    summary = runner.execute_run(config, destination, expected, [5, 5, 5])
                 summaries[config["prefix"]] = summary
-                self.assertEqual(len(output.getvalue().splitlines()), 3)
+                self.assertEqual(len(output.getvalue().splitlines()), 4)
+                self.assertIn("FINAL Average Accuracy=", output.getvalue())
+                self.assertIn("Final Top-5=", output.getvalue())
                 self.assertNotIn("Loss", output.getvalue())
                 self.assertNotIn("kernel=", output.getvalue())
                 self.assertEqual([p.name for p in destination.glob("*.pkl")], ["final_task.pkl"])
                 with (destination / "tasks.csv").open() as stream:
                     self.assertEqual(len(list(csv.DictReader(stream))), 3)
                 self.assertEqual(summary["status"], "complete")
+                historical = {p.name: p.read_bytes() for p in destination.iterdir() if p.is_file()}
+                with patch("models.RSIAT_adapter.Learner.incremental_train", side_effect=AssertionError("training forbidden")), \
+                     redirect_stdout(io.StringIO()):
+                    recovered = runner.evaluate_final(destination)
+                self.assertEqual(recovered["final_top5"], summary["final_top5"])
+                self.assertEqual(recovered["final_top1"], summary["final_top1"])
+                for name, content in historical.items():
+                    self.assertEqual((destination / name).read_bytes(), content)
                 with self.assertRaises(FileExistsError):
-                    runner.execute_run(config, destination, expected, [2, 2, 2])
+                    runner.execute_run(config, destination, expected, [5, 5, 5])
             self.assertEqual(summaries["A1"]["base_state_sha256"], summaries["A2"]["base_state_sha256"])
 
     def test_failed_run_records_failure_without_final_metrics(self):

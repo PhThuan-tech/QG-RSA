@@ -20,6 +20,7 @@ def collect(study, output):
         for name in ("tasks.csv", "tasks.jsonl", "run_manifest.json", "run_summary.json", "FAILED.json", "train.log", "runtime_output.log"):
             if (directory / name).is_file():
                 paths.append(directory / name)
+        paths.extend(directory.glob("final_evaluation_*.json"))
         if (directory / "run_summary.json").is_file():
             completed.append(entry["run_id"])
         else:

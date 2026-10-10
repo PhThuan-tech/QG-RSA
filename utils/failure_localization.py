@@ -14,7 +14,7 @@ VARYING_FIELDS = {"seed", "prefix", "use_quantum_kernel_base", "use_quantum_kern
 CSV_FIELDS = (
     "variant", "seed", "task", "train_epochs", "ca_epochs", "ca_applied",
     "evaluation_split", "pre_ca_total", "pre_ca_old", "pre_ca_new",
-    "post_ca_total", "post_ca_old", "post_ca_new", "pre_ca_forgetting",
+    "post_ca_total", "post_ca_top5", "post_ca_old", "post_ca_new", "pre_ca_forgetting",
     "post_ca_forgetting", "running_aia", "adapter_stage_seconds", "ca_stage_seconds",
     "training_seconds", "task_seconds",
 )
@@ -134,6 +134,7 @@ class TaskRecorder:
             "ca_epochs": config["ca_epochs"] if task > 0 and config["ca"] else 0,
             "ca_applied": bool(diagnostic and diagnostic["ca_applied"]),
             "evaluation_split": "test",
+            "post_ca_top5": post_result["top5"],
             **{stage + "_" + group: (None if task == 0 and group == "old" else result["grouped"][group])
                for stage, result in (("pre_ca", pre), ("post_ca", post)) for group in ("total", "old", "new")},
             "pre_ca_forgetting": forgetting(self.pre_matrix),
@@ -161,6 +162,8 @@ class TaskRecorder:
             "variant": self.variant, "seed": self.seed, "completed_tasks": len(self.rows),
             "average_incremental_accuracy": self.rows[-1]["running_aia"],
             "final_accuracy": self.rows[-1]["post_ca_total"],
+            "final_top1": self.rows[-1]["post_ca_total"],
+            "final_top5": self.rows[-1]["post_ca_top5"],
             "average_forgetting": statistics.mean(values) if values else None,
             "final_forgetting": self.rows[-1]["post_ca_forgetting"],
             "training_seconds": sum(row["training_seconds"] for row in self.rows),
@@ -172,12 +175,10 @@ class TaskRecorder:
 
 
 def task_line(row):
-    def number(value):
-        return "n/a" if value is None else "{:.2f}".format(value)
-    def triple(stage):
-        return "/".join(number(row[stage + "_" + key]) for key in ("total", "old", "new"))
-    return ("{variant} seed={seed} task={task} epochs={train_epochs}+CA:{ca_epochs} "
-            "pre(total/old/new)={pre} post={post} forgetting={forget}pp time={seconds:.1f}s").format(
-                **row, pre=triple("pre_ca"), post=triple("post_ca"),
-                forget=number(row["post_ca_forgetting"]), seconds=row["task_seconds"],
-            )
+    return ("{variant} seed={seed} task={task} Average Accuracy={running_aia:.2f}% "
+            "Top-1={post_ca_total:.2f}% Top-5={post_ca_top5:.2f}%").format(**row)
+
+
+def final_line(summary):
+    return ("{variant} seed={seed} FINAL Average Accuracy={average_incremental_accuracy:.2f}% "
+            "Final Top-1={final_top1:.2f}% Final Top-5={final_top5:.2f}%").format(**summary)
