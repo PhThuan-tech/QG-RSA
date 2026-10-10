@@ -1,9 +1,12 @@
 import numpy as np
+from pathlib import Path
 from torchvision import datasets, transforms
 from utils.toolkit import split_images_labels
 
 
 class iData(object):
+    data_root = None
+    offline = False
     train_trsf = []
     test_trsf = []
     common_trsf = []
@@ -50,8 +53,10 @@ class iCIFAR224(iData):
     class_order = np.arange(100).tolist()
 
     def download_data(self):
-        train_dataset = datasets.cifar.CIFAR100("./data/datasets", train=True, download=True)
-        test_dataset = datasets.cifar.CIFAR100("./data/datasets", train=False, download=True)
+        root = self.data_root or "./data/datasets"
+        offline = getattr(self, "offline", False)
+        train_dataset = datasets.cifar.CIFAR100(root, train=True, download=not offline)
+        test_dataset = datasets.cifar.CIFAR100(root, train=False, download=not offline)
         self.train_data, self.train_targets = train_dataset.data, np.array(
             train_dataset.targets
         )
@@ -74,11 +79,14 @@ class iImageNetR(iData):
 
     def download_data(self):
         # assert 0, "You should specify the folder of your dataset"
-        train_dir = "./data/datasets/imagenet-r/train/"
-        test_dir = "./data/datasets/imagenet-r/test/"
+        root = Path(getattr(self, "data_root", None) or "./data/datasets/imagenet-r")
+        train_dir, test_dir = root / "train", root / "test"
 
         train_dset = datasets.ImageFolder(train_dir)
         test_dset = datasets.ImageFolder(test_dir)
+
+        if train_dset.class_to_idx != test_dset.class_to_idx:
+            raise ValueError("ImageNet-R train/test class mappings differ.")
 
         self.train_data, self.train_targets = split_images_labels(train_dset.imgs)
         self.test_data, self.test_targets = split_images_labels(test_dset.imgs)
@@ -95,11 +103,14 @@ class iImageNetA(iData):
 
     def download_data(self):
         # assert 0, "You should specify the folder of your dataset"
-        train_dir = "./data/datasets/imagenet-a/train/"
-        test_dir = "./data/datasets/imagenet-a/test/"
+        root = Path(getattr(self, "data_root", None) or "./data/datasets/imagenet-a")
+        train_dir, test_dir = root / "train", root / "test"
 
         train_dset = datasets.ImageFolder(train_dir)
         test_dset = datasets.ImageFolder(test_dir)
+
+        if train_dset.class_to_idx != test_dset.class_to_idx:
+            raise ValueError("ImageNet-A train/test class mappings differ.")
 
         self.train_data, self.train_targets = split_images_labels(train_dset.imgs)
         self.test_data, self.test_targets = split_images_labels(test_dset.imgs)

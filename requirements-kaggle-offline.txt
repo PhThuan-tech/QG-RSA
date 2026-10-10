@@ -1,0 +1,6 @@
+# Install only from manually uploaded wheels with pip --no-index --find-links.
+# Keep Kaggle's preinstalled CUDA torch/torchvision pair.
+timm>=1.0,<2.0
+easydict==1.13
+scipy>=1.10
+tqdm>=4.64

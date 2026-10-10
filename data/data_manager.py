@@ -7,8 +7,11 @@ from data.data import  iCIFAR224, iImageNetR,iImageNetA,CUB, vtab, omnibenchmark
 
 
 class DataManager(object):
-    def __init__(self, dataset_name, shuffle, seed, init_cls, increment):
+    def __init__(self, dataset_name, shuffle, seed, init_cls, increment,
+                 data_root=None, offline=False):
         self.dataset_name = dataset_name
+        self.data_root = data_root
+        self.offline = offline
         self._setup_data(dataset_name, shuffle, seed)
         assert init_cls <= len(self._class_order), "No enough classes."
         self._increments = [init_cls]
@@ -221,6 +224,8 @@ class DataManager(object):
 
     def _setup_data(self, dataset_name, shuffle, seed):
         idata = _get_idata(dataset_name)
+        idata.data_root = getattr(self, "data_root", None)
+        idata.offline = getattr(self, "offline", False)
         idata.download_data()
         # train_data和train_target和test_data和test_target
 

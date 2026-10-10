@@ -9,6 +9,7 @@ import timm
 from functools import partial
 from collections import OrderedDict
 import torch
+from utils.offline_assets import load_adapter_pretrained
 import torch.nn as nn
 try:
     # timm >= 0.9; timm.models.layers is deprecated in these releases.
@@ -312,78 +313,15 @@ class VisionTransformer(nn.Module):
         return x
 
 
-def vit_base_patch16_224_adapter(pretrained=False, **kwargs):
+def vit_base_patch16_224_adapter(pretrained=False, pretrained_path=None, **kwargs):
     model = VisionTransformer(patch_size=16, embed_dim=768, depth=12, num_heads=12, mlp_ratio=4, qkv_bias=True,
                               norm_layer=partial(nn.LayerNorm, eps=1e-6), **kwargs)
 
-    checkpoint_model = timm.create_model("vit_base_patch16_224", pretrained=True, num_classes=0)
-    state_dict = checkpoint_model.state_dict()
-    for key in list(state_dict.keys()):
-        if 'qkv.weight' in key:
-            qkv_weight = state_dict.pop(key)
-            q_weight = qkv_weight[:768]
-            k_weight = qkv_weight[768:768 * 2]
-            v_weight = qkv_weight[768 * 2:]
-            state_dict[key.replace('qkv.weight', 'q_proj.weight')] = q_weight
-            state_dict[key.replace('qkv.weight', 'k_proj.weight')] = k_weight
-            state_dict[key.replace('qkv.weight', 'v_proj.weight')] = v_weight
-        elif 'qkv.bias' in key:
-            qkv_bias = state_dict.pop(key)
-            q_bias = qkv_bias[:768]
-            k_bias = qkv_bias[768:768 * 2]
-            v_bias = qkv_bias[768 * 2:]
-            state_dict[key.replace('qkv.bias', 'q_proj.bias')] = q_bias
-            state_dict[key.replace('qkv.bias', 'k_proj.bias')] = k_bias
-            state_dict[key.replace('qkv.bias', 'v_proj.bias')] = v_bias
-    for key in list(state_dict.keys()):
-        if 'mlp.fc' in key:
-            fc_weight = state_dict.pop(key)
-            state_dict[key.replace('mlp.', '')] = fc_weight
-
-    msg = model.load_state_dict(state_dict, strict=False)
-
-    for name, p in model.named_parameters():
-        if name in msg.missing_keys:
-            p.requires_grad = True
-        else:
-            p.requires_grad = False
-    return model
+    return load_adapter_pretrained(model, "vit_base_patch16_224", pretrained_path)
 
 
-def vit_base_patch16_224_in21k_adapter(pretrained=False, **kwargs):
+def vit_base_patch16_224_in21k_adapter(pretrained=False, pretrained_path=None, **kwargs):
     model = VisionTransformer(patch_size=16, embed_dim=768, depth=12, num_heads=12, mlp_ratio=4, qkv_bias=True,
                               norm_layer=partial(nn.LayerNorm, eps=1e-6), **kwargs)
 
-    checkpoint_model = timm.create_model("vit_base_patch16_224_in21k", pretrained=True, num_classes=0)
-    state_dict = checkpoint_model.state_dict()
-    for key in list(state_dict.keys()):
-        if 'qkv.weight' in key:
-            qkv_weight = state_dict.pop(key)
-            q_weight = qkv_weight[:768]
-            k_weight = qkv_weight[768:768 * 2]
-            v_weight = qkv_weight[768 * 2:]
-            state_dict[key.replace('qkv.weight', 'q_proj.weight')] = q_weight
-            state_dict[key.replace('qkv.weight', 'k_proj.weight')] = k_weight
-            state_dict[key.replace('qkv.weight', 'v_proj.weight')] = v_weight
-        elif 'qkv.bias' in key:
-            qkv_bias = state_dict.pop(key)
-            q_bias = qkv_bias[:768]
-            k_bias = qkv_bias[768:768 * 2]
-            v_bias = qkv_bias[768 * 2:]
-            state_dict[key.replace('qkv.bias', 'q_proj.bias')] = q_bias
-            state_dict[key.replace('qkv.bias', 'k_proj.bias')] = k_bias
-            state_dict[key.replace('qkv.bias', 'v_proj.bias')] = v_bias
-    # second, modify the mlp.fc.weight to match fc.weight
-    for key in list(state_dict.keys()):
-        if 'mlp.fc' in key:
-            fc_weight = state_dict.pop(key)
-            state_dict[key.replace('mlp.', '')] = fc_weight
-
-    msg = model.load_state_dict(state_dict, strict=False)
-
-    for name, p in model.named_parameters():
-        if name in msg.missing_keys:
-            p.requires_grad = True
-        else:
-            p.requires_grad = False
-    return model
+    return load_adapter_pretrained(model, "vit_base_patch16_224_in21k", pretrained_path)

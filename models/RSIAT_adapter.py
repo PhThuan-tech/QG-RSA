@@ -522,7 +522,8 @@ class Learner(BaseLearner):
         )
 
     def _init_train(self, train_loader, test_loader, optimizer, scheduler, warmup_epoch):
-        prog_bar = tqdm(range(self.tuned_epochs))
+        quiet = self.args.get("quiet_task_logging", False)
+        prog_bar = range(self.tuned_epochs) if quiet else tqdm(range(self.tuned_epochs))
         eval_interval = self.args.get("eval_interval", 0)
         if self._device.type == "cuda":
             torch.cuda.reset_peak_memory_stats(self._device)
@@ -569,8 +570,9 @@ class Learner(BaseLearner):
                 test_acc_msg,
                 epoch_seconds,
             )
-            prog_bar.set_description(info)
-            if self.quantum_kernel is not None and self._quantum_used_this_task():
+            if not quiet:
+                prog_bar.set_description(info)
+            if not quiet and self.quantum_kernel is not None and self._quantum_used_this_task():
                 logging.info(
                     "QKSR diagnostics task=%d epoch=%d gamma=%.8g gradients=%s kernel=%s",
                     self._cur_task,

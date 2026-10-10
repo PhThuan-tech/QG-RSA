@@ -75,6 +75,7 @@ def _train(args):
         args["seed"],
         args["init_cls"],
         args["increment"],
+        data_root=args.get("data_root"), offline=args.get("offline", False),
     )
     model = model_factory.get_model(args["model_name"], args)
     model.class_order = list(data_manager._class_order)
@@ -153,10 +154,11 @@ def _train(args):
                 task, backward_transfer, forgetting, current_row,
             )
 
-        if args.get("save_checkpoints", True):
+        final_only = args.get("checkpoint_policy") == "final_only"
+        if args.get("save_checkpoints", True) and (not final_only or task == data_manager.nb_tasks - 1):
             checkpoint_path = os.path.join(checkpoint_dir, "task_{}.pkl".format(task))
             model.save_checkpoint(checkpoint_path)
-            if args.get("keep_last_checkpoint", True) and task > 0:
+            if not final_only and args.get("keep_last_checkpoint", True) and task > 0:
                 previous_checkpoint = os.path.join(
                     checkpoint_dir, "task_{}.pkl".format(task - 1)
                 )

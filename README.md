@@ -57,6 +57,13 @@ Optionally set `"resume_path"` to a specific `task_N.pkl`, `"keep_last_checkpoin
 
 ### Efficient training
 
+For the A0/A1/A2 study on Kaggle with Internet OFF, use
+[the offline failure-localization guide](docs/KAGGLE_OFFLINE_FAILURE_LOCALIZATION.md)
+and `notebooks/QKSR_Failure_Localization_Kaggle_Offline.ipynb`. The dedicated
+runner validates uploaded assets, emits task CSV/JSON, prints one line per task,
+and saves only the final checkpoint. Build its source upload ZIP with
+`python -B scripts/package_failure_localization.py`.
+
 Experimental-integrity fixes and validation are documented in
 [EXPERIMENTAL_INTEGRITY_20261010.md](docs/EXPERIMENTAL_INTEGRITY_20261010.md).
 New task-boundary checkpoints save Python/NumPy/Torch CPU/CUDA RNG and the

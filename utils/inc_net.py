@@ -8,6 +8,8 @@ import timm
 
 def get_convnet(args, pretrained=False):
     name = args["convnet_type"].lower()
+    if args.get("offline", False) and "_adapter" not in name:
+        raise ValueError("Offline loading currently supports the adapter ViT backbones only.")
     # SimpleCIL or SimpleCIL w/ Finetune
     if name == "pretrained_vit_b16_224" or name == "vit_base_patch16_224":
         model = timm.create_model("vit_base_patch16_224", pretrained=True, num_classes=0)
@@ -19,6 +21,9 @@ def get_convnet(args, pretrained=False):
         return model.eval()
 
     elif '_adapter' in name:
+        if args.get("offline", False) and not args.get("pretrained_path"):
+            raise ValueError("Offline adapter initialization requires pretrained_path.")
+        weight_options = {"pretrained_path": args["pretrained_path"]} if args.get("pretrained_path") else {}
         ffn_num = args["ffn_num"]
         if args["model_name"] == "adapter":
             from network import vision_transformer_adapter
@@ -39,13 +44,13 @@ def get_convnet(args, pretrained=False):
             if name == "pretrained_vit_b16_224_adapter":
                 model = vision_transformer_adapter.vit_base_patch16_224_adapter(num_classes=0,
                                                                                 global_pool=False, drop_path_rate=0.0,
-                                                                                tuning_config=tuning_config)
+                                                                                tuning_config=tuning_config, **weight_options)
                 model.out_dim = 768
             elif name == "pretrained_vit_b16_224_in21k_adapter":
                 model = vision_transformer_adapter.vit_base_patch16_224_in21k_adapter(num_classes=0,
                                                                                       global_pool=False,
                                                                                       drop_path_rate=0.0,
-                                                                                      tuning_config=tuning_config)
+                                                                                      tuning_config=tuning_config, **weight_options)
                 model.out_dim = 768
             else:
                 raise NotImplementedError("Unknown type {}".format(name))

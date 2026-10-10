@@ -1,0 +1,15 @@
+{
+  "source_config": "exps/adapter_cifar224.json",
+  "dataset": "cifar224",
+  "seeds": [1993, 2015, 2026],
+  "variants": {
+    "A0": {"use_quantum_kernel_base": false, "use_quantum_kernel_inc": false},
+    "A1": {"use_quantum_kernel_base": true, "use_quantum_kernel_inc": false},
+    "A2": {"use_quantum_kernel_base": true, "use_quantum_kernel_inc": true}
+  },
+  "input_root": "/kaggle/input",
+  "output_root": "/kaggle/working",
+  "checkpoint_policy": "final_only",
+  "resume": false,
+  "note": "Study specification, not a main.py config. The runner materializes nine complete configs after offline preflight."
+}
