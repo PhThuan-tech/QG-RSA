@@ -53,31 +53,33 @@ class DataManager(object):
         else:
             raise ValueError("Unknown mode {}.".format(mode))
 
-        data, targets = [], []
+        data, targets, sample_ids = [], [], []
         for idx in indices:
-            if m_rate is None:
-                class_data, class_targets = self._select(
-                    x, y, low_range=idx, high_range=idx + 1
+            class_ids = np.flatnonzero((y >= idx) & (y < idx + 1))
+            if m_rate is not None and m_rate != 0:
+                selected = np.random.randint(
+                    0, len(class_ids), size=int((1 - m_rate) * len(class_ids))
                 )
-            else:
-                class_data, class_targets = self._select_rmm(
-                    x, y, low_range=idx, high_range=idx + 1, m_rate=m_rate
-                )
+                class_ids = np.sort(class_ids[selected])
+            class_data, class_targets = x[class_ids], y[class_ids]
             
             data.append(class_data)
             targets.append(class_targets)
+            sample_ids.append(class_ids)
 
         if appendent is not None and len(appendent) != 0:
             appendent_data, appendent_targets = appendent
             data.append(appendent_data)
             targets.append(appendent_targets)
+            sample_ids.append(np.arange(len(x), len(x) + len(appendent_data)))
 
         data, targets = np.concatenate(data), np.concatenate(targets)
+        sample_ids = np.concatenate(sample_ids)
 
         if ret_data:
-            return data, targets, DummyDataset(data, targets, trsf, self.use_path)
+            return data, targets, DummyDataset(data, targets, trsf, self.use_path, sample_ids)
         else:
-            return DummyDataset(data, targets, trsf, self.use_path)
+            return DummyDataset(data, targets, trsf, self.use_path, sample_ids)
 
     def get_dataset_with_split(
         self, indices, source, mode, appendent=None, val_samples_per_class=0
@@ -149,7 +151,9 @@ class DataManager(object):
         rng = np.random.default_rng(int(seed))
         train_data, train_targets = [], []
         val_data, val_targets = [], []
+        train_ids, val_ids = [], []
         for idx in indices:
+            class_ids = np.flatnonzero(self._train_targets == idx)
             class_data, class_targets = self._select(
                 self._train_data, self._train_targets, low_range=idx, high_range=idx + 1
             )
@@ -166,6 +170,8 @@ class DataManager(object):
             train_targets.append(class_targets[train_indices])
             val_data.append(class_data[val_indices])
             val_targets.append(class_targets[val_indices])
+            train_ids.append(class_ids[train_indices])
+            val_ids.append(class_ids[val_indices])
 
         train_transform = transforms.Compose([*self._train_trsf, *self._common_trsf])
         val_transform = transforms.Compose([*self._test_trsf, *self._common_trsf])
@@ -175,12 +181,14 @@ class DataManager(object):
                 np.concatenate(train_targets),
                 train_transform,
                 self.use_path,
+                np.concatenate(train_ids),
             ),
             DummyDataset(
                 np.concatenate(val_data),
                 np.concatenate(val_targets),
                 val_transform,
                 self.use_path,
+                np.concatenate(val_ids),
             ),
         )
 
@@ -189,7 +197,27 @@ class DataManager(object):
         if not isinstance(dataset, DummyDataset):
             raise TypeError("get_eval_view expects a DummyDataset.")
         eval_transform = transforms.Compose([*self._test_trsf, *self._common_trsf])
-        return DummyDataset(dataset.images, dataset.labels, eval_transform, dataset.use_path)
+        return DummyDataset(
+            dataset.images, dataset.labels, eval_transform, dataset.use_path,
+            dataset.sample_ids,
+        )
+
+    def get_seen_validation_dataset(self, task_sizes, val_ratio, seed):
+        """Reconstruct validation for all seen classes without training on it."""
+        validation_ids = []
+        lower = 0
+        for task, size in enumerate(task_sizes):
+            _, validation = self.get_dataset_with_validation(
+                np.arange(lower, lower + size), val_ratio, int(seed) + task
+            )
+            validation_ids.append(validation.sample_ids)
+            lower += size
+        ids = np.concatenate(validation_ids)
+        transform = transforms.Compose([*self._test_trsf, *self._common_trsf])
+        return DummyDataset(
+            self._train_data[ids], self._train_targets[ids], transform,
+            self.use_path, ids,
+        )
 
     def _setup_data(self, dataset_name, shuffle, seed):
         idata = _get_idata(dataset_name)
@@ -245,12 +273,18 @@ class DataManager(object):
 
 
 class DummyDataset(Dataset):
-    def __init__(self, images, labels, trsf, use_path=False):
+    def __init__(self, images, labels, trsf, use_path=False, sample_ids=None):
         assert len(images) == len(labels), "Data size error!"
         self.images = images
         self.labels = labels
         self.trsf = trsf
         self.use_path = use_path
+        self.sample_ids = np.asarray(
+            np.arange(len(images)) if sample_ids is None else sample_ids,
+            dtype=np.int64,
+        )
+        if len(self.sample_ids) != len(images):
+            raise ValueError("Sample ID count must match dataset size.")
 
     def __len__(self):
         return len(self.images)
@@ -262,7 +296,7 @@ class DummyDataset(Dataset):
             image = self.trsf(Image.fromarray(self.images[idx]))
         label = self.labels[idx]
 
-        return idx, image, label
+        return int(self.sample_ids[idx]), image, label
 
 
 def _map_new_class_index(y, order):

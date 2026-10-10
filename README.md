@@ -57,6 +57,27 @@ Optionally set `"resume_path"` to a specific `task_N.pkl`, `"keep_last_checkpoin
 
 ### Efficient training
 
+Experimental-integrity fixes and validation are documented in
+[EXPERIMENTAL_INTEGRITY_20261010.md](docs/EXPERIMENTAL_INTEGRITY_20261010.md).
+New task-boundary checkpoints save Python/NumPy/Torch CPU/CUDA RNG and the
+private sampler/worker generator states. Legacy checkpoints remain readable
+but emit an explicit warning that their continuation is not an exact paired
+run. Use a fresh `output_root` for new ablations to preserve historical outputs.
+
+With `val_ratio > 0`, only the training subset contributes to drift probes,
+class statistics and synthetic classifier-alignment training. Evaluation,
+including pre/post alignment diagnostics, uses all seen validation classes.
+Old covariance compensation, model architecture, losses and configured rates
+are unchanged. Incremental AdamW now includes `old_ae` for both RSIAT and QKSR
+at the existing `ae_init_lr` / `ae_weight_decay`; historical AdamW baseline
+results used the omitted-group behavior and should be labeled separately.
+
+Run the dataset-independent integrity and quantum tests without full training:
+
+```bash
+python -B -m unittest discover -s tests -v
+```
+
 `eval_interval: 0` and `ca_eval_interval: 0` evaluate only the final epoch of each training stage. This avoids repeated full validation passes without changing gradients, optimizer steps, or the cosine scheduler. Set either value to a positive number when intermediate validation curves are needed. `num_workers`, `stats_num_workers`, `pin_memory`, and `persistent_workers` configure data loading; the provided values are suitable starting points for a GPU runtime.
 
 For a Google Colab smoke test that verifies data loading, training, checkpoint creation, and resume at task 1, use [RSIAT_Colab.ipynb](RSIAT_Colab.ipynb).

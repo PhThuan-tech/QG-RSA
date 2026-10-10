@@ -8,7 +8,7 @@ from torch.serialization import load
 from tqdm import tqdm
 from torch import optim
 from torch.nn import functional as F
-from torch.utils.data import DataLoader, Subset
+from torch.utils.data import DataLoader, Subset, RandomSampler
 from utils.inc_net import SimpleVitNet
 from torch.distributions.multivariate_normal import MultivariateNormal
 from models.base import BaseLearner
@@ -16,6 +16,10 @@ from utils.toolkit import count_parameters, log_count_parameter, target2onehot, 
 from utils.loss import AngularPenaltySMLoss
 from utils.toolkit import AutoencoderSigmoid
 from utils.quantum_kernel import QuantumKernelModule
+from utils.experimental_integrity import (
+    preserve_rng_state, seed_worker, dataset_manifest, pair_features,
+    snapshot_moments, memory_drift_diagnostics,
+)
 import math
 num_workers = 8
 
@@ -137,24 +141,72 @@ class Learner(BaseLearner):
             self.old_network_module_ptr = self._old_network
 
 
-    def extract_features(self, trainloader, model, args):
-        model = model.eval()
+    def extract_features(self, trainloader, model, args=None, return_ids=False):
+        was_training = model.training
+        model.eval()
         embedding_list = []
         label_list = []
-        with torch.no_grad():
-            for i, batch in enumerate(trainloader):
-                (_, data, label) = batch
-                data = data.to(self._device, non_blocking=True)
-                label = label.to(self._device, non_blocking=True)
-                embedding = model.extract_vector(data)
-                embedding_list.append(embedding.cpu())
-                label_list.append(label.cpu())
+        id_list = []
+        feature_model = model.module if isinstance(model, nn.DataParallel) else model
+        with preserve_rng_state(), torch.no_grad():
+            try:
+                for sample_ids, data, label in trainloader:
+                    data = data.to(self._device, non_blocking=True)
+                    embedding = feature_model.extract_vector(data)
+                    embedding_list.append(embedding.cpu())
+                    label_list.append(label.cpu())
+                    id_list.append(sample_ids.cpu())
+            finally:
+                model.train(was_training)
 
         embedding_list = torch.cat(embedding_list, dim=0)
         label_list = torch.cat(label_list, dim=0)
+        if return_ids:
+            return torch.cat(id_list), embedding_list, label_list
         return embedding_list, label_list
 
+    def _task_partition(self, data_manager, classes, task):
+        ratio = float(self.args.get("val_ratio", 0.0) or 0.0)
+        if ratio > 0:
+            return data_manager.get_dataset_with_validation(
+                classes, ratio, int(self.args["seed"]) + task,
+            )
+        return data_manager.get_dataset(classes, source="train", mode="train"), None
+
+    @staticmethod
+    def _partition_manifest(train, validation):
+        return {
+            "train": dataset_manifest(train),
+            "validation": dataset_manifest(validation) if validation is not None else None,
+        }
+
+    def _validate_saved_partitions(self, data_manager):
+        lower = 0
+        for task, size in enumerate(self.task_sizes):
+            if str(task) not in self.split_manifests and not self.resume_reproducible:
+                # A legacy checkpoint cannot retroactively certify its old splits.
+                lower += size
+                continue
+            train, validation = self._task_partition(
+                data_manager, np.arange(lower, lower + size), task,
+            )
+            actual = self._partition_manifest(train, validation)
+            if actual != self.split_manifests.get(str(task)):
+                raise ValueError("Checkpoint dataset/split manifest differs at task {}.".format(task))
+            lower += size
+        self._pending_split_validation = False
+
+    def _make_drift_loader(self, data_manager, training_dataset):
+        # A single deterministic view of the TRAIN subset, reused on both sides.
+        return DataLoader(
+            data_manager.get_eval_view(training_dataset), batch_size=self.batch_size,
+            shuffle=False, num_workers=0, pin_memory=self.pin_memory,
+            generator=self._loader_generator("drift_workers"),
+        )
+
     def incremental_train(self, data_manager):
+        if getattr(self, "_pending_split_validation", False):
+            self._validate_saved_partitions(data_manager)
         self._cur_task += 1
         
         if self._cur_task == 1:
@@ -172,26 +224,31 @@ class Learner(BaseLearner):
         current_classes = np.arange(self._known_classes, self._total_classes)
         val_ratio = float(self.args.get("val_ratio", 0.0) or 0.0)
         self.val_loader = None
+        train_dataset, val_dataset = self._task_partition(
+            data_manager, current_classes, self._cur_task,
+        )
+        self.split_manifests[str(self._cur_task)] = self._partition_manifest(
+            train_dataset, val_dataset,
+        )
         if val_ratio > 0.0:
-            split_seed = int(self.args["seed"]) + self._cur_task
-            train_dataset, val_dataset = data_manager.get_dataset_with_validation(
-                current_classes, val_ratio=val_ratio, seed=split_seed
+            # Evaluate old and new classes on validation during tuning, including
+            # after CA; never route tuning metrics through the public test set.
+            seen_validation = data_manager.get_seen_validation_dataset(
+                self.task_sizes, val_ratio, self.args["seed"],
             )
             self.val_loader = DataLoader(
-                val_dataset,
+                seen_validation,
                 batch_size=self.batch_size,
                 shuffle=False,
                 num_workers=self.num_workers,
                 pin_memory=self.pin_memory,
                 persistent_workers=self.persistent_workers,
+                generator=self._loader_generator("validation_workers"),
+                worker_init_fn=seed_worker,
             )
             logging.info(
                 "Task %d validation split: train=%d, validation=%d, ratio=%.4f",
                 self._cur_task, len(train_dataset), len(val_dataset), val_ratio,
-            )
-        else:
-            train_dataset = data_manager.get_dataset(
-                current_classes, source="train", mode="train"
             )
 
         self.train_dataset = train_dataset
@@ -201,20 +258,28 @@ class Learner(BaseLearner):
         self.train_loader = DataLoader(
             train_dataset,
             batch_size=self.batch_size,
-            shuffle=True,
+            sampler=RandomSampler(
+                train_dataset, generator=self._loader_generator("train_sampler"),
+            ),
             num_workers=self.num_workers,
             pin_memory=self.pin_memory,
             persistent_workers=self.persistent_workers,
+            generator=self._loader_generator("train_workers"),
+            worker_init_fn=seed_worker,
         )
-        test_dataset = data_manager.get_dataset(np.arange(0, self._total_classes), source="test", mode="test")
-        self.test_loader = DataLoader(
-            test_dataset,
-            batch_size=self.batch_size,
-            shuffle=False,
-            num_workers=self.num_workers,
-            pin_memory=self.pin_memory,
-            persistent_workers=self.persistent_workers,
-        )
+        self.test_loader = None
+        if val_ratio == 0.0:
+            test_dataset = data_manager.get_dataset(
+                np.arange(0, self._total_classes), source="test", mode="test",
+            )
+            self.test_loader = DataLoader(
+                test_dataset, batch_size=self.batch_size, shuffle=False,
+                num_workers=self.num_workers, pin_memory=self.pin_memory,
+                persistent_workers=self.persistent_workers,
+                generator=self._loader_generator("test_workers"),
+                worker_init_fn=seed_worker,
+            )
+        self.evaluation_loader = self.val_loader if self.val_loader is not None else self.test_loader
 
         # Gamma calibration uses the same training samples but deterministic
         # evaluation transforms.  A private generator prevents RNG drift.
@@ -261,17 +326,27 @@ class Learner(BaseLearner):
       
         if self._cur_task >0:
             self._network.to(self._device)
-            train_embeddings_old, _ = self.extract_features(self.train_loader, self._network, None)
+            drift_loader = self._make_drift_loader(data_manager, train_dataset)
+            before_features = self.extract_features(
+                drift_loader, self._network, return_ids=True,
+            )
+            old_moments = snapshot_moments(
+                self._class_means, self._class_covs, self._known_classes,
+            )
 
-        evaluation_loader = self.val_loader if self.val_loader is not None else self.test_loader
-        self._train(self.train_loader, evaluation_loader)
+        self._train(self.train_loader, self.evaluation_loader)
         
         if len(self._multiple_gpus) > 1:
             self._network = self._network.module
 
       
         if self._cur_task >0:
-            train_embeddings_new, _ = self.extract_features(self.train_loader, self._network, None)
+            after_features = self.extract_features(
+                drift_loader, self._network, return_ids=True,
+            )
+            train_embeddings_old, train_embeddings_new, paired_ids = pair_features(
+                before_features, after_features,
+            )
             old_class_mean = self._class_means[:self._known_classes]
             gap = self.displacement(train_embeddings_old, train_embeddings_new, old_class_mean, 4.0)
             if self.args['ssca'] is True:
@@ -279,11 +354,29 @@ class Learner(BaseLearner):
                 self._class_means[:self._known_classes] = old_class_mean
 
         self._network.fc.backup()
-        self._compute_class_mean(data_manager, check_diff=False, oracle=False)
+        self._compute_class_mean(
+            data_manager, check_diff=False, oracle=False, training_dataset=train_dataset,
+        )
+        diagnostic = None
+        if self._cur_task > 0:
+            diagnostic = {
+                "task": self._cur_task,
+                "drift_paired_sample_ids": paired_ids.tolist(),
+                "statistics_train_count": len(train_dataset),
+                "memory": memory_drift_diagnostics(
+                    old_moments, self._class_means, self._class_covs,
+                ),
+                "pre_ca": self._record_classifier_alignment("pre_ca"),
+                "ca_applied": bool(self.args['ca'] and self.args['ca_epochs'] > 0),
+            }
+            logging.info("Old memory drift diagnostic: %s", diagnostic["memory"])
         if self._cur_task>0 and self.args['ca_epochs']>0 and self.args['ca'] is True:
             self._stage2_compact_classifier(task_size, self.args['ca_epochs'])
             if len(self._multiple_gpus) > 1:
                 self._network = self._network.module
+        if diagnostic is not None:
+            diagnostic["post_ca"] = self._record_classifier_alignment("post_ca")
+            self.task_diagnostics.append(diagnostic)
 
     def _quantum_used_this_task(self):
         return (
@@ -358,70 +451,67 @@ class Learner(BaseLearner):
             metric_lr_mult=self.args.get("q_metric_lr_mult", 0.1),
         )
 
-    def _train(self, train_loader, test_loader):
-        self._network.to(self._device)
-        self._calibrate_quantum_kernel()
-
+    def _build_optimizer(self):
+        """Same non-metric groups for RSIAT and QKSR, at existing rates."""
+        optimizer_name = self.args['optimizer']
         if self._cur_task == 0:
-            self.tuned_epochs = self.args["init_epochs"]
             adapter_lr = 0.01
-            param_groups = [
-                {'params': self._network.convnet.blocks[-1].parameters(), 'lr': adapter_lr,
-                 'weight_decay': self.args['weight_decay']},
-                {'params': self._network.convnet.blocks[:-1].parameters(), 'lr': adapter_lr,
-                 'weight_decay': self.args['weight_decay']},
-                {'params': self._network.fc.parameters(), 'lr': adapter_lr,
-                 'weight_decay': self.args['weight_decay']}
-            ]
-            quantum_groups = self._quantum_param_groups(adapter_lr)
-            param_groups.extend(quantum_groups)
-
-            if self.args['optimizer'] == 'sgd':
-                optimizer = optim.SGD(
-                    param_groups, momentum=0.9, lr=self.init_lr,
-                    weight_decay=self.weight_decay,
-                )
-            elif self.args['optimizer'] == 'adam':
-                if quantum_groups:
-                    optimizer = optim.AdamW(
-                        [{'params': self._network.parameters(), 'lr': self.init_lr,
-                          'weight_decay': self.weight_decay}] + quantum_groups
-                    )
-                else:
-                    optimizer = optim.AdamW(
-                        self._network.parameters(), lr=self.init_lr,
-                        weight_decay=self.weight_decay,
-                    )
+            if optimizer_name == 'sgd':
+                param_groups = [
+                    {'params': self._network.convnet.blocks[-1].parameters(),
+                     'lr': adapter_lr, 'weight_decay': self.weight_decay, 'group_name': 'last_block'},
+                    {'params': self._network.convnet.blocks[:-1].parameters(),
+                     'lr': adapter_lr, 'weight_decay': self.weight_decay, 'group_name': 'other_blocks'},
+                    {'params': self._network.fc.parameters(),
+                     'lr': adapter_lr, 'weight_decay': self.weight_decay, 'group_name': 'classifier'},
+                ]
             else:
-                raise ValueError("Unknown optimizer {}".format(self.args['optimizer']))
+                # Keep the existing base AdamW network LR (init_lr); metric
+                # groups retain their existing 0.01-based projector/metric LR.
+                param_groups = [{'params': self._network.parameters(), 'lr': self.init_lr,
+                                 'weight_decay': self.weight_decay, 'group_name': 'network'}]
         else:
-            self.tuned_epochs = self.args['inc_epochs']
             adapter_lr = self.init_lr
             param_groups = [
                 {'params': self._network.convnet.parameters(), 'lr': adapter_lr,
-                 'weight_decay': self.weight_decay},
+                  'weight_decay': self.weight_decay, 'group_name': 'convnet'},
                 {'params': self._network.fc.parameters(), 'lr': adapter_lr,
-                 'weight_decay': self.weight_decay},
+                  'weight_decay': self.weight_decay, 'group_name': 'classifier'},
                 {'params': self.old_ae.parameters(), 'lr': self.args['ae_init_lr'],
-                 'weight_decay': self.args['ae_weight_decay']},
+                  'weight_decay': self.args['ae_weight_decay'], 'group_name': 'old_ae'},
             ]
-            quantum_groups = self._quantum_param_groups(adapter_lr)
-            param_groups.extend(quantum_groups)
+        param_groups.extend(self._quantum_param_groups(adapter_lr))
+        active_groups = []
+        grouped_ids = []
+        for group in param_groups:
+            group['params'] = [p for p in group['params'] if p.requires_grad]
+            if not group['params']:
+                continue
+            group.setdefault('group_name', 'metric_' + group.get('q_group', 'parameters'))
+            active_groups.append(group)
+            grouped_ids.extend(id(p) for p in group['params'])
+        expected = [p for p in self._network.parameters() if p.requires_grad]
+        if self._cur_task > 0:
+            expected.extend(p for p in self.old_ae.parameters() if p.requires_grad)
+        if self._quantum_trainable_this_task():
+            expected.extend(p for p in self.quantum_kernel.parameters() if p.requires_grad)
+        if len(grouped_ids) != len(set(grouped_ids)) or set(grouped_ids) != {id(p) for p in expected}:
+            raise ValueError("Optimizer groups omit or duplicate active parameters.")
+        logging.info("Optimizer groups: %s", [
+            {'name': g['group_name'], 'lr': g['lr'], 'weight_decay': g['weight_decay'],
+             'parameters': sum(p.numel() for p in g['params'])} for g in active_groups
+        ])
+        if optimizer_name == 'sgd':
+            return optim.SGD(active_groups, momentum=0.9, lr=self.init_lr)
+        if optimizer_name == 'adam':
+            return optim.AdamW(active_groups, lr=self.init_lr, weight_decay=self.weight_decay)
+        raise ValueError("Unknown optimizer {}".format(optimizer_name))
 
-            if self.args['optimizer'] == 'sgd':
-                optimizer = optim.SGD(param_groups, momentum=0.9)
-            elif self.args['optimizer'] == 'adam':
-                if self.use_quantum_kernel_inc:
-                    # QKSR's incremental objective requires old_ae to update.
-                    optimizer = optim.AdamW(param_groups)
-                else:
-                    # Preserve the original baseline behavior bit-for-bit.
-                    optimizer = optim.AdamW(
-                        self._network.parameters(), lr=self.init_lr,
-                        weight_decay=self.weight_decay,
-                    )
-            else:
-                raise ValueError("Unknown optimizer {}".format(self.args['optimizer']))
+    def _train(self, train_loader, test_loader):
+        self._network.to(self._device)
+        self._calibrate_quantum_kernel()
+        self.tuned_epochs = self.args['init_epochs'] if self._cur_task == 0 else self.args['inc_epochs']
+        optimizer = self._build_optimizer()
 
         scheduler = optim.lr_scheduler.CosineAnnealingLR(
             optimizer, T_max=self.tuned_epochs, eta_min=self.min_lr

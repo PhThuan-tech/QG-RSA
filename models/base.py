@@ -6,10 +6,14 @@ import torch
 from torch import nn
 from torch import optim
 from torch.nn import functional as F
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, Subset
 from torch.distributions.multivariate_normal import MultivariateNormal
 from utils.toolkit import tensor2numpy, accuracy
 from scipy.spatial.distance import cdist
+from utils.experimental_integrity import (
+    capture_rng_state, restore_rng_state, preserve_rng_state,
+    make_generator, seed_worker,
+)
 import time
 EPSILON = 1e-8
 batch_size = 64
@@ -27,6 +31,34 @@ class BaseLearner(object):
         self.topk = 5
         self._device = args["device"][0]
         self._multiple_gpus = args["device"]
+        self._loader_generators = {}
+        self.split_manifests = {}
+        self.task_diagnostics = []
+        self.resume_reproducible = True
+
+    def _loader_generator(self, role):
+        if not hasattr(self, "_loader_generators"):
+            self._loader_generators = {}
+        if role not in self._loader_generators:
+            self._loader_generators[role] = make_generator(self.args.get("seed", 0), role)
+        return self._loader_generators[role]
+
+    def _record_classifier_alignment(self, stage):
+        loader = getattr(self, "evaluation_loader", None) or self.test_loader
+        was_training = self._network.training
+        with preserve_rng_state():
+            try:
+                predictions, targets = self._eval_cnn(loader)
+                result = self._evaluate(predictions, targets)
+            finally:
+                self._network.train(was_training)
+        record = {
+            "task": self._cur_task, "stage": stage,
+            "split": "validation" if self.args.get("val_ratio", 0.0) > 0 else "test",
+            "grouped": result["grouped"], "task_accuracies": result["task_accuracies"],
+        }
+        logging.info("Classifier alignment diagnostic: %s", record)
+        return record
 
     @property
     def exemplar_size(self):
@@ -141,7 +173,10 @@ class BaseLearner(object):
             scheduler.step()
             if self._should_eval_epoch(epoch, run_epochs, eval_interval):
                 test_acc_msg = "{:.3f}".format(
-                    self._compute_accuracy(self._network, self.test_loader)
+                    self._compute_accuracy(
+                        self._network,
+                        getattr(self, "evaluation_loader", None) or self.test_loader,
+                    )
                 )
             else:
                 test_acc_msg = "skipped"
@@ -157,9 +192,17 @@ class BaseLearner(object):
             "use_quantum_kernel_base", "use_quantum_kernel_inc", "q_kernel_type",
             "q_kernel_order", "q_num_qubits", "q_num_layers", "q_reupload",
             "q_gamma_mode", "q_inc_train_mode", "inc_loss_mode", "q_inc_pair",
+            "optimizer", "init_lr", "ae_init_lr", "weight_decay", "ae_weight_decay",
+            "batch_size", "init_epochs", "inc_epochs", "ca_epochs", "warmup_epoch",
+            "alpha", "beta", "gamma", "scale", "margin", "lambda_rs", "rs_margin",
+            "ae_code_dims", "ffn_num", "ssca", "ca", "min_lr", "val_ratio",
+            "num_workers", "stats_num_workers", "persistent_workers", "q_init_seed",
+            "q_calib_samples", "q_metric_lr_mult", "q_order2_weight", "q_dtype",
+            "rs_margin_q", "rs_margin_q_mode", "rs_margin_quantile", "rs_margin_inc",
+            "compact_diagonal_checkpoint",
         )
         return {
-            "format_version": 1,
+            "format_version": 2,
             **{key: self.args.get(key) for key in keys if key in self.args},
         }
 
@@ -177,6 +220,7 @@ class BaseLearner(object):
             else self._network
         )
         checkpoint = {
+            "experimental_integrity_version": 1,
             "run_metadata": self._checkpoint_run_metadata(),
             "cur_task": self._cur_task,
             "known_classes": self._known_classes,
@@ -224,6 +268,14 @@ class BaseLearner(object):
             checkpoint["nme_curve"] = self.nme_curve
         if hasattr(self, "task_accuracy_matrix"):
             checkpoint["task_accuracy_matrix"] = self.task_accuracy_matrix
+        checkpoint["resume_reproducible"] = getattr(self, "resume_reproducible", True)
+        checkpoint["rng_state"] = capture_rng_state()
+        checkpoint["loader_generator_states"] = {
+            role: generator.get_state().clone()
+            for role, generator in getattr(self, "_loader_generators", {}).items()
+        }
+        checkpoint["split_manifests"] = copy.deepcopy(getattr(self, "split_manifests", {}))
+        checkpoint["task_diagnostics"] = copy.deepcopy(getattr(self, "task_diagnostics", []))
 
         checkpoint_dir = os.path.dirname(filepath)
         if checkpoint_dir:
@@ -256,14 +308,18 @@ class BaseLearner(object):
     def _validate_checkpoint(self, checkpoint):
         saved_metadata = checkpoint.get("run_metadata", {})
         current_metadata = self._checkpoint_run_metadata()
+        strict = saved_metadata.get("format_version", 1) >= 2
+        compared_keys = set(current_metadata)
+        if strict:
+            compared_keys |= set(saved_metadata)
         mismatches = [
             "{} (checkpoint={!r}, current={!r})".format(
-                key, saved_metadata[key], current_metadata[key]
+                key, saved_metadata.get(key, "<missing>"), current_metadata.get(key, "<missing>")
             )
-            for key in current_metadata
+            for key in sorted(compared_keys)
             if key != "format_version"
-            and key in saved_metadata
-            and saved_metadata[key] != current_metadata[key]
+            and (strict or key in saved_metadata)
+            and saved_metadata.get(key, "<missing>") != current_metadata.get(key, "<missing>")
         ]
         if mismatches:
             raise ValueError("Checkpoint does not match this experiment: " + ", ".join(mismatches))
@@ -287,6 +343,10 @@ class BaseLearner(object):
                 "Unsupported checkpoint {}: missing {}".format(filepath, sorted(missing_keys))
             )
         self._validate_checkpoint(checkpoint)
+        if checkpoint.get("experimental_integrity_version") == 1:
+            required_integrity = {"rng_state", "loader_generator_states", "split_manifests"}
+            if not required_integrity.issubset(checkpoint):
+                raise ValueError("Integrity checkpoint is missing reproducibility state.")
 
         self._cur_task = int(checkpoint["cur_task"])
         self._known_classes = int(checkpoint["known_classes"])
@@ -332,6 +392,27 @@ class BaseLearner(object):
         if hasattr(self, "_after_load_checkpoint"):
             self._after_load_checkpoint(checkpoint)
 
+        self._loader_generators = {}
+        for role, state in checkpoint.get("loader_generator_states", {}).items():
+            self._loader_generator(role).set_state(state.cpu())
+        self.split_manifests = copy.deepcopy(checkpoint.get("split_manifests", {}))
+        self._pending_split_validation = bool(self.split_manifests)
+        self.task_diagnostics = copy.deepcopy(checkpoint.get("task_diagnostics", []))
+        self.resume_reproducible = (
+            checkpoint.get("experimental_integrity_version") == 1
+            and checkpoint.get("resume_reproducible", True)
+        )
+        if not self.resume_reproducible:
+            logging.warning(
+                "Legacy checkpoint or inherited approximate history; resume is not an exact paired continuation."
+            )
+        if "class_variances" in checkpoint and "class_covs" not in checkpoint:
+            self.resume_reproducible = False
+            logging.warning("Diagonal covariance checkpoint is an approximate continuation.")
+        # Restore LAST: rebuilding heads, teacher and old_ae consumes RNG.
+        if "rng_state" in checkpoint:
+            restore_rng_state(checkpoint["rng_state"])
+
         logging.info(
             "Loaded checkpoint %s; completed task=%d, known_classes=%d, total_classes=%d",
             filepath, self._cur_task, self._known_classes, self._total_classes,
@@ -373,7 +454,9 @@ class BaseLearner(object):
         return ret
 
     def eval_task(self):
-        y_pred, y_true = self._eval_cnn(self.test_loader)
+        loader = getattr(self, "evaluation_loader", None) or self.test_loader
+        with preserve_rng_state():
+            y_pred, y_true = self._eval_cnn(loader)
         cnn_accy = self._evaluate(y_pred, y_true)
         return cnn_accy
 
@@ -439,7 +522,14 @@ class BaseLearner(object):
 
         return np.concatenate(vectors), np.concatenate(targets)
 
-    def _compute_class_mean(self, data_manager, check_diff=False, oracle=False):
+    def _compute_class_mean(self, data_manager, check_diff=False, oracle=False,
+                            training_dataset=None):
+        if self.args.get("val_ratio", 0.0) > 0 and training_dataset is None:
+            raise ValueError("Tuning statistics require the explicit training subset.")
+        stats_view = (
+            data_manager.get_eval_view(training_dataset)
+            if training_dataset is not None else None
+        )
         if hasattr(self, '_class_means') and self._class_means is not None and not check_diff:
             ori_classes = self._class_means.shape[0]
             assert ori_classes == self._known_classes
@@ -456,8 +546,16 @@ class BaseLearner(object):
         radius = []
         for class_idx in range(self._known_classes, self._total_classes):
 
-            data, targets, idx_dataset = data_manager.get_dataset(np.arange(class_idx, class_idx + 1), source='train',
-                                                                  mode='test', ret_data=True)
+            if stats_view is None:
+                _, _, idx_dataset = data_manager.get_dataset(
+                    np.arange(class_idx, class_idx + 1), source='train',
+                    mode='test', ret_data=True,
+                )
+            else:
+                indices = np.flatnonzero(stats_view.labels == class_idx).tolist()
+                if len(indices) < 2:
+                    raise ValueError("Class statistics require at least two training samples per class.")
+                idx_dataset = Subset(stats_view, indices)
             stats_workers = int(self.args.get("stats_num_workers", 4))
             idx_loader = DataLoader(
                 idx_dataset,
@@ -466,6 +564,8 @@ class BaseLearner(object):
                 num_workers=stats_workers,
                 pin_memory=self.args.get("pin_memory", self._device.type == "cuda"),
                 persistent_workers=stats_workers > 0 and self.args.get("persistent_workers", True),
+                generator=self._loader_generator("statistics_workers"),
+                worker_init_fn=seed_worker,
             )
             vectors, _ = self._extract_vectors(idx_loader)
             class_mean = np.mean(vectors, axis=0)
