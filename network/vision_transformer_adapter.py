@@ -170,8 +170,15 @@ class Block(nn.Module):
             adapt_x = self.adaptmlp(x, add_residual=False)
 
         residual = x
-        x = self.mlp_drop(self.act(self.fc1(self.norm2(x))))
-        x = self.drop_path(self.mlp_drop(self.fc2(x)))
+        mlp_input = self.norm2(x)
+        fc1_output = self.fc1(mlp_input)
+        if hasattr(self, "keeplora_mlp"):
+            fc1_output = fc1_output + self.keeplora_mlp["fc1"](mlp_input)
+        x = self.mlp_drop(self.act(fc1_output))
+        fc2_output = self.fc2(x)
+        if hasattr(self, "keeplora_mlp"):
+            fc2_output = fc2_output + self.keeplora_mlp["fc2"](x)
+        x = self.drop_path(self.mlp_drop(fc2_output))
 
         """
          Change the inserted layers 

@@ -1,4 +1,4 @@
-"""RSIAT's ViT with KeepLoRA attention updates and no AdaptFormer branch."""
+"""RSIAT's ViT with selectable KeepLoRA attention or MLP updates."""
 
 import logging
 
@@ -65,25 +65,66 @@ class KeepLoRAAttention(Attention):
             yield f"{prefix}.{name}", projections[name].weight, adapter
 
 
+def _add_keeplora_to_linear(linear, rank, alpha):
+    return KeepLoRA(
+        linear.in_features,
+        linear.out_features,
+        r=rank,
+        lora_alpha=alpha,
+    )
+
+
 class KeepLoRAVisionTransformer(VisionTransformer):
     def __init__(self, *args, keeplora_config=None, **kwargs):
         super().__init__(*args, **kwargs)
         self.keeplora_config = keeplora_config
-        for block in self.blocks:
-            original = block.attn
-            replacement = KeepLoRAAttention(
-                original.q_proj.in_features,
-                num_heads=original.num_heads,
-                qkv_bias=original.q_proj.bias is not None,
-                keeplora_config=keeplora_config,
-            )
-            # The original RSIAT attention has no KeepLoRA B/basis tensors.
-            replacement.load_state_dict(original.state_dict(), strict=False)
-            block.attn = replacement
+        target = keeplora_config.keeplora_target
+        if target == "attention":
+            for block in self.blocks:
+                original = block.attn
+                replacement = KeepLoRAAttention(
+                    original.q_proj.in_features,
+                    num_heads=original.num_heads,
+                    qkv_bias=original.q_proj.bias is not None,
+                    keeplora_config=keeplora_config,
+                )
+                # The original RSIAT attention has no KeepLoRA B/basis tensors.
+                replacement.load_state_dict(original.state_dict(), strict=False)
+                block.attn = replacement
+        elif target == "mlp":
+            for block in self.blocks:
+                block.keeplora_mlp = nn.ModuleDict(
+                    {
+                        "fc1": _add_keeplora_to_linear(
+                            block.fc1,
+                            keeplora_config.keeplora_fc1_rank,
+                            keeplora_config.keeplora_alpha,
+                        ),
+                        "fc2": _add_keeplora_to_linear(
+                            block.fc2,
+                            keeplora_config.keeplora_fc2_rank,
+                            keeplora_config.keeplora_alpha,
+                        ),
+                    }
+                )
+        else:
+            raise ValueError("Unknown keeplora_target: {}".format(target))
 
     def named_keeplora_targets(self):
-        for index, block in enumerate(self.blocks):
-            yield from block.attn.named_keeplora_targets(f"blocks.{index}.attn")
+        if self.keeplora_config.keeplora_target == "attention":
+            for index, block in enumerate(self.blocks):
+                yield from block.attn.named_keeplora_targets(f"blocks.{index}.attn")
+        else:
+            for index, block in enumerate(self.blocks):
+                for name, adapter in block.keeplora_mlp.items():
+                    weight = getattr(block, name).weight
+                    yield f"blocks.{index}.keeplora_mlp.{name}", weight, adapter
+
+    def keeplora_trainable_parameter_count(self):
+        return sum(
+            adapter.lora_B.numel()
+            for _, _, adapter in self.named_keeplora_targets()
+        )
 
     def initialize_keeplora_principal_subspaces(self):
         for _, weight, adapter in self.named_keeplora_targets():
@@ -162,7 +203,12 @@ def _make_keeplora_vit(pretrained_model_name, **kwargs):
             state_dict[key.replace("mlp.", "")] = state_dict.pop(key)
 
     expected_missing_keeplora_keys = {
-        name for name in model.state_dict() if ".attn.keeplora." in name
+        name
+        for name in model.state_dict()
+        if (
+            ".attn.keeplora." in name
+            or ".keeplora_mlp." in name
+        )
     }
     message = model.load_state_dict(state_dict, strict=False)
     missing_keys = set(message.missing_keys)

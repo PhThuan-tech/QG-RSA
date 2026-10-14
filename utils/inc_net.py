@@ -58,17 +58,26 @@ def get_convnet(args, pretrained=False):
         from easydict import EasyDict
         from network import vision_transformer_keeplora
 
+        target = str(args.get("keeplora_target", "attention")).lower()
+        if target not in ("attention", "mlp"):
+            raise ValueError("keeplora_target must be 'attention' or 'mlp'")
         targets = tuple(args.get("keeplora_targets", ["q", "k", "v", "o"]))
         valid_targets = {"q", "k", "v", "o"}
-        if not targets or len(set(targets)) != len(targets) or not set(targets).issubset(valid_targets):
+        if target == "attention" and (
+            not targets
+            or len(set(targets)) != len(targets)
+            or not set(targets).issubset(valid_targets)
+        ):
             raise ValueError("keeplora_targets must be a non-empty, unique subset of q, k, v, o")
         rank = int(args.get("keeplora_rank", 32))
         alpha = float(args.get("keeplora_alpha", 2))
+        fc1_rank = int(args.get("keeplora_fc1_rank", rank))
+        fc2_rank = int(args.get("keeplora_fc2_rank", rank))
         weight_threshold = float(args.get("keeplora_weight_threshold", 0.85))
         feature_threshold = float(args.get("keeplora_feature_threshold", 0.99))
         feature_samples = int(args.get("keeplora_feature_samples", 0))
-        if rank < 1 or alpha <= 0:
-            raise ValueError("keeplora_rank and keeplora_alpha must be positive")
+        if rank < 1 or fc1_rank < 1 or fc2_rank < 1 or alpha <= 0:
+            raise ValueError("KeepLoRA ranks and alpha must be positive")
         if not 0 < weight_threshold <= 1 or not 0 < feature_threshold <= 1:
             raise ValueError("KeepLoRA subspace thresholds must be in (0, 1]")
         if feature_samples < 0:
@@ -90,7 +99,10 @@ def get_convnet(args, pretrained=False):
             vpt_num=0,
             keeplora_rank=rank,
             keeplora_alpha=alpha,
+            keeplora_target=target,
             keeplora_targets=targets,
+            keeplora_fc1_rank=fc1_rank,
+            keeplora_fc2_rank=fc2_rank,
             # KeepLoRA's paper config uses eps_w=0.85 for PTM weights and
             # eps_f=0.99 for accumulated task-feature directions.
             keeplora_weight_threshold=weight_threshold,
@@ -260,4 +272,3 @@ class SimpleVitNet(BaseNet):
         gamma = meanold / meannew
         print("alignweights,gamma=", gamma)
         self.fc.heads[increment][0].weight.data[-increment:, :] *= gamma
-

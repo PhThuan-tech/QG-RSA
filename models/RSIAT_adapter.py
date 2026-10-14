@@ -58,6 +58,34 @@ class Learner(BaseLearner):
         self._rae_last_state_snapshot = None
         self._uses_keeplora = "keeplora" in args["convnet_type"].lower()
         self.keeplora_init_mode = str(args.get("keeplora_init_mode", "cosine")).lower()
+        convnet_trainable = sum(
+            parameter.numel()
+            for parameter in self._network.convnet.parameters()
+            if parameter.requires_grad
+        )
+        if self._uses_keeplora:
+            adaptation_name = "KeepLoRA-{}".format(
+                str(args.get("keeplora_target", "attention")).lower()
+            )
+            logging.info(
+                "%s trainable adaptation parameters=%d; "
+                "convnet trainable parameters=%d",
+                adaptation_name,
+                convnet_trainable,
+                convnet_trainable,
+            )
+        else:
+            adapter_trainable = sum(
+                parameter.numel()
+                for name, parameter in self._network.convnet.named_parameters()
+                if parameter.requires_grad and "adaptmlp" in name
+            )
+            logging.info(
+                "RSIAT-Adapter trainable adaptation parameters=%d; "
+                "convnet trainable parameters=%d",
+                adapter_trainable,
+                convnet_trainable,
+            )
         if self.keeplora_init_mode not in ("cosine", "full_rsiat"):
             raise ValueError(
                 "keeplora_init_mode must be 'cosine' or 'full_rsiat', got {!r}."
