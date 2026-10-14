@@ -91,6 +91,76 @@ class Learner(BaseLearner):
                 "keeplora_init_mode must be 'cosine' or 'full_rsiat', got {!r}."
                 .format(self.keeplora_init_mode)
             )
+        self._log_trainable_parameter_budget("initialization")
+
+    def _log_trainable_parameter_budget(self, stage):
+        network = self._network.module if isinstance(self._network, nn.DataParallel) else self._network
+        named_parameters = list(network.named_parameters())
+        total_network_trainable = sum(
+            parameter.numel()
+            for _, parameter in named_parameters
+            if parameter.requires_grad
+        )
+        if self._uses_keeplora:
+            adaptation_marker = "keeplora"
+            method = "KeepLoRA-{}".format(
+                str(self.args.get("keeplora_target", "attention")).lower()
+            )
+        else:
+            adaptation_marker = "adaptmlp"
+            method = "RSIAT-Adapter"
+        adaptation_trainable = sum(
+            parameter.numel()
+            for name, parameter in named_parameters
+            if parameter.requires_grad and adaptation_marker in name
+        )
+        classifier_trainable = sum(
+            parameter.numel()
+            for parameter in network.fc.parameters()
+            if parameter.requires_grad
+        ) if network.fc is not None else 0
+        rae_trainable = sum(
+            parameter.numel()
+            for parameter in self.old_ae.parameters()
+            if parameter.requires_grad
+        ) if self.old_ae is not None else 0
+        logging.info(
+            "Parameter budget stage=%s method=%s adaptation_trainable=%d "
+            "classifier_trainable=%d rae_trainable=%d model_trainable=%d",
+            stage,
+            method,
+            adaptation_trainable,
+            classifier_trainable,
+            rae_trainable,
+            total_network_trainable + rae_trainable,
+        )
+        if self._uses_keeplora:
+            targets = list(network.convnet.named_keeplora_targets())
+            layer_ids = {
+                name.split(".")[1]
+                for name, _, _ in targets
+                if name.startswith("blocks.")
+            }
+            if self.args.get("keeplora_target", "attention") == "mlp":
+                fc1_count = sum(
+                    adapter.lora_B.numel()
+                    for name, _, adapter in targets
+                    if name.endswith(".fc1") and adapter.lora_B.requires_grad
+                )
+                fc2_count = sum(
+                    adapter.lora_B.numel()
+                    for name, _, adapter in targets
+                    if name.endswith(".fc2") and adapter.lora_B.requires_grad
+                )
+                logging.info(
+                    "KeepLoRA-MLP layers=%d fc1_rank=%d fc2_rank=%d "
+                    "fc1_trainable=%d fc2_trainable=%d",
+                    len(layer_ids),
+                    int(self.args.get("keeplora_fc1_rank", self.args.get("keeplora_rank", 32))),
+                    int(self.args.get("keeplora_fc2_rank", self.args.get("keeplora_rank", 32))),
+                    fc1_count,
+                    fc2_count,
+                )
 
     def _after_load_checkpoint(self, checkpoint):
         """Restore learner-specific state after BaseLearner restores the network."""
@@ -486,6 +556,7 @@ class Learner(BaseLearner):
         self._total_classes = self._known_classes + task_size
         # self._network.update_fc(data_manager.get_task_size(self._cur_task)*4)
         self._network.update_fc(task_size)
+        self._log_trainable_parameter_budget("task_{}".format(self._cur_task))
         self._network_module_ptr = self._network
         logging.info("Learning on {}-{}".format(self._known_classes, self._total_classes))
     

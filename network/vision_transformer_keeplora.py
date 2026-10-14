@@ -66,6 +66,12 @@ class KeepLoRAAttention(Attention):
 
 
 def _add_keeplora_to_linear(linear, rank, alpha):
+    if rank > min(linear.in_features, linear.out_features):
+        raise ValueError(
+            "KeepLoRA rank {} exceeds linear dimensions ({}, {}).".format(
+                rank, linear.in_features, linear.out_features
+            )
+        )
     return KeepLoRA(
         linear.in_features,
         linear.out_features,
@@ -78,7 +84,7 @@ class KeepLoRAVisionTransformer(VisionTransformer):
     def __init__(self, *args, keeplora_config=None, **kwargs):
         super().__init__(*args, **kwargs)
         self.keeplora_config = keeplora_config
-        target = keeplora_config.keeplora_target
+        target = getattr(keeplora_config, "keeplora_target", "attention")
         if target == "attention":
             for block in self.blocks:
                 original = block.attn
@@ -93,6 +99,8 @@ class KeepLoRAVisionTransformer(VisionTransformer):
                 block.attn = replacement
         elif target == "mlp":
             for block in self.blocks:
+                if block.layer_id > 12:
+                    continue
                 block.keeplora_mlp = nn.ModuleDict(
                     {
                         "fc1": _add_keeplora_to_linear(
@@ -111,7 +119,8 @@ class KeepLoRAVisionTransformer(VisionTransformer):
             raise ValueError("Unknown keeplora_target: {}".format(target))
 
     def named_keeplora_targets(self):
-        if self.keeplora_config.keeplora_target == "attention":
+        target = getattr(self.keeplora_config, "keeplora_target", "attention")
+        if target == "attention":
             for index, block in enumerate(self.blocks):
                 yield from block.attn.named_keeplora_targets(f"blocks.{index}.attn")
         else:
@@ -127,9 +136,11 @@ class KeepLoRAVisionTransformer(VisionTransformer):
         )
 
     def initialize_keeplora_principal_subspaces(self):
+        target = getattr(self.keeplora_config, "keeplora_target", "attention")
         for _, weight, adapter in self.named_keeplora_targets():
+            basis_weight = weight if target == "attention" else weight.transpose(0, 1)
             adapter.initialize_principal_subspace(
-                weight, self.keeplora_config.keeplora_weight_threshold
+                basis_weight, self.keeplora_config.keeplora_weight_threshold
             )
 
     def initialize_keeplora_from_gradients(self, gradients, verify_invariance=False):

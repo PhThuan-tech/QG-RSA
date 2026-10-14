@@ -108,6 +108,33 @@ Accumulation is enabled only during the explicit end-of-task feature pass, so
 the RSIAT training loop has no feature-statistics overhead. KeepLoRA checkpoint
 metadata records every PEFT setting and rejects incompatible resumes.
 
+### KeepLoRA MLP placement experiments
+
+The CUB and CIFAR-100 semantic-drift configurations for the MLP-only variant are:
+
+    python main.py --config ./exps/keeplora_cub_mlp_semantic_drift.json
+    python main.py --config ./exps/keeplora_cifar224_mlp_semantic_drift.json
+
+Each configuration keeps the corresponding dataset split, seed, epochs, RSIAT
+losses, and semantic-drift probes from its attention KeepLoRA config, while
+using a distinct run/checkpoint prefix. KeepLoRA is attached only to each ViT
+block's `fc1` and `fc2`: the `fc1` update is added to the linear output before
+activation, and the `fc2` update is added before the MLP dropout and residual
+path. The attention projections remain untouched. Adapter execution and configurations without
+`keeplora_target` (or with `keeplora_target: "attention"`) retain their
+existing paths.
+
+For the ViT-B/16 bottleneck-64 comparison, RSIAT Adapter has 1,189,632
+trainable adapter parameters across 12 blocks. MLP KeepLoRA uses
+`keeplora_fc1_rank: 25` and `keeplora_fc2_rank: 29`, giving 1,188,864
+trainable factor-B parameters (0.0646% fewer; classifier and RAE parameters
+are excluded). Each MLP config inherits its dataset's batch size and other
+training settings: 128 for CUB and 64 for CIFAR-100. Both leave KeepLoRA
+gradient/feature passes uncapped to match their attention configurations.
+Initialization may exceed the memory available on a 16-GB Kaggle GPU for CUB;
+reducing the batch or limiting those passes is a separate smoke/debug run, not
+the matched experiment.
+
 ### KeepLoRA full-RSIAT initialization experiment (E1)
 
 E1 changes only the loss used to estimate the KeepLoRA initialization

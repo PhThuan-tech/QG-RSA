@@ -158,7 +158,7 @@ class BaseLearner(object):
             "keeplora_weight_threshold", "keeplora_feature_threshold",
             "keeplora_feature_samples", "keeplora_grad_batches", "keeplora_feature_batches",
         )
-        return {
+        metadata = {
             "format_version": 2,
             "keeplora_init_mode": str(
                 self.args.get("keeplora_init_mode", "cosine")
@@ -167,6 +167,20 @@ class BaseLearner(object):
             "rae_lifecycle": str(self.args.get("rae_lifecycle", "shared")).lower(),
             **{key: self.args.get(key) for key in keys if key in self.args},
         }
+        if "keeplora" in str(self.args.get("convnet_type", "")).lower():
+            rank = int(self.args.get("keeplora_rank", 32))
+            metadata.update(
+                keeplora_target=str(
+                    self.args.get("keeplora_target", "attention")
+                ).lower(),
+                keeplora_fc1_rank=int(
+                    self.args.get("keeplora_fc1_rank", rank)
+                ),
+                keeplora_fc2_rank=int(
+                    self.args.get("keeplora_fc2_rank", rank)
+                ),
+            )
+        return metadata
 
     def save_checkpoint(self, filepath):
         """Persist the completed task state needed to start the next task.
@@ -255,7 +269,8 @@ class BaseLearner(object):
         current_metadata = self._checkpoint_run_metadata()
         if saved_metadata.get("format_version", 1) >= 2:
             optional_metadata_keys = {
-                "keeplora_init_mode", "rae_zero_init", "rae_lifecycle"
+                "keeplora_init_mode", "rae_zero_init", "rae_lifecycle",
+                "keeplora_target", "keeplora_fc1_rank", "keeplora_fc2_rank",
             }
             missing_metadata = [
                 key for key in current_metadata
@@ -276,6 +291,27 @@ class BaseLearner(object):
             and key in saved_metadata
             and saved_metadata[key] != current_metadata[key]
         ]
+        if "keeplora_target" in current_metadata:
+            saved_target = str(
+                saved_metadata.get("keeplora_target", "attention")
+            ).lower()
+            current_target = current_metadata["keeplora_target"]
+            if saved_target != current_target:
+                mismatches.append(
+                    "keeplora_target (checkpoint={!r}, current={!r})".format(
+                        saved_target, current_target
+                    )
+                )
+            for key in ("keeplora_fc1_rank", "keeplora_fc2_rank"):
+                saved_rank = saved_metadata.get(
+                    key, saved_metadata.get("keeplora_rank")
+                )
+                if saved_rank is not None and saved_rank != current_metadata[key]:
+                    mismatches.append(
+                        "{} (checkpoint={!r}, current={!r})".format(
+                            key, saved_rank, current_metadata[key]
+                        )
+                    )
         if mismatches:
             raise ValueError("Checkpoint does not match this experiment: " + ", ".join(mismatches))
 
