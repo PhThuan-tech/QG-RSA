@@ -24,6 +24,8 @@ def make_config(target="mlp", ffn_adapt=False):
         vpt_num=0,
         keeplora_rank=2,
         keeplora_alpha=2.0,
+        keeplora_fc1_alpha=2.0,
+        keeplora_fc2_alpha=2.0,
         keeplora_targets=("q", "k", "v", "o"),
         keeplora_fc1_rank=3,
         keeplora_fc2_rank=2,
@@ -77,6 +79,28 @@ class KeepLoRAMlpTests(unittest.TestCase):
             self.assertEqual(adapter.principal_basis.shape[0], weight.shape[1])
             self.assertEqual(adapter.lora_A.shape[0], weight.shape[1])
             self.assertEqual(adapter.lora_B.shape[1], weight.shape[0])
+
+    def test_mlp_targets_support_independent_alpha_scaling(self):
+        config = make_config()
+        config.keeplora_fc1_rank = 4
+        config.keeplora_fc2_rank = 8
+        config.keeplora_fc1_alpha = 0.25
+        config.keeplora_fc2_alpha = 0.5
+        model = KeepLoRAVisionTransformer(
+            img_size=32,
+            patch_size=16,
+            num_classes=0,
+            embed_dim=8,
+            depth=2,
+            num_heads=2,
+            mlp_ratio=2.0,
+            qkv_bias=True,
+            tuning_config=config,
+            keeplora_config=config,
+        )
+        for block in model.blocks:
+            self.assertAlmostEqual(block.keeplora_mlp["fc1"].scaling, 0.0625)
+            self.assertAlmostEqual(block.keeplora_mlp["fc2"].scaling, 0.0625)
 
     def test_zero_mlp_update_matches_plain_vit_forward(self):
         config = make_config()

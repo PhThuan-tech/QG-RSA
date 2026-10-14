@@ -73,10 +73,19 @@ def get_convnet(args, pretrained=False):
         alpha = float(args.get("keeplora_alpha", 2))
         fc1_rank = int(args.get("keeplora_fc1_rank", rank))
         fc2_rank = int(args.get("keeplora_fc2_rank", rank))
+        fc1_alpha = float(args.get("keeplora_fc1_alpha", alpha))
+        fc2_alpha = float(args.get("keeplora_fc2_alpha", alpha))
         weight_threshold = float(args.get("keeplora_weight_threshold", 0.85))
         feature_threshold = float(args.get("keeplora_feature_threshold", 0.99))
         feature_samples = int(args.get("keeplora_feature_samples", 0))
-        if rank < 1 or fc1_rank < 1 or fc2_rank < 1 or alpha <= 0:
+        if (
+            rank < 1
+            or fc1_rank < 1
+            or fc2_rank < 1
+            or alpha <= 0
+            or fc1_alpha <= 0
+            or fc2_alpha <= 0
+        ):
             raise ValueError("KeepLoRA ranks and alpha must be positive")
         if not 0 < weight_threshold <= 1 or not 0 < feature_threshold <= 1:
             raise ValueError("KeepLoRA subspace thresholds must be in (0, 1]")
@@ -99,6 +108,8 @@ def get_convnet(args, pretrained=False):
             vpt_num=0,
             keeplora_rank=rank,
             keeplora_alpha=alpha,
+            keeplora_fc1_alpha=fc1_alpha,
+            keeplora_fc2_alpha=fc2_alpha,
             keeplora_target=target,
             keeplora_targets=targets,
             keeplora_fc1_rank=fc1_rank,

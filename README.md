@@ -114,6 +114,7 @@ The CUB and CIFAR-100 semantic-drift configurations for the MLP-only variant are
 
     python main.py --config ./exps/keeplora_cub_mlp_semantic_drift.json
     python main.py --config ./exps/keeplora_cifar224_mlp_semantic_drift.json
+    python main.py --config ./exps/keeplora_cifar224_mlp_semantic_drift_scaling_matched.json
 
 Each configuration keeps the corresponding dataset split, seed, epochs, RSIAT
 losses, and semantic-drift probes from its attention KeepLoRA config, while
@@ -123,6 +124,13 @@ activation, and the `fc2` update is added before the MLP dropout and residual
 path. The attention projections remain untouched. Adapter execution and configurations without
 `keeplora_target` (or with `keeplora_target: "attention"`) retain their
 existing paths.
+
+The `keeplora_cifar224_mlp_semantic_drift_scaling_matched.json` variant keeps
+the same CIFAR-100 experiment settings and rank budget, but uses
+`keeplora_fc1_alpha: 1.5625` and `keeplora_fc2_alpha: 1.8125`. With
+`scaling = lora_alpha / rank`, both MLP updates then have scaling `0.0625`,
+matching the CIFAR attention configuration's `2 / 32`. This is a controlled
+scaling comparison, not a claim that the matched scale is optimal.
 
 For the ViT-B/16 bottleneck-64 comparison, RSIAT Adapter has 1,189,632
 trainable adapter parameters across 12 blocks. MLP KeepLoRA uses

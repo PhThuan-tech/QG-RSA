@@ -179,6 +179,18 @@ class BaseLearner(object):
                 keeplora_fc2_rank=int(
                     self.args.get("keeplora_fc2_rank", rank)
                 ),
+                keeplora_fc1_alpha=float(
+                    self.args.get(
+                        "keeplora_fc1_alpha",
+                        self.args.get("keeplora_alpha", 2),
+                    )
+                ),
+                keeplora_fc2_alpha=float(
+                    self.args.get(
+                        "keeplora_fc2_alpha",
+                        self.args.get("keeplora_alpha", 2),
+                    )
+                ),
             )
         return metadata
 
@@ -271,6 +283,7 @@ class BaseLearner(object):
             optional_metadata_keys = {
                 "keeplora_init_mode", "rae_zero_init", "rae_lifecycle",
                 "keeplora_target", "keeplora_fc1_rank", "keeplora_fc2_rank",
+                "keeplora_fc1_alpha", "keeplora_fc2_alpha",
             }
             missing_metadata = [
                 key for key in current_metadata
@@ -310,6 +323,19 @@ class BaseLearner(object):
                     mismatches.append(
                         "{} (checkpoint={!r}, current={!r})".format(
                             key, saved_rank, current_metadata[key]
+                        )
+                    )
+            for key in ("keeplora_fc1_alpha", "keeplora_fc2_alpha"):
+                saved_alpha = saved_metadata.get(
+                    key, saved_metadata.get("keeplora_alpha")
+                )
+                if (
+                    saved_alpha is not None
+                    and saved_alpha != current_metadata[key]
+                ):
+                    mismatches.append(
+                        "{} (checkpoint={!r}, current={!r})".format(
+                            key, saved_alpha, current_metadata[key]
                         )
                     )
         if mismatches:

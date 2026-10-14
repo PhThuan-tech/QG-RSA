@@ -106,12 +106,12 @@ class KeepLoRAVisionTransformer(VisionTransformer):
                         "fc1": _add_keeplora_to_linear(
                             block.fc1,
                             keeplora_config.keeplora_fc1_rank,
-                            keeplora_config.keeplora_alpha,
+                            keeplora_config.keeplora_fc1_alpha,
                         ),
                         "fc2": _add_keeplora_to_linear(
                             block.fc2,
                             keeplora_config.keeplora_fc2_rank,
-                            keeplora_config.keeplora_alpha,
+                            keeplora_config.keeplora_fc2_alpha,
                         ),
                     }
                 )
