@@ -253,6 +253,84 @@ class FullRsiatInitializationLossTests(unittest.TestCase):
         expected = learner.args["beta"] * align + learner.args["gamma"] * orth
         self.assertTrue(torch.allclose(actual, expected))
 
+    def test_missing_lorth_prototype_mode_preserves_projected_calculation(self):
+        learner = self.make_learner(task=1)
+        features = torch.randn(3, 4)
+        features_old = torch.randn(3, 4)
+        old_prototypes = torch.from_numpy(learner._class_means).float().to(
+            learner._device
+        )
+        projected_features = learner.old_ae(features_old)
+        expected_align = nn.MSELoss()(features, projected_features)
+        projected_feature_norm = F.normalize(projected_features, p=2, dim=1)
+        projected_prototypes = learner.old_ae(old_prototypes)
+        projected_prototype_norm = F.normalize(
+            projected_prototypes, p=2, dim=1
+        )
+        expected_orth = (
+            torch.matmul(projected_prototype_norm, projected_feature_norm.t()).sum()
+            / (projected_prototype_norm.shape[0] * projected_feature_norm.shape[0])
+        )
+
+        actual_align, actual_orth = Learner._inc_loss_components(
+            learner, features, features_old
+        )
+
+        self.assertTrue(torch.equal(actual_align, expected_align))
+        self.assertTrue(torch.equal(actual_orth, expected_orth))
+
+    def test_raw_lorth_prototypes_skip_rae_but_keep_projected_features(self):
+        class RecordingProjector(nn.Module):
+            def __init__(self):
+                super().__init__()
+                self.inputs = []
+
+            def forward(self, inputs):
+                self.inputs.append(inputs.detach().clone())
+                return inputs * 1.5 + 0.25
+
+        learner = self.make_learner(task=1)
+        learner.args["lorth_prototype_mode"] = "raw"
+        projector = RecordingProjector()
+        learner.old_ae = projector
+        features = torch.randn(3, 4)
+        features_old = torch.randn(3, 4)
+        means_before = learner._class_means.copy()
+        projected_features = features_old * 1.5 + 0.25
+        expected_align = nn.MSELoss()(features, projected_features)
+        projected_feature_norm = F.normalize(projected_features, p=2, dim=1)
+        raw_prototypes = torch.from_numpy(means_before).float().to(
+            learner._device
+        )
+        raw_prototype_norm = F.normalize(raw_prototypes, p=2, dim=1)
+        expected_orth = (
+            torch.matmul(raw_prototype_norm, projected_feature_norm.t()).sum()
+            / (raw_prototype_norm.shape[0] * projected_feature_norm.shape[0])
+        )
+
+        actual_align, actual_orth = Learner._inc_loss_components(
+            learner, features, features_old
+        )
+
+        self.assertEqual(len(projector.inputs), 1)
+        self.assertTrue(torch.equal(projector.inputs[0], features_old))
+        self.assertTrue(torch.equal(actual_align, expected_align))
+        self.assertTrue(torch.equal(actual_orth, expected_orth))
+        self.assertEqual(actual_orth.shape, torch.Size([]))
+        self.assertEqual(actual_orth.dtype, features.dtype)
+        self.assertEqual(actual_orth.device, features.device)
+        self.assertTrue(torch.isfinite(actual_align))
+        self.assertTrue(torch.isfinite(actual_orth))
+        np.testing.assert_array_equal(learner._class_means, means_before)
+
+    def test_invalid_lorth_prototype_mode_is_rejected(self):
+        learner = self.make_learner(task=1)
+        learner.args["lorth_prototype_mode"] = "unprojected"
+        with self.assertRaisesRegex(ValueError, "lorth_prototype_mode"):
+            Learner._inc_loss_components(
+                learner, self.inputs, self.inputs.detach()
+            )
+
     def test_legacy_checkpoint_without_init_mode_remains_loadable(self):
         args = {
             "dataset": "cifar224",

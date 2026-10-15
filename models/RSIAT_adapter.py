@@ -746,7 +746,14 @@ class Learner(BaseLearner):
         loss_align = nn.MSELoss()(features, features_old)
         features_old_norm = F.normalize(features_old, p=2, dim=1)
         protos = torch.from_numpy(self._class_means).float().to(self._device,non_blocking=True)
-        protos = self.old_ae(protos)
+        prototype_mode = self.args.get("lorth_prototype_mode", "projected")
+        if prototype_mode == "projected":
+            protos = self.old_ae(protos)
+        elif prototype_mode != "raw":
+            raise ValueError(
+                "lorth_prototype_mode must be 'projected' or 'raw', got {!r}."
+                .format(prototype_mode)
+            )
         protos = F.normalize(protos, p=2, dim=1)
         similarity = torch.matmul(protos, features_old_norm.t())
         loss_orth = similarity.sum() / (similarity.shape[0]*similarity.shape[1])
