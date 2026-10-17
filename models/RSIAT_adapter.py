@@ -657,18 +657,16 @@ class Learner(BaseLearner):
         if self._cur_task == 0:
             self.tuned_epochs = self.args["init_epochs"]
             param_groups = [
-                {'params': self._network.convnet.blocks[-1].parameters(), 'lr': 0.01,
+                {'name': 'backbone_last_block',
+                 'params': self._network.convnet.blocks[-1].parameters(), 'lr': 0.01,
                  'weight_decay': self.args['weight_decay']},
-                {'params': self._network.convnet.blocks[:-1].parameters(), 'lr': 0.01,
+                {'name': 'backbone_other_blocks',
+                 'params': self._network.convnet.blocks[:-1].parameters(), 'lr': 0.01,
                  'weight_decay': self.args['weight_decay']},
-                {'params': self._network.fc.parameters(), 'lr': 0.01, 'weight_decay': self.args['weight_decay']}
+                {'name': 'classifier', 'params': self._network.fc.parameters(),
+                 'lr': 0.01, 'weight_decay': self.args['weight_decay']}
             ]
-
-            if self.args['optimizer'] == 'sgd':
-                optimizer = optim.SGD(param_groups, momentum=0.9, lr=self.init_lr, weight_decay=self.weight_decay)
-            elif self.args['optimizer'] == 'adam':
-                optimizer = optim.AdamW(self._network.parameters(), lr=self.init_lr, weight_decay=self.weight_decay)
-                
+            optimizer = self._build_main_optimizer(param_groups, incremental=False)
             scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=self.tuned_epochs, eta_min=self.min_lr)
             log_count_parameter(param_groups)
             self._init_train(train_loader, test_loader, optimizer, scheduler, self.args['warmup_epoch'])
@@ -676,20 +674,162 @@ class Learner(BaseLearner):
             self.tuned_epochs = self.args['inc_epochs']
             param_groups = []
             param_groups.append(
-                {'params': self._network.convnet.parameters(), 'lr': self.init_lr, 'weight_decay': self.weight_decay})
+                {'name': 'backbone', 'params': self._network.convnet.parameters(),
+                 'lr': self.init_lr, 'weight_decay': self.weight_decay})
             param_groups.append(
-                {'params': self._network.fc.parameters(), 'lr': self.init_lr, 'weight_decay': self.weight_decay})
+                {'name': 'classifier', 'params': self._network.fc.parameters(),
+                 'lr': self.init_lr, 'weight_decay': self.weight_decay})
             param_groups.append(
-                {'params': self.old_ae.parameters(), 'lr': self.args['ae_init_lr'], 'weight_decay': self.args['ae_weight_decay']})
-            
-            if self.args['optimizer'] == 'sgd':
-                optimizer = optim.SGD(param_groups, momentum=0.9)
-            elif self.args['optimizer'] == 'adam':
-                optimizer = optim.AdamW(self._network.parameters(), lr=self.init_lr, weight_decay=self.weight_decay)
-
+                {'name': 'rae', 'params': self.old_ae.parameters(),
+                 'lr': self.args['ae_init_lr'], 'weight_decay': self.args['ae_weight_decay']})
+            optimizer = self._build_main_optimizer(param_groups, incremental=True)
             scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=self.tuned_epochs, eta_min=self.min_lr)
             log_count_parameter(param_groups)
             self._init_train(train_loader, test_loader, optimizer, scheduler, self.args['warmup_epoch'])
+
+    def _build_main_optimizer(self, param_groups, incremental):
+        for group in param_groups:
+            group["params"] = list(group["params"])
+        grouped_ids = [
+            id(parameter)
+            for group in param_groups
+            for parameter in group["params"]
+        ]
+        if len(grouped_ids) != len(set(grouped_ids)):
+            raise RuntimeError("Optimizer parameter groups contain duplicates.")
+
+        optimizer_name = str(self.args.get("optimizer", "sgd")).lower()
+        if optimizer_name == "sgd":
+            if incremental:
+                optimizer = optim.SGD(param_groups, momentum=0.9)
+            else:
+                optimizer = optim.SGD(
+                    param_groups,
+                    momentum=0.9,
+                    lr=self.init_lr,
+                    weight_decay=self.weight_decay,
+                )
+            logging.info("SGD settings momentum=%g", optimizer.defaults["momentum"])
+        elif optimizer_name in ("adam", "adamw"):
+            lr = float(self.args.get("adamw_lr", 1e-3))
+            weight_decay = float(self.args.get("adamw_weight_decay", 0.01))
+            betas = tuple(
+                float(value)
+                for value in self.args.get("adamw_betas", (0.9, 0.999))
+            )
+            eps = float(self.args.get("adamw_eps", 1e-8))
+            if lr <= 0 or weight_decay < 0 or eps <= 0 or len(betas) != 2:
+                raise ValueError(
+                    "AdamW requires lr > 0, weight_decay >= 0, eps > 0, "
+                    "and exactly two beta values."
+                )
+            if any(beta < 0 or beta >= 1 for beta in betas):
+                raise ValueError("AdamW beta values must be in [0, 1).")
+
+            for group in param_groups:
+                group["params"] = [
+                    parameter
+                    for parameter in group["params"]
+                    if parameter.requires_grad
+                ]
+                group["lr"] = lr
+                group["weight_decay"] = weight_decay
+                if incremental and group["name"] == "rae":
+                    group["lr"] = float(self.args.get("adamw_rae_lr", lr))
+                    group["weight_decay"] = float(
+                        self.args.get("adamw_rae_weight_decay", weight_decay)
+                    )
+                if not group["params"]:
+                    raise RuntimeError(
+                        "Optimizer parameter group {!r} is empty."
+                        .format(group["name"])
+                    )
+            optimizer = optim.AdamW(
+                param_groups,
+                lr=lr,
+                weight_decay=weight_decay,
+                betas=betas,
+                eps=eps,
+            )
+            logging.info(
+                "AdamW settings lr=%g weight_decay=%g betas=%s eps=%g",
+                lr,
+                weight_decay,
+                betas,
+                eps,
+            )
+        else:
+            raise ValueError(
+                "optimizer must be 'sgd' or 'adamw', got {!r}."
+                .format(optimizer_name)
+            )
+
+        network = (
+            self._network.module
+            if isinstance(self._network, nn.DataParallel)
+            else self._network
+        )
+        expected_parameters = {
+            id(parameter)
+            for parameter in network.parameters()
+            if parameter.requires_grad
+        }
+        if incremental and self.old_ae is not None:
+            expected_parameters.update(
+                id(parameter)
+                for parameter in self.old_ae.parameters()
+                if parameter.requires_grad
+            )
+
+        grouped_ids = [
+            id(parameter)
+            for group in optimizer.param_groups
+            for parameter in group["params"]
+        ]
+        if len(grouped_ids) != len(set(grouped_ids)):
+            raise RuntimeError("Optimizer parameter groups contain duplicates.")
+        grouped_trainable = {
+            id(parameter)
+            for group in optimizer.param_groups
+            for parameter in group["params"]
+            if parameter.requires_grad
+        }
+        missing_parameters = expected_parameters - grouped_trainable
+        unexpected_parameters = grouped_trainable - expected_parameters
+        if missing_parameters or unexpected_parameters:
+            raise RuntimeError(
+                "Optimizer parameter coverage mismatch: missing={}, unexpected={}"
+                .format(len(missing_parameters), len(unexpected_parameters))
+            )
+
+        logging.info(
+            "Main optimizer=%s stage=%s scheduler=CosineAnnealingLR "
+            "scheduler_step=per_epoch trainable_parameters=%d",
+            optimizer.__class__.__name__,
+            "incremental" if incremental else "initial",
+            sum(
+                parameter.numel()
+                for group in optimizer.param_groups
+                for parameter in group["params"]
+                if parameter.requires_grad
+            ),
+        )
+        for index, group in enumerate(optimizer.param_groups):
+            logging.info(
+                "Optimizer group=%s index=%d tensors=%d trainable_parameters=%d "
+                "lr=%g weight_decay=%g",
+                group.get("name", "group_{}".format(index)),
+                index,
+                len(group["params"]),
+                sum(
+                    parameter.numel()
+                    for parameter in group["params"]
+                    if parameter.requires_grad
+                ),
+                group["lr"],
+                group["weight_decay"],
+            )
+        return optimizer
 
     def _init_train(self, train_loader, test_loader, optimizer, scheduler, warmup_epoch):
         prog_bar = tqdm(range(self.tuned_epochs))

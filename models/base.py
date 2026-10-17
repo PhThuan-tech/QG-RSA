@@ -72,6 +72,14 @@ class BaseLearner(object):
 
         optimizer = optim.SGD(network_params, lr=self.init_lr, momentum=0.9, weight_decay=self.weight_decay)
         scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer=optimizer, T_max=run_epochs)
+        logging.info(
+            "CA optimizer=SGD lr=%g weight_decay=%g momentum=0.9 "
+            "scheduler=CosineAnnealingLR scheduler_step=per_epoch "
+            "trainable_parameters=%d",
+            self.init_lr,
+            self.weight_decay,
+            sum(parameter.numel() for parameter in param_list),
+        )
 
         self._network.to(self._device)
 
@@ -160,6 +168,7 @@ class BaseLearner(object):
         )
         metadata = {
             "format_version": 2,
+            "optimizer": str(self.args.get("optimizer", "sgd")).lower(),
             "keeplora_init_mode": str(
                 self.args.get("keeplora_init_mode", "cosine")
             ).lower(),
@@ -167,6 +176,29 @@ class BaseLearner(object):
             "rae_lifecycle": str(self.args.get("rae_lifecycle", "shared")).lower(),
             **{key: self.args.get(key) for key in keys if key in self.args},
         }
+        if metadata["optimizer"] in ("adam", "adamw"):
+            metadata.update(
+                adamw_lr=float(self.args.get("adamw_lr", 1e-3)),
+                adamw_weight_decay=float(
+                    self.args.get("adamw_weight_decay", 0.01)
+                ),
+                adamw_betas=tuple(
+                    float(value)
+                    for value in self.args.get("adamw_betas", (0.9, 0.999))
+                ),
+                adamw_eps=float(self.args.get("adamw_eps", 1e-8)),
+                adamw_rae_lr=float(
+                    self.args.get(
+                        "adamw_rae_lr", self.args.get("adamw_lr", 1e-3)
+                    )
+                ),
+                adamw_rae_weight_decay=float(
+                    self.args.get(
+                        "adamw_rae_weight_decay",
+                        self.args.get("adamw_weight_decay", 0.01),
+                    )
+                ),
+            )
         if "keeplora" in str(self.args.get("convnet_type", "")).lower():
             rank = int(self.args.get("keeplora_rank", 32))
             metadata.update(
@@ -284,6 +316,9 @@ class BaseLearner(object):
                 "keeplora_init_mode", "rae_zero_init", "rae_lifecycle",
                 "keeplora_target", "keeplora_fc1_rank", "keeplora_fc2_rank",
                 "keeplora_fc1_alpha", "keeplora_fc2_alpha",
+                "optimizer", "adamw_lr", "adamw_weight_decay",
+                "adamw_betas", "adamw_eps", "adamw_rae_lr",
+                "adamw_rae_weight_decay",
             }
             missing_metadata = [
                 key for key in current_metadata

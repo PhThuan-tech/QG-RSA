@@ -205,6 +205,50 @@ class KeepLoRAMlpTests(unittest.TestCase):
         for adapter, before in zip(adapters, factor_a_snapshots):
             self.assertTrue(torch.equal(adapter.lora_A, before))
 
+    def test_adamw_updates_only_trainable_lora_b_factors(self):
+        model = make_tiny_keeplora()
+        targets = list(model.named_keeplora_targets())
+        adapters = [adapter for _, _, adapter in targets]
+        base_parameters = [
+            parameter
+            for name, parameter in model.named_parameters()
+            if "keeplora_mlp" not in name
+        ]
+        base_snapshots = [parameter.detach().clone() for parameter in base_parameters]
+        with torch.no_grad():
+            for adapter in adapters:
+                adapter.lora_A.normal_()
+        optimizer = torch.optim.AdamW(
+            [adapter.lora_B for adapter in adapters],
+            lr=1e-3,
+            weight_decay=0.01,
+        )
+
+        optimizer.zero_grad(set_to_none=True)
+        model.forward_features(torch.randn(2, 3, 32, 32)).square().mean().backward()
+        self.assertTrue(
+            any(
+                adapter.lora_B.grad is not None
+                and torch.isfinite(adapter.lora_B.grad).all()
+                and torch.count_nonzero(adapter.lora_B.grad).item() > 0
+                for adapter in adapters
+            )
+        )
+        factor_a_snapshots = [adapter.lora_A.clone() for adapter in adapters]
+        factor_b_snapshots = [adapter.lora_B.detach().clone() for adapter in adapters]
+        optimizer.step()
+
+        self.assertTrue(
+            any(
+                not torch.equal(adapter.lora_B, before)
+                for adapter, before in zip(adapters, factor_b_snapshots)
+            )
+        )
+        for parameter, before in zip(base_parameters, base_snapshots):
+            self.assertTrue(torch.equal(parameter, before))
+        for adapter, before in zip(adapters, factor_a_snapshots):
+            self.assertTrue(torch.equal(adapter.lora_A, before))
+
     def test_attention_default_and_explicit_target_are_equivalent(self):
         torch.manual_seed(101)
         default = make_tiny_keeplora(target=None)
