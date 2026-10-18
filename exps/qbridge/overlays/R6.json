@@ -1,0 +1,50 @@
+{
+  "use_quantum_kernel_base": true,
+  "use_quantum_kernel_inc": false,
+  "qbridge": {
+    "enabled": true,
+    "margin_x": 0.1,
+    "margin_old": 0.1,
+    "lambda_cross": 0.1,
+    "lambda_guard": 0.1,
+    "risk_gain": 0.5,
+    "cross_normalization": "mean_all_old_pairs",
+    "legacy_incremental_separation": "replace",
+    "old_head_grad_in_added_losses": false,
+    "detach_risk": true,
+    "detach_guard_anchors": true,
+    "preserve_original_ssca_ca": true,
+    "base_checkpoint_path": "<REQUIRED_EXISTING_BASE_CHECKPOINT>",
+    "variant": "R6",
+    "risk_mode": "calibrated_pqk",
+    "calibration": {
+      "enabled": true,
+      "strict_require_fitted": true,
+      "fit_source": "base_train_only",
+      "prototype_fit_fraction": 0.6,
+      "calibrator_fit_fraction": 0.2,
+      "calibrator_eval_fraction": 0.2,
+      "split_seed": "{seed}",
+      "proxy_margin": 0.1,
+      "fit_loss": "unweighted_bce",
+      "monotonic": "softplus_slope_sigmoid",
+      "recalibrate_per_task": false
+    },
+    "calibrator_artifact_path": "<REQUIRED_ARTIFACT_DIRECTORY>/{dataset}/{seed}/calibrator.pt",
+    "kernel_source": "base_frozen",
+    "guard_refresh": "each_step",
+    "prototype_source": "previous_task_means",
+    "prototype_cache": "per_task"
+  },
+  "qbridge_experiment": true,
+  "q_inc_train_mode": "frozen",
+  "prefix": "qbridge_R6",
+  "seed": [
+    1993,
+    2015,
+    2026
+  ],
+  "save_checkpoints": true,
+  "resume": false,
+  "compact_diagonal_checkpoint": false
+}

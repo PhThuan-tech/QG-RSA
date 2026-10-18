@@ -61,6 +61,18 @@ class SimpleContinualLinear(nn.Module):
         out = {'logits': torch.cat(out, dim=1)}
         return out
 
+    def qbridge_scores(self, features, seen_ids, old_ids):
+        """Raw cosine with detached old rows only; feature gradients stay intact.
+
+        seen_ids describes concatenated head rows in original/global label space.
+        The legacy forward and optimizer policy are deliberately unchanged.
+        """
+        from utils.qbridge import safe_cosine_scores
+        if self.feat_expand or self.with_norm:
+            raise ValueError("Q-BRIDGE v1.1 requires RSIAT's plain shared-feature head")
+        weights = torch.cat([head[0].weight for head in self.heads], dim=0)
+        return safe_cosine_scores(features, weights, seen_ids, old_ids)
+
 
 
 class CosineLinear(nn.Module):

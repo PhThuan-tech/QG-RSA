@@ -36,6 +36,10 @@ class Learner(BaseLearner):
         self.weight_decay = args["weight_decay"] if args["weight_decay"] is not None else 0.0005
         self.min_lr = args['min_lr'] if args['min_lr'] is not None else 1e-8
         self.args = args
+        from utils.qbridge import config_from_args
+        self.qbridge_config = config_from_args(args)
+        self.qbridge_runtime = None
+        self.qbridge_stage_records = []
 
         self._old_most_sentive = []
         self._update_grads = {}
@@ -128,6 +132,54 @@ class Learner(BaseLearner):
         self._network_module_ptr = self._network
         self.old_network_module_ptr = self._old_network
 
+    def _validate_checkpoint(self, checkpoint):
+        if not self.args.get("_qbridge_restore_only", False):
+            return super()._validate_checkpoint(checkpoint)
+        # Only incremental settings may differ when branching from the same base.
+        if checkpoint.get("cur_task") != 0:
+            raise ValueError("Q-BRIDGE base branching requires task 0")
+        base_view = dict(checkpoint)
+        metadata = dict(checkpoint.get("run_metadata", {}))
+        for key in ("use_quantum_kernel_inc", "q_inc_train_mode", "inc_loss_mode", "q_inc_pair"):
+            metadata.pop(key, None)
+        base_view["run_metadata"] = metadata
+        super()._validate_checkpoint(base_view)
+        required = {"class_order", "class_means", "class_covs", "quantum_kernel_state_dict"}
+        if required - checkpoint.keys():
+            raise ValueError("Incomplete paired base checkpoint")
+
+    def initialize_qbridge_branch(self):
+        from utils.qbridge import BridgeRuntime
+        base_hash = self.args["_qbridge_base_hash"]
+        self._qb_snapshot_id = base_hash + ":task0"
+        self._qb_means_id = self._qb_snapshot_id
+        if self.qbridge_config is not None:
+            self.qbridge_runtime = BridgeRuntime(self.qbridge_config, self.quantum_kernel,
+                                                  base_hash, self.args["seed"], self._device)
+        self.quantum_kernel.set_inc_mode("frozen")
+
+    def _start_qbridge_task(self):
+        self._qb_seen_ids = list(self.class_order[:self._total_classes])
+        self._qb_old_ids = list(self.class_order[:self._known_classes])
+        self._qb_new_ids = list(self.class_order[self._known_classes:self._total_classes])
+        if self.qbridge_runtime is None:
+            raise ValueError("Q-BRIDGE requires the paired-base runner and artifacts")
+        self.qbridge_runtime.start_task(
+            torch.as_tensor(self._class_means, dtype=torch.float32, device=self._device),
+            self._qb_old_ids, self._qb_snapshot_id, self._qb_means_id)
+        self.qbridge_runtime.adapter_parameters = tuple(
+            p for p in self._network_module_ptr.convnet.parameters() if p.requires_grad)
+        from pathlib import Path
+        from utils.qbridge import write_json
+        write_json(Path(self.args["_qbridge_report_dir"]) / ("task_%d_provenance.json" % self._cur_task), {
+            "task_index": self._cur_task, "class_order": list(self.class_order),
+            "old_global_ids": self._qb_old_ids, "new_global_ids": self._qb_new_ids,
+            "snapshot_encoder_id": self._qb_snapshot_id, "means_encoder_id": self._qb_means_id,
+            "means_are_estimates": True, "metric_base_checkpoint_hash": self.args["_qbridge_base_hash"],
+            "selector_artifact_hash": self.qbridge_runtime.artifact_hash,
+            "calibrator_fit_id": self.qbridge_runtime.fit_id,
+            "version_origin": "base binding reconstructed from validated checkpoint; later SSCA updates tagged by task"})
+
     def after_task(self):
         self._known_classes = self._total_classes
         self._old_network = self._network.copy().freeze()
@@ -135,6 +187,8 @@ class Learner(BaseLearner):
             self.old_network_module_ptr = self._old_network.module
         else:
             self.old_network_module_ptr = self._old_network
+        if self.args.get("qbridge_experiment", False):
+            self._qb_snapshot_id = self.args["_qbridge_base_hash"] + ":task%d" % self._cur_task
 
 
     def extract_features(self, trainloader, model, args):
@@ -218,7 +272,7 @@ class Learner(BaseLearner):
 
         # Gamma calibration uses the same training samples but deterministic
         # evaluation transforms.  A private generator prevents RNG drift.
-        if self.quantum_kernel is not None:
+        if self.quantum_kernel is not None and not (self.qbridge_config is not None and self._cur_task > 0):
             calibration_dataset = data_manager.get_eval_view(train_dataset)
             calibration_count = min(
                 int(self.args.get("q_calib_samples", 512)), len(calibration_dataset)
@@ -263,11 +317,17 @@ class Learner(BaseLearner):
             self._network.to(self._device)
             train_embeddings_old, _ = self.extract_features(self.train_loader, self._network, None)
 
+        if self.qbridge_config is not None and self._cur_task > 0:
+            self._start_qbridge_task()
         evaluation_loader = self.val_loader if self.val_loader is not None else self.test_loader
         self._train(self.train_loader, evaluation_loader)
         
         if len(self._multiple_gpus) > 1:
             self._network = self._network.module
+
+        if self.args.get("qbridge_experiment", False) and self._cur_task > 0:
+            from utils.qbridge_experiment import evaluate_stage
+            evaluate_stage(self, "pre_ca")
 
       
         if self._cur_task >0:
@@ -280,10 +340,17 @@ class Learner(BaseLearner):
 
         self._network.fc.backup()
         self._compute_class_mean(data_manager, check_diff=False, oracle=False)
+        if self.args.get("qbridge_experiment", False):
+            self._qb_means_id = self.args["_qbridge_base_hash"] + ":task%d" % self._cur_task
         if self._cur_task>0 and self.args['ca_epochs']>0 and self.args['ca'] is True:
             self._stage2_compact_classifier(task_size, self.args['ca_epochs'])
             if len(self._multiple_gpus) > 1:
                 self._network = self._network.module
+        if self.args.get("qbridge_experiment", False) and self._cur_task > 0:
+            from utils.qbridge_experiment import evaluate_stage
+            evaluate_stage(self, "post_ca")
+            if self.qbridge_runtime is not None:
+                self.qbridge_runtime.cache = None
 
     def _quantum_used_this_task(self):
         return (
@@ -411,7 +478,7 @@ class Learner(BaseLearner):
             if self.args['optimizer'] == 'sgd':
                 optimizer = optim.SGD(param_groups, momentum=0.9)
             elif self.args['optimizer'] == 'adam':
-                if self.use_quantum_kernel_inc:
+                if self.use_quantum_kernel_inc or self.qbridge_config is not None:
                     # QKSR's incremental objective requires old_ae to update.
                     optimizer = optim.AdamW(param_groups)
                 else:
@@ -432,7 +499,7 @@ class Learner(BaseLearner):
         )
 
     def _init_train(self, train_loader, test_loader, optimizer, scheduler, warmup_epoch):
-        prog_bar = tqdm(range(self.tuned_epochs))
+        prog_bar = tqdm(range(self.tuned_epochs), disable=self.args.get("qbridge_experiment", False))
         eval_interval = self.args.get("eval_interval", 0)
         if self._device.type == "cuda":
             torch.cuda.reset_peak_memory_stats(self._device)
@@ -443,6 +510,9 @@ class Learner(BaseLearner):
             losses = 0.0
             losses_c, losses_rt = 0.0, 0.0
             correct, total = 0, 0
+            qb_records = []
+            if self.qbridge_runtime is not None:
+                self.qbridge_runtime.observe_gradient = True
 
             for i, (_, inputs, targets) in enumerate(train_loader):
                 inputs = inputs.to(self._device, non_blocking=True)
@@ -452,6 +522,8 @@ class Learner(BaseLearner):
                 optimizer.zero_grad()
                 loss.backward()
                 optimizer.step()
+                if self.qbridge_runtime is not None:
+                    qb_records.append(dict(self.qbridge_runtime.last))
                 losses += loss.item()
                 losses_c += loss_c.item()
                 losses_rt += loss_rt.item()
@@ -480,6 +552,25 @@ class Learner(BaseLearner):
                 epoch_seconds,
             )
             prog_bar.set_description(info)
+            if self.args.get("qbridge_experiment", False):
+                import json
+                from pathlib import Path
+                record = {"task": self._cur_task, "epoch": epoch + 1,
+                          "seconds": epoch_seconds, "batches": len(train_loader),
+                          "milliseconds_per_batch": epoch_seconds * 1000 / len(train_loader),
+                          "loss": losses / len(train_loader),
+                          "gpu_peak_bytes": torch.cuda.max_memory_allocated(self._device)
+                          if self._device.type == "cuda" else None,
+                          "device": str(self._device)}
+                if qb_records:
+                    record["mean"] = {key: float(np.mean([r[key] for r in qb_records]))
+                                      for key in ("cross", "guard", "active_fraction", "active_weight_mean")}
+                    record["first_batch"] = qb_records[0]
+                    record["last_batch"] = qb_records[-1]
+                with open(Path(self.args["_qbridge_report_dir"]) / "epochs.jsonl", "a", encoding="utf-8") as output:
+                    output.write(json.dumps(record, allow_nan=False) + "\n")
+                logging.info("QBRIDGE task=%d epoch=%d elapsed=%.2fs status=trained",
+                             self._cur_task, epoch + 1, epoch_seconds)
             if self.quantum_kernel is not None and self._quantum_used_this_task():
                 logging.info(
                     "QKSR diagnostics task=%d epoch=%d gamma=%.8g gradients=%s kernel=%s",
@@ -549,6 +640,35 @@ class Learner(BaseLearner):
             return logits, loss_c, loss_base
         
         features_old = self.old_network_module_ptr.extract_vector(inputs)
+        if getattr(self, "qbridge_config", None) is not None:
+            bridge = self.qbridge_runtime
+            if bridge is None:
+                raise ValueError("Missing Q-BRIDGE paired-base runtime")
+            features_old = features_old.detach()
+            global_labels = torch.as_tensor(self.class_order, device=targets.device)[targets]
+            if self.qbridge_config.get("classification_mode") == "all_seen_cosface":
+                from utils.qbridge import id_positions
+                scores = self._network_module_ptr.fc.qbridge_scores(
+                    features, self._qb_seen_ids, self._qb_old_ids)
+                loss_c = loss_cos(scores, id_positions(global_labels, self._qb_seen_ids, targets.device))
+            loss_align = F.mse_loss(features, self.old_ae(features_old))
+            observe_modules = getattr(bridge, "observe_gradient", False)
+            added = bridge.losses(features, features_old, global_labels,
+                                  self._network_module_ptr.fc, self.old_ae,
+                                  self._qb_seen_ids, self._qb_new_ids)
+            bridge.last.update(classification=float(loss_c.detach()), alignment=float(loss_align.detach()),
+                               weighted_alignment=float((self.args["beta"] * loss_align).detach()),
+                               weighted_bridge=float(added.detach()))
+            if observe_modules:
+                module_norms = {}
+                total_loss = loss_c + self.args["beta"] * loss_align + added
+                for name, module in (("adapter", self._network_module_ptr.convnet),
+                                     ("head", self._network_module_ptr.fc), ("alignment_projector", self.old_ae)):
+                    params = tuple(p for p in module.parameters() if p.requires_grad)
+                    grads = torch.autograd.grad(total_loss, params, retain_graph=True, allow_unused=True) if params else ()
+                    module_norms[name] = sum(float(g.detach().square().sum()) for g in grads if g is not None) ** .5
+                bridge.last["total_loss_module_gradient_norms"] = module_norms
+            return logits, loss_c, self.args["beta"] * loss_align + added
         loss_inc = self._inc_loss(features, features_old)
         return logits, loss_c, loss_inc
     

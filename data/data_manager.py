@@ -1,3 +1,4 @@
+import copy
 import logging
 import numpy as np
 from PIL import Image
@@ -7,9 +8,12 @@ from data.data import  iCIFAR224, iImageNetR,iImageNetA,CUB, vtab, omnibenchmark
 
 
 class DataManager(object):
-    def __init__(self, dataset_name, shuffle, seed, init_cls, increment):
+    def __init__(self, dataset_name, shuffle, seed, init_cls, increment, data_root=None,
+                 offline=False, class_order=None):
         self.dataset_name = dataset_name
-        self._setup_data(dataset_name, shuffle, seed)
+        self.data_root = data_root
+        self.offline = offline
+        self._setup_data(dataset_name, shuffle, seed, class_order=class_order)
         assert init_cls <= len(self._class_order), "No enough classes."
         self._increments = [init_cls]
         while sum(self._increments) + increment < len(self._class_order):
@@ -189,10 +193,18 @@ class DataManager(object):
         if not isinstance(dataset, DummyDataset):
             raise TypeError("get_eval_view expects a DummyDataset.")
         eval_transform = transforms.Compose([*self._test_trsf, *self._common_trsf])
-        return DummyDataset(dataset.images, dataset.labels, eval_transform, dataset.use_path)
+        return DummyDataset(
+            dataset.images,
+            dataset.labels,
+            eval_transform,
+            dataset.use_path,
+            sample_ids=dataset.sample_ids,
+        )
 
-    def _setup_data(self, dataset_name, shuffle, seed):
+    def _setup_data(self, dataset_name, shuffle, seed, class_order=None):
         idata = _get_idata(dataset_name)
+        idata.data_root = self.data_root
+        idata.offline = self.offline
         idata.download_data()
         # train_data和train_target和test_data和test_target
 
@@ -200,6 +212,7 @@ class DataManager(object):
         self._train_data, self._train_targets = idata.train_data, idata.train_targets
         self._test_data, self._test_targets = idata.test_data, idata.test_targets
         self.use_path = idata.use_path
+        self.class_names = copy.deepcopy(getattr(idata, "class_names", None))
 
         # Transforms
         self._train_trsf = idata.train_trsf
@@ -207,13 +220,25 @@ class DataManager(object):
         self._common_trsf = idata.common_trsf
 
         # Order
-        order = [i for i in range(len(np.unique(self._train_targets)))]
-        if shuffle:
-            np.random.seed(seed)
-            order = np.random.permutation(len(order)).tolist()
+        class_count = len(np.unique(self._train_targets))
+        order = [i for i in range(class_count)]
+        if class_order is not None:
+            order = [int(value) for value in class_order]
+            if len(order) != class_count or sorted(order) != list(range(class_count)):
+                raise ValueError(
+                    "Explicit class_order must be a permutation of 0..{}.".format(
+                        class_count - 1
+                    )
+                )
+        elif shuffle:
+            # RandomState preserves the exact historical permutation without
+            # mutating NumPy's process-global training RNG stream.
+            order = np.random.RandomState(int(seed)).permutation(class_count).tolist()
         else:
             order = idata.class_order
         self._class_order = order
+        if self.class_names is not None:
+            self.class_names = [self.class_names[index] for index in self._class_order]
         logging.info(self._class_order)
 
         # Map indices
@@ -245,12 +270,19 @@ class DataManager(object):
 
 
 class DummyDataset(Dataset):
-    def __init__(self, images, labels, trsf, use_path=False):
+    def __init__(self, images, labels, trsf, use_path=False, sample_ids=None):
         assert len(images) == len(labels), "Data size error!"
         self.images = images
         self.labels = labels
         self.trsf = trsf
         self.use_path = use_path
+        self.sample_ids = (
+            np.arange(len(images), dtype=np.int64)
+            if sample_ids is None
+            else np.asarray(sample_ids, dtype=np.int64)
+        )
+        if len(self.sample_ids) != len(images):
+            raise ValueError("sample_ids must align with dataset images")
 
     def __len__(self):
         return len(self.images)
@@ -262,7 +294,7 @@ class DummyDataset(Dataset):
             image = self.trsf(Image.fromarray(self.images[idx]))
         label = self.labels[idx]
 
-        return idx, image, label
+        return int(self.sample_ids[idx]), image, label
 
 
 def _map_new_class_index(y, order):

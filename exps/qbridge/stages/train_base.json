@@ -1,0 +1,12 @@
+{
+  "prefix": "qbridge_base",
+  "qbridge_experiment": false,
+  "max_tasks_per_run": 1,
+  "save_checkpoints": true,
+  "resume": false,
+  "isolate_runs": true,
+  "keep_last_checkpoint": true,
+  "compact_diagonal_checkpoint": false,
+  "use_quantum_kernel_base": true,
+  "use_quantum_kernel_inc": false
+}

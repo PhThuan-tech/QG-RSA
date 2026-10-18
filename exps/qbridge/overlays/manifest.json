@@ -1,0 +1,29 @@
+{
+  "schema": "qbridge-v1.1-generated",
+  "variants": {
+    "R0": "Legacy QKSR old_proj separation",
+    "R1": "All-seen CosFace replacing new-class CosFace; alignment retained; no legacy separation",
+    "R2": "Uniform cross-task margin, guard off",
+    "R3": "Uniform cross-task margin plus old-anchor guard",
+    "R4": "Cosine risk weighting",
+    "R5": "Raw PQK weighting (full MVP)",
+    "R6": "Monotone calibrated PQK weighting (full v1)",
+    "R7": "Projected-RBF classical risk",
+    "R8": "MLP classical risk",
+    "R9": "Active-pair shuffled raw PQK risk",
+    "R10": "Active-pair mean constant raw PQK risk"
+  },
+  "seeds": [
+    1993,
+    2015,
+    2026
+  ],
+  "status": "requires compatible actual base/artifacts; no benchmark executed",
+  "full_raw": "R5",
+  "full_calibrated": "R6",
+  "base_path_template": "<REQUIRED_EXISTING_BASE_CHECKPOINT>",
+  "classical_training": {
+    "R7": "scripts/qbridge_prepare.py rbf: frozen shared projection; base-only median gamma",
+    "R8": "scripts/qbridge_prepare.py mlp: fixed base features; steering-only SGD; report budget"
+  }
+}

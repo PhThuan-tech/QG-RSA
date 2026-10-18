@@ -1,1 +1,44 @@
-*__pycache__
+# Python caches and test state
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Local environments and editor files
+.venv/
+venv/
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Notebook-generated state
+.ipynb_checkpoints/
+
+# Datasets and downloaded model assets
+datasets/
+data/datasets/
+*.pt
+*.pth
+*.pkl
+*.safetensors
+*.bin
+
+# Runtime outputs
+ckpt/
+logs/
+outputs/
+runs/
+artifacts/
+cache/
+
+# Rebuildable packages and generated reports
+dist/
+reports/generated/
+reports/qbridge_v1_1/
+
+# Temporary files
+*.tmp
+*.temp
+*.log.tmp

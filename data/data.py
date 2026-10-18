@@ -1,4 +1,5 @@
 import numpy as np
+import os
 from torchvision import datasets, transforms
 from utils.toolkit import split_images_labels
 
@@ -50,8 +51,10 @@ class iCIFAR224(iData):
     class_order = np.arange(100).tolist()
 
     def download_data(self):
-        train_dataset = datasets.cifar.CIFAR100("./data/datasets", train=True, download=True)
-        test_dataset = datasets.cifar.CIFAR100("./data/datasets", train=False, download=True)
+        root = getattr(self, "data_root", None) or "./data/datasets"
+        download = not getattr(self, "offline", False)
+        train_dataset = datasets.cifar.CIFAR100(root, train=True, download=download)
+        test_dataset = datasets.cifar.CIFAR100(root, train=False, download=download)
         self.train_data, self.train_targets = train_dataset.data, np.array(
             train_dataset.targets
         )
@@ -95,11 +98,24 @@ class iImageNetA(iData):
 
     def download_data(self):
         # assert 0, "You should specify the folder of your dataset"
-        train_dir = "./data/datasets/imagenet-a/train/"
-        test_dir = "./data/datasets/imagenet-a/test/"
+        root = getattr(self, "data_root", None) or "./data/datasets/imagenet-a"
+        train_dir = os.path.join(root, "train")
+        test_dir = os.path.join(root, "test")
 
         train_dset = datasets.ImageFolder(train_dir)
         test_dset = datasets.ImageFolder(test_dir)
+
+        train_classes = list(train_dset.classes)
+        test_classes = list(test_dset.classes)
+        if len(train_classes) != 200 or len(test_classes) != 200:
+            raise ValueError(
+                "ImageNet-A protocol requires exactly 200 train and 200 test classes"
+            )
+        if train_classes != test_classes:
+            raise ValueError(
+                "ImageNet-A train/test class folders differ; their label maps are unsafe"
+            )
+        self.class_names = train_classes
 
         self.train_data, self.train_targets = split_images_labels(train_dset.imgs)
         self.test_data, self.test_targets = split_images_labels(test_dset.imgs)

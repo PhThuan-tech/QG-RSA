@@ -1,108 +1,91 @@
+# RSIAT baseline and Q-BRIDGE
 
-# Representation-Steered Incremental Adapter-Tuning for Class-Incremental Learning with Pre-Trained Models
+This repository contains two active experiment paths:
 
-  
+1. **RSIAT baseline** reproduces the classical ViT-adapter, representation
+   steering, SSCA, and classifier-alignment pipeline.
+2. **Q-BRIDGE** starts every branch from the same QKSR task-0 checkpoint and
+   studies risk-weighted cross-task margins and old-anchor guards.
 
-This repository serves as the official implementation corresponding to the paper titled "Representation-Steered Incremental Adapter-Tuning for Class-Incremental Learning with Pre-Trained Models". 
-![Overall pipeline of RSIAT. ](images/framework.png)
+The QKSR documents and quantum-kernel tests remain as technical background
+because Q-BRIDGE uses a frozen PQK trained on the base task. Standalone QKSR
+experiments are no longer part of the active configuration layout.
 
 ## Installation
-### Requirements
-Ubuntu 20.04 LTS
 
-Python 3.10
+The original environment used Ubuntu 20.04, Python 3.10, and CUDA 11.8. Install
+the packages in `requirements.txt`. For an offline notebook runtime, prepare the
+wheels listed in `requirements-colab.txt`.
 
-CUDA 11.8
+Expected local datasets include `cifar-100-python`, `imagenet-a`, `imagenet-r`,
+`cub`, `omnibenchmark`, and `vtab`. Dataset paths may also be supplied through
+the `data_root` config key.
 
-Detailed package information and corresponding versions are available in the requirements.txt file.
+## Experiment configurations
 
-### Data preparation
+Configuration roles and commands are documented in [`exps/README.md`](exps/README.md).
+The active layout is:
 
-The overall directory structure should be:
-```
-RSIAT/
-├──data/
-├──datasets/
-│   ├──cifar-100-python/
-│   ├──cub/
-│   ├──imagenet-a/
-│   ├──imagenet-r/
-│   ├──omnibenchmark/
-│   ├──vtab/
-│   ......
-├──.......
+```text
+exps/
+├── rsiat/                 # directly runnable classical baselines
+├── smoke/                 # short pipeline checks
+└── qbridge/
+    ├── sources/           # dataset/training settings shared by all branches
+    ├── stages/            # stage overlays, including task-0 base training
+    └── overlays/          # R0-R10 contribution/control overlays
 ```
 
-## Training and evaluation
+Run a baseline directly:
 
-The training and evaluation instructions for each dataset are in the "./args.sh" file. Each dataset can be calculated separately, and the results are stored in the "./logs" folder.
-
-### Checkpoint and resume
-
-Each experiment configuration now saves a checkpoint after every completed incremental task. Checkpoints are isolated by seed and stored at:
-
+```bash
+python main.py --config exps/rsiat/cifar224.json
+python main.py --config exps/rsiat/imageneta.json
 ```
+
+Train a local Q-BRIDGE task-0 base:
+
+```bash
+python main.py \
+  --config exps/qbridge/sources/cifar224.json \
+  --overlay exps/qbridge/stages/train_base.json
+```
+
+R0-R10 require the exact base checkpoint and, for R6/R7/R8, fitted base-only
+artifacts. Generate complete runtime configs with
+`scripts/generate_qbridge_configs.py`; do not run the overlay JSON files alone.
+See [`docs/QBRIDGE_RUNBOOK.md`](docs/QBRIDGE_RUNBOOK.md) for the staged workflow.
+
+For Kaggle with Internet disabled, use `QBRIDGE_Kaggle.ipynb`. The notebook
+accepts a repository ZIP, dataset input, and pretrained ViT tensor.
+
+## Checkpoint and resume
+
+Classical RSIAT saves task-boundary checkpoints under:
+
+```text
 ckpt/<prefix>/<dataset>/<init_cls>_<increment>/seed_<seed>/task_<N>.pkl
 ```
 
-The default configurations keep only the most recent checkpoint to reduce disk use. To resume a stopped run, set the following in the same JSON configuration and run the original command again:
+Set `"resume": true` to continue from the latest completed task, or provide a
+specific `resume_path`. This restores the network and class statistics but does
+not restore optimizer, scheduler, DataLoader, or full RNG state. Q-BRIDGE
+branches intentionally restart from their paired task-0 base and do not support
+incremental resume.
 
-```json
-{
-  "resume": true
-}
-```
-
-Optionally set `"resume_path"` to a specific `task_N.pkl`, `"keep_last_checkpoint": false` to retain every task checkpoint, or `"max_tasks_per_run"` to stop cleanly after a fixed number of tasks. Resume requires the same dataset, seed, class order, initial/incremental class split, model, and backbone. Checkpoints are task-boundary snapshots; they do not resume an interrupted epoch. The supplied configurations retain full covariance (`"compact_diagonal_checkpoint": false`) for an exact task-boundary resume; enable the compact diagonal form only when Drive space matters, since it drops covariance cross-terms used by classifier alignment.
-
-### Efficient training
-
-`eval_interval: 0` and `ca_eval_interval: 0` evaluate only the final epoch of each training stage. This avoids repeated full validation passes without changing gradients, optimizer steps, or the cosine scheduler. Set either value to a positive number when intermediate validation curves are needed. `num_workers`, `stats_num_workers`, `pin_memory`, and `persistent_workers` configure data loading; the provided values are suitable starting points for a GPU runtime.
-
-For a Google Colab smoke test that verifies data loading, training, checkpoint creation, and resume at task 1, use [RSIAT_Colab.ipynb](RSIAT_Colab.ipynb).
-
-### QKSR projected local metric
-
-The QKSR implementation is self-contained in PyTorch and does not require
-PennyLane, Qiskit, or any additional environment setup.  The full CUB pilot
-configuration is `exps/adapter_cub.json`; the paired RSIAT control is
-`exps/adapter_cub_baseline.json`:
+## Validation
 
 ```bash
-python main.py --config=exps/adapter_cub_baseline.json
-python main.py --config=exps/adapter_cub.json
+python -B -m unittest discover -s tests -q
+python scripts/build_qbridge_kaggle_notebook.py
+python scripts/package_qbridge_kaggle_repo.py
 ```
 
-The metric supports `pqk`, `pqk_no_cnot`, `pqk_random_frozen`, `rbf_proj`,
-`mlp_small`, and `mlp_cap` through `q_kernel_type`.  Gamma calibration uses a
-fixed deterministic subset of the task's training data.  Set `val_ratio` above
-zero only during hyperparameter tuning; keep it at zero for the locked final
-training runs.
-
-Run the dataset-independent circuit, RDM, kernel, gradient, and RNG checks with:
-
-```bash
-python -m unittest tests.test_quantum_kernel -v
-```
-
-On CPU the CUDA RNG check is skipped.  Run the same command once in Colab to
-exercise it on the target GPU runtime before starting a long experiment.
-
-After tuning and locking the common settings, generate the minimum A–E
-ablation files without editing JSON by hand:
-
-```bash
-python scripts/generate_qksr_ablation_configs.py \
-  --source exps/adapter_cub.json \
-  --output-dir exps/qksr_ablation
-```
-
-Use a separate output directory for exploratory configs and commit the locked
-JSON files before confirmatory test runs, as required by the v3.1 protocol.
+Unit tests establish source behavior only. Accuracy and contribution claims
+require completed paired dataset runs with the same base checkpoint, data
+protocol, class order, seeds, and training budget.
 
 ## Citation
-
-If you find this useful in your research, please consider citing:
 
 ```text
 @inproceedings{zhao2026representation,
@@ -114,8 +97,4 @@ If you find this useful in your research, please consider citing:
 }
 ```
 
-## Acknowledgement
-
-This repo is based on [PILOT](https://github.com/LAMDA-CL/LAMDA-PILOT) and [SSIAT](https://github.com/HAIV-Lab/SSIAT).
-
-Thanks for their wonderful work!!!
+The upstream RSIAT implementation is based on PILOT and SSIAT.
