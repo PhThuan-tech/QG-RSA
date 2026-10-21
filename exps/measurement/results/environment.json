@@ -1,0 +1,22 @@
+{
+  "gpu": "NVIDIA RTX PRO 6000 Blackwell Server Edition",
+  "torch": "2.11.0+cu128",
+  "cuda": "12.8",
+  "timm": "1.0.29",
+  "parallel": 3,
+  "seeds": [
+    1993
+  ],
+  "datasets": [
+    "imagenetr"
+  ],
+  "variants": [
+    "noise_rep0",
+    "noise_rep1",
+    "noise_rep2",
+    "noise_rep3"
+  ],
+  "overrides": {
+    "save_checkpoints": false
+  }
+}

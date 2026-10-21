@@ -1,0 +1,8 @@
+{
+  "prefix": "noise",
+  "ssca_mode": "legacy",
+  "rng_replicate": 0,
+  "stats_diagnostics": false,
+  "save_predictions": true,
+  "save_checkpoints": false
+}

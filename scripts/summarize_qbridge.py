@@ -14,7 +14,9 @@ def protocol_hash(config):
     excluded = {"qbridge", "qbridge_experiment", "prefix", "output_root", "config", "overlay",
                 "data_root", "device", "use_quantum_kernel_inc", "q_inc_train_mode",
                 "save_checkpoints", "keep_last_checkpoint", "resume", "resume_path",
-                "compact_diagonal_checkpoint", "isolate_runs"}
+                "compact_diagonal_checkpoint", "isolate_runs",
+                # Observation only: diagnostics never change the trained model.
+                "stats_diagnostics", "save_predictions"}
     return stable_hash({k: v for k, v in config.items() if k not in excluded})
 
 

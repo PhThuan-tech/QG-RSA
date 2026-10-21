@@ -76,12 +76,12 @@ class iImageNetR(iData):
     class_order = np.arange(200).tolist()
 
     def download_data(self):
-        # assert 0, "You should specify the folder of your dataset"
-        train_dir = "./data/datasets/imagenet-r/train/"
-        test_dir = "./data/datasets/imagenet-r/test/"
-
-        train_dset = datasets.ImageFolder(train_dir)
-        test_dset = datasets.ImageFolder(test_dir)
+        root = getattr(self, "data_root", None) or "./data/datasets/imagenet-r"
+        train_dset = datasets.ImageFolder(os.path.join(root, "train"))
+        test_dset = datasets.ImageFolder(os.path.join(root, "test"))
+        if len(train_dset.classes) != 200 or train_dset.classes != test_dset.classes:
+            raise ValueError("ImageNet-R requires the same 200 class folders in train and test")
+        self.class_names = list(train_dset.classes)
 
         self.train_data, self.train_targets = split_images_labels(train_dset.imgs)
         self.test_data, self.test_targets = split_images_labels(test_dset.imgs)

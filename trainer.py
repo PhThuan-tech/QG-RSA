@@ -111,6 +111,7 @@ def _train_impl(args):
             args["prefix"], args["seed"], args["convnet_type"],
         ),
     )
+    args["_run_log_prefix"] = logfilename
     if qb_experiment:
         report_dir = logfilename + "_qbridge"
         if os.path.isdir(report_dir) and os.listdir(report_dir):
@@ -225,6 +226,10 @@ def _train_impl(args):
         
         model.incremental_train(data_manager)
         cnn_accy = model.eval_task()
+        if args.get("save_predictions", False):
+            from utils.stats_diagnostics import save_predictions
+            save_predictions(args.get("_qbridge_report_dir") or logfilename + "_stats", task,
+                             *model._last_eval, model._known_classes)
         model.after_task()
      
         logging.info("CNN: {}".format(cnn_accy["grouped"]))

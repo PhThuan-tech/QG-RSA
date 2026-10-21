@@ -1,0 +1,6 @@
+{
+  "prefix": "diag_paired",
+  "ssca_mode": "paired",
+  "stats_diagnostics": true,
+  "save_predictions": true
+}

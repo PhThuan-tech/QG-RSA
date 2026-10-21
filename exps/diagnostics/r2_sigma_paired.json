@@ -1,0 +1,7 @@
+{
+  "prefix": "r2_sigma_paired",
+  "ssca_mode": "paired",
+  "ssca_sigma": "auto_nn",
+  "stats_diagnostics": true,
+  "save_predictions": true
+}

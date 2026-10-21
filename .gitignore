@@ -42,3 +42,16 @@ reports/qbridge_v1_1/
 *.tmp
 *.temp
 *.log.tmp
+
+# Measured diagnostic results are kept with the configs that produced them
+!exps/diagnostics/results/*/logs/
+
+# Measured noise/upper-bound runs (paired baselines for later candidates)
+!exps/measurement/results/logs/
+
+# Duplicates waiting for manual deletion
+_duplicates_to_delete/
+
+# Per-task diagnostics (npz/json) stay local: summaries and .log files carry the results
+exps/diagnostics/results/**/*_stats/
+exps/measurement/results/**/*_stats/

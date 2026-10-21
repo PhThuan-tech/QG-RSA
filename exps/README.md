@@ -51,6 +51,21 @@ R5 is the raw-PQK full pilot. R6 is the full calibrated contribution. R6, R7,
 and R8 require artifacts produced from base-training data by
 `scripts/qbridge_prepare.py`.
 
+## SSCA and old-class statistic diagnostics
+
+`diagnostics/` holds overlays for paired SSCA (`ssca_mode: "paired"`),
+observation-only estimator reports (`stats_diagnostics: true`), and oracle
+old-class statistics for CA (`ca_stats_source`; an upper bound that violates
+exemplar-free CIL). See [`diagnostics/README.md`](diagnostics/README.md).
+
+## Measurement protocol
+
+`measurement/` holds the run-level measurement design: replicate overlays
+(`noise_rep0..3`) for training-noise calibration and the paired
+(seed, replicate) comparison rule used to accept or reject candidates
+(`scripts/run_level_stats.py`). Run everything from `QGRSA_EXPERIMENTS.ipynb`.
+See [`measurement/README.md`](measurement/README.md).
+
 ## Smoke config
 
 `smoke/rsiat_cifar224.json` runs one short task with one epoch. It checks the

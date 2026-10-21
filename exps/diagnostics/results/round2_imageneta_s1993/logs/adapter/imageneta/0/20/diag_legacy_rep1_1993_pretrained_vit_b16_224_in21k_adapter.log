@@ -1,0 +1,288 @@
+2026-10-20 09:15:46,070 [trainer.py] => config: /kaggle/working/ssca_runs/configs/noise_replicate_1993.json
+2026-10-20 09:15:46,071 [trainer.py] => overlay: []
+2026-10-20 09:15:46,071 [trainer.py] => prefix: diag_legacy_rep1
+2026-10-20 09:15:46,071 [trainer.py] => dataset: imageneta
+2026-10-20 09:15:46,071 [trainer.py] => save_checkpoints: False
+2026-10-20 09:15:46,071 [trainer.py] => resume: False
+2026-10-20 09:15:46,071 [trainer.py] => isolate_runs: True
+2026-10-20 09:15:46,071 [trainer.py] => keep_last_checkpoint: True
+2026-10-20 09:15:46,071 [trainer.py] => compact_diagonal_checkpoint: False
+2026-10-20 09:15:46,071 [trainer.py] => eval_interval: 0
+2026-10-20 09:15:46,071 [trainer.py] => ca_eval_interval: 0
+2026-10-20 09:15:46,071 [trainer.py] => num_workers: 4
+2026-10-20 09:15:46,071 [trainer.py] => stats_num_workers: 2
+2026-10-20 09:15:46,071 [trainer.py] => pin_memory: True
+2026-10-20 09:15:46,071 [trainer.py] => persistent_workers: True
+2026-10-20 09:15:46,071 [trainer.py] => shuffle: True
+2026-10-20 09:15:46,071 [trainer.py] => ssca: True
+2026-10-20 09:15:46,071 [trainer.py] => ca: True
+2026-10-20 09:15:46,071 [trainer.py] => init_cls: 20
+2026-10-20 09:15:46,071 [trainer.py] => increment: 20
+2026-10-20 09:15:46,071 [trainer.py] => model_name: adapter
+2026-10-20 09:15:46,071 [trainer.py] => convnet_type: pretrained_vit_b16_224_in21k_adapter
+2026-10-20 09:15:46,071 [trainer.py] => device: [device(type='cuda', index=0)]
+2026-10-20 09:15:46,071 [trainer.py] => seed: 1993
+2026-10-20 09:15:46,071 [trainer.py] => init_epochs: 20
+2026-10-20 09:15:46,071 [trainer.py] => warmup_epoch: 3
+2026-10-20 09:15:46,071 [trainer.py] => inc_epochs: 15
+2026-10-20 09:15:46,071 [trainer.py] => ca_epochs: 10
+2026-10-20 09:15:46,071 [trainer.py] => init_lr: 0.006688537652915857
+2026-10-20 09:15:46,071 [trainer.py] => batch_size: 48
+2026-10-20 09:15:46,071 [trainer.py] => weight_decay: 5.929828534160845e-07
+2026-10-20 09:15:46,071 [trainer.py] => min_lr: 0
+2026-10-20 09:15:46,071 [trainer.py] => ffn_num: 64
+2026-10-20 09:15:46,071 [trainer.py] => optimizer: sgd
+2026-10-20 09:15:46,071 [trainer.py] => scale: 30.0
+2026-10-20 09:15:46,071 [trainer.py] => margin: 0.3
+2026-10-20 09:15:46,071 [trainer.py] => alpha: 1.0
+2026-10-20 09:15:46,071 [trainer.py] => rs_margin: 1.5
+2026-10-20 09:15:46,071 [trainer.py] => lambda_rs: 1.0
+2026-10-20 09:15:46,071 [trainer.py] => beta: 3.0
+2026-10-20 09:15:46,071 [trainer.py] => gamma: 6.0
+2026-10-20 09:15:46,071 [trainer.py] => ae_code_dims: 128
+2026-10-20 09:15:46,071 [trainer.py] => ae_init_lr: 0.0003120779977680931
+2026-10-20 09:15:46,071 [trainer.py] => ae_weight_decay: 2.424346330636298e-05
+2026-10-20 09:15:46,071 [trainer.py] => algorithm: rsiat
+2026-10-20 09:15:46,071 [trainer.py] => use_quantum_kernel_base: False
+2026-10-20 09:15:46,071 [trainer.py] => use_quantum_kernel_inc: False
+2026-10-20 09:15:46,071 [trainer.py] => ssca_mode: legacy
+2026-10-20 09:15:46,071 [trainer.py] => stats_diagnostics: True
+2026-10-20 09:15:46,071 [trainer.py] => save_predictions: True
+2026-10-20 09:15:46,071 [trainer.py] => rng_replicate: 1
+2026-10-20 09:15:46,071 [trainer.py] => data_root: /kaggle/working/imageneta_split
+2026-10-20 09:15:46,071 [trainer.py] => pretrained_path: /kaggle/working/vit_b16_224.pt
+2026-10-20 09:15:46,071 [trainer.py] => output_root: /kaggle/working/ssca_runs
+2026-10-20 09:15:46,071 [trainer.py] => class_order_seed: 1993
+2026-10-20 09:15:46,071 [trainer.py] => train_seed: 1993
+2026-10-20 09:15:46,071 [trainer.py] => partition_seed: 1993
+2026-10-20 09:15:46,071 [trainer.py] => _run_log_prefix: /kaggle/working/ssca_runs/logs/adapter/imageneta/0/20/diag_legacy_rep1_1993_pretrained_vit_b16_224_in21k_adapter
+2026-10-20 09:15:46,578 [data_manager.py] => [168, 136, 51, 9, 183, 101, 171, 99, 42, 159, 191, 70, 16, 188, 27, 10, 175, 26, 68, 187, 98, 6, 85, 35, 112, 43, 100, 0, 103, 181, 88, 59, 4, 2, 116, 174, 94, 80, 106, 1, 147, 17, 141, 131, 72, 23, 173, 54, 197, 118, 87, 32, 79, 104, 91, 19, 135, 107, 178, 36, 11, 199, 142, 8, 122, 3, 28, 57, 153, 172, 190, 56, 49, 44, 97, 62, 151, 169, 194, 55, 192, 12, 189, 78, 66, 180, 15, 137, 109, 134, 92, 119, 126, 52, 170, 40, 148, 65, 144, 64, 138, 45, 77, 89, 154, 90, 71, 193, 74, 30, 113, 143, 96, 84, 67, 50, 186, 156, 69, 21, 18, 111, 108, 58, 125, 157, 150, 110, 182, 129, 166, 83, 81, 60, 13, 165, 14, 176, 63, 117, 5, 22, 145, 121, 38, 41, 82, 127, 114, 20, 31, 53, 37, 163, 196, 130, 152, 162, 86, 76, 24, 34, 184, 149, 33, 128, 198, 155, 146, 167, 139, 120, 140, 102, 47, 25, 158, 123, 46, 164, 61, 7, 115, 75, 133, 160, 105, 132, 179, 124, 48, 73, 93, 39, 95, 195, 29, 177, 185, 161]
+2026-10-20 09:15:47,545 [trainer.py] => All params: 86988288
+2026-10-20 09:15:47,545 [trainer.py] => Trainable params: 1189632
+2026-10-20 09:15:47,546 [RSIAT_adapter.py] => Learning on 0-20
+2026-10-20 09:15:47,718 [toolkit.py] => All params: 86259456
+2026-10-20 09:15:47,718 [toolkit.py] => Trainable params: 1204992
+2026-10-20 09:21:19,300 [RSIAT_adapter.py] => Task 0, Epoch 20/20 => Loss 3.468, Loss_c 2.826, Losses_rt 0.642, Train_accy 92.87, Test_accy 87.15, Time 9.76s
+2026-10-20 09:21:19,300 [RSIAT_adapter.py] => Task 0 peak GPU memory: 4417.41 MiB
+2026-10-20 09:21:27,725 [trainer.py] => CNN: {'total': 87.15, '00-19': 87.15, 'old': 0.0, 'new': 87.15}
+2026-10-20 09:21:27,725 [trainer.py] => CNN top1 curve: [87.15]
+2026-10-20 09:21:27,725 [trainer.py] => CNN top5 curve: [98.32]
+2026-10-20 09:21:27,725 [trainer.py] => Average Accuracy (CNN): 87.15
+2026-10-20 09:21:27,726 [trainer.py] => All params: 87003648
+2026-10-20 09:21:27,726 [trainer.py] => Trainable params: 1204992
+2026-10-20 09:21:27,727 [stats_diagnostics.py] => STATS rng_replicate=1: reseeded task-1 onward with 9912
+2026-10-20 09:21:27,728 [RSIAT_adapter.py] => Learning on 20-40
+2026-10-20 09:22:09,843 [toolkit.py] => All params: 87134720
+2026-10-20 09:22:09,844 [toolkit.py] => Trainable params: 1336064
+2026-10-20 09:26:42,820 [RSIAT_adapter.py] => Task 1, Epoch 15/15 => Loss 5.550, Loss_c 3.206, Losses_rt 2.344, Train_accy 85.04, Test_accy 80.71, Time 15.82s
+2026-10-20 09:26:42,821 [RSIAT_adapter.py] => Task 1 peak GPU memory: 4875.62 MiB
+2026-10-20 09:27:08,359 [stats_diagnostics.py] => STATS report written: /kaggle/working/ssca_runs/logs/adapter/imageneta/0/20/diag_legacy_rep1_1993_pretrained_vit_b16_224_in21k_adapter_stats/stats_task_1.json
+2026-10-20 09:27:08,360 [RSIAT_adapter.py] => STATS task=1 mode=legacy source=estimated median relative mean error: stale=1.0000, legacy=0.6355, paired=0.5704, applied=0.6355; median cov rel error=0.1572
+2026-10-20 09:27:08,800 [base.py] => CA Task 1 => Loss 0.104, Test_accy skipped
+2026-10-20 09:27:09,198 [base.py] => CA Task 1 => Loss 0.070, Test_accy skipped
+2026-10-20 09:27:09,594 [base.py] => CA Task 1 => Loss 0.059, Test_accy skipped
+2026-10-20 09:27:09,991 [base.py] => CA Task 1 => Loss 0.052, Test_accy skipped
+2026-10-20 09:27:10,387 [base.py] => CA Task 1 => Loss 0.049, Test_accy skipped
+2026-10-20 09:27:10,784 [base.py] => CA Task 1 => Loss 0.047, Test_accy skipped
+2026-10-20 09:27:11,181 [base.py] => CA Task 1 => Loss 0.045, Test_accy skipped
+2026-10-20 09:27:11,577 [base.py] => CA Task 1 => Loss 0.042, Test_accy skipped
+2026-10-20 09:27:11,974 [base.py] => CA Task 1 => Loss 0.039, Test_accy skipped
+2026-10-20 09:27:14,892 [base.py] => CA Task 1 => Loss 0.043, Test_accy 82.070
+2026-10-20 09:27:17,373 [trainer.py] => CNN: {'total': 82.07, '00-19': 84.36, '20-39': 79.89, 'old': 84.36, 'new': 79.89}
+2026-10-20 09:27:17,373 [trainer.py] => Continual metrics after task 1: BWT=-2.7900, forgetting=2.7900, task_acc=[84.36, 79.89]
+2026-10-20 09:27:17,373 [trainer.py] => CNN top1 curve: [87.15, 82.07]
+2026-10-20 09:27:17,373 [trainer.py] => CNN top5 curve: [98.32, 96.47]
+2026-10-20 09:27:17,373 [trainer.py] => Average Accuracy (CNN): 84.61
+2026-10-20 09:27:17,373 [trainer.py] => All params: 87019008
+2026-10-20 09:27:17,374 [trainer.py] => Trainable params: 1220352
+2026-10-20 09:27:17,374 [RSIAT_adapter.py] => Learning on 40-60
+2026-10-20 09:27:44,265 [toolkit.py] => All params: 87150080
+2026-10-20 09:27:44,265 [toolkit.py] => Trainable params: 1351424
+2026-10-20 09:30:51,785 [RSIAT_adapter.py] => Task 2, Epoch 15/15 => Loss 4.808, Loss_c 2.575, Losses_rt 2.233, Train_accy 88.42, Test_accy 79.35, Time 10.66s
+2026-10-20 09:30:51,786 [RSIAT_adapter.py] => Task 2 peak GPU memory: 4870.15 MiB
+2026-10-20 09:31:17,707 [stats_diagnostics.py] => STATS report written: /kaggle/working/ssca_runs/logs/adapter/imageneta/0/20/diag_legacy_rep1_1993_pretrained_vit_b16_224_in21k_adapter_stats/stats_task_2.json
+2026-10-20 09:31:17,707 [RSIAT_adapter.py] => STATS task=2 mode=legacy source=estimated median relative mean error: stale=1.0000, legacy=0.7565, paired=0.6429, applied=0.7565; median cov rel error=0.1424
+2026-10-20 09:31:18,291 [base.py] => CA Task 2 => Loss 0.088, Test_accy skipped
+2026-10-20 09:31:18,909 [base.py] => CA Task 2 => Loss 0.070, Test_accy skipped
+2026-10-20 09:31:19,527 [base.py] => CA Task 2 => Loss 0.063, Test_accy skipped
+2026-10-20 09:31:20,146 [base.py] => CA Task 2 => Loss 0.058, Test_accy skipped
+2026-10-20 09:31:20,766 [base.py] => CA Task 2 => Loss 0.055, Test_accy skipped
+2026-10-20 09:31:21,385 [base.py] => CA Task 2 => Loss 0.052, Test_accy skipped
+2026-10-20 09:31:22,004 [base.py] => CA Task 2 => Loss 0.050, Test_accy skipped
+2026-10-20 09:31:22,625 [base.py] => CA Task 2 => Loss 0.051, Test_accy skipped
+2026-10-20 09:31:23,244 [base.py] => CA Task 2 => Loss 0.051, Test_accy skipped
+2026-10-20 09:31:27,407 [base.py] => CA Task 2 => Loss 0.050, Test_accy 79.350
+2026-10-20 09:31:30,801 [trainer.py] => CNN: {'total': 79.35, '00-19': 81.56, '20-39': 77.25, '40-59': 79.37, 'old': 79.35, 'new': 79.37}
+2026-10-20 09:31:30,801 [trainer.py] => Continual metrics after task 2: BWT=-4.1150, forgetting=4.1150, task_acc=[81.56, 77.25, 79.37]
+2026-10-20 09:31:30,801 [trainer.py] => CNN top1 curve: [87.15, 82.07, 79.35]
+2026-10-20 09:31:30,801 [trainer.py] => CNN top5 curve: [98.32, 96.47, 94.33]
+2026-10-20 09:31:30,801 [trainer.py] => Average Accuracy (CNN): 82.85666666666667
+2026-10-20 09:31:30,801 [trainer.py] => All params: 87034368
+2026-10-20 09:31:30,802 [trainer.py] => Trainable params: 1235712
+2026-10-20 09:31:30,802 [RSIAT_adapter.py] => Learning on 60-80
+2026-10-20 09:32:13,226 [toolkit.py] => All params: 87165440
+2026-10-20 09:32:13,227 [toolkit.py] => Trainable params: 1366784
+2026-10-20 09:37:07,755 [RSIAT_adapter.py] => Task 3, Epoch 15/15 => Loss 5.173, Loss_c 3.100, Losses_rt 2.073, Train_accy 79.60, Test_accy 75.72, Time 16.69s
+2026-10-20 09:37:07,755 [RSIAT_adapter.py] => Task 3 peak GPU memory: 4876.58 MiB
+2026-10-20 09:37:45,061 [stats_diagnostics.py] => STATS report written: /kaggle/working/ssca_runs/logs/adapter/imageneta/0/20/diag_legacy_rep1_1993_pretrained_vit_b16_224_in21k_adapter_stats/stats_task_3.json
+2026-10-20 09:37:45,061 [RSIAT_adapter.py] => STATS task=3 mode=legacy source=estimated median relative mean error: stale=1.0000, legacy=0.8254, paired=0.7552, applied=0.8254; median cov rel error=0.1602
+2026-10-20 09:37:45,906 [base.py] => CA Task 3 => Loss 0.119, Test_accy skipped
+2026-10-20 09:37:46,765 [base.py] => CA Task 3 => Loss 0.087, Test_accy skipped
+2026-10-20 09:37:47,625 [base.py] => CA Task 3 => Loss 0.077, Test_accy skipped
+2026-10-20 09:37:48,485 [base.py] => CA Task 3 => Loss 0.075, Test_accy skipped
+2026-10-20 09:37:49,345 [base.py] => CA Task 3 => Loss 0.067, Test_accy skipped
+2026-10-20 09:37:50,206 [base.py] => CA Task 3 => Loss 0.068, Test_accy skipped
+2026-10-20 09:37:51,064 [base.py] => CA Task 3 => Loss 0.067, Test_accy skipped
+2026-10-20 09:37:51,919 [base.py] => CA Task 3 => Loss 0.062, Test_accy skipped
+2026-10-20 09:37:52,776 [base.py] => CA Task 3 => Loss 0.065, Test_accy skipped
+2026-10-20 09:37:59,468 [base.py] => CA Task 3 => Loss 0.065, Test_accy 77.870
+2026-10-20 09:38:03,171 [trainer.py] => CNN: {'total': 77.87, '00-19': 79.89, '20-39': 74.6, '40-59': 75.4, '60-79': 80.69, 'old': 76.72, 'new': 80.69}
+2026-10-20 09:38:03,171 [trainer.py] => Continual metrics after task 3: BWT=-5.5067, forgetting=5.5067, task_acc=[79.89, 74.6, 75.4, 80.69]
+2026-10-20 09:38:03,171 [trainer.py] => CNN top1 curve: [87.15, 82.07, 79.35, 77.87]
+2026-10-20 09:38:03,171 [trainer.py] => CNN top5 curve: [98.32, 96.47, 94.33, 93.97]
+2026-10-20 09:38:03,171 [trainer.py] => Average Accuracy (CNN): 81.61
+2026-10-20 09:38:03,172 [trainer.py] => All params: 87049728
+2026-10-20 09:38:03,172 [trainer.py] => Trainable params: 1251072
+2026-10-20 09:38:03,172 [RSIAT_adapter.py] => Learning on 80-100
+2026-10-20 09:38:32,990 [toolkit.py] => All params: 87180800
+2026-10-20 09:38:32,990 [toolkit.py] => Trainable params: 1382144
+2026-10-20 09:41:57,087 [RSIAT_adapter.py] => Task 4, Epoch 15/15 => Loss 4.484, Loss_c 2.525, Losses_rt 1.959, Train_accy 80.68, Test_accy 76.51, Time 11.29s
+2026-10-20 09:41:57,088 [RSIAT_adapter.py] => Task 4 peak GPU memory: 4870.60 MiB
+2026-10-20 09:42:35,048 [stats_diagnostics.py] => STATS report written: /kaggle/working/ssca_runs/logs/adapter/imageneta/0/20/diag_legacy_rep1_1993_pretrained_vit_b16_224_in21k_adapter_stats/stats_task_4.json
+2026-10-20 09:42:35,048 [RSIAT_adapter.py] => STATS task=4 mode=legacy source=estimated median relative mean error: stale=1.0000, legacy=0.9614, paired=0.8791, applied=0.9614; median cov rel error=0.1893
+2026-10-20 09:42:36,593 [base.py] => CA Task 4 => Loss 0.104, Test_accy skipped
+2026-10-20 09:42:37,706 [base.py] => CA Task 4 => Loss 0.086, Test_accy skipped
+2026-10-20 09:42:38,819 [base.py] => CA Task 4 => Loss 0.079, Test_accy skipped
+2026-10-20 09:42:39,933 [base.py] => CA Task 4 => Loss 0.077, Test_accy skipped
+2026-10-20 09:42:41,044 [base.py] => CA Task 4 => Loss 0.073, Test_accy skipped
+2026-10-20 09:42:42,157 [base.py] => CA Task 4 => Loss 0.072, Test_accy skipped
+2026-10-20 09:42:43,270 [base.py] => CA Task 4 => Loss 0.070, Test_accy skipped
+2026-10-20 09:42:44,383 [base.py] => CA Task 4 => Loss 0.068, Test_accy skipped
+2026-10-20 09:42:45,500 [base.py] => CA Task 4 => Loss 0.067, Test_accy skipped
+2026-10-20 09:42:51,968 [base.py] => CA Task 4 => Loss 0.069, Test_accy 76.510
+2026-10-20 09:42:57,868 [trainer.py] => CNN: {'total': 76.51, '00-19': 77.09, '20-39': 74.07, '40-59': 76.19, '60-79': 79.21, '80-99': 75.37, 'old': 76.72, 'new': 75.37}
+2026-10-20 09:42:57,868 [trainer.py] => Continual metrics after task 4: BWT=-5.1350, forgetting=5.1350, task_acc=[77.09, 74.07, 76.19, 79.21, 75.37]
+2026-10-20 09:42:57,868 [trainer.py] => CNN top1 curve: [87.15, 82.07, 79.35, 77.87, 76.51]
+2026-10-20 09:42:57,868 [trainer.py] => CNN top5 curve: [98.32, 96.47, 94.33, 93.97, 93.25]
+2026-10-20 09:42:57,868 [trainer.py] => Average Accuracy (CNN): 80.59
+2026-10-20 09:42:57,868 [trainer.py] => All params: 87065088
+2026-10-20 09:42:57,869 [trainer.py] => Trainable params: 1266432
+2026-10-20 09:42:57,869 [RSIAT_adapter.py] => Learning on 100-120
+2026-10-20 09:43:24,512 [toolkit.py] => All params: 87196160
+2026-10-20 09:43:24,512 [toolkit.py] => Trainable params: 1397504
+2026-10-20 09:46:40,569 [RSIAT_adapter.py] => Task 5, Epoch 15/15 => Loss 4.152, Loss_c 2.275, Losses_rt 1.877, Train_accy 85.14, Test_accy 73.39, Time 10.90s
+2026-10-20 09:46:40,569 [RSIAT_adapter.py] => Task 5 peak GPU memory: 4877.30 MiB
+2026-10-20 09:47:23,344 [stats_diagnostics.py] => STATS report written: /kaggle/working/ssca_runs/logs/adapter/imageneta/0/20/diag_legacy_rep1_1993_pretrained_vit_b16_224_in21k_adapter_stats/stats_task_5.json
+2026-10-20 09:47:23,345 [RSIAT_adapter.py] => STATS task=5 mode=legacy source=estimated median relative mean error: stale=1.0000, legacy=1.0271, paired=0.9357, applied=1.0271; median cov rel error=0.1865
+2026-10-20 09:47:24,727 [base.py] => CA Task 5 => Loss 0.105, Test_accy skipped
+2026-10-20 09:47:26,120 [base.py] => CA Task 5 => Loss 0.089, Test_accy skipped
+2026-10-20 09:47:27,507 [base.py] => CA Task 5 => Loss 0.082, Test_accy skipped
+2026-10-20 09:47:28,899 [base.py] => CA Task 5 => Loss 0.079, Test_accy skipped
+2026-10-20 09:47:30,290 [base.py] => CA Task 5 => Loss 0.075, Test_accy skipped
+2026-10-20 09:47:31,678 [base.py] => CA Task 5 => Loss 0.073, Test_accy skipped
+2026-10-20 09:47:33,071 [base.py] => CA Task 5 => Loss 0.073, Test_accy skipped
+2026-10-20 09:47:34,464 [base.py] => CA Task 5 => Loss 0.071, Test_accy skipped
+2026-10-20 09:47:35,856 [base.py] => CA Task 5 => Loss 0.070, Test_accy skipped
+2026-10-20 09:47:43,782 [base.py] => CA Task 5 => Loss 0.070, Test_accy 74.320
+2026-10-20 09:47:50,574 [trainer.py] => CNN: {'total': 74.32, '00-19': 71.51, '20-39': 70.9, '40-59': 73.81, '60-79': 80.2, '80-99': 70.15, '100-119': 78.79, 'old': 73.61, 'new': 78.79}
+2026-10-20 09:47:50,574 [trainer.py] => Continual metrics after task 5: BWT=-7.1800, forgetting=7.1800, task_acc=[71.51, 70.9, 73.81, 80.2, 70.15, 78.79]
+2026-10-20 09:47:50,574 [trainer.py] => CNN top1 curve: [87.15, 82.07, 79.35, 77.87, 76.51, 74.32]
+2026-10-20 09:47:50,574 [trainer.py] => CNN top5 curve: [98.32, 96.47, 94.33, 93.97, 93.25, 92.52]
+2026-10-20 09:47:50,574 [trainer.py] => Average Accuracy (CNN): 79.545
+2026-10-20 09:47:50,575 [trainer.py] => All params: 87080448
+2026-10-20 09:47:50,575 [trainer.py] => Trainable params: 1281792
+2026-10-20 09:47:50,576 [RSIAT_adapter.py] => Learning on 120-140
+2026-10-20 09:48:19,594 [toolkit.py] => All params: 87211520
+2026-10-20 09:48:19,595 [toolkit.py] => Trainable params: 1412864
+2026-10-20 09:51:51,492 [RSIAT_adapter.py] => Task 6, Epoch 15/15 => Loss 4.895, Loss_c 2.998, Losses_rt 1.897, Train_accy 80.33, Test_accy 71.40, Time 11.56s
+2026-10-20 09:51:51,492 [RSIAT_adapter.py] => Task 6 peak GPU memory: 4872.62 MiB
+2026-10-20 09:52:39,603 [stats_diagnostics.py] => STATS report written: /kaggle/working/ssca_runs/logs/adapter/imageneta/0/20/diag_legacy_rep1_1993_pretrained_vit_b16_224_in21k_adapter_stats/stats_task_6.json
+2026-10-20 09:52:39,603 [RSIAT_adapter.py] => STATS task=6 mode=legacy source=estimated median relative mean error: stale=1.0000, legacy=0.9784, paired=0.9325, applied=0.9784; median cov rel error=0.2031
+2026-10-20 09:52:41,284 [base.py] => CA Task 6 => Loss 0.115, Test_accy skipped
+2026-10-20 09:52:42,967 [base.py] => CA Task 6 => Loss 0.098, Test_accy skipped
+2026-10-20 09:52:44,648 [base.py] => CA Task 6 => Loss 0.092, Test_accy skipped
+2026-10-20 09:52:46,328 [base.py] => CA Task 6 => Loss 0.087, Test_accy skipped
+2026-10-20 09:52:48,009 [base.py] => CA Task 6 => Loss 0.085, Test_accy skipped
+2026-10-20 09:52:49,693 [base.py] => CA Task 6 => Loss 0.083, Test_accy skipped
+2026-10-20 09:52:51,377 [base.py] => CA Task 6 => Loss 0.081, Test_accy skipped
+2026-10-20 09:52:53,062 [base.py] => CA Task 6 => Loss 0.080, Test_accy skipped
+2026-10-20 09:52:54,743 [base.py] => CA Task 6 => Loss 0.080, Test_accy skipped
+2026-10-20 09:53:04,815 [base.py] => CA Task 6 => Loss 0.077, Test_accy 72.500
+2026-10-20 09:53:11,657 [trainer.py] => CNN: {'total': 72.5, '00-19': 68.72, '20-39': 69.31, '40-59': 68.25, '60-79': 77.23, '80-99': 70.9, '100-119': 78.79, '120-139': 74.26, 'old': 72.25, 'new': 74.26}
+2026-10-20 09:53:11,657 [trainer.py] => Continual metrics after task 6: BWT=-8.0100, forgetting=8.0100, task_acc=[68.72, 69.31, 68.25, 77.23, 70.9, 78.79, 74.26]
+2026-10-20 09:53:11,657 [trainer.py] => CNN top1 curve: [87.15, 82.07, 79.35, 77.87, 76.51, 74.32, 72.5]
+2026-10-20 09:53:11,658 [trainer.py] => CNN top5 curve: [98.32, 96.47, 94.33, 93.97, 93.25, 92.52, 91.71]
+2026-10-20 09:53:11,658 [trainer.py] => Average Accuracy (CNN): 78.53857142857143
+2026-10-20 09:53:11,658 [trainer.py] => All params: 87095808
+2026-10-20 09:53:11,658 [trainer.py] => Trainable params: 1297152
+2026-10-20 09:53:11,659 [RSIAT_adapter.py] => Learning on 140-160
+2026-10-20 09:53:40,260 [toolkit.py] => All params: 87226880
+2026-10-20 09:53:40,260 [toolkit.py] => Trainable params: 1428224
+2026-10-20 09:57:05,889 [RSIAT_adapter.py] => Task 7, Epoch 15/15 => Loss 5.020, Loss_c 3.135, Losses_rt 1.885, Train_accy 79.70, Test_accy 69.89, Time 10.98s
+2026-10-20 09:57:05,889 [RSIAT_adapter.py] => Task 7 peak GPU memory: 4878.67 MiB
+2026-10-20 09:57:58,460 [stats_diagnostics.py] => STATS report written: /kaggle/working/ssca_runs/logs/adapter/imageneta/0/20/diag_legacy_rep1_1993_pretrained_vit_b16_224_in21k_adapter_stats/stats_task_7.json
+2026-10-20 09:57:58,460 [RSIAT_adapter.py] => STATS task=7 mode=legacy source=estimated median relative mean error: stale=1.0000, legacy=0.9907, paired=0.9431, applied=0.9907; median cov rel error=0.2105
+2026-10-20 09:58:00,475 [base.py] => CA Task 7 => Loss 0.120, Test_accy skipped
+2026-10-20 09:58:02,468 [base.py] => CA Task 7 => Loss 0.103, Test_accy skipped
+2026-10-20 09:58:04,461 [base.py] => CA Task 7 => Loss 0.095, Test_accy skipped
+2026-10-20 09:58:06,445 [base.py] => CA Task 7 => Loss 0.091, Test_accy skipped
+2026-10-20 09:58:08,418 [base.py] => CA Task 7 => Loss 0.087, Test_accy skipped
+2026-10-20 09:58:10,444 [base.py] => CA Task 7 => Loss 0.086, Test_accy skipped
+2026-10-20 09:58:12,474 [base.py] => CA Task 7 => Loss 0.083, Test_accy skipped
+2026-10-20 09:58:14,531 [base.py] => CA Task 7 => Loss 0.083, Test_accy skipped
+2026-10-20 09:58:16,557 [base.py] => CA Task 7 => Loss 0.084, Test_accy skipped
+2026-10-20 09:58:30,735 [base.py] => CA Task 7 => Loss 0.083, Test_accy 71.280
+2026-10-20 09:58:35,199 [trainer.py] => CNN: {'total': 71.28, '00-19': 69.83, '20-39': 69.31, '40-59': 67.46, '60-79': 75.74, '80-99': 67.16, '100-119': 78.79, '120-139': 70.59, '140-159': 70.23, 'old': 71.4, 'new': 70.23}
+2026-10-20 09:58:35,200 [trainer.py] => Continual metrics after task 7: BWT=-8.0914, forgetting=8.0914, task_acc=[69.83, 69.31, 67.46, 75.74, 67.16, 78.79, 70.59, 70.23]
+2026-10-20 09:58:35,200 [trainer.py] => CNN top1 curve: [87.15, 82.07, 79.35, 77.87, 76.51, 74.32, 72.5, 71.28]
+2026-10-20 09:58:35,200 [trainer.py] => CNN top5 curve: [98.32, 96.47, 94.33, 93.97, 93.25, 92.52, 91.71, 90.72]
+2026-10-20 09:58:35,200 [trainer.py] => Average Accuracy (CNN): 77.63125
+2026-10-20 09:58:35,200 [trainer.py] => All params: 87111168
+2026-10-20 09:58:35,200 [trainer.py] => Trainable params: 1312512
+2026-10-20 09:58:35,201 [RSIAT_adapter.py] => Learning on 160-180
+2026-10-20 09:59:02,045 [toolkit.py] => All params: 87242240
+2026-10-20 09:59:02,046 [toolkit.py] => Trainable params: 1443584
+2026-10-20 10:02:42,668 [RSIAT_adapter.py] => Task 8, Epoch 15/15 => Loss 5.696, Loss_c 3.821, Losses_rt 1.876, Train_accy 70.61, Test_accy 68.51, Time 12.01s
+2026-10-20 10:02:42,669 [RSIAT_adapter.py] => Task 8 peak GPU memory: 4872.69 MiB
+2026-10-20 10:03:40,001 [stats_diagnostics.py] => STATS report written: /kaggle/working/ssca_runs/logs/adapter/imageneta/0/20/diag_legacy_rep1_1993_pretrained_vit_b16_224_in21k_adapter_stats/stats_task_8.json
+2026-10-20 10:03:40,001 [RSIAT_adapter.py] => STATS task=8 mode=legacy source=estimated median relative mean error: stale=1.0000, legacy=0.9860, paired=0.9634, applied=0.9860; median cov rel error=0.2407
+2026-10-20 10:03:42,308 [base.py] => CA Task 8 => Loss 0.130, Test_accy skipped
+2026-10-20 10:03:44,619 [base.py] => CA Task 8 => Loss 0.115, Test_accy skipped
+2026-10-20 10:03:46,941 [base.py] => CA Task 8 => Loss 0.108, Test_accy skipped
+2026-10-20 10:03:49,278 [base.py] => CA Task 8 => Loss 0.102, Test_accy skipped
+2026-10-20 10:03:51,629 [base.py] => CA Task 8 => Loss 0.099, Test_accy skipped
+2026-10-20 10:03:53,971 [base.py] => CA Task 8 => Loss 0.098, Test_accy skipped
+2026-10-20 10:03:56,348 [base.py] => CA Task 8 => Loss 0.098, Test_accy skipped
+2026-10-20 10:03:58,737 [base.py] => CA Task 8 => Loss 0.097, Test_accy skipped
+2026-10-20 10:04:01,190 [base.py] => CA Task 8 => Loss 0.094, Test_accy skipped
+2026-10-20 10:04:12,998 [base.py] => CA Task 8 => Loss 0.093, Test_accy 68.660
+2026-10-20 10:04:22,011 [trainer.py] => CNN: {'total': 68.66, '00-19': 68.72, '20-39': 68.25, '40-59': 59.52, '60-79': 73.27, '80-99': 65.67, '100-119': 78.79, '120-139': 69.85, '140-159': 68.7, '160-179': 62.94, 'old': 69.32, 'new': 62.94}
+2026-10-20 10:04:22,011 [trainer.py] => Continual metrics after task 8: BWT=-9.1225, forgetting=9.1225, task_acc=[68.72, 68.25, 59.52, 73.27, 65.67, 78.79, 69.85, 68.7, 62.94]
+2026-10-20 10:04:22,012 [trainer.py] => CNN top1 curve: [87.15, 82.07, 79.35, 77.87, 76.51, 74.32, 72.5, 71.28, 68.66]
+2026-10-20 10:04:22,012 [trainer.py] => CNN top5 curve: [98.32, 96.47, 94.33, 93.97, 93.25, 92.52, 91.71, 90.72, 89.72]
+2026-10-20 10:04:22,012 [trainer.py] => Average Accuracy (CNN): 76.63444444444445
+2026-10-20 10:04:22,012 [trainer.py] => All params: 87126528
+2026-10-20 10:04:22,012 [trainer.py] => Trainable params: 1327872
+2026-10-20 10:04:22,013 [RSIAT_adapter.py] => Learning on 180-200
+2026-10-20 10:04:51,637 [toolkit.py] => All params: 87257600
+2026-10-20 10:04:51,638 [toolkit.py] => Trainable params: 1458944
+2026-10-20 10:08:21,589 [RSIAT_adapter.py] => Task 9, Epoch 15/15 => Loss 4.505, Loss_c 2.682, Losses_rt 1.822, Train_accy 83.56, Test_accy 66.73, Time 11.24s
+2026-10-20 10:08:21,589 [RSIAT_adapter.py] => Task 9 peak GPU memory: 4879.65 MiB
+2026-10-20 10:09:23,599 [stats_diagnostics.py] => STATS report written: /kaggle/working/ssca_runs/logs/adapter/imageneta/0/20/diag_legacy_rep1_1993_pretrained_vit_b16_224_in21k_adapter_stats/stats_task_9.json
+2026-10-20 10:09:23,600 [RSIAT_adapter.py] => STATS task=9 mode=legacy source=estimated median relative mean error: stale=1.0000, legacy=1.0515, paired=0.9875, applied=1.0515; median cov rel error=0.2447
+2026-10-20 10:09:25,842 [base.py] => CA Task 9 => Loss 0.128, Test_accy skipped
+2026-10-20 10:09:28,494 [base.py] => CA Task 9 => Loss 0.111, Test_accy skipped
+2026-10-20 10:09:31,198 [base.py] => CA Task 9 => Loss 0.108, Test_accy skipped
+2026-10-20 10:09:33,863 [base.py] => CA Task 9 => Loss 0.104, Test_accy skipped
+2026-10-20 10:09:36,541 [base.py] => CA Task 9 => Loss 0.100, Test_accy skipped
+2026-10-20 10:09:39,218 [base.py] => CA Task 9 => Loss 0.099, Test_accy skipped
+2026-10-20 10:09:41,942 [base.py] => CA Task 9 => Loss 0.097, Test_accy skipped
+2026-10-20 10:09:44,578 [base.py] => CA Task 9 => Loss 0.096, Test_accy skipped
+2026-10-20 10:09:47,307 [base.py] => CA Task 9 => Loss 0.096, Test_accy skipped
+2026-10-20 10:10:00,985 [base.py] => CA Task 9 => Loss 0.096, Test_accy 67.800
+2026-10-20 10:10:08,678 [trainer.py] => CNN: {'total': 67.8, '00-19': 67.04, '20-39': 65.61, '40-59': 59.52, '60-79': 71.78, '80-99': 64.93, '100-119': 77.27, '120-139': 68.38, '140-159': 70.23, '160-179': 61.54, '180-199': 71.09, 'old': 67.49, 'new': 71.09}
+2026-10-20 10:10:08,678 [trainer.py] => Continual metrics after task 9: BWT=-9.1544, forgetting=9.1544, task_acc=[67.04, 65.61, 59.52, 71.78, 64.93, 77.27, 68.38, 70.23, 61.54, 71.09]
+2026-10-20 10:10:08,678 [trainer.py] => CNN top1 curve: [87.15, 82.07, 79.35, 77.87, 76.51, 74.32, 72.5, 71.28, 68.66, 67.8]
+2026-10-20 10:10:08,678 [trainer.py] => CNN top5 curve: [98.32, 96.47, 94.33, 93.97, 93.25, 92.52, 91.71, 90.72, 89.72, 88.67]
+2026-10-20 10:10:08,678 [trainer.py] => Average Accuracy (CNN): 75.751
+2026-10-20 10:10:08,763 [trainer.py] => Average Seed Accuracy (CNN): 75.751

@@ -1,0 +1,7 @@
+{
+  "prefix": "diag_oracle_mean_cov",
+  "ssca_mode": "legacy",
+  "ca_stats_source": "oracle_mean_cov",
+  "stats_diagnostics": true,
+  "save_predictions": true
+}

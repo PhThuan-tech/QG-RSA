@@ -1,5 +1,6 @@
 import copy
 import logging
+import os
 import time
 import numpy as np
 import torch
@@ -16,6 +17,8 @@ from utils.toolkit import count_parameters, log_count_parameter, target2onehot, 
 from utils.loss import AngularPenaltySMLoss
 from utils.toolkit import AutoencoderSigmoid
 from utils.quantum_kernel import QuantumKernelModule
+from utils import stats_diagnostics
+from utils.stats_diagnostics import stats_settings
 import math
 num_workers = 8
 
@@ -40,11 +43,13 @@ class Learner(BaseLearner):
         self.qbridge_config = config_from_args(args)
         self.qbridge_runtime = None
         self.qbridge_stage_records = []
+        stats_settings(args)
 
         self._old_most_sentive = []
         self._update_grads = {}
 
-        self.logit_norm = None
+        # Existing CA logit normalization (task-wise norm, then temperature); off by default.
+        self.logit_norm, _ = stats_diagnostics.ca_settings(args)
         self.tuned_epochs = None
         self.task_sizes = []
         self.rs_loss_func = RS_Loss(self.args["alpha"], self.args["rs_margin"])
@@ -140,7 +145,9 @@ class Learner(BaseLearner):
             raise ValueError("Q-BRIDGE base branching requires task 0")
         base_view = dict(checkpoint)
         metadata = dict(checkpoint.get("run_metadata", {}))
-        for key in ("use_quantum_kernel_inc", "q_inc_train_mode", "inc_loss_mode", "q_inc_pair"):
+        for key in ("use_quantum_kernel_inc", "q_inc_train_mode", "inc_loss_mode", "q_inc_pair",
+                    "ssca_mode", "ssca_sigma", "ca_stats_source", "rng_replicate",
+                    "ca_logit_norm", "ca_task_margin"):
             metadata.pop(key, None)
         base_view["run_metadata"] = metadata
         super()._validate_checkpoint(base_view)
@@ -210,7 +217,9 @@ class Learner(BaseLearner):
 
     def incremental_train(self, data_manager):
         self._cur_task += 1
-        
+        if self._cur_task == 1 and stats_settings(self.args)["rng_replicate"]:
+            stats_diagnostics.reseed_replicate(self.args)
+
         if self._cur_task == 1:
             self.old_ae = AutoencoderSigmoid(input_dims=768, code_dims=self.args["ae_code_dims"])
             self.old_ae.to(self._device)
@@ -313,9 +322,17 @@ class Learner(BaseLearner):
             self._network = nn.DataParallel(self._network, self._multiple_gpus)
 
       
+        stats_cfg = stats_settings(self.args)
         if self._cur_task >0:
             self._network.to(self._device)
+            # The legacy pass always runs: it fixes the global RNG stream so
+            # ssca_mode changes only the drift estimate, not training.
             train_embeddings_old, _ = self.extract_features(self.train_loader, self._network, None)
+            if stats_cfg["needs_paired"]:
+                paired_loader = stats_diagnostics.deterministic_loader(
+                    data_manager.get_eval_view(train_dataset), self.batch_size, self.num_workers,
+                    self.pin_memory, int(self.args["seed"]) + self._cur_task)
+                paired_old, paired_labels = self.extract_features(paired_loader, self._network, None)
 
         if self.qbridge_config is not None and self._cur_task > 0:
             self._start_qbridge_task()
@@ -330,16 +347,42 @@ class Learner(BaseLearner):
             evaluate_stage(self, "pre_ca")
 
       
+        estimates, kernel_report = {}, None
         if self._cur_task >0:
             train_embeddings_new, _ = self.extract_features(self.train_loader, self._network, None)
-            old_class_mean = self._class_means[:self._known_classes]
-            gap = self.displacement(train_embeddings_old, train_embeddings_new, old_class_mean, 4.0)
+            stale_means = self._class_means[:self._known_classes].copy()
+            estimates["stale"] = stale_means
+            # auto_nn reads the features of the applied estimator, so turning
+            # diagnostics on never changes the bandwidth.
+            sigma = stats_diagnostics.resolve_sigma(
+                stats_cfg["sigma"], paired_old if stats_cfg["mode"] == "paired" else train_embeddings_old,
+                stale_means)
+            stats_cfg["sigma_used"] = sigma
+            if stats_cfg["sigma"] == stats_diagnostics.AUTO_SIGMA:
+                logging.info("STATS task=%d ssca_sigma auto_nn -> %.4f", self._cur_task, sigma)
+            gap = None
+            if stats_cfg["mode"] == "legacy":
+                gap = self.displacement(train_embeddings_old, train_embeddings_new, stale_means, sigma)
+                estimates["legacy"] = stale_means + gap
+            elif stats_cfg["diagnostics"]:
+                estimates["legacy"] = stale_means + stats_diagnostics.kernel_displacement(
+                    train_embeddings_old, train_embeddings_new, stale_means, sigma)
+            if stats_cfg["needs_paired"]:
+                paired_new, paired_labels_new = self.extract_features(paired_loader, self._network, None)
+                if not torch.equal(paired_labels, paired_labels_new):
+                    raise RuntimeError("Paired SSCA passes visited samples in different orders.")
+                paired_gap = stats_diagnostics.kernel_displacement(paired_old, paired_new, stale_means, sigma)
+                estimates["paired"] = stale_means + paired_gap
+                if stats_cfg["mode"] == "paired":
+                    gap = paired_gap
+                kernel_report = stats_diagnostics.kernel_summary(paired_old, stale_means, sigma)
             if self.args['ssca'] is True:
-                old_class_mean +=gap
-                self._class_means[:self._known_classes] = old_class_mean
+                self._class_means[:self._known_classes] = stale_means + gap
 
         self._network.fc.backup()
         self._compute_class_mean(data_manager, check_diff=False, oracle=False)
+        if self._cur_task > 0 and stats_cfg["needs_oracle"]:
+            self._old_statistics_oracle(data_manager, stats_cfg, estimates, kernel_report)
         if self.args.get("qbridge_experiment", False):
             self._qb_means_id = self.args["_qbridge_base_hash"] + ":task%d" % self._cur_task
         if self._cur_task>0 and self.args['ca_epochs']>0 and self.args['ca'] is True:
@@ -351,6 +394,94 @@ class Learner(BaseLearner):
             evaluate_stage(self, "post_ca")
             if self.qbridge_runtime is not None:
                 self.qbridge_runtime.cache = None
+
+    def _old_statistics_oracle(self, data_manager, stats_cfg, estimates, kernel_report):
+        """Compare old-class statistics with the oracle computed from old images.
+
+        Reading old-class training images violates exemplar-free CIL. With
+        ca_stats_source set to an oracle option, the run is an upper bound for
+        diagnosis and must not be reported as a method result.
+        """
+        known = self._known_classes
+        # Test accuracy after adaptation and SSCA, before CA refits the head.
+        from utils.qbridge_experiment import preserve_rng
+        with preserve_rng():
+            modes = [(module, module.training) for module in self._network.modules()]
+            pred, target = self._eval_cnn(self.test_loader)
+            for module, training in modes:
+                module.training = training
+        pre_ca = self._evaluate(pred, target)["grouped"]
+        pre_ca.update(stats_diagnostics.error_directions(pred[:, 0], target, known))
+
+        dataset = data_manager.get_dataset(np.arange(0, known), source="train", mode="test")
+        loader = stats_diagnostics.deterministic_loader(
+            dataset, self.batch_size, int(self.args.get("stats_num_workers", 4)),
+            self.pin_memory, int(self.args["seed"]) + 1000 + self._cur_task)
+        vectors, labels = self._extract_vectors(loader)
+        origin = stats_diagnostics.origin_tasks(data_manager, self._cur_task, known)
+
+        replace_cov = stats_cfg["ca_stats_source"] == "oracle_mean_cov"
+        oracle_means = np.zeros((known, self._class_means.shape[1]))
+        cov_relative = np.full(known, np.nan)
+        cov_trace_ratio = np.full(known, np.nan)
+        for class_idx in range(known):
+            class_vectors = vectors[labels == class_idx]
+            if len(class_vectors) < 2:
+                raise ValueError("Oracle statistics need at least two samples of class {}.".format(class_idx))
+            mean, cov = stats_diagnostics.class_statistics(class_vectors)
+            oracle_means[class_idx] = mean
+            cov_relative[class_idx], cov_trace_ratio[class_idx] = stats_diagnostics.covariance_errors(
+                self._class_covs[class_idx], cov)
+            if replace_cov:
+                self._class_covs[class_idx] = cov
+
+        stale = estimates["stale"]
+        report_estimates = dict(estimates)
+        report_estimates["applied"] = self._class_means[:known].copy()
+        mean_report = {
+            name: stats_diagnostics.summarize_by_origin(
+                stats_diagnostics.mean_errors(estimate, oracle_means, stale), origin)
+            for name, estimate in report_estimates.items()
+        }
+        drift = stats_diagnostics.summarize_by_origin({
+            "l2": np.linalg.norm(stale - oracle_means, axis=1),
+            "relative_to_oracle_norm": np.linalg.norm(stale - oracle_means, axis=1)
+            / np.linalg.norm(oracle_means, axis=1),
+        }, origin)
+        if stats_cfg["ca_stats_source"] != "estimated":
+            self._class_means[:known] = oracle_means
+            logging.warning("STATS task=%d: CA uses ORACLE old-class %s (upper bound, not exemplar-free).",
+                            self._cur_task, "means and covariances" if replace_cov else "means")
+
+        report_dir = self.args.get("_qbridge_report_dir") or (
+            str(self.args.get("_run_log_prefix", "stats")) + "_stats")
+        stats_diagnostics.write_report(os.path.join(report_dir, "stats_task_%d.json" % self._cur_task), {
+            "task": self._cur_task,
+            "known_classes": known,
+            "ssca": self.args.get("ssca"),
+            "ssca_mode": stats_cfg["mode"],
+            "ssca_sigma": stats_cfg["sigma"],
+            "ssca_sigma_used": stats_cfg.get("sigma_used"),
+            "ca_logit_norm": self.logit_norm,
+            "ca_task_margin": float(self.args.get("ca_task_margin", 0.0)),
+            "ca_stats_source": stats_cfg["ca_stats_source"],
+            "oracle_is_exemplar_free": False,
+            "rng_replicate": stats_cfg["rng_replicate"],
+            "pre_ca_accuracy": pre_ca,
+            "estimator_mean_errors": mean_report,
+            "oracle_drift": drift,
+            "stored_covariance_errors": stats_diagnostics.summarize_by_origin(
+                {"relative_frobenius": cov_relative, "trace_ratio": cov_trace_ratio}, origin),
+            "ssca_kernel": kernel_report,
+        })
+        logging.info(
+            "STATS task=%d mode=%s source=%s median relative mean error: %s; median cov rel error=%.4f",
+            self._cur_task, stats_cfg["mode"], stats_cfg["ca_stats_source"],
+            ", ".join("{}={:.4f}".format(name, float("nan") if report["all"]["relative"]["median"] is None
+                                          else report["all"]["relative"]["median"])
+                      for name, report in mean_report.items()),
+            float(np.nanmedian(cov_relative)),
+        )
 
     def _quantum_used_this_task(self):
         return (

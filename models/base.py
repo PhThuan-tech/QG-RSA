@@ -80,6 +80,17 @@ class BaseLearner(object):
 
         self._network.eval()
 
+        # Cross-task cosine margin: each synthetic sample must beat every class of
+        # another task by ``ca_task_margin`` (raw cosine units, before scale).
+        # Targets inter-task confusion; same-task competitors keep plain CE.
+        task_margin = float(self.args.get("ca_task_margin", 0.0))
+        if task_margin > 0:
+            class_task = torch.repeat_interleave(
+                torch.arange(len(self.task_sizes)), torch.as_tensor(self.task_sizes))
+            if len(class_task) != crct_num:
+                raise ValueError("task_sizes do not cover the classifier rows.")
+            other_task = (class_task[:, None] != class_task[None, :]).float().to(self._device)
+
         eval_interval = self.args.get("ca_eval_interval", 0)
         for epoch in range(run_epochs):
             losses = 0.
@@ -113,7 +124,11 @@ class BaseLearner(object):
 
                 # -stage two only use classifiers
                 outputs = self._network.ca_forward(inp)
-                logits = self.args['scale'] * outputs['logits']
+                if task_margin > 0:
+                    cosine = outputs['logits'][:, :crct_num] + task_margin * other_task[tgt]
+                    logits = self.args['scale'] * cosine
+                else:
+                    logits = self.args['scale'] * outputs['logits']
 
                 if self.logit_norm is not None:
                     per_task_norm = []
@@ -158,6 +173,8 @@ class BaseLearner(object):
             "use_quantum_kernel_base", "use_quantum_kernel_inc", "q_kernel_type",
             "q_kernel_order", "q_num_qubits", "q_num_layers", "q_reupload",
             "q_gamma_mode", "q_inc_train_mode", "inc_loss_mode", "q_inc_pair",
+            "ssca_mode", "ssca_sigma", "ca_stats_source", "rng_replicate",
+            "ca_logit_norm", "ca_task_margin",
             "class_order_sha256", "partition_manifest_sha256",
             "dataset_manifest_sha256", "pretrained_sha256",
             "base_checkpoint_sha256",
@@ -392,6 +409,8 @@ class BaseLearner(object):
 
     def eval_task(self):
         y_pred, y_true = self._eval_cnn(self.test_loader)
+        # Kept for optional per-image paired tests (trainer save_predictions).
+        self._last_eval = (y_pred[:, 0], y_true)
         cnn_accy = self._evaluate(y_pred, y_true)
         return cnn_accy
 

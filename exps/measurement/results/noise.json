@@ -1,0 +1,21 @@
+[
+  {
+    "dataset": "imagenetr",
+    "family": "noise",
+    "seed": 1993,
+    "replicates": 4,
+    "minutes": 118.225,
+    "aia_mean": 87.34675,
+    "aia_sd": 0.1441235002812978,
+    "final_mean": 82.5875,
+    "final_sd": 0.2302715787933867,
+    "forgetting_mean": 5.2505500000000005,
+    "forgetting_sd": 0.19012889487573106,
+    "pairs_needed": {
+      "0.3": 4,
+      "0.5": 3,
+      "1.0": 3
+    },
+    "cost_minutes": 709.3499999999999
+  }
+]

@@ -5,7 +5,7 @@ import zipfile
 
 ROOT = Path(__file__).resolve().parents[1]
 OUTPUT = ROOT / "dist" / "QG-RSA_QBRIDGE_Kaggle.zip"
-EXCLUDED_DIRS = {".git", "__pycache__", ".ipynb_checkpoints", "logs", "ckpt", "reports", "dist"}
+EXCLUDED_DIRS = {".git", "__pycache__", ".ipynb_checkpoints", "logs", "ckpt", "reports", "dist", "result", "results"}
 EXCLUDED_SUFFIXES = {".pyc", ".pyo"}
 
 
@@ -25,7 +25,8 @@ def main():
     temporary.replace(OUTPUT)
     with zipfile.ZipFile(OUTPUT) as archive:
         names = set(archive.namelist())
-        required = {"QG-RSA/main.py", "QG-RSA/utils/qbridge.py",
+        required = {"QG-RSA/main.py", "QG-RSA/utils/qbridge.py", "QG-RSA/utils/stats_diagnostics.py",
+                    "QG-RSA/scripts/run_level_stats.py", "QG-RSA/QGRSA_EXPERIMENTS.ipynb",
                     "QG-RSA/scripts/qbridge_prepare.py", "QG-RSA/QBRIDGE_Kaggle.ipynb"}
         if required - names:
             raise RuntimeError("Incomplete package: " + str(required - names))
