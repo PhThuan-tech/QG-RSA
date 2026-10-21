@@ -5,8 +5,10 @@ import zipfile
 
 ROOT = Path(__file__).resolve().parents[1]
 OUTPUT = ROOT / "dist" / "QG-RSA_QBRIDGE_Kaggle.zip"
-EXCLUDED_DIRS = {".git", "__pycache__", ".ipynb_checkpoints", "logs", "ckpt", "reports", "dist", "result", "results"}
-EXCLUDED_SUFFIXES = {".pyc", ".pyo"}
+EXCLUDED_DIRS = {".git", "__pycache__", ".ipynb_checkpoints", "logs", "ckpt", "reports", "dist", "result", "results",
+                 "console", "paper", "_duplicates_to_delete"}
+# Measured outputs and weights never belong in the code package (the notebook searches inputs for models).
+EXCLUDED_SUFFIXES = {".pyc", ".pyo", ".npz", ".pt", ".pth", ".pkl", ".bin", ".safetensors"}
 
 
 def included(path):

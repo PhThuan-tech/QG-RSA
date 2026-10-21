@@ -55,3 +55,13 @@ _duplicates_to_delete/
 # Per-task diagnostics (npz/json) stay local: summaries and .log files carry the results
 exps/diagnostics/results/**/*_stats/
 exps/measurement/results/**/*_stats/
+
+# Upper-bound runs: keep logs/configs/summaries, per-task stats and consoles stay local
+!exps/upper/logs/
+exps/upper/**/*_stats/
+exps/upper/console/
+
+# QKSR development runs: keep logs/configs/README, per-task stats and consoles stay local
+!exps/qksr_old_cur/logs/
+exps/qksr_old_cur/**/*_stats/
+exps/qksr_old_cur/console/

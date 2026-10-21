@@ -49,6 +49,11 @@ Vì vậy chỉ số đúng là **tỉ lệ nhầm trên mỗi cặp lớp**:
 | ImageNet-R | 0.065 | 0.090 | 1.38 |
 | ImageNet-A | 0.151 | 0.164 | 1.09 |
 
+*Hiệu chỉnh sau vòng `UPPER` (`exps/upper/README.md`):* mốc so sánh đúng là mô hình
+huấn luyện chung trên ImageNet-R, có tỉ số 0.90 chứ không phải 1.0. Như vậy học tăng dần
+làm tăng khoảng 50% mức nhầm giữa các task, và 3.9 điểm final mất đi chủ yếu là nhầm
+giữa các task ở các lớp cũ nhất. Đoạn dưới đây giữ nguyên để đối chiếu.
+
 Như vậy, nhầm lẫn giữa các task chỉ cao hơn mức nền 1.1–1.4 lần. Phần lớn lỗi là ảnh
 khó đối với backbone, không phải hỏng hóc đặc thù của học tăng dần. Câu "91% lỗi là
 nhầm giữa task" ở vòng 1 đúng về số liệu, nhưng diễn giải nó như bằng chứng của lỗi

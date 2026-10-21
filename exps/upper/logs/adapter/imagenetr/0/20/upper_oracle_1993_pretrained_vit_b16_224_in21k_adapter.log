@@ -1,0 +1,297 @@
+2026-10-21 00:10:12,640 [trainer.py] => config: /kaggle/working/runs/configs/imagenetr_upper_oracle_rep0_1993.json
+2026-10-21 00:10:12,641 [trainer.py] => overlay: []
+2026-10-21 00:10:12,641 [trainer.py] => prefix: upper_oracle
+2026-10-21 00:10:12,641 [trainer.py] => dataset: imagenetr
+2026-10-21 00:10:12,641 [trainer.py] => save_checkpoints: False
+2026-10-21 00:10:12,641 [trainer.py] => resume: False
+2026-10-21 00:10:12,641 [trainer.py] => isolate_runs: True
+2026-10-21 00:10:12,641 [trainer.py] => keep_last_checkpoint: True
+2026-10-21 00:10:12,641 [trainer.py] => compact_diagonal_checkpoint: False
+2026-10-21 00:10:12,641 [trainer.py] => eval_interval: 0
+2026-10-21 00:10:12,641 [trainer.py] => ca_eval_interval: 0
+2026-10-21 00:10:12,641 [trainer.py] => num_workers: 4
+2026-10-21 00:10:12,641 [trainer.py] => stats_num_workers: 2
+2026-10-21 00:10:12,641 [trainer.py] => pin_memory: True
+2026-10-21 00:10:12,641 [trainer.py] => persistent_workers: True
+2026-10-21 00:10:12,641 [trainer.py] => shuffle: True
+2026-10-21 00:10:12,641 [trainer.py] => ssca: True
+2026-10-21 00:10:12,641 [trainer.py] => ca: True
+2026-10-21 00:10:12,641 [trainer.py] => init_cls: 20
+2026-10-21 00:10:12,641 [trainer.py] => increment: 20
+2026-10-21 00:10:12,641 [trainer.py] => model_name: adapter
+2026-10-21 00:10:12,641 [trainer.py] => convnet_type: pretrained_vit_b16_224_in21k_adapter
+2026-10-21 00:10:12,641 [trainer.py] => device: [device(type='cuda', index=0)]
+2026-10-21 00:10:12,641 [trainer.py] => seed: 1993
+2026-10-21 00:10:12,641 [trainer.py] => init_epochs: 30
+2026-10-21 00:10:12,641 [trainer.py] => warmup_epoch: 4
+2026-10-21 00:10:12,641 [trainer.py] => inc_epochs: 30
+2026-10-21 00:10:12,641 [trainer.py] => ca_epochs: 10
+2026-10-21 00:10:12,641 [trainer.py] => init_lr: 0.006734973446816302
+2026-10-21 00:10:12,641 [trainer.py] => batch_size: 48
+2026-10-21 00:10:12,641 [trainer.py] => weight_decay: 1.0711992196950609e-06
+2026-10-21 00:10:12,641 [trainer.py] => min_lr: 0
+2026-10-21 00:10:12,641 [trainer.py] => ffn_num: 64
+2026-10-21 00:10:12,641 [trainer.py] => optimizer: sgd
+2026-10-21 00:10:12,641 [trainer.py] => scale: 50.0
+2026-10-21 00:10:12,641 [trainer.py] => margin: 0.2
+2026-10-21 00:10:12,641 [trainer.py] => alpha: 1.5
+2026-10-21 00:10:12,641 [trainer.py] => rs_margin: 0.4
+2026-10-21 00:10:12,641 [trainer.py] => lambda_rs: 0.5
+2026-10-21 00:10:12,641 [trainer.py] => beta: 3.0
+2026-10-21 00:10:12,641 [trainer.py] => gamma: 1.5
+2026-10-21 00:10:12,641 [trainer.py] => ae_code_dims: 384
+2026-10-21 00:10:12,641 [trainer.py] => ae_init_lr: 0.00016714136601737281
+2026-10-21 00:10:12,641 [trainer.py] => ae_weight_decay: 0.004098198825078632
+2026-10-21 00:10:12,641 [trainer.py] => algorithm: rsiat
+2026-10-21 00:10:12,641 [trainer.py] => use_quantum_kernel_base: False
+2026-10-21 00:10:12,641 [trainer.py] => use_quantum_kernel_inc: False
+2026-10-21 00:10:12,641 [trainer.py] => ssca_mode: legacy
+2026-10-21 00:10:12,641 [trainer.py] => rng_replicate: 0
+2026-10-21 00:10:12,641 [trainer.py] => ca_stats_source: oracle_mean_cov
+2026-10-21 00:10:12,641 [trainer.py] => stats_diagnostics: True
+2026-10-21 00:10:12,641 [trainer.py] => save_predictions: True
+2026-10-21 00:10:12,641 [trainer.py] => data_root: /kaggle/input/datasets/zaphat206/imagenet-r/imagenet-r
+2026-10-21 00:10:12,641 [trainer.py] => pretrained_path: /kaggle/working/vit_b16_224.pt
+2026-10-21 00:10:12,641 [trainer.py] => output_root: /kaggle/working/runs
+2026-10-21 00:10:12,641 [trainer.py] => class_order_seed: 1993
+2026-10-21 00:10:12,641 [trainer.py] => train_seed: 1993
+2026-10-21 00:10:12,641 [trainer.py] => partition_seed: 1993
+2026-10-21 00:10:12,641 [trainer.py] => _run_log_prefix: /kaggle/working/runs/logs/adapter/imagenetr/0/20/upper_oracle_1993_pretrained_vit_b16_224_in21k_adapter
+2026-10-21 00:10:12,722 [data_manager.py] => [168, 136, 51, 9, 183, 101, 171, 99, 42, 159, 191, 70, 16, 188, 27, 10, 175, 26, 68, 187, 98, 6, 85, 35, 112, 43, 100, 0, 103, 181, 88, 59, 4, 2, 116, 174, 94, 80, 106, 1, 147, 17, 141, 131, 72, 23, 173, 54, 197, 118, 87, 32, 79, 104, 91, 19, 135, 107, 178, 36, 11, 199, 142, 8, 122, 3, 28, 57, 153, 172, 190, 56, 49, 44, 97, 62, 151, 169, 194, 55, 192, 12, 189, 78, 66, 180, 15, 137, 109, 134, 92, 119, 126, 52, 170, 40, 148, 65, 144, 64, 138, 45, 77, 89, 154, 90, 71, 193, 74, 30, 113, 143, 96, 84, 67, 50, 186, 156, 69, 21, 18, 111, 108, 58, 125, 157, 150, 110, 182, 129, 166, 83, 81, 60, 13, 165, 14, 176, 63, 117, 5, 22, 145, 121, 38, 41, 82, 127, 114, 20, 31, 53, 37, 163, 196, 130, 152, 162, 86, 76, 24, 34, 184, 149, 33, 128, 198, 155, 146, 167, 139, 120, 140, 102, 47, 25, 158, 123, 46, 164, 61, 7, 115, 75, 133, 160, 105, 132, 179, 124, 48, 73, 93, 39, 95, 195, 29, 177, 185, 161]
+2026-10-21 00:10:13,683 [trainer.py] => All params: 86988288
+2026-10-21 00:10:13,683 [trainer.py] => Trainable params: 1189632
+2026-10-21 00:10:13,684 [RSIAT_adapter.py] => Learning on 0-20
+2026-10-21 00:10:13,804 [toolkit.py] => All params: 86259456
+2026-10-21 00:10:13,804 [toolkit.py] => Trainable params: 1204992
+2026-10-21 00:24:47,530 [RSIAT_adapter.py] => Task 0, Epoch 30/30 => Loss 2.086, Loss_c 1.804, Losses_rt 0.282, Train_accy 93.14, Test_accy 96.05, Time 13.54s
+2026-10-21 00:24:47,531 [RSIAT_adapter.py] => Task 0 peak GPU memory: 4417.41 MiB
+2026-10-21 00:25:01,077 [trainer.py] => CNN: {'total': 96.05, '00-19': 96.05, 'old': 0.0, 'new': 96.05}
+2026-10-21 00:25:01,077 [trainer.py] => CNN top1 curve: [96.05]
+2026-10-21 00:25:01,077 [trainer.py] => CNN top5 curve: [99.72]
+2026-10-21 00:25:01,077 [trainer.py] => Average Accuracy (CNN): 96.05
+2026-10-21 00:25:01,077 [trainer.py] => All params: 87003648
+2026-10-21 00:25:01,078 [trainer.py] => Trainable params: 1204992
+2026-10-21 00:25:01,079 [RSIAT_adapter.py] => Learning on 20-40
+2026-10-21 00:26:04,757 [toolkit.py] => All params: 87167744
+2026-10-21 00:26:04,757 [toolkit.py] => Trainable params: 1369088
+2026-10-21 00:37:05,087 [RSIAT_adapter.py] => Task 1, Epoch 30/30 => Loss 3.785, Loss_c 2.505, Losses_rt 1.280, Train_accy 83.75, Test_accy 91.73, Time 18.34s
+2026-10-21 00:37:05,087 [RSIAT_adapter.py] => Task 1 peak GPU memory: 4876.00 MiB
+2026-10-21 00:37:44,316 [RSIAT_adapter.py] => STATS task=1: CA uses ORACLE old-class means and covariances (upper bound, not exemplar-free).
+2026-10-21 00:37:44,317 [stats_diagnostics.py] => STATS report written: /kaggle/working/runs/logs/adapter/imagenetr/0/20/upper_oracle_1993_pretrained_vit_b16_224_in21k_adapter_stats/stats_task_1.json
+2026-10-21 00:37:44,318 [RSIAT_adapter.py] => STATS task=1 mode=legacy source=oracle_mean_cov median relative mean error: stale=1.0000, legacy=0.8348, paired=0.8192, applied=0.8348; median cov rel error=0.1457
+2026-10-21 00:37:44,908 [base.py] => CA Task 1 => Loss 0.044, Test_accy skipped
+2026-10-21 00:37:45,271 [base.py] => CA Task 1 => Loss 0.036, Test_accy skipped
+2026-10-21 00:37:45,632 [base.py] => CA Task 1 => Loss 0.034, Test_accy skipped
+2026-10-21 00:37:46,030 [base.py] => CA Task 1 => Loss 0.027, Test_accy skipped
+2026-10-21 00:37:46,420 [base.py] => CA Task 1 => Loss 0.027, Test_accy skipped
+2026-10-21 00:37:46,794 [base.py] => CA Task 1 => Loss 0.030, Test_accy skipped
+2026-10-21 00:37:47,151 [base.py] => CA Task 1 => Loss 0.026, Test_accy skipped
+2026-10-21 00:37:47,531 [base.py] => CA Task 1 => Loss 0.028, Test_accy skipped
+2026-10-21 00:37:47,929 [base.py] => CA Task 1 => Loss 0.026, Test_accy skipped
+2026-10-21 00:37:52,199 [base.py] => CA Task 1 => Loss 0.029, Test_accy 91.370
+2026-10-21 00:37:56,068 [trainer.py] => CNN: {'total': 91.37, '00-19': 94.21, '20-39': 88.25, 'old': 94.21, 'new': 88.25}
+2026-10-21 00:37:56,068 [trainer.py] => Continual metrics after task 1: BWT=-1.8400, forgetting=1.8400, task_acc=[94.21, 88.25]
+2026-10-21 00:37:56,068 [trainer.py] => CNN top1 curve: [96.05, 91.37]
+2026-10-21 00:37:56,068 [trainer.py] => CNN top5 curve: [99.72, 98.52]
+2026-10-21 00:37:56,068 [trainer.py] => Average Accuracy (CNN): 93.71000000000001
+2026-10-21 00:37:56,068 [trainer.py] => All params: 87019008
+2026-10-21 00:37:56,069 [trainer.py] => Trainable params: 1220352
+2026-10-21 00:37:56,069 [RSIAT_adapter.py] => Learning on 40-60
+2026-10-21 00:38:09,492 [toolkit.py] => All params: 87183104
+2026-10-21 00:38:09,493 [toolkit.py] => Trainable params: 1384448
+2026-10-21 00:51:02,767 [RSIAT_adapter.py] => Task 2, Epoch 30/30 => Loss 3.823, Loss_c 2.519, Losses_rt 1.304, Train_accy 81.68, Test_accy 89.65, Time 22.61s
+2026-10-21 00:51:02,768 [RSIAT_adapter.py] => Task 2 peak GPU memory: 4870.53 MiB
+2026-10-21 00:51:49,680 [RSIAT_adapter.py] => STATS task=2: CA uses ORACLE old-class means and covariances (upper bound, not exemplar-free).
+2026-10-21 00:51:49,681 [stats_diagnostics.py] => STATS report written: /kaggle/working/runs/logs/adapter/imagenetr/0/20/upper_oracle_1993_pretrained_vit_b16_224_in21k_adapter_stats/stats_task_2.json
+2026-10-21 00:51:49,681 [RSIAT_adapter.py] => STATS task=2 mode=legacy source=oracle_mean_cov median relative mean error: stale=1.0000, legacy=0.8961, paired=0.8411, applied=0.8961; median cov rel error=0.1540
+2026-10-21 00:51:50,322 [base.py] => CA Task 2 => Loss 0.056, Test_accy skipped
+2026-10-21 00:51:50,866 [base.py] => CA Task 2 => Loss 0.053, Test_accy skipped
+2026-10-21 00:51:51,447 [base.py] => CA Task 2 => Loss 0.045, Test_accy skipped
+2026-10-21 00:51:52,046 [base.py] => CA Task 2 => Loss 0.044, Test_accy skipped
+2026-10-21 00:51:52,583 [base.py] => CA Task 2 => Loss 0.039, Test_accy skipped
+2026-10-21 00:51:53,127 [base.py] => CA Task 2 => Loss 0.043, Test_accy skipped
+2026-10-21 00:51:53,739 [base.py] => CA Task 2 => Loss 0.041, Test_accy skipped
+2026-10-21 00:51:54,306 [base.py] => CA Task 2 => Loss 0.036, Test_accy skipped
+2026-10-21 00:51:54,847 [base.py] => CA Task 2 => Loss 0.042, Test_accy skipped
+2026-10-21 00:52:00,913 [base.py] => CA Task 2 => Loss 0.038, Test_accy 90.010
+2026-10-21 00:52:06,462 [trainer.py] => CNN: {'total': 90.01, '00-19': 93.5, '20-39': 87.02, '40-59': 89.09, 'old': 90.41, 'new': 89.09}
+2026-10-21 00:52:06,462 [trainer.py] => Continual metrics after task 2: BWT=-1.8900, forgetting=1.8900, task_acc=[93.5, 87.02, 89.09]
+2026-10-21 00:52:06,462 [trainer.py] => CNN top1 curve: [96.05, 91.37, 90.01]
+2026-10-21 00:52:06,462 [trainer.py] => CNN top5 curve: [99.72, 98.52, 97.8]
+2026-10-21 00:52:06,462 [trainer.py] => Average Accuracy (CNN): 92.47666666666667
+2026-10-21 00:52:06,462 [trainer.py] => All params: 87034368
+2026-10-21 00:52:06,462 [trainer.py] => Trainable params: 1235712
+2026-10-21 00:52:06,463 [RSIAT_adapter.py] => Learning on 60-80
+2026-10-21 00:52:19,539 [toolkit.py] => All params: 87198464
+2026-10-21 00:52:19,540 [toolkit.py] => Trainable params: 1399808
+2026-10-21 01:04:41,884 [RSIAT_adapter.py] => Task 3, Epoch 30/30 => Loss 3.615, Loss_c 2.364, Losses_rt 1.251, Train_accy 80.26, Test_accy 88.62, Time 21.94s
+2026-10-21 01:04:41,884 [RSIAT_adapter.py] => Task 3 peak GPU memory: 4876.96 MiB
+2026-10-21 01:05:36,839 [RSIAT_adapter.py] => STATS task=3: CA uses ORACLE old-class means and covariances (upper bound, not exemplar-free).
+2026-10-21 01:05:36,840 [stats_diagnostics.py] => STATS report written: /kaggle/working/runs/logs/adapter/imagenetr/0/20/upper_oracle_1993_pretrained_vit_b16_224_in21k_adapter_stats/stats_task_3.json
+2026-10-21 01:05:36,840 [RSIAT_adapter.py] => STATS task=3 mode=legacy source=oracle_mean_cov median relative mean error: stale=1.0000, legacy=0.8533, paired=0.8362, applied=0.8533; median cov rel error=0.1367
+2026-10-21 01:05:37,621 [base.py] => CA Task 3 => Loss 0.076, Test_accy skipped
+2026-10-21 01:05:38,407 [base.py] => CA Task 3 => Loss 0.064, Test_accy skipped
+2026-10-21 01:05:39,188 [base.py] => CA Task 3 => Loss 0.063, Test_accy skipped
+2026-10-21 01:05:39,967 [base.py] => CA Task 3 => Loss 0.060, Test_accy skipped
+2026-10-21 01:05:40,756 [base.py] => CA Task 3 => Loss 0.058, Test_accy skipped
+2026-10-21 01:05:41,512 [base.py] => CA Task 3 => Loss 0.058, Test_accy skipped
+2026-10-21 01:05:42,324 [base.py] => CA Task 3 => Loss 0.052, Test_accy skipped
+2026-10-21 01:05:43,062 [base.py] => CA Task 3 => Loss 0.057, Test_accy skipped
+2026-10-21 01:05:43,893 [base.py] => CA Task 3 => Loss 0.054, Test_accy skipped
+2026-10-21 01:05:51,743 [base.py] => CA Task 3 => Loss 0.049, Test_accy 88.620
+2026-10-21 01:05:58,875 [trainer.py] => CNN: {'total': 88.62, '00-19': 92.37, '20-39': 86.71, '40-59': 88.59, '60-79': 86.18, 'old': 89.34, 'new': 86.18}
+2026-10-21 01:05:58,876 [trainer.py] => Continual metrics after task 3: BWT=-1.9067, forgetting=1.9067, task_acc=[92.37, 86.71, 88.59, 86.18]
+2026-10-21 01:05:58,876 [trainer.py] => CNN top1 curve: [96.05, 91.37, 90.01, 88.62]
+2026-10-21 01:05:58,876 [trainer.py] => CNN top5 curve: [99.72, 98.52, 97.8, 96.68]
+2026-10-21 01:05:58,876 [trainer.py] => Average Accuracy (CNN): 91.5125
+2026-10-21 01:05:58,876 [trainer.py] => All params: 87049728
+2026-10-21 01:05:58,877 [trainer.py] => Trainable params: 1251072
+2026-10-21 01:05:58,877 [RSIAT_adapter.py] => Learning on 80-100
+2026-10-21 01:06:11,132 [toolkit.py] => All params: 87213824
+2026-10-21 01:06:11,133 [toolkit.py] => Trainable params: 1415168
+2026-10-21 01:17:50,972 [RSIAT_adapter.py] => Task 4, Epoch 30/30 => Loss 3.831, Loss_c 2.588, Losses_rt 1.244, Train_accy 79.11, Test_accy 86.36, Time 20.42s
+2026-10-21 01:17:50,973 [RSIAT_adapter.py] => Task 4 peak GPU memory: 4870.97 MiB
+2026-10-21 01:18:53,600 [RSIAT_adapter.py] => STATS task=4: CA uses ORACLE old-class means and covariances (upper bound, not exemplar-free).
+2026-10-21 01:18:53,601 [stats_diagnostics.py] => STATS report written: /kaggle/working/runs/logs/adapter/imagenetr/0/20/upper_oracle_1993_pretrained_vit_b16_224_in21k_adapter_stats/stats_task_4.json
+2026-10-21 01:18:53,601 [RSIAT_adapter.py] => STATS task=4 mode=legacy source=oracle_mean_cov median relative mean error: stale=1.0000, legacy=0.8378, paired=0.7884, applied=0.8378; median cov rel error=0.1328
+2026-10-21 01:18:54,568 [base.py] => CA Task 4 => Loss 0.085, Test_accy skipped
+2026-10-21 01:18:55,611 [base.py] => CA Task 4 => Loss 0.070, Test_accy skipped
+2026-10-21 01:18:56,655 [base.py] => CA Task 4 => Loss 0.071, Test_accy skipped
+2026-10-21 01:18:57,672 [base.py] => CA Task 4 => Loss 0.067, Test_accy skipped
+2026-10-21 01:18:58,644 [base.py] => CA Task 4 => Loss 0.064, Test_accy skipped
+2026-10-21 01:18:59,667 [base.py] => CA Task 4 => Loss 0.064, Test_accy skipped
+2026-10-21 01:19:00,719 [base.py] => CA Task 4 => Loss 0.064, Test_accy skipped
+2026-10-21 01:19:01,762 [base.py] => CA Task 4 => Loss 0.061, Test_accy skipped
+2026-10-21 01:19:02,800 [base.py] => CA Task 4 => Loss 0.061, Test_accy skipped
+2026-10-21 01:19:12,393 [base.py] => CA Task 4 => Loss 0.059, Test_accy 86.620
+2026-10-21 01:19:20,846 [trainer.py] => CNN: {'total': 86.62, '00-19': 91.24, '20-39': 86.4, '40-59': 86.41, '60-79': 85.32, '80-99': 82.44, 'old': 87.51, 'new': 82.44}
+2026-10-21 01:19:20,846 [trainer.py] => Continual metrics after task 4: BWT=-2.5500, forgetting=2.5500, task_acc=[91.24, 86.4, 86.41, 85.32, 82.44]
+2026-10-21 01:19:20,846 [trainer.py] => CNN top1 curve: [96.05, 91.37, 90.01, 88.62, 86.62]
+2026-10-21 01:19:20,846 [trainer.py] => CNN top5 curve: [99.72, 98.52, 97.8, 96.68, 95.83]
+2026-10-21 01:19:20,846 [trainer.py] => Average Accuracy (CNN): 90.534
+2026-10-21 01:19:20,847 [trainer.py] => All params: 87065088
+2026-10-21 01:19:20,847 [trainer.py] => Trainable params: 1266432
+2026-10-21 01:19:20,847 [RSIAT_adapter.py] => Learning on 100-120
+2026-10-21 01:19:35,678 [toolkit.py] => All params: 87229184
+2026-10-21 01:19:35,678 [toolkit.py] => Trainable params: 1430528
+2026-10-21 01:34:19,099 [RSIAT_adapter.py] => Task 5, Epoch 30/30 => Loss 3.422, Loss_c 2.215, Losses_rt 1.207, Train_accy 81.87, Test_accy 85.12, Time 25.70s
+2026-10-21 01:34:19,099 [RSIAT_adapter.py] => Task 5 peak GPU memory: 4877.67 MiB
+2026-10-21 01:35:32,631 [RSIAT_adapter.py] => STATS task=5: CA uses ORACLE old-class means and covariances (upper bound, not exemplar-free).
+2026-10-21 01:35:32,633 [stats_diagnostics.py] => STATS report written: /kaggle/working/runs/logs/adapter/imagenetr/0/20/upper_oracle_1993_pretrained_vit_b16_224_in21k_adapter_stats/stats_task_5.json
+2026-10-21 01:35:32,633 [RSIAT_adapter.py] => STATS task=5 mode=legacy source=oracle_mean_cov median relative mean error: stale=1.0000, legacy=0.8596, paired=0.8445, applied=0.8596; median cov rel error=0.1313
+2026-10-21 01:35:33,858 [base.py] => CA Task 5 => Loss 0.090, Test_accy skipped
+2026-10-21 01:35:35,006 [base.py] => CA Task 5 => Loss 0.081, Test_accy skipped
+2026-10-21 01:35:36,217 [base.py] => CA Task 5 => Loss 0.083, Test_accy skipped
+2026-10-21 01:35:37,453 [base.py] => CA Task 5 => Loss 0.074, Test_accy skipped
+2026-10-21 01:35:38,682 [base.py] => CA Task 5 => Loss 0.070, Test_accy skipped
+2026-10-21 01:35:39,804 [base.py] => CA Task 5 => Loss 0.070, Test_accy skipped
+2026-10-21 01:35:40,992 [base.py] => CA Task 5 => Loss 0.073, Test_accy skipped
+2026-10-21 01:35:42,150 [base.py] => CA Task 5 => Loss 0.071, Test_accy skipped
+2026-10-21 01:35:43,376 [base.py] => CA Task 5 => Loss 0.073, Test_accy skipped
+2026-10-21 01:35:55,023 [base.py] => CA Task 5 => Loss 0.071, Test_accy 85.790
+2026-10-21 01:36:05,535 [trainer.py] => CNN: {'total': 85.79, '00-19': 90.54, '20-39': 85.32, '40-59': 86.58, '60-79': 84.46, '80-99': 81.7, '100-119': 84.97, 'old': 85.97, 'new': 84.97}
+2026-10-21 01:36:05,535 [trainer.py] => Continual metrics after task 5: BWT=-2.6820, forgetting=2.6820, task_acc=[90.54, 85.32, 86.58, 84.46, 81.7, 84.97]
+2026-10-21 01:36:05,535 [trainer.py] => CNN top1 curve: [96.05, 91.37, 90.01, 88.62, 86.62, 85.79]
+2026-10-21 01:36:05,535 [trainer.py] => CNN top5 curve: [99.72, 98.52, 97.8, 96.68, 95.83, 95.67]
+2026-10-21 01:36:05,535 [trainer.py] => Average Accuracy (CNN): 89.74333333333334
+2026-10-21 01:36:05,535 [trainer.py] => All params: 87080448
+2026-10-21 01:36:05,535 [trainer.py] => Trainable params: 1281792
+2026-10-21 01:36:05,536 [RSIAT_adapter.py] => Learning on 120-140
+2026-10-21 01:36:17,997 [toolkit.py] => All params: 87244544
+2026-10-21 01:36:17,998 [toolkit.py] => Trainable params: 1445888
+2026-10-21 01:48:16,714 [RSIAT_adapter.py] => Task 6, Epoch 30/30 => Loss 3.361, Loss_c 2.161, Losses_rt 1.200, Train_accy 80.37, Test_accy 84.81, Time 20.73s
+2026-10-21 01:48:16,714 [RSIAT_adapter.py] => Task 6 peak GPU memory: 4873.00 MiB
+2026-10-21 01:49:23,809 [RSIAT_adapter.py] => STATS task=6: CA uses ORACLE old-class means and covariances (upper bound, not exemplar-free).
+2026-10-21 01:49:23,811 [stats_diagnostics.py] => STATS report written: /kaggle/working/runs/logs/adapter/imagenetr/0/20/upper_oracle_1993_pretrained_vit_b16_224_in21k_adapter_stats/stats_task_6.json
+2026-10-21 01:49:23,811 [RSIAT_adapter.py] => STATS task=6 mode=legacy source=oracle_mean_cov median relative mean error: stale=1.0000, legacy=0.8700, paired=0.8430, applied=0.8700; median cov rel error=0.1254
+2026-10-21 01:49:24,378 [base.py] => CA Task 6 => Loss 0.083, Test_accy skipped
+2026-10-21 01:49:24,977 [base.py] => CA Task 6 => Loss 0.082, Test_accy skipped
+2026-10-21 01:49:25,573 [base.py] => CA Task 6 => Loss 0.072, Test_accy skipped
+2026-10-21 01:49:26,168 [base.py] => CA Task 6 => Loss 0.071, Test_accy skipped
+2026-10-21 01:49:26,759 [base.py] => CA Task 6 => Loss 0.075, Test_accy skipped
+2026-10-21 01:49:27,551 [base.py] => CA Task 6 => Loss 0.071, Test_accy skipped
+2026-10-21 01:49:28,139 [base.py] => CA Task 6 => Loss 0.069, Test_accy skipped
+2026-10-21 01:49:28,733 [base.py] => CA Task 6 => Loss 0.067, Test_accy skipped
+2026-10-21 01:49:29,320 [base.py] => CA Task 6 => Loss 0.069, Test_accy skipped
+2026-10-21 01:49:40,353 [base.py] => CA Task 6 => Loss 0.065, Test_accy 85.150
+2026-10-21 01:49:50,656 [trainer.py] => CNN: {'total': 85.15, '00-19': 89.55, '20-39': 84.7, '40-59': 85.57, '60-79': 83.42, '80-99': 81.52, '100-119': 84.23, '120-139': 86.13, 'old': 85.01, 'new': 86.13}
+2026-10-21 01:49:50,656 [trainer.py] => Continual metrics after task 6: BWT=-2.9983, forgetting=2.9983, task_acc=[89.55, 84.7, 85.57, 83.42, 81.52, 84.23, 86.13]
+2026-10-21 01:49:50,656 [trainer.py] => CNN top1 curve: [96.05, 91.37, 90.01, 88.62, 86.62, 85.79, 85.15]
+2026-10-21 01:49:50,656 [trainer.py] => CNN top5 curve: [99.72, 98.52, 97.8, 96.68, 95.83, 95.67, 95.34]
+2026-10-21 01:49:50,656 [trainer.py] => Average Accuracy (CNN): 89.08714285714287
+2026-10-21 01:49:50,657 [trainer.py] => All params: 87095808
+2026-10-21 01:49:50,657 [trainer.py] => Trainable params: 1297152
+2026-10-21 01:49:50,657 [RSIAT_adapter.py] => Learning on 140-160
+2026-10-21 01:50:04,695 [toolkit.py] => All params: 87259904
+2026-10-21 01:50:04,696 [toolkit.py] => Trainable params: 1461248
+2026-10-21 02:00:30,587 [RSIAT_adapter.py] => Task 7, Epoch 30/30 => Loss 3.195, Loss_c 2.011, Losses_rt 1.184, Train_accy 81.54, Test_accy 84.31, Time 19.37s
+2026-10-21 02:00:30,588 [RSIAT_adapter.py] => Task 7 peak GPU memory: 4879.05 MiB
+2026-10-21 02:01:47,408 [RSIAT_adapter.py] => STATS task=7: CA uses ORACLE old-class means and covariances (upper bound, not exemplar-free).
+2026-10-21 02:01:47,409 [stats_diagnostics.py] => STATS report written: /kaggle/working/runs/logs/adapter/imagenetr/0/20/upper_oracle_1993_pretrained_vit_b16_224_in21k_adapter_stats/stats_task_7.json
+2026-10-21 02:01:47,410 [RSIAT_adapter.py] => STATS task=7 mode=legacy source=oracle_mean_cov median relative mean error: stale=1.0000, legacy=0.8702, paired=0.8257, applied=0.8702; median cov rel error=0.1270
+2026-10-21 02:01:47,974 [base.py] => CA Task 7 => Loss 0.090, Test_accy skipped
+2026-10-21 02:01:48,657 [base.py] => CA Task 7 => Loss 0.084, Test_accy skipped
+2026-10-21 02:01:49,341 [base.py] => CA Task 7 => Loss 0.082, Test_accy skipped
+2026-10-21 02:01:50,028 [base.py] => CA Task 7 => Loss 0.079, Test_accy skipped
+2026-10-21 02:01:50,715 [base.py] => CA Task 7 => Loss 0.077, Test_accy skipped
+2026-10-21 02:01:51,402 [base.py] => CA Task 7 => Loss 0.073, Test_accy skipped
+2026-10-21 02:01:52,090 [base.py] => CA Task 7 => Loss 0.070, Test_accy skipped
+2026-10-21 02:01:52,780 [base.py] => CA Task 7 => Loss 0.073, Test_accy skipped
+2026-10-21 02:01:53,467 [base.py] => CA Task 7 => Loss 0.074, Test_accy skipped
+2026-10-21 02:02:05,336 [base.py] => CA Task 7 => Loss 0.074, Test_accy 84.510
+2026-10-21 02:02:17,099 [trainer.py] => CNN: {'total': 84.51, '00-19': 87.99, '20-39': 84.08, '40-59': 85.07, '60-79': 83.94, '80-99': 80.04, '100-119': 83.48, '120-139': 85.58, '140-159': 84.96, 'old': 84.43, 'new': 84.96}
+2026-10-21 02:02:17,099 [trainer.py] => Continual metrics after task 7: BWT=-3.2757, forgetting=3.2757, task_acc=[87.99, 84.08, 85.07, 83.94, 80.04, 83.48, 85.58, 84.96]
+2026-10-21 02:02:17,099 [trainer.py] => CNN top1 curve: [96.05, 91.37, 90.01, 88.62, 86.62, 85.79, 85.15, 84.51]
+2026-10-21 02:02:17,099 [trainer.py] => CNN top5 curve: [99.72, 98.52, 97.8, 96.68, 95.83, 95.67, 95.34, 94.87]
+2026-10-21 02:02:17,099 [trainer.py] => Average Accuracy (CNN): 88.515
+2026-10-21 02:02:17,100 [trainer.py] => All params: 87111168
+2026-10-21 02:02:17,100 [trainer.py] => Trainable params: 1312512
+2026-10-21 02:02:17,100 [RSIAT_adapter.py] => Learning on 160-180
+2026-10-21 02:02:26,053 [toolkit.py] => All params: 87275264
+2026-10-21 02:02:26,053 [toolkit.py] => Trainable params: 1476608
+2026-10-21 02:09:15,499 [RSIAT_adapter.py] => Task 8, Epoch 30/30 => Loss 3.686, Loss_c 2.447, Losses_rt 1.240, Train_accy 79.76, Test_accy 83.46, Time 13.43s
+2026-10-21 02:09:15,499 [RSIAT_adapter.py] => Task 8 peak GPU memory: 4873.07 MiB
+2026-10-21 02:10:32,934 [RSIAT_adapter.py] => STATS task=8: CA uses ORACLE old-class means and covariances (upper bound, not exemplar-free).
+2026-10-21 02:10:32,936 [stats_diagnostics.py] => STATS report written: /kaggle/working/runs/logs/adapter/imagenetr/0/20/upper_oracle_1993_pretrained_vit_b16_224_in21k_adapter_stats/stats_task_8.json
+2026-10-21 02:10:32,936 [RSIAT_adapter.py] => STATS task=8 mode=legacy source=oracle_mean_cov median relative mean error: stale=1.0000, legacy=0.9234, paired=0.8449, applied=0.9234; median cov rel error=0.1370
+2026-10-21 02:10:33,816 [base.py] => CA Task 8 => Loss 0.090, Test_accy skipped
+2026-10-21 02:10:34,632 [base.py] => CA Task 8 => Loss 0.088, Test_accy skipped
+2026-10-21 02:10:35,277 [base.py] => CA Task 8 => Loss 0.081, Test_accy skipped
+2026-10-21 02:10:36,068 [base.py] => CA Task 8 => Loss 0.082, Test_accy skipped
+2026-10-21 02:10:36,861 [base.py] => CA Task 8 => Loss 0.077, Test_accy skipped
+2026-10-21 02:10:37,656 [base.py] => CA Task 8 => Loss 0.075, Test_accy skipped
+2026-10-21 02:10:38,453 [base.py] => CA Task 8 => Loss 0.076, Test_accy skipped
+2026-10-21 02:10:39,250 [base.py] => CA Task 8 => Loss 0.076, Test_accy skipped
+2026-10-21 02:10:40,048 [base.py] => CA Task 8 => Loss 0.076, Test_accy skipped
+2026-10-21 02:10:48,212 [base.py] => CA Task 8 => Loss 0.074, Test_accy 83.680
+2026-10-21 02:11:00,990 [trainer.py] => CNN: {'total': 83.68, '00-19': 87.15, '20-39': 83.93, '40-59': 84.73, '60-79': 82.73, '80-99': 79.11, '100-119': 82.74, '120-139': 84.67, '140-159': 83.84, '160-179': 83.2, 'old': 83.73, 'new': 83.2}
+2026-10-21 02:11:00,990 [trainer.py] => Continual metrics after task 8: BWT=-3.6462, forgetting=3.6462, task_acc=[87.15, 83.93, 84.73, 82.73, 79.11, 82.74, 84.67, 83.84, 83.2]
+2026-10-21 02:11:00,990 [trainer.py] => CNN top1 curve: [96.05, 91.37, 90.01, 88.62, 86.62, 85.79, 85.15, 84.51, 83.68]
+2026-10-21 02:11:00,990 [trainer.py] => CNN top5 curve: [99.72, 98.52, 97.8, 96.68, 95.83, 95.67, 95.34, 94.87, 94.68]
+2026-10-21 02:11:00,990 [trainer.py] => Average Accuracy (CNN): 87.97777777777779
+2026-10-21 02:11:00,990 [trainer.py] => All params: 87126528
+2026-10-21 02:11:00,991 [trainer.py] => Trainable params: 1327872
+2026-10-21 02:11:00,991 [RSIAT_adapter.py] => Learning on 180-200
+2026-10-21 02:11:12,088 [toolkit.py] => All params: 87290624
+2026-10-21 02:11:12,089 [toolkit.py] => Trainable params: 1491968
+2026-10-21 02:19:13,014 [RSIAT_adapter.py] => Task 9, Epoch 30/30 => Loss 3.187, Loss_c 1.991, Losses_rt 1.196, Train_accy 80.75, Test_accy 82.64, Time 15.58s
+2026-10-21 02:19:13,014 [RSIAT_adapter.py] => Task 9 peak GPU memory: 4880.02 MiB
+2026-10-21 02:20:35,894 [RSIAT_adapter.py] => STATS task=9: CA uses ORACLE old-class means and covariances (upper bound, not exemplar-free).
+2026-10-21 02:20:35,896 [stats_diagnostics.py] => STATS report written: /kaggle/working/runs/logs/adapter/imagenetr/0/20/upper_oracle_1993_pretrained_vit_b16_224_in21k_adapter_stats/stats_task_9.json
+2026-10-21 02:20:35,896 [RSIAT_adapter.py] => STATS task=9 mode=legacy source=oracle_mean_cov median relative mean error: stale=1.0000, legacy=0.9685, paired=0.9164, applied=0.9685; median cov rel error=0.1388
+2026-10-21 02:20:37,036 [base.py] => CA Task 9 => Loss 0.102, Test_accy skipped
+2026-10-21 02:20:38,785 [base.py] => CA Task 9 => Loss 0.098, Test_accy skipped
+2026-10-21 02:20:40,003 [base.py] => CA Task 9 => Loss 0.091, Test_accy skipped
+2026-10-21 02:20:41,085 [base.py] => CA Task 9 => Loss 0.090, Test_accy skipped
+2026-10-21 02:20:42,003 [base.py] => CA Task 9 => Loss 0.087, Test_accy skipped
+2026-10-21 02:20:43,347 [base.py] => CA Task 9 => Loss 0.084, Test_accy skipped
+2026-10-21 02:20:44,737 [base.py] => CA Task 9 => Loss 0.085, Test_accy skipped
+2026-10-21 02:20:45,656 [base.py] => CA Task 9 => Loss 0.081, Test_accy skipped
+2026-10-21 02:20:46,553 [base.py] => CA Task 9 => Loss 0.079, Test_accy skipped
+2026-10-21 02:20:55,659 [base.py] => CA Task 9 => Loss 0.082, Test_accy 83.110
+2026-10-21 02:21:03,938 [trainer.py] => CNN: {'total': 83.11, '00-19': 86.86, '20-39': 83.0, '40-59': 83.72, '60-79': 82.56, '80-99': 78.93, '100-119': 81.7, '120-139': 84.12, '140-159': 83.29, '160-179': 82.19, '180-199': 83.77, 'old': 83.05, 'new': 83.77}
+2026-10-21 02:21:03,938 [trainer.py] => Continual metrics after task 9: BWT=-3.8778, forgetting=3.8778, task_acc=[86.86, 83.0, 83.72, 82.56, 78.93, 81.7, 84.12, 83.29, 82.19, 83.77]
+2026-10-21 02:21:03,938 [trainer.py] => CNN top1 curve: [96.05, 91.37, 90.01, 88.62, 86.62, 85.79, 85.15, 84.51, 83.68, 83.11]
+2026-10-21 02:21:03,938 [trainer.py] => CNN top5 curve: [99.72, 98.52, 97.8, 96.68, 95.83, 95.67, 95.34, 94.87, 94.68, 94.26]
+2026-10-21 02:21:03,938 [trainer.py] => Average Accuracy (CNN): 87.49100000000001
+2026-10-21 02:21:04,035 [trainer.py] => Average Seed Accuracy (CNN): 87.49100000000001
