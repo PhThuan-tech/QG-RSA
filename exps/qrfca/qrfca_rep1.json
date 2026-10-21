@@ -1,0 +1,25 @@
+{
+  "prefix": "qrfca_rep1",
+  "ssca_mode": "legacy",
+  "rng_replicate": 1,
+  "stats_diagnostics": false,
+  "save_predictions": true,
+  "save_checkpoints": false,
+  "ca_heads": [
+    "linear",
+    "qda",
+    "rff_ridge",
+    "rp_ridge",
+    "pqk_ridge",
+    "pqk_noent_ridge"
+  ],
+  "ca_head_samples": 512,
+  "ca_head_dim": 8192,
+  "ca_head_qubits": 8,
+  "ca_head_layers": 2,
+  "ca_head_reupload": true,
+  "ca_head_order": 2,
+  "ca_head_seed": 20261021,
+  "ca_head_holdout": 0.2,
+  "ca_head_gate_samples": 1000
+}

@@ -65,3 +65,9 @@ exps/upper/console/
 !exps/qksr_old_cur/logs/
 exps/qksr_old_cur/**/*_stats/
 exps/qksr_old_cur/console/
+
+# QRF-CA results: keep logs/configs/summaries, per-task stats and consoles stay local
+!exps/qrfca/result/logs/
+!exps/qrfca/results/logs/
+exps/qrfca/**/*_stats/
+exps/qrfca/**/console/

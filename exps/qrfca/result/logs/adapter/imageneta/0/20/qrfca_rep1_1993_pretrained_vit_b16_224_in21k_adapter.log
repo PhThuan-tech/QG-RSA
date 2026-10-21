@@ -1,0 +1,470 @@
+2026-10-21 14:32:30,259 [trainer.py] => config: /kaggle/working/runs/configs/imageneta_qrfca_rep1_1993.json
+2026-10-21 14:32:30,259 [trainer.py] => overlay: []
+2026-10-21 14:32:30,259 [trainer.py] => prefix: qrfca_rep1
+2026-10-21 14:32:30,259 [trainer.py] => dataset: imageneta
+2026-10-21 14:32:30,259 [trainer.py] => save_checkpoints: False
+2026-10-21 14:32:30,259 [trainer.py] => resume: False
+2026-10-21 14:32:30,259 [trainer.py] => isolate_runs: True
+2026-10-21 14:32:30,259 [trainer.py] => keep_last_checkpoint: True
+2026-10-21 14:32:30,259 [trainer.py] => compact_diagonal_checkpoint: False
+2026-10-21 14:32:30,259 [trainer.py] => eval_interval: 0
+2026-10-21 14:32:30,259 [trainer.py] => ca_eval_interval: 0
+2026-10-21 14:32:30,259 [trainer.py] => num_workers: 4
+2026-10-21 14:32:30,259 [trainer.py] => stats_num_workers: 2
+2026-10-21 14:32:30,259 [trainer.py] => pin_memory: True
+2026-10-21 14:32:30,259 [trainer.py] => persistent_workers: True
+2026-10-21 14:32:30,259 [trainer.py] => shuffle: True
+2026-10-21 14:32:30,259 [trainer.py] => ssca: True
+2026-10-21 14:32:30,259 [trainer.py] => ca: True
+2026-10-21 14:32:30,259 [trainer.py] => init_cls: 20
+2026-10-21 14:32:30,259 [trainer.py] => increment: 20
+2026-10-21 14:32:30,259 [trainer.py] => model_name: adapter
+2026-10-21 14:32:30,259 [trainer.py] => convnet_type: pretrained_vit_b16_224_in21k_adapter
+2026-10-21 14:32:30,259 [trainer.py] => device: [device(type='cuda', index=0)]
+2026-10-21 14:32:30,259 [trainer.py] => seed: 1993
+2026-10-21 14:32:30,259 [trainer.py] => init_epochs: 20
+2026-10-21 14:32:30,259 [trainer.py] => warmup_epoch: 3
+2026-10-21 14:32:30,259 [trainer.py] => inc_epochs: 15
+2026-10-21 14:32:30,259 [trainer.py] => ca_epochs: 10
+2026-10-21 14:32:30,259 [trainer.py] => init_lr: 0.006688537652915857
+2026-10-21 14:32:30,259 [trainer.py] => batch_size: 48
+2026-10-21 14:32:30,259 [trainer.py] => weight_decay: 5.929828534160845e-07
+2026-10-21 14:32:30,259 [trainer.py] => min_lr: 0
+2026-10-21 14:32:30,259 [trainer.py] => ffn_num: 64
+2026-10-21 14:32:30,259 [trainer.py] => optimizer: sgd
+2026-10-21 14:32:30,259 [trainer.py] => scale: 30.0
+2026-10-21 14:32:30,259 [trainer.py] => margin: 0.3
+2026-10-21 14:32:30,259 [trainer.py] => alpha: 1.0
+2026-10-21 14:32:30,259 [trainer.py] => rs_margin: 1.5
+2026-10-21 14:32:30,259 [trainer.py] => lambda_rs: 1.0
+2026-10-21 14:32:30,259 [trainer.py] => beta: 3.0
+2026-10-21 14:32:30,259 [trainer.py] => gamma: 6.0
+2026-10-21 14:32:30,259 [trainer.py] => ae_code_dims: 128
+2026-10-21 14:32:30,259 [trainer.py] => ae_init_lr: 0.0003120779977680931
+2026-10-21 14:32:30,259 [trainer.py] => ae_weight_decay: 2.424346330636298e-05
+2026-10-21 14:32:30,259 [trainer.py] => algorithm: rsiat
+2026-10-21 14:32:30,259 [trainer.py] => use_quantum_kernel_base: False
+2026-10-21 14:32:30,259 [trainer.py] => use_quantum_kernel_inc: False
+2026-10-21 14:32:30,259 [trainer.py] => ssca_mode: legacy
+2026-10-21 14:32:30,259 [trainer.py] => rng_replicate: 1
+2026-10-21 14:32:30,259 [trainer.py] => stats_diagnostics: False
+2026-10-21 14:32:30,259 [trainer.py] => save_predictions: True
+2026-10-21 14:32:30,259 [trainer.py] => ca_heads: ['linear', 'qda', 'rff_ridge', 'rp_ridge', 'pqk_ridge', 'pqk_noent_ridge']
+2026-10-21 14:32:30,259 [trainer.py] => ca_head_samples: 512
+2026-10-21 14:32:30,259 [trainer.py] => ca_head_dim: 8192
+2026-10-21 14:32:30,259 [trainer.py] => ca_head_qubits: 8
+2026-10-21 14:32:30,259 [trainer.py] => ca_head_layers: 2
+2026-10-21 14:32:30,259 [trainer.py] => ca_head_reupload: True
+2026-10-21 14:32:30,259 [trainer.py] => ca_head_order: 2
+2026-10-21 14:32:30,259 [trainer.py] => ca_head_seed: 20261021
+2026-10-21 14:32:30,259 [trainer.py] => ca_head_holdout: 0.2
+2026-10-21 14:32:30,259 [trainer.py] => ca_head_gate_samples: 1000
+2026-10-21 14:32:30,259 [trainer.py] => data_root: /kaggle/working/imageneta_split
+2026-10-21 14:32:30,259 [trainer.py] => pretrained_path: /kaggle/working/vit_b16_224.pt
+2026-10-21 14:32:30,259 [trainer.py] => output_root: /kaggle/working/runs
+2026-10-21 14:32:30,259 [trainer.py] => class_order_seed: 1993
+2026-10-21 14:32:30,260 [trainer.py] => train_seed: 1993
+2026-10-21 14:32:30,260 [trainer.py] => partition_seed: 1993
+2026-10-21 14:32:30,260 [trainer.py] => _run_log_prefix: /kaggle/working/runs/logs/adapter/imageneta/0/20/qrfca_rep1_1993_pretrained_vit_b16_224_in21k_adapter
+2026-10-21 14:32:30,751 [data_manager.py] => [168, 136, 51, 9, 183, 101, 171, 99, 42, 159, 191, 70, 16, 188, 27, 10, 175, 26, 68, 187, 98, 6, 85, 35, 112, 43, 100, 0, 103, 181, 88, 59, 4, 2, 116, 174, 94, 80, 106, 1, 147, 17, 141, 131, 72, 23, 173, 54, 197, 118, 87, 32, 79, 104, 91, 19, 135, 107, 178, 36, 11, 199, 142, 8, 122, 3, 28, 57, 153, 172, 190, 56, 49, 44, 97, 62, 151, 169, 194, 55, 192, 12, 189, 78, 66, 180, 15, 137, 109, 134, 92, 119, 126, 52, 170, 40, 148, 65, 144, 64, 138, 45, 77, 89, 154, 90, 71, 193, 74, 30, 113, 143, 96, 84, 67, 50, 186, 156, 69, 21, 18, 111, 108, 58, 125, 157, 150, 110, 182, 129, 166, 83, 81, 60, 13, 165, 14, 176, 63, 117, 5, 22, 145, 121, 38, 41, 82, 127, 114, 20, 31, 53, 37, 163, 196, 130, 152, 162, 86, 76, 24, 34, 184, 149, 33, 128, 198, 155, 146, 167, 139, 120, 140, 102, 47, 25, 158, 123, 46, 164, 61, 7, 115, 75, 133, 160, 105, 132, 179, 124, 48, 73, 93, 39, 95, 195, 29, 177, 185, 161]
+2026-10-21 14:32:31,681 [trainer.py] => All params: 86988288
+2026-10-21 14:32:31,681 [trainer.py] => Trainable params: 1189632
+2026-10-21 14:32:31,682 [RSIAT_adapter.py] => Learning on 0-20
+2026-10-21 14:32:31,802 [toolkit.py] => All params: 86259456
+2026-10-21 14:32:31,802 [toolkit.py] => Trainable params: 1204992
+2026-10-21 14:36:13,372 [RSIAT_adapter.py] => Task 0, Epoch 20/20 => Loss 3.468, Loss_c 2.826, Losses_rt 0.642, Train_accy 92.87, Test_accy 87.15, Time 4.93s
+2026-10-21 14:36:13,372 [RSIAT_adapter.py] => Task 0 peak GPU memory: 4417.41 MiB
+2026-10-21 14:36:49,646 [ca_heads.py] => CAHEAD task=0 head=linear top1=87.15 old=None new=87.15
+2026-10-21 14:36:49,646 [ca_heads.py] => CAHEAD tasks head=linear: [87.15]
+2026-10-21 14:36:49,646 [ca_heads.py] => CAHEAD curve head=linear: [87.15]
+2026-10-21 14:36:49,646 [ca_heads.py] => CAHEAD task=0 head=qda top1=84.92 old=None new=84.92
+2026-10-21 14:36:49,646 [ca_heads.py] => CAHEAD tasks head=qda: [84.92]
+2026-10-21 14:36:49,646 [ca_heads.py] => CAHEAD curve head=qda: [84.92]
+2026-10-21 14:36:49,646 [ca_heads.py] => CAHEAD task=0 head=rff_ridge top1=88.83 old=None new=88.83
+2026-10-21 14:36:49,646 [ca_heads.py] => CAHEAD tasks head=rff_ridge: [88.83]
+2026-10-21 14:36:49,646 [ca_heads.py] => CAHEAD curve head=rff_ridge: [88.83]
+2026-10-21 14:36:49,646 [ca_heads.py] => CAHEAD task=0 head=rp_ridge top1=87.71 old=None new=87.71
+2026-10-21 14:36:49,646 [ca_heads.py] => CAHEAD tasks head=rp_ridge: [87.71]
+2026-10-21 14:36:49,646 [ca_heads.py] => CAHEAD curve head=rp_ridge: [87.71]
+2026-10-21 14:36:49,646 [ca_heads.py] => CAHEAD task=0 head=pqk_ridge top1=77.09 old=None new=77.09
+2026-10-21 14:36:49,646 [ca_heads.py] => CAHEAD tasks head=pqk_ridge: [77.09]
+2026-10-21 14:36:49,646 [ca_heads.py] => CAHEAD curve head=pqk_ridge: [77.09]
+2026-10-21 14:36:49,646 [ca_heads.py] => CAHEAD task=0 head=pqk_noent_ridge top1=83.24 old=None new=83.24
+2026-10-21 14:36:49,646 [ca_heads.py] => CAHEAD tasks head=pqk_noent_ridge: [83.24]
+2026-10-21 14:36:49,646 [ca_heads.py] => CAHEAD curve head=pqk_noent_ridge: [83.24]
+2026-10-21 14:36:49,646 [ca_heads.py] => CAHEAD task=0 gates={"alignment": {"rff": 0.5389768140608008, "rp": 0.5400351756735822, "pqk": 0.22915582426721356, "pqk_noent": 0.31691891712571807}, "geometric_difference": {"rff": 11.718808823753205, "rp": 7.1882492664954025, "pqk_noent": 3.0342236128725593}} seconds=30.6
+2026-10-21 14:36:49,660 [trainer.py] => CNN: {'total': 87.15, '00-19': 87.15, 'old': 0.0, 'new': 87.15}
+2026-10-21 14:36:49,660 [trainer.py] => CNN top1 curve: [87.15]
+2026-10-21 14:36:49,660 [trainer.py] => CNN top5 curve: [98.32]
+2026-10-21 14:36:49,660 [trainer.py] => Average Accuracy (CNN): 87.15
+2026-10-21 14:36:49,660 [trainer.py] => All params: 87003648
+2026-10-21 14:36:49,661 [trainer.py] => Trainable params: 1204992
+2026-10-21 14:36:49,661 [stats_diagnostics.py] => STATS rng_replicate=1: reseeded task-1 onward with 9912
+2026-10-21 14:36:49,687 [RSIAT_adapter.py] => Learning on 20-40
+2026-10-21 14:37:19,493 [toolkit.py] => All params: 87134720
+2026-10-21 14:37:19,493 [toolkit.py] => Trainable params: 1336064
+2026-10-21 14:39:49,362 [RSIAT_adapter.py] => Task 1, Epoch 15/15 => Loss 5.550, Loss_c 3.206, Losses_rt 2.344, Train_accy 85.04, Test_accy 80.71, Time 7.90s
+2026-10-21 14:39:49,362 [RSIAT_adapter.py] => Task 1 peak GPU memory: 4875.62 MiB
+2026-10-21 14:39:57,958 [base.py] => CA Task 1 => Loss 0.104, Test_accy skipped
+2026-10-21 14:39:58,158 [base.py] => CA Task 1 => Loss 0.070, Test_accy skipped
+2026-10-21 14:39:58,359 [base.py] => CA Task 1 => Loss 0.059, Test_accy skipped
+2026-10-21 14:39:58,564 [base.py] => CA Task 1 => Loss 0.052, Test_accy skipped
+2026-10-21 14:39:58,762 [base.py] => CA Task 1 => Loss 0.049, Test_accy skipped
+2026-10-21 14:39:58,961 [base.py] => CA Task 1 => Loss 0.047, Test_accy skipped
+2026-10-21 14:39:59,160 [base.py] => CA Task 1 => Loss 0.045, Test_accy skipped
+2026-10-21 14:39:59,359 [base.py] => CA Task 1 => Loss 0.042, Test_accy skipped
+2026-10-21 14:39:59,540 [base.py] => CA Task 1 => Loss 0.039, Test_accy skipped
+2026-10-21 14:40:00,966 [base.py] => CA Task 1 => Loss 0.043, Test_accy 82.070
+2026-10-21 14:40:37,577 [ca_heads.py] => CAHEAD task=1 head=linear top1=82.07 old=84.36 new=79.89
+2026-10-21 14:40:37,577 [ca_heads.py] => CAHEAD tasks head=linear: [84.36, 79.89]
+2026-10-21 14:40:37,577 [ca_heads.py] => CAHEAD curve head=linear: [87.15, 82.07]
+2026-10-21 14:40:37,577 [ca_heads.py] => CAHEAD task=1 head=qda top1=76.90 old=79.89 new=74.07
+2026-10-21 14:40:37,577 [ca_heads.py] => CAHEAD tasks head=qda: [79.89, 74.07]
+2026-10-21 14:40:37,577 [ca_heads.py] => CAHEAD curve head=qda: [84.92, 76.9]
+2026-10-21 14:40:37,577 [ca_heads.py] => CAHEAD task=1 head=rff_ridge top1=80.98 old=82.68 new=79.37
+2026-10-21 14:40:37,577 [ca_heads.py] => CAHEAD tasks head=rff_ridge: [82.68, 79.37]
+2026-10-21 14:40:37,577 [ca_heads.py] => CAHEAD curve head=rff_ridge: [88.83, 80.98]
+2026-10-21 14:40:37,577 [ca_heads.py] => CAHEAD task=1 head=rp_ridge top1=80.98 old=82.12 new=79.89
+2026-10-21 14:40:37,577 [ca_heads.py] => CAHEAD tasks head=rp_ridge: [82.12, 79.89]
+2026-10-21 14:40:37,577 [ca_heads.py] => CAHEAD curve head=rp_ridge: [87.71, 80.98]
+2026-10-21 14:40:37,577 [ca_heads.py] => CAHEAD task=1 head=pqk_ridge top1=66.58 old=72.63 new=60.85
+2026-10-21 14:40:37,577 [ca_heads.py] => CAHEAD tasks head=pqk_ridge: [72.63, 60.85]
+2026-10-21 14:40:37,577 [ca_heads.py] => CAHEAD curve head=pqk_ridge: [77.09, 66.58]
+2026-10-21 14:40:37,577 [ca_heads.py] => CAHEAD task=1 head=pqk_noent_ridge top1=75.27 old=78.21 new=72.49
+2026-10-21 14:40:37,577 [ca_heads.py] => CAHEAD tasks head=pqk_noent_ridge: [78.21, 72.49]
+2026-10-21 14:40:37,577 [ca_heads.py] => CAHEAD curve head=pqk_noent_ridge: [83.24, 75.27]
+2026-10-21 14:40:37,577 [ca_heads.py] => CAHEAD task=1 gates={"alignment": {"rff": 0.46705186353496836, "rp": 0.47053133705142974, "pqk": 0.22375029390112122, "pqk_noent": 0.2919033858824562}, "geometric_difference": {"rff": 12.42439199952751, "rp": 7.01075538172139, "pqk_noent": 3.068484570581523}} seconds=35.3
+2026-10-21 14:40:37,594 [trainer.py] => CNN: {'total': 82.07, '00-19': 84.36, '20-39': 79.89, 'old': 84.36, 'new': 79.89}
+2026-10-21 14:40:37,594 [trainer.py] => Continual metrics after task 1: BWT=-2.7900, forgetting=2.7900, task_acc=[84.36, 79.89]
+2026-10-21 14:40:37,594 [trainer.py] => CNN top1 curve: [87.15, 82.07]
+2026-10-21 14:40:37,594 [trainer.py] => CNN top5 curve: [98.32, 96.47]
+2026-10-21 14:40:37,594 [trainer.py] => Average Accuracy (CNN): 84.61
+2026-10-21 14:40:37,594 [trainer.py] => All params: 87019008
+2026-10-21 14:40:37,595 [trainer.py] => Trainable params: 1220352
+2026-10-21 14:40:37,595 [RSIAT_adapter.py] => Learning on 40-60
+2026-10-21 14:40:59,796 [toolkit.py] => All params: 87150080
+2026-10-21 14:40:59,797 [toolkit.py] => Trainable params: 1351424
+2026-10-21 14:42:53,035 [RSIAT_adapter.py] => Task 2, Epoch 15/15 => Loss 4.808, Loss_c 2.575, Losses_rt 2.233, Train_accy 88.42, Test_accy 79.35, Time 5.31s
+2026-10-21 14:42:53,036 [RSIAT_adapter.py] => Task 2 peak GPU memory: 4870.15 MiB
+2026-10-21 14:43:00,038 [base.py] => CA Task 2 => Loss 0.088, Test_accy skipped
+2026-10-21 14:43:00,345 [base.py] => CA Task 2 => Loss 0.070, Test_accy skipped
+2026-10-21 14:43:00,654 [base.py] => CA Task 2 => Loss 0.063, Test_accy skipped
+2026-10-21 14:43:00,961 [base.py] => CA Task 2 => Loss 0.058, Test_accy skipped
+2026-10-21 14:43:01,269 [base.py] => CA Task 2 => Loss 0.055, Test_accy skipped
+2026-10-21 14:43:01,578 [base.py] => CA Task 2 => Loss 0.052, Test_accy skipped
+2026-10-21 14:43:01,886 [base.py] => CA Task 2 => Loss 0.050, Test_accy skipped
+2026-10-21 14:43:02,193 [base.py] => CA Task 2 => Loss 0.051, Test_accy skipped
+2026-10-21 14:43:02,490 [base.py] => CA Task 2 => Loss 0.051, Test_accy skipped
+2026-10-21 14:43:04,971 [base.py] => CA Task 2 => Loss 0.050, Test_accy 79.350
+2026-10-21 14:43:46,800 [ca_heads.py] => CAHEAD task=2 head=linear top1=79.35 old=79.35 new=79.37
+2026-10-21 14:43:46,800 [ca_heads.py] => CAHEAD tasks head=linear: [81.56, 77.25, 79.37]
+2026-10-21 14:43:46,801 [ca_heads.py] => CAHEAD curve head=linear: [87.15, 82.07, 79.35]
+2026-10-21 14:43:46,801 [ca_heads.py] => CAHEAD task=2 head=qda top1=72.67 old=73.64 new=69.84
+2026-10-21 14:43:46,801 [ca_heads.py] => CAHEAD tasks head=qda: [78.77, 68.78, 69.84]
+2026-10-21 14:43:46,801 [ca_heads.py] => CAHEAD curve head=qda: [84.92, 76.9, 72.67]
+2026-10-21 14:43:46,801 [ca_heads.py] => CAHEAD task=2 head=rff_ridge top1=75.71 old=75.54 new=76.19
+2026-10-21 14:43:46,801 [ca_heads.py] => CAHEAD tasks head=rff_ridge: [78.21, 73.02, 76.19]
+2026-10-21 14:43:46,801 [ca_heads.py] => CAHEAD curve head=rff_ridge: [88.83, 80.98, 75.71]
+2026-10-21 14:43:46,801 [ca_heads.py] => CAHEAD task=2 head=rp_ridge top1=77.73 old=77.45 new=78.57
+2026-10-21 14:43:46,801 [ca_heads.py] => CAHEAD tasks head=rp_ridge: [79.89, 75.13, 78.57]
+2026-10-21 14:43:46,801 [ca_heads.py] => CAHEAD curve head=rp_ridge: [87.71, 80.98, 77.73]
+2026-10-21 14:43:46,801 [ca_heads.py] => CAHEAD task=2 head=pqk_ridge top1=62.96 old=62.23 new=65.08
+2026-10-21 14:43:46,801 [ca_heads.py] => CAHEAD tasks head=pqk_ridge: [68.72, 56.08, 65.08]
+2026-10-21 14:43:46,801 [ca_heads.py] => CAHEAD curve head=pqk_ridge: [77.09, 66.58, 62.96]
+2026-10-21 14:43:46,801 [ca_heads.py] => CAHEAD task=2 head=pqk_noent_ridge top1=68.02 old=68.75 new=65.87
+2026-10-21 14:43:46,801 [ca_heads.py] => CAHEAD tasks head=pqk_noent_ridge: [70.95, 66.67, 65.87]
+2026-10-21 14:43:46,801 [ca_heads.py] => CAHEAD curve head=pqk_noent_ridge: [83.24, 75.27, 68.02]
+2026-10-21 14:43:46,801 [ca_heads.py] => CAHEAD task=2 gates={"alignment": {"rff": 0.438246982165086, "rp": 0.4428979188146876, "pqk": 0.2446333477343641, "pqk_noent": 0.3023859048833383}, "geometric_difference": {"rff": 10.25427928510203, "rp": 6.473789304828361, "pqk_noent": 3.0278599142466054}} seconds=40.1
+2026-10-21 14:43:46,815 [trainer.py] => CNN: {'total': 79.35, '00-19': 81.56, '20-39': 77.25, '40-59': 79.37, 'old': 79.35, 'new': 79.37}
+2026-10-21 14:43:46,816 [trainer.py] => Continual metrics after task 2: BWT=-4.1150, forgetting=4.1150, task_acc=[81.56, 77.25, 79.37]
+2026-10-21 14:43:46,816 [trainer.py] => CNN top1 curve: [87.15, 82.07, 79.35]
+2026-10-21 14:43:46,816 [trainer.py] => CNN top5 curve: [98.32, 96.47, 94.33]
+2026-10-21 14:43:46,816 [trainer.py] => Average Accuracy (CNN): 82.85666666666667
+2026-10-21 14:43:46,816 [trainer.py] => All params: 87034368
+2026-10-21 14:43:46,816 [trainer.py] => Trainable params: 1235712
+2026-10-21 14:43:46,817 [RSIAT_adapter.py] => Learning on 60-80
+2026-10-21 14:44:17,558 [toolkit.py] => All params: 87165440
+2026-10-21 14:44:17,558 [toolkit.py] => Trainable params: 1366784
+2026-10-21 14:46:58,224 [RSIAT_adapter.py] => Task 3, Epoch 15/15 => Loss 5.173, Loss_c 3.100, Losses_rt 2.073, Train_accy 79.60, Test_accy 75.72, Time 8.44s
+2026-10-21 14:46:58,224 [RSIAT_adapter.py] => Task 3 peak GPU memory: 4876.58 MiB
+2026-10-21 14:47:07,952 [base.py] => CA Task 3 => Loss 0.119, Test_accy skipped
+2026-10-21 14:47:08,372 [base.py] => CA Task 3 => Loss 0.087, Test_accy skipped
+2026-10-21 14:47:08,791 [base.py] => CA Task 3 => Loss 0.077, Test_accy skipped
+2026-10-21 14:47:09,209 [base.py] => CA Task 3 => Loss 0.075, Test_accy skipped
+2026-10-21 14:47:09,627 [base.py] => CA Task 3 => Loss 0.067, Test_accy skipped
+2026-10-21 14:47:10,046 [base.py] => CA Task 3 => Loss 0.068, Test_accy skipped
+2026-10-21 14:47:10,465 [base.py] => CA Task 3 => Loss 0.067, Test_accy skipped
+2026-10-21 14:47:10,881 [base.py] => CA Task 3 => Loss 0.062, Test_accy skipped
+2026-10-21 14:47:11,299 [base.py] => CA Task 3 => Loss 0.065, Test_accy skipped
+2026-10-21 14:47:14,336 [base.py] => CA Task 3 => Loss 0.065, Test_accy 77.870
+2026-10-21 14:48:03,250 [ca_heads.py] => CAHEAD task=3 head=linear top1=77.87 old=76.72 new=80.69
+2026-10-21 14:48:03,250 [ca_heads.py] => CAHEAD tasks head=linear: [79.89, 74.6, 75.4, 80.69]
+2026-10-21 14:48:03,250 [ca_heads.py] => CAHEAD curve head=linear: [87.15, 82.07, 79.35, 77.87]
+2026-10-21 14:48:03,250 [ca_heads.py] => CAHEAD task=3 head=qda top1=70.40 old=68.42 new=75.25
+2026-10-21 14:48:03,250 [ca_heads.py] => CAHEAD tasks head=qda: [73.18, 67.2, 63.49, 75.25]
+2026-10-21 14:48:03,250 [ca_heads.py] => CAHEAD curve head=qda: [84.92, 76.9, 72.67, 70.4]
+2026-10-21 14:48:03,250 [ca_heads.py] => CAHEAD task=3 head=rff_ridge top1=74.86 old=73.28 new=78.71
+2026-10-21 14:48:03,250 [ca_heads.py] => CAHEAD tasks head=rff_ridge: [78.21, 70.9, 69.84, 78.71]
+2026-10-21 14:48:03,250 [ca_heads.py] => CAHEAD curve head=rff_ridge: [88.83, 80.98, 75.71, 74.86]
+2026-10-21 14:48:03,250 [ca_heads.py] => CAHEAD task=3 head=rp_ridge top1=75.43 old=72.67 new=82.18
+2026-10-21 14:48:03,250 [ca_heads.py] => CAHEAD tasks head=rp_ridge: [74.86, 71.96, 70.63, 82.18]
+2026-10-21 14:48:03,250 [ca_heads.py] => CAHEAD curve head=rp_ridge: [87.71, 80.98, 77.73, 75.43]
+2026-10-21 14:48:03,250 [ca_heads.py] => CAHEAD task=3 head=pqk_ridge top1=61.64 old=58.1 new=70.3
+2026-10-21 14:48:03,250 [ca_heads.py] => CAHEAD tasks head=pqk_ridge: [63.69, 53.97, 56.35, 70.3]
+2026-10-21 14:48:03,250 [ca_heads.py] => CAHEAD curve head=pqk_ridge: [77.09, 66.58, 62.96, 61.64]
+2026-10-21 14:48:03,250 [ca_heads.py] => CAHEAD task=3 head=pqk_noent_ridge top1=69.25 old=65.79 new=77.72
+2026-10-21 14:48:03,250 [ca_heads.py] => CAHEAD tasks head=pqk_noent_ridge: [71.51, 62.96, 61.9, 77.72]
+2026-10-21 14:48:03,250 [ca_heads.py] => CAHEAD curve head=pqk_noent_ridge: [83.24, 75.27, 68.02, 69.25]
+2026-10-21 14:48:03,251 [ca_heads.py] => CAHEAD task=3 gates={"alignment": {"rff": 0.40758521077421483, "rp": 0.4135687894096225, "pqk": 0.25826531162790883, "pqk_noent": 0.3114968845166545}, "geometric_difference": {"rff": 9.692322586957015, "rp": 6.445114169187249, "pqk_noent": 3.0410907283351722}} seconds=46.4
+2026-10-21 14:48:03,266 [trainer.py] => CNN: {'total': 77.87, '00-19': 79.89, '20-39': 74.6, '40-59': 75.4, '60-79': 80.69, 'old': 76.72, 'new': 80.69}
+2026-10-21 14:48:03,266 [trainer.py] => Continual metrics after task 3: BWT=-5.5067, forgetting=5.5067, task_acc=[79.89, 74.6, 75.4, 80.69]
+2026-10-21 14:48:03,266 [trainer.py] => CNN top1 curve: [87.15, 82.07, 79.35, 77.87]
+2026-10-21 14:48:03,266 [trainer.py] => CNN top5 curve: [98.32, 96.47, 94.33, 93.97]
+2026-10-21 14:48:03,266 [trainer.py] => Average Accuracy (CNN): 81.61
+2026-10-21 14:48:03,267 [trainer.py] => All params: 87049728
+2026-10-21 14:48:03,267 [trainer.py] => Trainable params: 1251072
+2026-10-21 14:48:03,267 [RSIAT_adapter.py] => Learning on 80-100
+2026-10-21 14:48:25,640 [toolkit.py] => All params: 87180800
+2026-10-21 14:48:25,641 [toolkit.py] => Trainable params: 1382144
+2026-10-21 14:50:17,710 [RSIAT_adapter.py] => Task 4, Epoch 15/15 => Loss 4.484, Loss_c 2.525, Losses_rt 1.959, Train_accy 80.68, Test_accy 76.51, Time 5.57s
+2026-10-21 14:50:17,710 [RSIAT_adapter.py] => Task 4 peak GPU memory: 4870.60 MiB
+2026-10-21 14:50:25,319 [base.py] => CA Task 4 => Loss 0.104, Test_accy skipped
+2026-10-21 14:50:25,870 [base.py] => CA Task 4 => Loss 0.086, Test_accy skipped
+2026-10-21 14:50:26,422 [base.py] => CA Task 4 => Loss 0.079, Test_accy skipped
+2026-10-21 14:50:26,979 [base.py] => CA Task 4 => Loss 0.077, Test_accy skipped
+2026-10-21 14:50:27,542 [base.py] => CA Task 4 => Loss 0.073, Test_accy skipped
+2026-10-21 14:50:28,099 [base.py] => CA Task 4 => Loss 0.072, Test_accy skipped
+2026-10-21 14:50:28,654 [base.py] => CA Task 4 => Loss 0.070, Test_accy skipped
+2026-10-21 14:50:29,207 [base.py] => CA Task 4 => Loss 0.068, Test_accy skipped
+2026-10-21 14:50:29,753 [base.py] => CA Task 4 => Loss 0.067, Test_accy skipped
+2026-10-21 14:50:33,261 [base.py] => CA Task 4 => Loss 0.069, Test_accy 76.510
+2026-10-21 14:51:28,060 [ca_heads.py] => CAHEAD task=4 head=linear top1=76.51 old=76.72 new=75.37
+2026-10-21 14:51:28,060 [ca_heads.py] => CAHEAD tasks head=linear: [77.09, 74.07, 76.19, 79.21, 75.37]
+2026-10-21 14:51:28,060 [ca_heads.py] => CAHEAD curve head=linear: [87.15, 82.07, 79.35, 77.87, 76.51]
+2026-10-21 14:51:28,060 [ca_heads.py] => CAHEAD task=4 head=qda top1=67.35 old=68.53 new=61.19
+2026-10-21 14:51:28,060 [ca_heads.py] => CAHEAD tasks head=qda: [69.27, 65.61, 61.9, 74.75, 61.19]
+2026-10-21 14:51:28,060 [ca_heads.py] => CAHEAD curve head=qda: [84.92, 76.9, 72.67, 70.4, 67.35]
+2026-10-21 14:51:28,060 [ca_heads.py] => CAHEAD task=4 head=rff_ridge top1=73.49 old=73.85 new=71.64
+2026-10-21 14:51:28,060 [ca_heads.py] => CAHEAD tasks head=rff_ridge: [73.18, 71.96, 70.63, 78.22, 71.64]
+2026-10-21 14:51:28,060 [ca_heads.py] => CAHEAD curve head=rff_ridge: [88.83, 80.98, 75.71, 74.86, 73.49]
+2026-10-21 14:51:28,060 [ca_heads.py] => CAHEAD task=4 head=rp_ridge top1=74.58 old=74.43 new=75.37
+2026-10-21 14:51:28,060 [ca_heads.py] => CAHEAD tasks head=rp_ridge: [72.07, 72.49, 73.02, 79.21, 75.37]
+2026-10-21 14:51:28,060 [ca_heads.py] => CAHEAD curve head=rp_ridge: [87.71, 80.98, 77.73, 75.43, 74.58]
+2026-10-21 14:51:28,060 [ca_heads.py] => CAHEAD task=4 head=pqk_ridge top1=56.27 old=57.18 new=51.49
+2026-10-21 14:51:28,060 [ca_heads.py] => CAHEAD tasks head=pqk_ridge: [59.78, 46.56, 53.17, 67.33, 51.49]
+2026-10-21 14:51:28,060 [ca_heads.py] => CAHEAD curve head=pqk_ridge: [77.09, 66.58, 62.96, 61.64, 56.27]
+2026-10-21 14:51:28,060 [ca_heads.py] => CAHEAD task=4 head=pqk_noent_ridge top1=65.66 old=66.24 new=62.69
+2026-10-21 14:51:28,060 [ca_heads.py] => CAHEAD tasks head=pqk_noent_ridge: [67.6, 61.38, 60.32, 73.27, 62.69]
+2026-10-21 14:51:28,060 [ca_heads.py] => CAHEAD curve head=pqk_noent_ridge: [83.24, 75.27, 68.02, 69.25, 65.66]
+2026-10-21 14:51:28,061 [ca_heads.py] => CAHEAD task=4 gates={"alignment": {"rff": 0.39987131802141446, "rp": 0.4073133684687263, "pqk": 0.28771744218605866, "pqk_noent": 0.33804336876284397}, "geometric_difference": {"rff": 17.082432327722348, "rp": 9.120650741846969, "pqk_noent": 3.0154159851464324}} seconds=51.8
+2026-10-21 14:51:28,077 [trainer.py] => CNN: {'total': 76.51, '00-19': 77.09, '20-39': 74.07, '40-59': 76.19, '60-79': 79.21, '80-99': 75.37, 'old': 76.72, 'new': 75.37}
+2026-10-21 14:51:28,077 [trainer.py] => Continual metrics after task 4: BWT=-5.1350, forgetting=5.1350, task_acc=[77.09, 74.07, 76.19, 79.21, 75.37]
+2026-10-21 14:51:28,077 [trainer.py] => CNN top1 curve: [87.15, 82.07, 79.35, 77.87, 76.51]
+2026-10-21 14:51:28,077 [trainer.py] => CNN top5 curve: [98.32, 96.47, 94.33, 93.97, 93.25]
+2026-10-21 14:51:28,078 [trainer.py] => Average Accuracy (CNN): 80.59
+2026-10-21 14:51:28,078 [trainer.py] => All params: 87065088
+2026-10-21 14:51:28,078 [trainer.py] => Trainable params: 1266432
+2026-10-21 14:51:28,079 [RSIAT_adapter.py] => Learning on 100-120
+2026-10-21 14:51:49,715 [toolkit.py] => All params: 87196160
+2026-10-21 14:51:49,715 [toolkit.py] => Trainable params: 1397504
+2026-10-21 14:53:39,712 [RSIAT_adapter.py] => Task 5, Epoch 15/15 => Loss 4.152, Loss_c 2.275, Losses_rt 1.877, Train_accy 85.14, Test_accy 73.39, Time 5.27s
+2026-10-21 14:53:39,712 [RSIAT_adapter.py] => Task 5 peak GPU memory: 4877.30 MiB
+2026-10-21 14:53:47,186 [base.py] => CA Task 5 => Loss 0.105, Test_accy skipped
+2026-10-21 14:53:47,866 [base.py] => CA Task 5 => Loss 0.089, Test_accy skipped
+2026-10-21 14:53:48,538 [base.py] => CA Task 5 => Loss 0.082, Test_accy skipped
+2026-10-21 14:53:49,211 [base.py] => CA Task 5 => Loss 0.079, Test_accy skipped
+2026-10-21 14:53:49,881 [base.py] => CA Task 5 => Loss 0.075, Test_accy skipped
+2026-10-21 14:53:50,556 [base.py] => CA Task 5 => Loss 0.073, Test_accy skipped
+2026-10-21 14:53:51,225 [base.py] => CA Task 5 => Loss 0.073, Test_accy skipped
+2026-10-21 14:53:51,895 [base.py] => CA Task 5 => Loss 0.071, Test_accy skipped
+2026-10-21 14:53:52,566 [base.py] => CA Task 5 => Loss 0.070, Test_accy skipped
+2026-10-21 14:53:56,669 [base.py] => CA Task 5 => Loss 0.070, Test_accy 74.320
+2026-10-21 14:54:57,271 [ca_heads.py] => CAHEAD task=5 head=linear top1=74.32 old=73.61 new=78.79
+2026-10-21 14:54:57,271 [ca_heads.py] => CAHEAD tasks head=linear: [71.51, 70.9, 73.81, 80.2, 70.15, 78.79]
+2026-10-21 14:54:57,271 [ca_heads.py] => CAHEAD curve head=linear: [87.15, 82.07, 79.35, 77.87, 76.51, 74.32]
+2026-10-21 14:54:57,271 [ca_heads.py] => CAHEAD task=5 head=qda top1=65.90 old=64.7 new=73.48
+2026-10-21 14:54:57,271 [ca_heads.py] => CAHEAD tasks head=qda: [65.92, 61.38, 60.32, 72.28, 60.45, 73.48]
+2026-10-21 14:54:57,271 [ca_heads.py] => CAHEAD curve head=qda: [84.92, 76.9, 72.67, 70.4, 67.35, 65.9]
+2026-10-21 14:54:57,271 [ca_heads.py] => CAHEAD task=5 head=rff_ridge top1=73.60 old=72.65 new=79.55
+2026-10-21 14:54:57,271 [ca_heads.py] => CAHEAD tasks head=rff_ridge: [72.07, 70.9, 69.84, 78.22, 70.15, 79.55]
+2026-10-21 14:54:57,271 [ca_heads.py] => CAHEAD curve head=rff_ridge: [88.83, 80.98, 75.71, 74.86, 73.49, 73.6]
+2026-10-21 14:54:57,271 [ca_heads.py] => CAHEAD task=5 head=rp_ridge top1=73.08 old=72.05 new=79.55
+2026-10-21 14:54:57,271 [ca_heads.py] => CAHEAD tasks head=rp_ridge: [69.27, 69.84, 69.84, 80.2, 68.66, 79.55]
+2026-10-21 14:54:57,271 [ca_heads.py] => CAHEAD curve head=rp_ridge: [87.71, 80.98, 77.73, 75.43, 74.58, 73.08]
+2026-10-21 14:54:57,272 [ca_heads.py] => CAHEAD task=5 head=pqk_ridge top1=55.20 old=53.49 new=65.91
+2026-10-21 14:54:57,272 [ca_heads.py] => CAHEAD tasks head=pqk_ridge: [55.87, 43.92, 50.79, 65.84, 47.76, 65.91]
+2026-10-21 14:54:57,272 [ca_heads.py] => CAHEAD curve head=pqk_ridge: [77.09, 66.58, 62.96, 61.64, 56.27, 55.2]
+2026-10-21 14:54:57,272 [ca_heads.py] => CAHEAD task=5 head=pqk_noent_ridge top1=62.89 old=61.93 new=68.94
+2026-10-21 14:54:57,272 [ca_heads.py] => CAHEAD tasks head=pqk_noent_ridge: [61.45, 57.14, 57.94, 70.79, 59.7, 68.94]
+2026-10-21 14:54:57,272 [ca_heads.py] => CAHEAD curve head=pqk_noent_ridge: [83.24, 75.27, 68.02, 69.25, 65.66, 62.89]
+2026-10-21 14:54:57,272 [ca_heads.py] => CAHEAD task=5 gates={"alignment": {"rff": 0.395023106974567, "rp": 0.40326975694318684, "pqk": 0.3051726293845565, "pqk_noent": 0.35206180073191945}, "geometric_difference": {"rff": 17.230151680016046, "rp": 9.50438519593114, "pqk_noent": 3.051131366537026}} seconds=57.2
+2026-10-21 14:54:57,288 [trainer.py] => CNN: {'total': 74.32, '00-19': 71.51, '20-39': 70.9, '40-59': 73.81, '60-79': 80.2, '80-99': 70.15, '100-119': 78.79, 'old': 73.61, 'new': 78.79}
+2026-10-21 14:54:57,288 [trainer.py] => Continual metrics after task 5: BWT=-7.1800, forgetting=7.1800, task_acc=[71.51, 70.9, 73.81, 80.2, 70.15, 78.79]
+2026-10-21 14:54:57,288 [trainer.py] => CNN top1 curve: [87.15, 82.07, 79.35, 77.87, 76.51, 74.32]
+2026-10-21 14:54:57,288 [trainer.py] => CNN top5 curve: [98.32, 96.47, 94.33, 93.97, 93.25, 92.52]
+2026-10-21 14:54:57,288 [trainer.py] => Average Accuracy (CNN): 79.545
+2026-10-21 14:54:57,289 [trainer.py] => All params: 87080448
+2026-10-21 14:54:57,289 [trainer.py] => Trainable params: 1281792
+2026-10-21 14:54:57,289 [RSIAT_adapter.py] => Learning on 120-140
+2026-10-21 14:55:19,542 [toolkit.py] => All params: 87211520
+2026-10-21 14:55:19,543 [toolkit.py] => Trainable params: 1412864
+2026-10-21 14:57:15,514 [RSIAT_adapter.py] => Task 6, Epoch 15/15 => Loss 4.895, Loss_c 2.998, Losses_rt 1.897, Train_accy 80.33, Test_accy 71.40, Time 5.84s
+2026-10-21 14:57:15,514 [RSIAT_adapter.py] => Task 6 peak GPU memory: 4872.62 MiB
+2026-10-21 14:57:23,637 [base.py] => CA Task 6 => Loss 0.115, Test_accy skipped
+2026-10-21 14:57:24,441 [base.py] => CA Task 6 => Loss 0.098, Test_accy skipped
+2026-10-21 14:57:25,254 [base.py] => CA Task 6 => Loss 0.092, Test_accy skipped
+2026-10-21 14:57:26,072 [base.py] => CA Task 6 => Loss 0.087, Test_accy skipped
+2026-10-21 14:57:26,895 [base.py] => CA Task 6 => Loss 0.085, Test_accy skipped
+2026-10-21 14:57:27,725 [base.py] => CA Task 6 => Loss 0.083, Test_accy skipped
+2026-10-21 14:57:28,564 [base.py] => CA Task 6 => Loss 0.081, Test_accy skipped
+2026-10-21 14:57:29,406 [base.py] => CA Task 6 => Loss 0.080, Test_accy skipped
+2026-10-21 14:57:30,232 [base.py] => CA Task 6 => Loss 0.080, Test_accy skipped
+2026-10-21 14:57:35,051 [base.py] => CA Task 6 => Loss 0.077, Test_accy 72.500
+2026-10-21 14:58:41,229 [ca_heads.py] => CAHEAD task=6 head=linear top1=72.50 old=72.25 new=74.26
+2026-10-21 14:58:41,230 [ca_heads.py] => CAHEAD tasks head=linear: [68.72, 69.31, 68.25, 77.23, 70.9, 78.79, 74.26]
+2026-10-21 14:58:41,230 [ca_heads.py] => CAHEAD curve head=linear: [87.15, 82.07, 79.35, 77.87, 76.51, 74.32, 72.5]
+2026-10-21 14:58:41,230 [ca_heads.py] => CAHEAD task=6 head=qda top1=64.75 old=64.66 new=65.44
+2026-10-21 14:58:41,230 [ca_heads.py] => CAHEAD tasks head=qda: [66.48, 60.85, 59.52, 67.82, 58.96, 73.48, 65.44]
+2026-10-21 14:58:41,230 [ca_heads.py] => CAHEAD curve head=qda: [84.92, 76.9, 72.67, 70.4, 67.35, 65.9, 64.75]
+2026-10-21 14:58:41,230 [ca_heads.py] => CAHEAD task=6 head=rff_ridge top1=71.31 old=71.73 new=68.38
+2026-10-21 14:58:41,230 [ca_heads.py] => CAHEAD tasks head=rff_ridge: [67.6, 68.78, 66.67, 75.25, 73.13, 79.55, 68.38]
+2026-10-21 14:58:41,230 [ca_heads.py] => CAHEAD curve head=rff_ridge: [88.83, 80.98, 75.71, 74.86, 73.49, 73.6, 71.31]
+2026-10-21 14:58:41,230 [ca_heads.py] => CAHEAD task=6 head=rp_ridge top1=72.13 old=72.25 new=71.32
+2026-10-21 14:58:41,230 [ca_heads.py] => CAHEAD tasks head=rp_ridge: [67.04, 69.31, 68.25, 78.22, 71.64, 78.79, 71.32]
+2026-10-21 14:58:41,230 [ca_heads.py] => CAHEAD curve head=rp_ridge: [87.71, 80.98, 77.73, 75.43, 74.58, 73.08, 72.13]
+2026-10-21 14:58:41,230 [ca_heads.py] => CAHEAD task=6 head=pqk_ridge top1=54.19 old=53.85 new=56.62
+2026-10-21 14:58:41,230 [ca_heads.py] => CAHEAD tasks head=pqk_ridge: [56.42, 43.39, 51.59, 60.89, 47.01, 63.64, 56.62]
+2026-10-21 14:58:41,230 [ca_heads.py] => CAHEAD curve head=pqk_ridge: [77.09, 66.58, 62.96, 61.64, 56.27, 55.2, 54.19]
+2026-10-21 14:58:41,230 [ca_heads.py] => CAHEAD task=6 head=pqk_noent_ridge top1=61.48 old=60.91 new=65.44
+2026-10-21 14:58:41,230 [ca_heads.py] => CAHEAD tasks head=pqk_noent_ridge: [59.78, 52.91, 56.35, 68.81, 61.19, 65.91, 65.44]
+2026-10-21 14:58:41,230 [ca_heads.py] => CAHEAD curve head=pqk_noent_ridge: [83.24, 75.27, 68.02, 69.25, 65.66, 62.89, 61.48]
+2026-10-21 14:58:41,230 [ca_heads.py] => CAHEAD task=6 gates={"alignment": {"rff": 0.3796722032627442, "rp": 0.387642775213237, "pqk": 0.30486752985749394, "pqk_noent": 0.3536629557942165}, "geometric_difference": {"rff": 17.10786558339211, "rp": 8.905533244348936, "pqk_noent": 3.0295355064139056}} seconds=62.3
+2026-10-21 14:58:41,246 [trainer.py] => CNN: {'total': 72.5, '00-19': 68.72, '20-39': 69.31, '40-59': 68.25, '60-79': 77.23, '80-99': 70.9, '100-119': 78.79, '120-139': 74.26, 'old': 72.25, 'new': 74.26}
+2026-10-21 14:58:41,247 [trainer.py] => Continual metrics after task 6: BWT=-8.0100, forgetting=8.0100, task_acc=[68.72, 69.31, 68.25, 77.23, 70.9, 78.79, 74.26]
+2026-10-21 14:58:41,247 [trainer.py] => CNN top1 curve: [87.15, 82.07, 79.35, 77.87, 76.51, 74.32, 72.5]
+2026-10-21 14:58:41,247 [trainer.py] => CNN top5 curve: [98.32, 96.47, 94.33, 93.97, 93.25, 92.52, 91.71]
+2026-10-21 14:58:41,247 [trainer.py] => Average Accuracy (CNN): 78.53857142857143
+2026-10-21 14:58:41,247 [trainer.py] => All params: 87095808
+2026-10-21 14:58:41,247 [trainer.py] => Trainable params: 1297152
+2026-10-21 14:58:41,248 [RSIAT_adapter.py] => Learning on 140-160
+2026-10-21 14:59:02,085 [toolkit.py] => All params: 87226880
+2026-10-21 14:59:02,085 [toolkit.py] => Trainable params: 1428224
+2026-10-21 15:00:56,014 [RSIAT_adapter.py] => Task 7, Epoch 15/15 => Loss 5.020, Loss_c 3.135, Losses_rt 1.885, Train_accy 79.70, Test_accy 69.89, Time 5.54s
+2026-10-21 15:00:56,014 [RSIAT_adapter.py] => Task 7 peak GPU memory: 4878.67 MiB
+2026-10-21 15:01:04,063 [base.py] => CA Task 7 => Loss 0.120, Test_accy skipped
+2026-10-21 15:01:05,066 [base.py] => CA Task 7 => Loss 0.103, Test_accy skipped
+2026-10-21 15:01:06,068 [base.py] => CA Task 7 => Loss 0.095, Test_accy skipped
+2026-10-21 15:01:07,063 [base.py] => CA Task 7 => Loss 0.091, Test_accy skipped
+2026-10-21 15:01:08,031 [base.py] => CA Task 7 => Loss 0.087, Test_accy skipped
+2026-10-21 15:01:09,000 [base.py] => CA Task 7 => Loss 0.086, Test_accy skipped
+2026-10-21 15:01:10,001 [base.py] => CA Task 7 => Loss 0.083, Test_accy skipped
+2026-10-21 15:01:10,998 [base.py] => CA Task 7 => Loss 0.083, Test_accy skipped
+2026-10-21 15:01:12,039 [base.py] => CA Task 7 => Loss 0.084, Test_accy skipped
+2026-10-21 15:01:17,558 [base.py] => CA Task 7 => Loss 0.083, Test_accy 71.280
+2026-10-21 15:02:29,390 [ca_heads.py] => CAHEAD task=7 head=linear top1=71.28 old=71.4 new=70.23
+2026-10-21 15:02:29,391 [ca_heads.py] => CAHEAD tasks head=linear: [69.83, 69.31, 67.46, 75.74, 67.16, 78.79, 70.59, 70.23]
+2026-10-21 15:02:29,391 [ca_heads.py] => CAHEAD curve head=linear: [87.15, 82.07, 79.35, 77.87, 76.51, 74.32, 72.5, 71.28]
+2026-10-21 15:02:29,391 [ca_heads.py] => CAHEAD task=7 head=qda top1=62.41 old=63.02 new=57.25
+2026-10-21 15:02:29,391 [ca_heads.py] => CAHEAD tasks head=qda: [64.8, 58.73, 57.14, 67.33, 57.46, 70.45, 63.97, 57.25]
+2026-10-21 15:02:29,391 [ca_heads.py] => CAHEAD curve head=qda: [84.92, 76.9, 72.67, 70.4, 67.35, 65.9, 64.75, 62.41]
+2026-10-21 15:02:29,391 [ca_heads.py] => CAHEAD task=7 head=rff_ridge top1=70.71 old=70.77 new=70.23
+2026-10-21 15:02:29,391 [ca_heads.py] => CAHEAD tasks head=rff_ridge: [67.6, 68.78, 66.67, 77.23, 67.91, 77.27, 68.38, 70.23]
+2026-10-21 15:02:29,391 [ca_heads.py] => CAHEAD curve head=rff_ridge: [88.83, 80.98, 75.71, 74.86, 73.49, 73.6, 71.31, 70.71]
+2026-10-21 15:02:29,391 [ca_heads.py] => CAHEAD task=7 head=rp_ridge top1=70.06 old=70.22 new=68.7
+2026-10-21 15:02:29,391 [ca_heads.py] => CAHEAD tasks head=rp_ridge: [67.04, 68.78, 65.08, 75.74, 69.4, 75.0, 69.12, 68.7]
+2026-10-21 15:02:29,391 [ca_heads.py] => CAHEAD curve head=rp_ridge: [87.71, 80.98, 77.73, 75.43, 74.58, 73.08, 72.13, 70.06]
+2026-10-21 15:02:29,391 [ca_heads.py] => CAHEAD task=7 head=pqk_ridge top1=51.99 old=52.19 new=50.38
+2026-10-21 15:02:29,391 [ca_heads.py] => CAHEAD tasks head=pqk_ridge: [54.75, 41.27, 49.21, 59.9, 47.01, 62.12, 50.74, 50.38]
+2026-10-21 15:02:29,391 [ca_heads.py] => CAHEAD curve head=pqk_ridge: [77.09, 66.58, 62.96, 61.64, 56.27, 55.2, 54.19, 51.99]
+2026-10-21 15:02:29,391 [ca_heads.py] => CAHEAD task=7 head=pqk_noent_ridge top1=58.99 old=58.56 new=62.6
+2026-10-21 15:02:29,391 [ca_heads.py] => CAHEAD tasks head=pqk_noent_ridge: [59.78, 53.44, 54.76, 63.37, 53.73, 65.15, 58.82, 62.6]
+2026-10-21 15:02:29,391 [ca_heads.py] => CAHEAD curve head=pqk_noent_ridge: [83.24, 75.27, 68.02, 69.25, 65.66, 62.89, 61.48, 58.99]
+2026-10-21 15:02:29,391 [ca_heads.py] => CAHEAD task=7 gates={"alignment": {"rff": 0.3777708211155053, "rp": 0.3845274019938305, "pqk": 0.3145415756380904, "pqk_noent": 0.36330784666841753}, "geometric_difference": {"rff": 14.210095741275387, "rp": 8.344126373743675, "pqk_noent": 3.039258823416799}} seconds=67.6
+2026-10-21 15:02:29,407 [trainer.py] => CNN: {'total': 71.28, '00-19': 69.83, '20-39': 69.31, '40-59': 67.46, '60-79': 75.74, '80-99': 67.16, '100-119': 78.79, '120-139': 70.59, '140-159': 70.23, 'old': 71.4, 'new': 70.23}
+2026-10-21 15:02:29,407 [trainer.py] => Continual metrics after task 7: BWT=-8.0914, forgetting=8.0914, task_acc=[69.83, 69.31, 67.46, 75.74, 67.16, 78.79, 70.59, 70.23]
+2026-10-21 15:02:29,407 [trainer.py] => CNN top1 curve: [87.15, 82.07, 79.35, 77.87, 76.51, 74.32, 72.5, 71.28]
+2026-10-21 15:02:29,407 [trainer.py] => CNN top5 curve: [98.32, 96.47, 94.33, 93.97, 93.25, 92.52, 91.71, 90.72]
+2026-10-21 15:02:29,408 [trainer.py] => Average Accuracy (CNN): 77.63125
+2026-10-21 15:02:29,408 [trainer.py] => All params: 87111168
+2026-10-21 15:02:29,408 [trainer.py] => Trainable params: 1312512
+2026-10-21 15:02:29,409 [RSIAT_adapter.py] => Learning on 160-180
+2026-10-21 15:02:51,741 [toolkit.py] => All params: 87242240
+2026-10-21 15:02:51,742 [toolkit.py] => Trainable params: 1443584
+2026-10-21 15:04:52,733 [RSIAT_adapter.py] => Task 8, Epoch 15/15 => Loss 5.696, Loss_c 3.821, Losses_rt 1.876, Train_accy 70.61, Test_accy 68.51, Time 5.97s
+2026-10-21 15:04:52,733 [RSIAT_adapter.py] => Task 8 peak GPU memory: 4872.69 MiB
+2026-10-21 15:05:01,549 [base.py] => CA Task 8 => Loss 0.130, Test_accy skipped
+2026-10-21 15:05:02,734 [base.py] => CA Task 8 => Loss 0.115, Test_accy skipped
+2026-10-21 15:05:03,859 [base.py] => CA Task 8 => Loss 0.108, Test_accy skipped
+2026-10-21 15:05:04,978 [base.py] => CA Task 8 => Loss 0.102, Test_accy skipped
+2026-10-21 15:05:06,095 [base.py] => CA Task 8 => Loss 0.099, Test_accy skipped
+2026-10-21 15:05:07,198 [base.py] => CA Task 8 => Loss 0.098, Test_accy skipped
+2026-10-21 15:05:08,298 [base.py] => CA Task 8 => Loss 0.098, Test_accy skipped
+2026-10-21 15:05:09,380 [base.py] => CA Task 8 => Loss 0.097, Test_accy skipped
+2026-10-21 15:05:10,505 [base.py] => CA Task 8 => Loss 0.094, Test_accy skipped
+2026-10-21 15:05:16,350 [base.py] => CA Task 8 => Loss 0.093, Test_accy 68.660
+2026-10-21 15:06:35,233 [ca_heads.py] => CAHEAD task=8 head=linear top1=68.66 old=69.32 new=62.94
+2026-10-21 15:06:35,233 [ca_heads.py] => CAHEAD tasks head=linear: [68.72, 68.25, 59.52, 73.27, 65.67, 78.79, 69.85, 68.7, 62.94]
+2026-10-21 15:06:35,233 [ca_heads.py] => CAHEAD curve head=linear: [87.15, 82.07, 79.35, 77.87, 76.51, 74.32, 72.5, 71.28, 68.66]
+2026-10-21 15:06:35,233 [ca_heads.py] => CAHEAD task=8 head=qda top1=60.42 old=60.54 new=59.44
+2026-10-21 15:06:35,233 [ca_heads.py] => CAHEAD tasks head=qda: [62.01, 57.14, 49.21, 67.33, 59.7, 68.94, 61.03, 55.73, 59.44]
+2026-10-21 15:06:35,233 [ca_heads.py] => CAHEAD curve head=qda: [84.92, 76.9, 72.67, 70.4, 67.35, 65.9, 64.75, 62.41, 60.42]
+2026-10-21 15:06:35,233 [ca_heads.py] => CAHEAD task=8 head=rff_ridge top1=67.42 old=67.7 new=65.03
+2026-10-21 15:06:35,233 [ca_heads.py] => CAHEAD tasks head=rff_ridge: [68.16, 65.61, 57.94, 72.77, 67.16, 74.24, 65.44, 67.94, 65.03]
+2026-10-21 15:06:35,233 [ca_heads.py] => CAHEAD curve head=rff_ridge: [88.83, 80.98, 75.71, 74.86, 73.49, 73.6, 71.31, 70.71, 67.42]
+2026-10-21 15:06:35,233 [ca_heads.py] => CAHEAD task=8 head=rp_ridge top1=66.25 old=66.31 new=65.73
+2026-10-21 15:06:35,233 [ca_heads.py] => CAHEAD tasks head=rp_ridge: [64.8, 62.96, 53.17, 72.77, 64.93, 74.24, 66.18, 69.47, 65.73]
+2026-10-21 15:06:35,233 [ca_heads.py] => CAHEAD curve head=rp_ridge: [87.71, 80.98, 77.73, 75.43, 74.58, 73.08, 72.13, 70.06, 66.25]
+2026-10-21 15:06:35,233 [ca_heads.py] => CAHEAD task=8 head=pqk_ridge top1=48.91 old=50.2 new=37.76
+2026-10-21 15:06:35,233 [ca_heads.py] => CAHEAD tasks head=pqk_ridge: [51.96, 40.21, 44.44, 55.94, 44.03, 64.39, 52.94, 48.09, 37.76]
+2026-10-21 15:06:35,233 [ca_heads.py] => CAHEAD curve head=pqk_ridge: [77.09, 66.58, 62.96, 61.64, 56.27, 55.2, 54.19, 51.99, 48.91]
+2026-10-21 15:06:35,233 [ca_heads.py] => CAHEAD task=8 head=pqk_noent_ridge top1=55.69 old=56.79 new=46.15
+2026-10-21 15:06:35,233 [ca_heads.py] => CAHEAD tasks head=pqk_noent_ridge: [58.66, 51.32, 44.44, 64.85, 53.73, 64.39, 57.35, 56.49, 46.15]
+2026-10-21 15:06:35,233 [ca_heads.py] => CAHEAD curve head=pqk_noent_ridge: [83.24, 75.27, 68.02, 69.25, 65.66, 62.89, 61.48, 58.99, 55.69]
+2026-10-21 15:06:35,233 [ca_heads.py] => CAHEAD task=8 gates={"alignment": {"rff": 0.3624536652861429, "rp": 0.37022462647007987, "pqk": 0.3242131637176993, "pqk_noent": 0.37011241812877804}, "geometric_difference": {"rff": 13.058769720678432, "rp": 8.049305750537618, "pqk_noent": 3.050812136754603}} seconds=74.0
+2026-10-21 15:06:35,251 [trainer.py] => CNN: {'total': 68.66, '00-19': 68.72, '20-39': 68.25, '40-59': 59.52, '60-79': 73.27, '80-99': 65.67, '100-119': 78.79, '120-139': 69.85, '140-159': 68.7, '160-179': 62.94, 'old': 69.32, 'new': 62.94}
+2026-10-21 15:06:35,251 [trainer.py] => Continual metrics after task 8: BWT=-9.1225, forgetting=9.1225, task_acc=[68.72, 68.25, 59.52, 73.27, 65.67, 78.79, 69.85, 68.7, 62.94]
+2026-10-21 15:06:35,251 [trainer.py] => CNN top1 curve: [87.15, 82.07, 79.35, 77.87, 76.51, 74.32, 72.5, 71.28, 68.66]
+2026-10-21 15:06:35,251 [trainer.py] => CNN top5 curve: [98.32, 96.47, 94.33, 93.97, 93.25, 92.52, 91.71, 90.72, 89.72]
+2026-10-21 15:06:35,251 [trainer.py] => Average Accuracy (CNN): 76.63444444444445
+2026-10-21 15:06:35,251 [trainer.py] => All params: 87126528
+2026-10-21 15:06:35,252 [trainer.py] => Trainable params: 1327872
+2026-10-21 15:06:35,252 [RSIAT_adapter.py] => Learning on 180-200
+2026-10-21 15:06:56,415 [toolkit.py] => All params: 87257600
+2026-10-21 15:06:56,416 [toolkit.py] => Trainable params: 1458944
+2026-10-21 15:08:51,208 [RSIAT_adapter.py] => Task 9, Epoch 15/15 => Loss 4.505, Loss_c 2.682, Losses_rt 1.822, Train_accy 83.56, Test_accy 66.73, Time 5.31s
+2026-10-21 15:08:51,209 [RSIAT_adapter.py] => Task 9 peak GPU memory: 4879.65 MiB
+2026-10-21 15:08:59,927 [base.py] => CA Task 9 => Loss 0.128, Test_accy skipped
+2026-10-21 15:09:01,227 [base.py] => CA Task 9 => Loss 0.111, Test_accy skipped
+2026-10-21 15:09:02,521 [base.py] => CA Task 9 => Loss 0.108, Test_accy skipped
+2026-10-21 15:09:03,817 [base.py] => CA Task 9 => Loss 0.104, Test_accy skipped
+2026-10-21 15:09:05,114 [base.py] => CA Task 9 => Loss 0.100, Test_accy skipped
+2026-10-21 15:09:06,409 [base.py] => CA Task 9 => Loss 0.099, Test_accy skipped
+2026-10-21 15:09:07,709 [base.py] => CA Task 9 => Loss 0.097, Test_accy skipped
+2026-10-21 15:09:09,008 [base.py] => CA Task 9 => Loss 0.096, Test_accy skipped
+2026-10-21 15:09:10,308 [base.py] => CA Task 9 => Loss 0.096, Test_accy skipped
+2026-10-21 15:09:17,057 [base.py] => CA Task 9 => Loss 0.096, Test_accy 67.800
+2026-10-21 15:10:41,961 [ca_heads.py] => CAHEAD task=9 head=linear top1=67.80 old=67.49 new=71.09
+2026-10-21 15:10:41,961 [ca_heads.py] => CAHEAD tasks head=linear: [67.04, 65.61, 59.52, 71.78, 64.93, 77.27, 68.38, 70.23, 61.54, 71.09]
+2026-10-21 15:10:41,961 [ca_heads.py] => CAHEAD curve head=linear: [87.15, 82.07, 79.35, 77.87, 76.51, 74.32, 72.5, 71.28, 68.66, 67.8]
+2026-10-21 15:10:41,961 [ca_heads.py] => CAHEAD task=9 head=qda top1=59.87 old=59.4 new=64.84
+2026-10-21 15:10:41,961 [ca_heads.py] => CAHEAD tasks head=qda: [60.89, 57.14, 50.0, 64.85, 58.21, 65.91, 59.56, 56.49, 58.74, 64.84]
+2026-10-21 15:10:41,961 [ca_heads.py] => CAHEAD curve head=qda: [84.92, 76.9, 72.67, 70.4, 67.35, 65.9, 64.75, 62.41, 60.42, 59.87]
+2026-10-21 15:10:41,961 [ca_heads.py] => CAHEAD task=9 head=rff_ridge top1=67.20 old=66.33 new=76.56
+2026-10-21 15:10:41,961 [ca_heads.py] => CAHEAD tasks head=rff_ridge: [65.92, 64.55, 57.14, 69.31, 67.91, 73.48, 66.91, 67.18, 63.64, 76.56]
+2026-10-21 15:10:41,961 [ca_heads.py] => CAHEAD curve head=rff_ridge: [88.83, 80.98, 75.71, 74.86, 73.49, 73.6, 71.31, 70.71, 67.42, 67.2]
+2026-10-21 15:10:41,961 [ca_heads.py] => CAHEAD task=9 head=rp_ridge top1=66.27 old=65.67 new=72.66
+2026-10-21 15:10:41,961 [ca_heads.py] => CAHEAD tasks head=rp_ridge: [64.8, 63.49, 54.76, 70.3, 64.18, 76.52, 66.18, 67.94, 61.54, 72.66]
+2026-10-21 15:10:41,961 [ca_heads.py] => CAHEAD curve head=rp_ridge: [87.71, 80.98, 77.73, 75.43, 74.58, 73.08, 72.13, 70.06, 66.25, 66.27]
+2026-10-21 15:10:41,961 [ca_heads.py] => CAHEAD task=9 head=pqk_ridge top1=48.87 old=48.32 new=54.69
+2026-10-21 15:10:41,961 [ca_heads.py] => CAHEAD tasks head=pqk_ridge: [54.75, 42.33, 46.83, 56.44, 41.04, 57.58, 49.26, 47.33, 36.36, 54.69]
+2026-10-21 15:10:41,961 [ca_heads.py] => CAHEAD curve head=pqk_ridge: [77.09, 66.58, 62.96, 61.64, 56.27, 55.2, 54.19, 51.99, 48.91, 48.87]
+2026-10-21 15:10:41,961 [ca_heads.py] => CAHEAD task=9 head=pqk_noent_ridge top1=55.40 old=54.88 new=60.94
+2026-10-21 15:10:41,961 [ca_heads.py] => CAHEAD tasks head=pqk_noent_ridge: [55.31, 52.91, 48.41, 61.39, 51.49, 64.39, 56.62, 57.25, 44.06, 60.94]
+2026-10-21 15:10:41,961 [ca_heads.py] => CAHEAD curve head=pqk_noent_ridge: [83.24, 75.27, 68.02, 69.25, 65.66, 62.89, 61.48, 58.99, 55.69, 55.4]
+2026-10-21 15:10:41,961 [ca_heads.py] => CAHEAD task=9 gates={"alignment": {"rff": 0.36917822737495787, "rp": 0.37603954135580525, "pqk": 0.33510005941978077, "pqk_noent": 0.38175010073043636}, "geometric_difference": {"rff": 14.7266888153181, "rp": 7.642618219577268, "pqk_noent": 3.097350472610992}} seconds=79.5
+2026-10-21 15:10:41,979 [trainer.py] => CNN: {'total': 67.8, '00-19': 67.04, '20-39': 65.61, '40-59': 59.52, '60-79': 71.78, '80-99': 64.93, '100-119': 77.27, '120-139': 68.38, '140-159': 70.23, '160-179': 61.54, '180-199': 71.09, 'old': 67.49, 'new': 71.09}
+2026-10-21 15:10:41,980 [trainer.py] => Continual metrics after task 9: BWT=-9.1544, forgetting=9.1544, task_acc=[67.04, 65.61, 59.52, 71.78, 64.93, 77.27, 68.38, 70.23, 61.54, 71.09]
+2026-10-21 15:10:41,980 [trainer.py] => CNN top1 curve: [87.15, 82.07, 79.35, 77.87, 76.51, 74.32, 72.5, 71.28, 68.66, 67.8]
+2026-10-21 15:10:41,980 [trainer.py] => CNN top5 curve: [98.32, 96.47, 94.33, 93.97, 93.25, 92.52, 91.71, 90.72, 89.72, 88.67]
+2026-10-21 15:10:41,980 [trainer.py] => Average Accuracy (CNN): 75.751
+2026-10-21 15:10:42,081 [trainer.py] => Average Seed Accuracy (CNN): 75.751

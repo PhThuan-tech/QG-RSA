@@ -17,7 +17,8 @@ def protocol_hash(config):
                 "compact_diagonal_checkpoint", "isolate_runs",
                 # Observation only: diagnostics never change the trained model.
                 "stats_diagnostics", "save_predictions"}
-    return stable_hash({k: v for k, v in config.items() if k not in excluded})
+    return stable_hash({k: v for k, v in config.items()
+                        if k not in excluded and not k.startswith("ca_head")})
 
 
 def summarize(root):

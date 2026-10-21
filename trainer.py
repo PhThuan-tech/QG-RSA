@@ -230,6 +230,11 @@ def _train_impl(args):
             from utils.stats_diagnostics import save_predictions
             save_predictions(args.get("_qbridge_report_dir") or logfilename + "_stats", task,
                              *model._last_eval, model._known_classes)
+        if args.get("ca_heads"):
+            # Evaluation only: alternative CA heads on the same class statistics (QRF-CA).
+            from utils.ca_heads import evaluate_heads
+            evaluate_heads(model, task, model._last_eval[0],
+                           args.get("_qbridge_report_dir") or logfilename + "_stats")
         model.after_task()
      
         logging.info("CNN: {}".format(cnn_accy["grouped"]))
