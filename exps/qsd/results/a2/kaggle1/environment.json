@@ -1,0 +1,39 @@
+{
+  "gpu": "NVIDIA RTX PRO 6000 Blackwell Server Edition",
+  "torch": "2.11.0+cu128",
+  "cuda": "12.8",
+  "timm": "1.0.29",
+  "parallel": 3,
+  "seeds": [
+    1993
+  ],
+  "plan": "kaggle1",
+  "jobs": [
+    [
+      "imagenetr",
+      "qsd2_rep0",
+      1993
+    ],
+    [
+      "imagenetr",
+      "qsd2_rep1",
+      1993
+    ],
+    [
+      "imagenetr",
+      "qsd2_rep2",
+      1993
+    ]
+  ],
+  "datasets": [
+    "imagenetr"
+  ],
+  "variants": [
+    "qsd2_rep0",
+    "qsd2_rep1",
+    "qsd2_rep2"
+  ],
+  "overrides": {
+    "save_checkpoints": false
+  }
+}

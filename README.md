@@ -1,15 +1,22 @@
-# RSIAT baseline and Q-BRIDGE
+# QG-RSA: RSIAT with quantum components and statistics–classifier fusion
 
-This repository contains two active experiment paths:
+This repository extends RSIAT (classical ViT-adapter, representation steering,
+SSCA and classifier alignment) and evaluates several quantum components under
+a measurement protocol of paired replicates, in-run multi-head evaluation and
+pre-registered rules.
 
-1. **RSIAT baseline** reproduces the classical ViT-adapter, representation
-   steering, SSCA, and classifier-alignment pipeline.
-2. **Q-BRIDGE** starts every branch from the same QKSR task-0 checkpoint and
-   studies risk-weighted cross-task margins and old-anchor guards.
+| Path | Content |
+|---|---|
+| `exps/` | Every experiment: specification, overlays, results and analysis. Start with [`exps/README.md`](exps/README.md), which also fixes the seed convention (1993, 2015, 2026). |
+| `paper/` | LNCS manuscript; `paper/make_figures.py` regenerates the figures from `exps/`. |
+| `QGRSA_EXPERIMENTS.ipynb` | Offline Kaggle notebook for all current rounds (built by `scripts/build_experiments_notebook.py`). |
+| `utils/qsd.py`, `scripts/summarize_qsd*.py` | QSD-CIL heads and statistics–classifier fusion (current direction). |
+| `utils/ca_heads.py`, `utils/quantum_kernel.py`, `utils/qbridge*.py` | Earlier quantum directions (QRF-CA, QKSR, Q-BRIDGE), kept for reproducibility. |
 
-The QKSR documents and quantum-kernel tests remain as technical background
-because Q-BRIDGE uses a frozen PQK trained on the base task. Standalone QKSR
-experiments are no longer part of the active configuration layout.
+Current result: a training-free fusion of the CA classifier with a generative
+score from the stored class statistics beats RSIAT on every held-out run
+(`exps/qsd/results/a2/README.md`). The quantum version of that score (a
+pretty-good measurement) does not beat its classical ridge counterpart.
 
 ## Installation
 
@@ -24,16 +31,17 @@ the `data_root` config key.
 ## Experiment configurations
 
 Configuration roles and commands are documented in [`exps/README.md`](exps/README.md).
-The active layout is:
 
 ```text
 exps/
-├── rsiat/                 # directly runnable classical baselines
+├── rsiat/                 # directly runnable classical baselines (6 datasets)
 ├── smoke/                 # short pipeline checks
-└── qbridge/
-    ├── sources/           # dataset/training settings shared by all branches
-    ├── stages/            # stage overlays, including task-0 base training
-    └── overlays/          # R0-R10 contribution/control overlays
+├── <experiment>/          # diagnostics, measurement, upper, qksr, qrfca, qsd:
+│   ├── README*.md         #   pre-registered specification
+│   ├── <variant>.json     #   overlays used by QGRSA_EXPERIMENTS.ipynb
+│   └── results/           #   logs, summaries, analysis
+├── qbridge/               # earlier Q-BRIDGE configs (inactive)
+└── archive/               # legacy single runs and old configs
 ```
 
 Run a baseline directly:
@@ -42,6 +50,8 @@ Run a baseline directly:
 python main.py --config exps/rsiat/cifar224.json
 python main.py --config exps/rsiat/imageneta.json
 ```
+
+### Earlier direction: Q-BRIDGE (inactive)
 
 Train a local Q-BRIDGE task-0 base:
 
@@ -77,8 +87,8 @@ incremental resume.
 
 ```bash
 python -B -m unittest discover -s tests -q
-python scripts/build_qbridge_kaggle_notebook.py
-python scripts/package_qbridge_kaggle_repo.py
+python scripts/build_experiments_notebook.py QGRSA_EXPERIMENTS.ipynb
+python scripts/package_qbridge_kaggle_repo.py   # dist/QG-RSA_QBRIDGE_Kaggle.zip for Kaggle
 ```
 
 Unit tests establish source behavior only. Accuracy and contribution claims

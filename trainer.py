@@ -235,6 +235,11 @@ def _train_impl(args):
             from utils.ca_heads import evaluate_heads
             evaluate_heads(model, task, model._last_eval[0],
                            args.get("_qbridge_report_dir") or logfilename + "_stats")
+        if args.get("qsd_heads"):
+            # Evaluation only: QSD-CIL states, channels and measurements (exps/qsd/README.md).
+            from utils.qsd import evaluate_qsd
+            evaluate_qsd(model, task, model._last_eval[0],
+                         args.get("_qbridge_report_dir") or logfilename + "_stats")
         model.after_task()
      
         logging.info("CNN: {}".format(cnn_accy["grouped"]))

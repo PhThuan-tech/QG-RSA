@@ -18,7 +18,7 @@ def protocol_hash(config):
                 # Observation only: diagnostics never change the trained model.
                 "stats_diagnostics", "save_predictions"}
     return stable_hash({k: v for k, v in config.items()
-                        if k not in excluded and not k.startswith("ca_head")})
+                        if k not in excluded and not k.startswith(("ca_head", "qsd"))})
 
 
 def summarize(root):

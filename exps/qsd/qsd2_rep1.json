@@ -1,0 +1,26 @@
+{
+  "prefix": "qsd2_rep1",
+  "ssca_mode": "legacy",
+  "rng_replicate": 1,
+  "stats_diagnostics": false,
+  "save_predictions": true,
+  "save_checkpoints": false,
+  "qsd_heads": [
+    "linear",
+    "ridge_stats",
+    "pgm_channel",
+    "pgm_channel_hier",
+    "pgm_fuse",
+    "pgm_stats_stale",
+    "pgm_stats",
+    "pgm_stats_hier",
+    "pgm_stats_oracle"
+  ],
+  "qsd_delta": 0.1,
+  "qsd_channel_ridge": 0.1,
+  "qsd_ridge": 0.1,
+  "qsd_seed": 20261022,
+  "qsd_batch": 128,
+  "qsd_fuse": true,
+  "qsd_save_scores": true
+}

@@ -64,7 +64,7 @@ ImageNet-A cũ được đo với 6 run song song.
 
 Mục tiêu là đo dư địa trước khi chọn hướng phương pháp:
 
-- `upper_oracle_rep0`, `upper_oracle_rep1`: CA dùng mean và covariance thật của lớp
+- (overlay nay nằm ở `exps/upper/`) `upper_oracle_rep0`, `upper_oracle_rep1`: CA dùng mean và covariance thật của lớp
   cũ. Hai run này ghép cặp với `noise` / `noise_rep1`.
 - `upper_joint`: một task duy nhất gồm 200 lớp với cùng công thức huấn luyện task 0.
   Đây là cận trên khi không học tăng dần.

@@ -52,7 +52,9 @@ class Learner(BaseLearner):
         self.logit_norm, _ = stats_diagnostics.ca_settings(args)
         # Fail at start-up, not after task 0, on a bad QRF-CA head configuration.
         from utils.ca_heads import head_settings
+        from utils.qsd import qsd_settings
         head_settings(args)
+        qsd_settings(args)
         self.tuned_epochs = None
         self.task_sizes = []
         self.rs_loss_func = RS_Loss(self.args["alpha"], self.args["rs_margin"])

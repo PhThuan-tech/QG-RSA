@@ -43,31 +43,12 @@ reports/qbridge_v1_1/
 *.temp
 *.log.tmp
 
-# Measured diagnostic results are kept with the configs that produced them
-!exps/diagnostics/results/*/logs/
-
-# Measured noise/upper-bound runs (paired baselines for later candidates)
-!exps/measurement/results/logs/
+# Experiment results (exps/<experiment>/results/...): keep per-run .log, configs,
+# summaries, READMEs and analysis scripts in git. Per-task stats (npz/json/scores)
+# and console dumps stay local: they are large and only needed for local analyses.
+!exps/**/logs/
+exps/**/*_stats/
+exps/**/console/
 
 # Duplicates waiting for manual deletion
 _duplicates_to_delete/
-
-# Per-task diagnostics (npz/json) stay local: summaries and .log files carry the results
-exps/diagnostics/results/**/*_stats/
-exps/measurement/results/**/*_stats/
-
-# Upper-bound runs: keep logs/configs/summaries, per-task stats and consoles stay local
-!exps/upper/logs/
-exps/upper/**/*_stats/
-exps/upper/console/
-
-# QKSR development runs: keep logs/configs/README, per-task stats and consoles stay local
-!exps/qksr_old_cur/logs/
-exps/qksr_old_cur/**/*_stats/
-exps/qksr_old_cur/console/
-
-# QRF-CA results: keep logs/configs/summaries, per-task stats and consoles stay local
-!exps/qrfca/result/logs/
-!exps/qrfca/results/logs/
-exps/qrfca/**/*_stats/
-exps/qrfca/**/console/

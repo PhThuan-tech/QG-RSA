@@ -1,0 +1,134 @@
+\section{Where Is the Gap?}
+\label{sec:gap}
+
+Before designing a method, we measured on ImageNet-R (seed 1993) how much
+accuracy is still reachable, and where the errors are.
+
+\paragraph{Two reference points.}
+Training jointly on all 200 classes, with the same recipe as task~0, gives
+a final accuracy of $86.52$. The gap to RSIAT is therefore
+$G=86.52-82.59=3.9$ points. If CA is given the \emph{oracle} statistics of
+the old classes (means and covariances recomputed from their images with
+the current network, which violates the exemplar-free constraint), AIA
+rises by only $H=+0.195$ (two pairs, SD$(\Delta)=0.03$) and final accuracy
+by $+0.5$. Feature drift is small: about $8\%$ of the feature norm per task.
+
+\paragraph{The oldest classes, and confusion across tasks.}
+Table~\ref{tab:gap} lists the final accuracy per task.
+
+\begin{itemize}
+  \item \emph{The oldest classes lose most.} Classes of tasks 0 and 1 lose
+    $9.0$ and $8.3$ points against joint training, while the newest task is
+    at the joint level.
+  \item \emph{The excess errors are cross-task.} Per pair of classes, the
+    ratio of cross-task to within-task confusions is $1.38$ for RSIAT and
+    $0.90$ for joint training.
+  \item \emph{Oracle statistics move the errors instead of removing them.}
+    They lift task~0 from $80.1$ to $87.1$, but tasks 5--9 drop by $1$--$2.6$
+    points, because newer classes are now predicted as task~0 more often.
+\end{itemize}
+
+The remaining gap therefore lies in how the classes of different tasks
+overlap in the learned representation, and not in the accuracy of the
+statistics. Inference-time changes can only redistribute this overlap
+better. The next section does this with information the linear head
+ignores.
+
+\begin{table}[t]
+\centering
+\caption{Final accuracy (\%) per task on ImageNet-R (task~0 holds the oldest
+classes). CIL: RSIAT, mean of 4 replicates; oracle: CA with oracle statistics
+of old classes, 2 runs; joint: one task with all 200 classes.}
+\label{tab:gap}
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{lrrrrrrrrrr}
+\toprule
+Task & 0 & 1 & 2 & 3 & 4 & 5 & 6 & 7 & 8 & 9\\
+\midrule
+Joint  & 89.1 & 88.7 & 86.4 & 86.4 & 83.2 & 86.0 & 85.8 & 87.0 & 85.4 & 85.8\\
+CIL    & 80.1 & 80.4 & 82.7 & 82.3 & 78.8 & 82.7 & 85.3 & 84.2 & 83.9 & 86.2\\
+Oracle & 87.1 & 83.1 & 83.5 & 82.2 & 79.1 & 81.6 & 84.7 & 82.9 & 82.1 & 83.6\\
+\midrule
+Joint $-$ CIL & $+9.0$ & $+8.3$ & $+3.7$ & $+4.1$ & $+4.4$ & $+3.3$ & $+0.5$ & $+2.9$ & $+1.6$ & $-0.3$\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Statistics--Classifier Fusion}
+\label{sec:method}
+
+\paragraph{Generative scores from stored statistics.}
+At stage $t$ the model holds, for every seen class $c$, the SSCA-updated mean
+$\boldsymbol\mu_c$ and the covariance $\Sigma_c$. These define generative
+scores $g_c(\mathbf z)$ without any further training. We use two of them.
+
+\emph{Ridge on statistics.} Least-squares regression of one-hot targets has
+the closed form
+\begin{equation}
+  W=\Big(\textstyle\sum_c(\Sigma_c+\boldsymbol\mu_c\boldsymbol\mu_c^{\top})+\lambda I\Big)^{-1}
+  [\boldsymbol\mu_1,\dots,\boldsymbol\mu_C],\qquad g_c(\mathbf z)=\mathbf z^{\top}W_{:,c},
+  \label{eq:ridge}
+\end{equation}
+with $\lambda=0.1\,\mathrm{tr}(\cdot)/768$. This regression uses only the
+stored moments.
+
+\emph{Pretty-good measurement on class states.} We encode a feature as a
+real amplitude vector
+$\psi(\mathbf z)=\mathbf v/\|\mathbf v\|$, $\mathbf v=[(\mathbf z-\mathbf m_0)/s_0;\,1]$.
+Here $\mathbf m_0$ and $s_0=\sqrt{\mathrm{tr}\,\mathrm{Cov}}$ are fixed on
+task~0. The vector has 769 entries, i.e.\ a 10-qubit state padded with
+zeros. The state of class $c$ is
+\begin{equation}
+  \rho_c=\frac{\mathbb E[\mathbf v\mathbf v^{\top}]}{\mathrm{tr}\,\mathbb E[\mathbf v\mathbf v^{\top}]},\qquad
+  \mathbb E[\mathbf v\mathbf v^{\top}]=
+  \begin{bmatrix}\tilde\Sigma_c+\tilde{\boldsymbol\mu}_c\tilde{\boldsymbol\mu}_c^{\top} & \tilde{\boldsymbol\mu}_c\\
+  \tilde{\boldsymbol\mu}_c^{\top} & 1\end{bmatrix},
+  \label{eq:state}
+\end{equation}
+with $\tilde{\boldsymbol\mu}_c=(\boldsymbol\mu_c-\mathbf m_0)/s_0$ and
+$\tilde\Sigma_c=\Sigma_c/s_0^2$. Thus $\rho_c$ is a mixture of the encoded
+pure states, weighted by $\|\mathbf v\|^2$. It is built from exactly the
+stored statistics, so it follows the SSCA updates and needs no exemplars.
+With uniform priors, the PGM~\cite{hausladen1994pgm} is
+\begin{equation}
+  E_c=\tfrac1C\,\bar\rho_\delta^{-1/2}\rho_c\,\bar\rho_\delta^{-1/2},\quad
+  \bar\rho_\delta=\tfrac1C\textstyle\sum_c\rho_c+\delta I,\qquad
+  g_c(\mathbf z)=\log\frac{\Tr\!\big(E_c\,\psi\psi^{\top}\big)}{\sum_{c'}\Tr\!\big(E_{c'}\psi\psi^{\top}\big)},
+  \label{eq:pgm}
+\end{equation}
+with $\delta=0.1/1024$. A hierarchical variant first measures the task,
+$E_T=\sum_{c\in T}E_c$, and then measures the class within the task with
+whitening by $\rho_T$.
+
+\paragraph{Fusion.}
+The prediction is
+\begin{equation}
+  \hat y(\mathbf z)=\arg\max_c\;\ell_c(\mathbf z)+w\,\kappa\,g_c(\mathbf z),\qquad
+  \kappa=\frac{\overline{\mathrm{sd}_c\,\ell_c(\mathbf x)}}{\overline{\mathrm{sd}_c\,g_c(\mathbf x)}},
+  \label{eq:fusion}
+\end{equation}
+where $\overline{\mathrm{sd}_c}$ is the spread across classes, averaged over the
+training images $\mathbf x$ of the current task. $\kappa$ needs no labels and
+puts both scores on the same scale, so $w$ is a relative weight that can be
+compared across sources. $w$ is chosen from $\{0.25,0.5,1,2,4\}$ on the tuning
+group only (Section~\ref{sec:protocol}) and then frozen.
+
+The fusion adds no parameters and no training. Its cost is one $768\times768$
+solve for the ridge source, or one $769\times769$ eigen-decomposition and one
+quadratic form per class for the PGM source. Both take less than a second
+per task on a GPU.
+
+\paragraph{Why should fusion help?}
+CA fits the linear head to Gaussian samples. With few images per class
+(30 on ImageNet-A), the covariances have rank at most 29. The pseudo-features
+are then nearly separable, and the head mainly encodes the means. A
+generative score uses the covariance shape directly. The two heads therefore
+err on different images (Section~\ref{sec:analysis}).
+
+\paragraph{Relation between the two sources.}
+For pure states, the square-root measurement coincides with the
+least-squares measurement~\cite{eldar2001srm}. Eq.~\eqref{eq:pgm} is thus the
+quantum analogue of least-squares classification on second moments: a
+quadratic score in the lifted feature $\mathbf v$, against the linear score of
+Eq.~\eqref{eq:ridge}. Section~\ref{sec:experiments} tests whether this
+difference matters.

@@ -132,15 +132,43 @@ class CUB(iData):
     class_order = np.arange(200).tolist()
 
     def download_data(self):
-        # assert 0, "You should specify the folder of your dataset"
-        train_dir = "./data/datasets/cub/train/"
-        test_dir = "./data/datasets/cub/test/"
-
-        train_dset = datasets.ImageFolder(train_dir)
-        test_dset = datasets.ImageFolder(test_dir)
+        root = getattr(self, "data_root", None) or "./data/datasets/cub"
+        train_dset = datasets.ImageFolder(os.path.join(root, "train"))
+        test_dset = datasets.ImageFolder(os.path.join(root, "test"))
+        if len(train_dset.classes) != 200 or train_dset.classes != test_dset.classes:
+            raise ValueError("CUB-200 requires the same 200 class folders in train and test")
+        self.class_names = list(train_dset.classes)
 
         self.train_data, self.train_targets = split_images_labels(train_dset.imgs)
         self.test_data, self.test_targets = split_images_labels(test_dset.imgs)
+
+
+def prepare_cub_split(source, dest):
+    """Build <dest>/{train,test}/<class>/ from a raw CUB_200_2011 folder with the official split.
+
+    ``source`` holds images/, images.txt and train_test_split.txt (5 994 train / 5 794 test).
+    Files are symlinked (copied if symlinks are unavailable); returns the image counts.
+    """
+    ids = dict(line.split() for line in open(os.path.join(source, "images.txt"), encoding="utf-8")
+               if line.strip())
+    counts = {"train": 0, "test": 0}
+    for line in open(os.path.join(source, "train_test_split.txt"), encoding="utf-8"):
+        if not line.strip():
+            continue
+        image_id, is_train = line.split()
+        relative = ids[image_id]
+        split = "train" if is_train == "1" else "test"
+        target = os.path.join(dest, split, relative)
+        os.makedirs(os.path.dirname(target), exist_ok=True)
+        if not os.path.exists(target):
+            original = os.path.abspath(os.path.join(source, "images", relative))
+            try:
+                os.symlink(original, target)
+            except OSError:
+                import shutil
+                shutil.copy2(original, target)
+        counts[split] += 1
+    return counts
 
 
 

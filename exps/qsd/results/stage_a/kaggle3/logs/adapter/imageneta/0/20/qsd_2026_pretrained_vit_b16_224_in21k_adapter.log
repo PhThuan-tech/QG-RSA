@@ -1,0 +1,646 @@
+2026-10-21 17:40:58,137 [trainer.py] => config: /kaggle/working/runs/configs/imageneta_qsd_rep0_2026.json
+2026-10-21 17:40:58,137 [trainer.py] => overlay: []
+2026-10-21 17:40:58,137 [trainer.py] => prefix: qsd
+2026-10-21 17:40:58,137 [trainer.py] => dataset: imageneta
+2026-10-21 17:40:58,137 [trainer.py] => save_checkpoints: False
+2026-10-21 17:40:58,137 [trainer.py] => resume: False
+2026-10-21 17:40:58,137 [trainer.py] => isolate_runs: True
+2026-10-21 17:40:58,137 [trainer.py] => keep_last_checkpoint: True
+2026-10-21 17:40:58,137 [trainer.py] => compact_diagonal_checkpoint: False
+2026-10-21 17:40:58,137 [trainer.py] => eval_interval: 0
+2026-10-21 17:40:58,137 [trainer.py] => ca_eval_interval: 0
+2026-10-21 17:40:58,137 [trainer.py] => num_workers: 4
+2026-10-21 17:40:58,137 [trainer.py] => stats_num_workers: 2
+2026-10-21 17:40:58,137 [trainer.py] => pin_memory: True
+2026-10-21 17:40:58,137 [trainer.py] => persistent_workers: True
+2026-10-21 17:40:58,137 [trainer.py] => shuffle: True
+2026-10-21 17:40:58,137 [trainer.py] => ssca: True
+2026-10-21 17:40:58,137 [trainer.py] => ca: True
+2026-10-21 17:40:58,137 [trainer.py] => init_cls: 20
+2026-10-21 17:40:58,137 [trainer.py] => increment: 20
+2026-10-21 17:40:58,137 [trainer.py] => model_name: adapter
+2026-10-21 17:40:58,137 [trainer.py] => convnet_type: pretrained_vit_b16_224_in21k_adapter
+2026-10-21 17:40:58,137 [trainer.py] => device: [device(type='cuda', index=0)]
+2026-10-21 17:40:58,137 [trainer.py] => seed: 2026
+2026-10-21 17:40:58,137 [trainer.py] => init_epochs: 20
+2026-10-21 17:40:58,137 [trainer.py] => warmup_epoch: 3
+2026-10-21 17:40:58,137 [trainer.py] => inc_epochs: 15
+2026-10-21 17:40:58,137 [trainer.py] => ca_epochs: 10
+2026-10-21 17:40:58,137 [trainer.py] => init_lr: 0.006688537652915857
+2026-10-21 17:40:58,137 [trainer.py] => batch_size: 48
+2026-10-21 17:40:58,137 [trainer.py] => weight_decay: 5.929828534160845e-07
+2026-10-21 17:40:58,137 [trainer.py] => min_lr: 0
+2026-10-21 17:40:58,137 [trainer.py] => ffn_num: 64
+2026-10-21 17:40:58,137 [trainer.py] => optimizer: sgd
+2026-10-21 17:40:58,137 [trainer.py] => scale: 30.0
+2026-10-21 17:40:58,137 [trainer.py] => margin: 0.3
+2026-10-21 17:40:58,137 [trainer.py] => alpha: 1.0
+2026-10-21 17:40:58,137 [trainer.py] => rs_margin: 1.5
+2026-10-21 17:40:58,137 [trainer.py] => lambda_rs: 1.0
+2026-10-21 17:40:58,137 [trainer.py] => beta: 3.0
+2026-10-21 17:40:58,137 [trainer.py] => gamma: 6.0
+2026-10-21 17:40:58,137 [trainer.py] => ae_code_dims: 128
+2026-10-21 17:40:58,137 [trainer.py] => ae_init_lr: 0.0003120779977680931
+2026-10-21 17:40:58,137 [trainer.py] => ae_weight_decay: 2.424346330636298e-05
+2026-10-21 17:40:58,137 [trainer.py] => algorithm: rsiat
+2026-10-21 17:40:58,137 [trainer.py] => use_quantum_kernel_base: False
+2026-10-21 17:40:58,137 [trainer.py] => use_quantum_kernel_inc: False
+2026-10-21 17:40:58,137 [trainer.py] => ssca_mode: legacy
+2026-10-21 17:40:58,137 [trainer.py] => rng_replicate: 0
+2026-10-21 17:40:58,137 [trainer.py] => stats_diagnostics: False
+2026-10-21 17:40:58,137 [trainer.py] => save_predictions: True
+2026-10-21 17:40:58,137 [trainer.py] => qsd_heads: ['linear', 'linear_rerun', 'linear_noscale', 'ridge_stats', 'pgm_stale', 'pgm_channel', 'pgm_channel_hier', 'pgm_fuse', 'pgm_nonlinear']
+2026-10-21 17:40:58,137 [trainer.py] => qsd_delta: 0.1
+2026-10-21 17:40:58,137 [trainer.py] => qsd_channel_ridge: 0.1
+2026-10-21 17:40:58,137 [trainer.py] => qsd_ridge: 0.1
+2026-10-21 17:40:58,137 [trainer.py] => qsd_nl_dim: 32
+2026-10-21 17:40:58,137 [trainer.py] => qsd_seed: 20261022
+2026-10-21 17:40:58,137 [trainer.py] => qsd_batch: 128
+2026-10-21 17:40:58,137 [trainer.py] => data_root: /kaggle/working/imageneta_split
+2026-10-21 17:40:58,137 [trainer.py] => pretrained_path: /kaggle/working/vit_b16_224.pt
+2026-10-21 17:40:58,137 [trainer.py] => output_root: /kaggle/working/runs
+2026-10-21 17:40:58,137 [trainer.py] => class_order_seed: 2026
+2026-10-21 17:40:58,137 [trainer.py] => train_seed: 2026
+2026-10-21 17:40:58,137 [trainer.py] => partition_seed: 2026
+2026-10-21 17:40:58,137 [trainer.py] => _run_log_prefix: /kaggle/working/runs/logs/adapter/imageneta/0/20/qsd_2026_pretrained_vit_b16_224_in21k_adapter
+2026-10-21 17:40:58,682 [data_manager.py] => [115, 91, 15, 57, 123, 5, 193, 196, 88, 185, 191, 168, 90, 80, 106, 146, 188, 118, 44, 151, 24, 56, 42, 127, 113, 119, 197, 194, 99, 12, 65, 71, 131, 6, 46, 186, 126, 31, 117, 30, 110, 82, 102, 165, 11, 76, 53, 138, 199, 18, 163, 149, 84, 133, 170, 189, 52, 104, 45, 114, 41, 23, 160, 171, 172, 169, 177, 142, 94, 50, 128, 39, 59, 120, 107, 162, 124, 9, 74, 198, 62, 174, 166, 122, 141, 81, 10, 63, 176, 100, 136, 187, 129, 16, 72, 147, 54, 0, 98, 150, 92, 155, 4, 167, 125, 97, 153, 8, 83, 159, 85, 86, 13, 34, 173, 93, 180, 33, 21, 132, 190, 87, 121, 108, 103, 145, 37, 158, 69, 89, 2, 19, 67, 175, 51, 78, 43, 64, 66, 143, 61, 20, 144, 154, 183, 14, 140, 139, 75, 79, 22, 58, 101, 109, 32, 178, 73, 164, 55, 35, 49, 152, 137, 36, 3, 40, 70, 95, 105, 181, 157, 47, 192, 17, 60, 112, 68, 25, 38, 48, 161, 148, 111, 135, 96, 7, 27, 182, 130, 28, 179, 156, 116, 29, 195, 77, 184, 26, 134, 1]
+2026-10-21 17:40:59,667 [trainer.py] => All params: 86988288
+2026-10-21 17:40:59,667 [trainer.py] => Trainable params: 1189632
+2026-10-21 17:40:59,668 [RSIAT_adapter.py] => Learning on 0-20
+2026-10-21 17:41:00,260 [toolkit.py] => All params: 86259456
+2026-10-21 17:41:00,260 [toolkit.py] => Trainable params: 1204992
+2026-10-21 17:42:37,653 [RSIAT_adapter.py] => Task 0, Epoch 20/20 => Loss 3.775, Loss_c 3.069, Losses_rt 0.706, Train_accy 94.68, Test_accy 83.45, Time 4.85s
+2026-10-21 17:42:37,654 [RSIAT_adapter.py] => Task 0 peak GPU memory: 4417.41 MiB
+2026-10-21 17:42:46,370 [qsd.py] => QSD task=0 head=linear top1=83.45 old=None new=83.45 task_pred=100.00 pair_ratio=None
+2026-10-21 17:42:46,370 [qsd.py] => QSD tasks head=linear: [83.45]
+2026-10-21 17:42:46,370 [qsd.py] => QSD mech head=linear: {"task_prediction": 100.0, "pair_ratio": null}
+2026-10-21 17:42:46,370 [qsd.py] => QSD curve head=linear: [83.45]
+2026-10-21 17:42:46,370 [qsd.py] => QSD task=0 head=linear_rerun top1=83.45 old=None new=83.45 task_pred=100.00 pair_ratio=None
+2026-10-21 17:42:46,370 [qsd.py] => QSD tasks head=linear_rerun: [83.45]
+2026-10-21 17:42:46,370 [qsd.py] => QSD mech head=linear_rerun: {"task_prediction": 100.0, "pair_ratio": null}
+2026-10-21 17:42:46,370 [qsd.py] => QSD curve head=linear_rerun: [83.45]
+2026-10-21 17:42:46,370 [qsd.py] => QSD task=0 head=linear_noscale top1=83.45 old=None new=83.45 task_pred=100.00 pair_ratio=None
+2026-10-21 17:42:46,370 [qsd.py] => QSD tasks head=linear_noscale: [83.45]
+2026-10-21 17:42:46,370 [qsd.py] => QSD mech head=linear_noscale: {"task_prediction": 100.0, "pair_ratio": null}
+2026-10-21 17:42:46,370 [qsd.py] => QSD curve head=linear_noscale: [83.45]
+2026-10-21 17:42:46,370 [qsd.py] => QSD task=0 head=ridge_stats top1=79.86 old=None new=79.86 task_pred=100.00 pair_ratio=None
+2026-10-21 17:42:46,370 [qsd.py] => QSD tasks head=ridge_stats: [79.86]
+2026-10-21 17:42:46,370 [qsd.py] => QSD mech head=ridge_stats: {"task_prediction": 100.0, "pair_ratio": null}
+2026-10-21 17:42:46,370 [qsd.py] => QSD curve head=ridge_stats: [79.86]
+2026-10-21 17:42:46,370 [qsd.py] => QSD task=0 head=pgm_stale top1=87.05 old=None new=87.05 task_pred=100.00 pair_ratio=None
+2026-10-21 17:42:46,370 [qsd.py] => QSD tasks head=pgm_stale: [87.05]
+2026-10-21 17:42:46,370 [qsd.py] => QSD mech head=pgm_stale: {"task_prediction": 100.0, "pair_ratio": null}
+2026-10-21 17:42:46,371 [qsd.py] => QSD curve head=pgm_stale: [87.05]
+2026-10-21 17:42:46,371 [qsd.py] => QSD task=0 head=pgm_channel top1=87.05 old=None new=87.05 task_pred=100.00 pair_ratio=None
+2026-10-21 17:42:46,371 [qsd.py] => QSD tasks head=pgm_channel: [87.05]
+2026-10-21 17:42:46,371 [qsd.py] => QSD mech head=pgm_channel: {"task_prediction": 100.0, "pair_ratio": null}
+2026-10-21 17:42:46,371 [qsd.py] => QSD curve head=pgm_channel: [87.05]
+2026-10-21 17:42:46,371 [qsd.py] => QSD task=0 head=pgm_channel_hier top1=87.05 old=None new=87.05 task_pred=100.00 pair_ratio=None
+2026-10-21 17:42:46,371 [qsd.py] => QSD tasks head=pgm_channel_hier: [87.05]
+2026-10-21 17:42:46,371 [qsd.py] => QSD mech head=pgm_channel_hier: {"task_prediction": 100.0, "pair_ratio": null}
+2026-10-21 17:42:46,371 [qsd.py] => QSD curve head=pgm_channel_hier: [87.05]
+2026-10-21 17:42:46,371 [qsd.py] => QSD task=0 head=pgm_fuse top1=84.17 old=None new=84.17 task_pred=100.00 pair_ratio=None
+2026-10-21 17:42:46,371 [qsd.py] => QSD tasks head=pgm_fuse: [84.17]
+2026-10-21 17:42:46,371 [qsd.py] => QSD mech head=pgm_fuse: {"task_prediction": 100.0, "pair_ratio": null}
+2026-10-21 17:42:46,371 [qsd.py] => QSD curve head=pgm_fuse: [84.17]
+2026-10-21 17:42:46,371 [qsd.py] => QSD task=0 head=pgm_nonlinear top1=75.54 old=None new=75.54 task_pred=100.00 pair_ratio=None
+2026-10-21 17:42:46,371 [qsd.py] => QSD tasks head=pgm_nonlinear: [75.54]
+2026-10-21 17:42:46,371 [qsd.py] => QSD mech head=pgm_nonlinear: {"task_prediction": 100.0, "pair_ratio": null}
+2026-10-21 17:42:46,371 [qsd.py] => QSD curve head=pgm_nonlinear: [75.54]
+2026-10-21 17:42:46,371 [qsd.py] => QSD task=0 diag={"pgm_channel": {"effective_rank": 26.70073049562621}, "delta_sensitivity": {"0.01": 86.33, "0.1": 87.05, "1.0": 85.61}, "pgm_nonlinear": {"effective_rank": 105.07877737146748}, "ridge_sensitivity": {"0.01": 74.82, "0.1": 79.86, "1.0": 82.01}} seconds=3.0
+2026-10-21 17:42:46,385 [trainer.py] => CNN: {'total': 83.45, '00-19': 83.45, 'old': 0.0, 'new': 83.45}
+2026-10-21 17:42:46,385 [trainer.py] => CNN top1 curve: [83.45]
+2026-10-21 17:42:46,385 [trainer.py] => CNN top5 curve: [96.4]
+2026-10-21 17:42:46,385 [trainer.py] => Average Accuracy (CNN): 83.45
+2026-10-21 17:42:46,385 [trainer.py] => All params: 87003648
+2026-10-21 17:42:46,386 [trainer.py] => Trainable params: 1204992
+2026-10-21 17:42:46,399 [RSIAT_adapter.py] => Learning on 20-40
+2026-10-21 17:42:48,133 [toolkit.py] => All params: 87134720
+2026-10-21 17:42:48,134 [toolkit.py] => Trainable params: 1336064
+2026-10-21 17:44:31,560 [RSIAT_adapter.py] => Task 1, Epoch 15/15 => Loss 5.434, Loss_c 3.248, Losses_rt 2.186, Train_accy 77.42, Test_accy 77.89, Time 6.72s
+2026-10-21 17:44:31,560 [RSIAT_adapter.py] => Task 1 peak GPU memory: 4882.91 MiB
+2026-10-21 17:44:40,045 [base.py] => CA Task 1 => Loss 0.148, Test_accy skipped
+2026-10-21 17:44:40,764 [base.py] => CA Task 1 => Loss 0.090, Test_accy skipped
+2026-10-21 17:44:41,481 [base.py] => CA Task 1 => Loss 0.068, Test_accy skipped
+2026-10-21 17:44:42,238 [base.py] => CA Task 1 => Loss 0.062, Test_accy skipped
+2026-10-21 17:44:42,945 [base.py] => CA Task 1 => Loss 0.058, Test_accy skipped
+2026-10-21 17:44:43,663 [base.py] => CA Task 1 => Loss 0.056, Test_accy skipped
+2026-10-21 17:44:44,384 [base.py] => CA Task 1 => Loss 0.052, Test_accy skipped
+2026-10-21 17:44:45,090 [base.py] => CA Task 1 => Loss 0.052, Test_accy skipped
+2026-10-21 17:44:45,775 [base.py] => CA Task 1 => Loss 0.052, Test_accy skipped
+2026-10-21 17:44:47,374 [base.py] => CA Task 1 => Loss 0.052, Test_accy 83.500
+2026-10-21 17:44:54,307 [qsd.py] => QSD task=1 head=linear top1=83.50 old=77.7 new=88.41 task_pred=91.75 pair_ratio=0.95
+2026-10-21 17:44:54,307 [qsd.py] => QSD tasks head=linear: [77.7, 88.41]
+2026-10-21 17:44:54,307 [qsd.py] => QSD mech head=linear: {"task_prediction": 91.75, "pair_ratio": 0.95}
+2026-10-21 17:44:54,307 [qsd.py] => QSD curve head=linear: [83.45, 83.5]
+2026-10-21 17:44:54,307 [qsd.py] => QSD task=1 head=linear_rerun top1=83.17 old=76.98 new=88.41 task_pred=91.09 pair_ratio=1.06875
+2026-10-21 17:44:54,307 [qsd.py] => QSD tasks head=linear_rerun: [76.98, 88.41]
+2026-10-21 17:44:54,307 [qsd.py] => QSD mech head=linear_rerun: {"task_prediction": 91.09, "pair_ratio": 1.06875}
+2026-10-21 17:44:54,307 [qsd.py] => QSD curve head=linear_rerun: [83.45, 83.17]
+2026-10-21 17:44:54,307 [qsd.py] => QSD task=1 head=linear_noscale top1=82.51 old=75.54 new=88.41 task_pred=90.43 pair_ratio=1.147916666666667
+2026-10-21 17:44:54,307 [qsd.py] => QSD tasks head=linear_noscale: [75.54, 88.41]
+2026-10-21 17:44:54,307 [qsd.py] => QSD mech head=linear_noscale: {"task_prediction": 90.43, "pair_ratio": 1.147916666666667}
+2026-10-21 17:44:54,307 [qsd.py] => QSD curve head=linear_noscale: [83.45, 82.51]
+2026-10-21 17:44:54,307 [qsd.py] => QSD task=1 head=ridge_stats top1=81.52 old=76.26 new=85.98 task_pred=91.75 pair_ratio=0.7661290322580644
+2026-10-21 17:44:54,307 [qsd.py] => QSD tasks head=ridge_stats: [76.26, 85.98]
+2026-10-21 17:44:54,307 [qsd.py] => QSD mech head=ridge_stats: {"task_prediction": 91.75, "pair_ratio": 0.7661290322580644}
+2026-10-21 17:44:54,307 [qsd.py] => QSD curve head=ridge_stats: [79.86, 81.52]
+2026-10-21 17:44:54,307 [qsd.py] => QSD task=1 head=pgm_stale top1=84.49 old=77.7 new=90.24 task_pred=92.41 pair_ratio=0.9104166666666668
+2026-10-21 17:44:54,307 [qsd.py] => QSD tasks head=pgm_stale: [77.7, 90.24]
+2026-10-21 17:44:54,307 [qsd.py] => QSD mech head=pgm_stale: {"task_prediction": 92.41, "pair_ratio": 0.9104166666666668}
+2026-10-21 17:44:54,307 [qsd.py] => QSD curve head=pgm_stale: [87.05, 84.49]
+2026-10-21 17:44:54,307 [qsd.py] => QSD task=1 head=pgm_channel top1=83.83 old=76.98 new=89.63 task_pred=92.08 pair_ratio=0.912
+2026-10-21 17:44:54,307 [qsd.py] => QSD tasks head=pgm_channel: [76.98, 89.63]
+2026-10-21 17:44:54,307 [qsd.py] => QSD mech head=pgm_channel: {"task_prediction": 92.08, "pair_ratio": 0.912}
+2026-10-21 17:44:54,307 [qsd.py] => QSD curve head=pgm_channel: [87.05, 83.83]
+2026-10-21 17:44:54,307 [qsd.py] => QSD task=1 head=pgm_channel_hier top1=84.82 old=79.86 new=89.02 task_pred=92.74 pair_ratio=0.8708333333333335
+2026-10-21 17:44:54,307 [qsd.py] => QSD tasks head=pgm_channel_hier: [79.86, 89.02]
+2026-10-21 17:44:54,307 [qsd.py] => QSD mech head=pgm_channel_hier: {"task_prediction": 92.74, "pair_ratio": 0.8708333333333335}
+2026-10-21 17:44:54,307 [qsd.py] => QSD curve head=pgm_channel_hier: [87.05, 84.82]
+2026-10-21 17:44:54,307 [qsd.py] => QSD task=1 head=pgm_fuse top1=83.83 old=76.98 new=89.63 task_pred=91.42 pair_ratio=1.0739130434782607
+2026-10-21 17:44:54,307 [qsd.py] => QSD tasks head=pgm_fuse: [76.98, 89.63]
+2026-10-21 17:44:54,307 [qsd.py] => QSD mech head=pgm_fuse: {"task_prediction": 91.42, "pair_ratio": 1.0739130434782607}
+2026-10-21 17:44:54,307 [qsd.py] => QSD curve head=pgm_fuse: [84.17, 83.83]
+2026-10-21 17:44:54,307 [qsd.py] => QSD task=1 head=pgm_nonlinear top1=74.59 old=67.63 new=80.49 task_pred=88.78 pair_ratio=0.7511627906976744
+2026-10-21 17:44:54,307 [qsd.py] => QSD tasks head=pgm_nonlinear: [67.63, 80.49]
+2026-10-21 17:44:54,307 [qsd.py] => QSD mech head=pgm_nonlinear: {"task_prediction": 88.78, "pair_ratio": 0.7511627906976744}
+2026-10-21 17:44:54,307 [qsd.py] => QSD curve head=pgm_nonlinear: [75.54, 74.59]
+2026-10-21 17:44:54,307 [qsd.py] => QSD task=1 diag={"channel": {"deviation": 0.07951119056346205, "pairs": 651, "ridge": 0.0846553966189857}, "channel_nonlinear": {"deviation": 0.11487756248543786, "pairs": 651, "ridge": 0.036307863915225884}, "pgm_channel": {"effective_rank": 30.659430639006704}, "delta_sensitivity": {"0.01": 84.16, "0.1": 83.83, "1.0": 82.18}, "pgm_nonlinear": {"effective_rank": 140.18951901111228}, "ridge_sensitivity": {"0.01": 76.9, "0.1": 81.52, "1.0": 82.84}} seconds=6.0
+2026-10-21 17:44:54,323 [trainer.py] => CNN: {'total': 83.5, '00-19': 77.7, '20-39': 88.41, 'old': 77.7, 'new': 88.41}
+2026-10-21 17:44:54,323 [trainer.py] => Continual metrics after task 1: BWT=-5.7500, forgetting=5.7500, task_acc=[77.7, 88.41]
+2026-10-21 17:44:54,323 [trainer.py] => CNN top1 curve: [83.45, 83.5]
+2026-10-21 17:44:54,323 [trainer.py] => CNN top5 curve: [96.4, 96.37]
+2026-10-21 17:44:54,323 [trainer.py] => Average Accuracy (CNN): 83.475
+2026-10-21 17:44:54,324 [trainer.py] => All params: 87019008
+2026-10-21 17:44:54,324 [trainer.py] => Trainable params: 1220352
+2026-10-21 17:44:54,324 [RSIAT_adapter.py] => Learning on 40-60
+2026-10-21 17:44:55,787 [toolkit.py] => All params: 87150080
+2026-10-21 17:44:55,787 [toolkit.py] => Trainable params: 1351424
+2026-10-21 17:46:13,398 [RSIAT_adapter.py] => Task 2, Epoch 15/15 => Loss 5.752, Loss_c 3.663, Losses_rt 2.089, Train_accy 81.25, Test_accy 75.83, Time 5.07s
+2026-10-21 17:46:13,398 [RSIAT_adapter.py] => Task 2 peak GPU memory: 4885.73 MiB
+2026-10-21 17:46:21,035 [base.py] => CA Task 2 => Loss 0.117, Test_accy skipped
+2026-10-21 17:46:22,109 [base.py] => CA Task 2 => Loss 0.088, Test_accy skipped
+2026-10-21 17:46:23,199 [base.py] => CA Task 2 => Loss 0.081, Test_accy skipped
+2026-10-21 17:46:24,283 [base.py] => CA Task 2 => Loss 0.076, Test_accy skipped
+2026-10-21 17:46:25,336 [base.py] => CA Task 2 => Loss 0.069, Test_accy skipped
+2026-10-21 17:46:26,406 [base.py] => CA Task 2 => Loss 0.068, Test_accy skipped
+2026-10-21 17:46:27,526 [base.py] => CA Task 2 => Loss 0.065, Test_accy skipped
+2026-10-21 17:46:28,553 [base.py] => CA Task 2 => Loss 0.065, Test_accy skipped
+2026-10-21 17:46:29,594 [base.py] => CA Task 2 => Loss 0.063, Test_accy skipped
+2026-10-21 17:46:31,555 [base.py] => CA Task 2 => Loss 0.065, Test_accy 78.200
+2026-10-21 17:46:38,507 [qsd.py] => QSD task=2 head=linear top1=78.20 old=80.53 new=72.27 task_pred=85.07 pair_ratio=1.0318965517241376
+2026-10-21 17:46:38,507 [qsd.py] => QSD tasks head=linear: [74.1, 85.98, 72.27]
+2026-10-21 17:46:38,507 [qsd.py] => QSD mech head=linear: {"task_prediction": 85.07, "pair_ratio": 1.0318965517241376}
+2026-10-21 17:46:38,507 [qsd.py] => QSD curve head=linear: [83.45, 83.5, 78.2]
+2026-10-21 17:46:38,507 [qsd.py] => QSD task=2 head=linear_rerun top1=77.96 old=80.2 new=72.27 task_pred=84.83 pair_ratio=1.0482758620689654
+2026-10-21 17:46:38,507 [qsd.py] => QSD tasks head=linear_rerun: [74.82, 84.76, 72.27]
+2026-10-21 17:46:38,507 [qsd.py] => QSD mech head=linear_rerun: {"task_prediction": 84.83, "pair_ratio": 1.0482758620689654}
+2026-10-21 17:46:38,507 [qsd.py] => QSD curve head=linear_rerun: [83.45, 83.17, 77.96]
+2026-10-21 17:46:38,507 [qsd.py] => QSD task=2 head=linear_noscale top1=78.44 old=80.53 new=73.11 task_pred=85.07 pair_ratio=1.0687499999999999
+2026-10-21 17:46:38,507 [qsd.py] => QSD tasks head=linear_noscale: [74.82, 85.37, 73.11]
+2026-10-21 17:46:38,507 [qsd.py] => QSD mech head=linear_noscale: {"task_prediction": 85.07, "pair_ratio": 1.0687499999999999}
+2026-10-21 17:46:38,507 [qsd.py] => QSD curve head=linear_noscale: [83.45, 82.51, 78.44]
+2026-10-21 17:46:38,507 [qsd.py] => QSD task=2 head=ridge_stats top1=74.88 old=77.56 new=68.07 task_pred=84.36 pair_ratio=0.7837500000000002
+2026-10-21 17:46:38,507 [qsd.py] => QSD tasks head=ridge_stats: [74.1, 80.49, 68.07]
+2026-10-21 17:46:38,507 [qsd.py] => QSD mech head=ridge_stats: {"task_prediction": 84.36, "pair_ratio": 0.7837500000000002}
+2026-10-21 17:46:38,507 [qsd.py] => QSD curve head=ridge_stats: [79.86, 81.52, 74.88]
+2026-10-21 17:46:38,507 [qsd.py] => QSD task=2 head=pgm_stale top1=78.44 old=81.19 new=71.43 task_pred=85.31 pair_ratio=1.01551724137931
+2026-10-21 17:46:38,507 [qsd.py] => QSD tasks head=pgm_stale: [74.1, 87.2, 71.43]
+2026-10-21 17:46:38,507 [qsd.py] => QSD mech head=pgm_stale: {"task_prediction": 85.31, "pair_ratio": 1.01551724137931}
+2026-10-21 17:46:38,507 [qsd.py] => QSD curve head=pgm_stale: [87.05, 84.49, 78.44]
+2026-10-21 17:46:38,507 [qsd.py] => QSD task=2 head=pgm_channel top1=77.25 old=80.2 new=69.75 task_pred=84.60 pair_ratio=0.995967741935484
+2026-10-21 17:46:38,507 [qsd.py] => QSD tasks head=pgm_channel: [73.38, 85.98, 69.75]
+2026-10-21 17:46:38,507 [qsd.py] => QSD mech head=pgm_channel: {"task_prediction": 84.6, "pair_ratio": 0.995967741935484}
+2026-10-21 17:46:38,507 [qsd.py] => QSD curve head=pgm_channel: [87.05, 83.83, 77.25]
+2026-10-21 17:46:38,507 [qsd.py] => QSD task=2 head=pgm_channel_hier top1=77.49 old=81.19 new=68.07 task_pred=85.07 pair_ratio=0.9351562499999998
+2026-10-21 17:46:38,508 [qsd.py] => QSD tasks head=pgm_channel_hier: [76.26, 85.37, 68.07]
+2026-10-21 17:46:38,508 [qsd.py] => QSD mech head=pgm_channel_hier: {"task_prediction": 85.07, "pair_ratio": 0.9351562499999998}
+2026-10-21 17:46:38,508 [qsd.py] => QSD curve head=pgm_channel_hier: [87.05, 84.82, 77.49]
+2026-10-21 17:46:38,508 [qsd.py] => QSD task=2 head=pgm_fuse top1=78.91 old=80.86 new=73.95 task_pred=85.31 pair_ratio=1.0907407407407408
+2026-10-21 17:46:38,508 [qsd.py] => QSD tasks head=pgm_fuse: [74.1, 86.59, 73.95]
+2026-10-21 17:46:38,508 [qsd.py] => QSD mech head=pgm_fuse: {"task_prediction": 85.31, "pair_ratio": 1.0907407407407408}
+2026-10-21 17:46:38,508 [qsd.py] => QSD curve head=pgm_fuse: [84.17, 83.83, 78.91]
+2026-10-21 17:46:38,508 [qsd.py] => QSD task=2 head=pgm_nonlinear top1=70.14 old=72.61 new=63.87 task_pred=81.99 pair_ratio=0.7219999999999999
+2026-10-21 17:46:38,508 [qsd.py] => QSD tasks head=pgm_nonlinear: [65.47, 78.66, 63.87]
+2026-10-21 17:46:38,508 [qsd.py] => QSD mech head=pgm_nonlinear: {"task_prediction": 81.99, "pair_ratio": 0.7219999999999999}
+2026-10-21 17:46:38,508 [qsd.py] => QSD curve head=pgm_nonlinear: [75.54, 74.59, 70.14]
+2026-10-21 17:46:38,508 [qsd.py] => QSD task=2 diag={"channel": {"deviation": 0.0686872652702711, "pairs": 480, "ridge": 0.06241872561768531}, "channel_nonlinear": {"deviation": 0.08514904288348203, "pairs": 480, "ridge": 0.026770775237032907}, "pgm_channel": {"effective_rank": 32.90227247598045}, "delta_sensitivity": {"0.01": 78.2, "0.1": 77.25, "1.0": 75.36}, "pgm_nonlinear": {"effective_rank": 158.79893080643384}, "ridge_sensitivity": {"0.01": 73.46, "0.1": 74.88, "1.0": 75.83}} seconds=5.8
+2026-10-21 17:46:38,522 [trainer.py] => CNN: {'total': 78.2, '00-19': 74.1, '20-39': 85.98, '40-59': 72.27, 'old': 80.53, 'new': 72.27}
+2026-10-21 17:46:38,522 [trainer.py] => Continual metrics after task 2: BWT=-5.8900, forgetting=5.8900, task_acc=[74.1, 85.98, 72.27]
+2026-10-21 17:46:38,523 [trainer.py] => CNN top1 curve: [83.45, 83.5, 78.2]
+2026-10-21 17:46:38,523 [trainer.py] => CNN top5 curve: [96.4, 96.37, 93.36]
+2026-10-21 17:46:38,523 [trainer.py] => Average Accuracy (CNN): 81.71666666666667
+2026-10-21 17:46:38,523 [trainer.py] => All params: 87034368
+2026-10-21 17:46:38,523 [trainer.py] => Trainable params: 1235712
+2026-10-21 17:46:38,524 [RSIAT_adapter.py] => Learning on 60-80
+2026-10-21 17:46:39,992 [toolkit.py] => All params: 87165440
+2026-10-21 17:46:39,993 [toolkit.py] => Trainable params: 1366784
+2026-10-21 17:48:04,311 [RSIAT_adapter.py] => Task 3, Epoch 15/15 => Loss 5.263, Loss_c 3.269, Losses_rt 1.995, Train_accy 82.82, Test_accy 73.51, Time 5.54s
+2026-10-21 17:48:04,312 [RSIAT_adapter.py] => Task 3 peak GPU memory: 4898.28 MiB
+2026-10-21 17:48:11,638 [base.py] => CA Task 3 => Loss 0.119, Test_accy skipped
+2026-10-21 17:48:12,482 [base.py] => CA Task 3 => Loss 0.095, Test_accy skipped
+2026-10-21 17:48:13,335 [base.py] => CA Task 3 => Loss 0.088, Test_accy skipped
+2026-10-21 17:48:14,138 [base.py] => CA Task 3 => Loss 0.079, Test_accy skipped
+2026-10-21 17:48:14,941 [base.py] => CA Task 3 => Loss 0.075, Test_accy skipped
+2026-10-21 17:48:15,748 [base.py] => CA Task 3 => Loss 0.075, Test_accy skipped
+2026-10-21 17:48:16,373 [base.py] => CA Task 3 => Loss 0.070, Test_accy skipped
+2026-10-21 17:48:17,343 [base.py] => CA Task 3 => Loss 0.071, Test_accy skipped
+2026-10-21 17:48:18,151 [base.py] => CA Task 3 => Loss 0.072, Test_accy skipped
+2026-10-21 17:48:20,240 [base.py] => CA Task 3 => Loss 0.070, Test_accy 75.140
+2026-10-21 17:48:29,298 [qsd.py] => QSD task=3 head=linear top1=75.14 old=77.25 new=68.42 task_pred=80.90 pair_ratio=1.0489583333333332
+2026-10-21 17:48:29,298 [qsd.py] => QSD tasks head=linear: [71.94, 85.37, 72.27, 68.42]
+2026-10-21 17:48:29,298 [qsd.py] => QSD mech head=linear: {"task_prediction": 80.9, "pair_ratio": 1.0489583333333332}
+2026-10-21 17:48:29,298 [qsd.py] => QSD curve head=linear: [83.45, 83.5, 78.2, 75.14]
+2026-10-21 17:48:29,298 [qsd.py] => QSD task=3 head=linear_rerun top1=75.14 old=77.25 new=68.42 task_pred=80.90 pair_ratio=1.0489583333333332
+2026-10-21 17:48:29,298 [qsd.py] => QSD tasks head=linear_rerun: [71.94, 85.37, 72.27, 68.42]
+2026-10-21 17:48:29,298 [qsd.py] => QSD mech head=linear_rerun: {"task_prediction": 80.9, "pair_ratio": 1.0489583333333332}
+2026-10-21 17:48:29,298 [qsd.py] => QSD curve head=linear_rerun: [83.45, 83.17, 77.96, 75.14]
+2026-10-21 17:48:29,298 [qsd.py] => QSD task=3 head=linear_noscale top1=74.95 old=77.01 new=68.42 task_pred=80.72 pair_ratio=1.0588541666666667
+2026-10-21 17:48:29,298 [qsd.py] => QSD tasks head=linear_noscale: [71.94, 84.76, 72.27, 68.42]
+2026-10-21 17:48:29,298 [qsd.py] => QSD mech head=linear_noscale: {"task_prediction": 80.72, "pair_ratio": 1.0588541666666667}
+2026-10-21 17:48:29,298 [qsd.py] => QSD curve head=linear_noscale: [83.45, 82.51, 78.44, 74.95]
+2026-10-21 17:48:29,298 [qsd.py] => QSD task=3 head=ridge_stats top1=72.43 old=73.93 new=67.67 task_pred=80.54 pair_ratio=0.76
+2026-10-21 17:48:29,298 [qsd.py] => QSD tasks head=ridge_stats: [71.22, 81.1, 67.23, 67.67]
+2026-10-21 17:48:29,298 [qsd.py] => QSD mech head=ridge_stats: {"task_prediction": 80.54, "pair_ratio": 0.76}
+2026-10-21 17:48:29,298 [qsd.py] => QSD curve head=ridge_stats: [79.86, 81.52, 74.88, 72.43]
+2026-10-21 17:48:29,298 [qsd.py] => QSD task=3 head=pgm_stale top1=72.97 old=74.41 new=68.42 task_pred=80.00 pair_ratio=0.9012820512820513
+2026-10-21 17:48:29,298 [qsd.py] => QSD tasks head=pgm_stale: [68.35, 84.76, 67.23, 68.42]
+2026-10-21 17:48:29,298 [qsd.py] => QSD mech head=pgm_stale: {"task_prediction": 80.0, "pair_ratio": 0.9012820512820513}
+2026-10-21 17:48:29,298 [qsd.py] => QSD curve head=pgm_stale: [87.05, 84.49, 78.44, 72.97]
+2026-10-21 17:48:29,298 [qsd.py] => QSD task=3 head=pgm_channel top1=72.61 old=74.41 new=66.92 task_pred=80.18 pair_ratio=0.8293650793650793
+2026-10-21 17:48:29,298 [qsd.py] => QSD tasks head=pgm_channel: [69.06, 84.15, 67.23, 66.92]
+2026-10-21 17:48:29,298 [qsd.py] => QSD mech head=pgm_channel: {"task_prediction": 80.18, "pair_ratio": 0.8293650793650793}
+2026-10-21 17:48:29,298 [qsd.py] => QSD curve head=pgm_channel: [87.05, 83.83, 77.25, 72.61]
+2026-10-21 17:48:29,298 [qsd.py] => QSD task=3 head=pgm_channel_hier top1=73.87 old=75.59 new=68.42 task_pred=80.90 pair_ratio=0.8606837606837606
+2026-10-21 17:48:29,298 [qsd.py] => QSD tasks head=pgm_channel_hier: [71.94, 84.76, 67.23, 68.42]
+2026-10-21 17:48:29,298 [qsd.py] => QSD mech head=pgm_channel_hier: {"task_prediction": 80.9, "pair_ratio": 0.8606837606837606}
+2026-10-21 17:48:29,298 [qsd.py] => QSD curve head=pgm_channel_hier: [87.05, 84.82, 77.49, 73.87]
+2026-10-21 17:48:29,298 [qsd.py] => QSD task=3 head=pgm_fuse top1=75.32 old=77.01 new=69.92 task_pred=80.90 pair_ratio=1.0827956989247312
+2026-10-21 17:48:29,298 [qsd.py] => QSD tasks head=pgm_fuse: [70.5, 85.37, 73.11, 69.92]
+2026-10-21 17:48:29,298 [qsd.py] => QSD mech head=pgm_fuse: {"task_prediction": 80.9, "pair_ratio": 1.0827956989247312}
+2026-10-21 17:48:29,298 [qsd.py] => QSD curve head=pgm_fuse: [84.17, 83.83, 78.91, 75.32]
+2026-10-21 17:48:29,298 [qsd.py] => QSD task=3 head=pgm_nonlinear top1=63.96 old=66.82 new=54.89 task_pred=73.87 pair_ratio=0.8348484848484848
+2026-10-21 17:48:29,298 [qsd.py] => QSD tasks head=pgm_nonlinear: [62.59, 75.0, 60.5, 54.89]
+2026-10-21 17:48:29,298 [qsd.py] => QSD mech head=pgm_nonlinear: {"task_prediction": 73.87, "pair_ratio": 0.8348484848484848}
+2026-10-21 17:48:29,298 [qsd.py] => QSD curve head=pgm_nonlinear: [75.54, 74.59, 70.14, 63.96]
+2026-10-21 17:48:29,298 [qsd.py] => QSD task=3 diag={"channel": {"deviation": 0.05393436751347994, "pairs": 524, "ridge": 0.0681404421326398}, "channel_nonlinear": {"deviation": 0.06860472428669402, "pairs": 524, "ridge": 0.02922476296709426}, "pgm_channel": {"effective_rank": 34.41111708252113}, "delta_sensitivity": {"0.01": 73.87, "0.1": 72.61, "1.0": 71.17}, "pgm_nonlinear": {"effective_rank": 174.3491691068405}, "ridge_sensitivity": {"0.01": 71.17, "0.1": 72.43, "1.0": 72.07}} seconds=7.8
+2026-10-21 17:48:29,314 [trainer.py] => CNN: {'total': 75.14, '00-19': 71.94, '20-39': 85.37, '40-59': 72.27, '60-79': 68.42, 'old': 77.25, 'new': 68.42}
+2026-10-21 17:48:29,314 [trainer.py] => Continual metrics after task 3: BWT=-4.8500, forgetting=4.8500, task_acc=[71.94, 85.37, 72.27, 68.42]
+2026-10-21 17:48:29,314 [trainer.py] => CNN top1 curve: [83.45, 83.5, 78.2, 75.14]
+2026-10-21 17:48:29,314 [trainer.py] => CNN top5 curve: [96.4, 96.37, 93.36, 90.63]
+2026-10-21 17:48:29,314 [trainer.py] => Average Accuracy (CNN): 80.0725
+2026-10-21 17:48:29,314 [trainer.py] => All params: 87049728
+2026-10-21 17:48:29,315 [trainer.py] => Trainable params: 1251072
+2026-10-21 17:48:29,315 [RSIAT_adapter.py] => Learning on 80-100
+2026-10-21 17:48:31,251 [toolkit.py] => All params: 87180800
+2026-10-21 17:48:31,251 [toolkit.py] => Trainable params: 1382144
+2026-10-21 17:50:03,455 [RSIAT_adapter.py] => Task 4, Epoch 15/15 => Loss 5.139, Loss_c 3.165, Losses_rt 1.974, Train_accy 79.41, Test_accy 70.59, Time 5.21s
+2026-10-21 17:50:03,455 [RSIAT_adapter.py] => Task 4 peak GPU memory: 4898.98 MiB
+2026-10-21 17:50:13,214 [base.py] => CA Task 4 => Loss 0.122, Test_accy skipped
+2026-10-21 17:50:15,073 [base.py] => CA Task 4 => Loss 0.103, Test_accy skipped
+2026-10-21 17:50:16,886 [base.py] => CA Task 4 => Loss 0.095, Test_accy skipped
+2026-10-21 17:50:18,715 [base.py] => CA Task 4 => Loss 0.087, Test_accy skipped
+2026-10-21 17:50:20,528 [base.py] => CA Task 4 => Loss 0.089, Test_accy skipped
+2026-10-21 17:50:22,308 [base.py] => CA Task 4 => Loss 0.084, Test_accy skipped
+2026-10-21 17:50:24,089 [base.py] => CA Task 4 => Loss 0.084, Test_accy skipped
+2026-10-21 17:50:25,925 [base.py] => CA Task 4 => Loss 0.080, Test_accy skipped
+2026-10-21 17:50:27,757 [base.py] => CA Task 4 => Loss 0.083, Test_accy skipped
+2026-10-21 17:50:31,433 [base.py] => CA Task 4 => Loss 0.080, Test_accy 70.730
+2026-10-21 17:50:42,011 [qsd.py] => QSD task=4 head=linear top1=70.73 old=70.81 new=70.45 task_pred=75.38 pair_ratio=1.2573529411764708
+2026-10-21 17:50:42,011 [qsd.py] => QSD tasks head=linear: [68.35, 82.32, 63.87, 65.41, 70.45]
+2026-10-21 17:50:42,011 [qsd.py] => QSD mech head=linear: {"task_prediction": 75.38, "pair_ratio": 1.2573529411764708}
+2026-10-21 17:50:42,011 [qsd.py] => QSD curve head=linear: [83.45, 83.5, 78.2, 75.14, 70.73]
+2026-10-21 17:50:42,012 [qsd.py] => QSD task=4 head=linear_rerun top1=71.55 old=71.71 new=71.02 task_pred=76.33 pair_ratio=1.1739285714285714
+2026-10-21 17:50:42,012 [qsd.py] => QSD tasks head=linear_rerun: [69.06, 82.32, 64.71, 67.67, 71.02]
+2026-10-21 17:50:42,012 [qsd.py] => QSD mech head=linear_rerun: {"task_prediction": 76.33, "pair_ratio": 1.1739285714285714}
+2026-10-21 17:50:42,012 [qsd.py] => QSD curve head=linear_rerun: [83.45, 83.17, 77.96, 75.14, 71.55]
+2026-10-21 17:50:42,012 [qsd.py] => QSD task=4 head=linear_noscale top1=71.14 old=70.99 new=71.59 task_pred=75.92 pair_ratio=1.1942857142857144
+2026-10-21 17:50:42,012 [qsd.py] => QSD tasks head=linear_noscale: [68.35, 81.71, 63.87, 66.92, 71.59]
+2026-10-21 17:50:42,012 [qsd.py] => QSD mech head=linear_noscale: {"task_prediction": 75.92, "pair_ratio": 1.1942857142857144}
+2026-10-21 17:50:42,012 [qsd.py] => QSD curve head=linear_noscale: [83.45, 82.51, 78.44, 74.95, 71.14]
+2026-10-21 17:50:42,012 [qsd.py] => QSD task=4 head=ridge_stats top1=71.68 old=71.35 new=72.73 task_pred=78.52 pair_ratio=0.74575
+2026-10-21 17:50:42,012 [qsd.py] => QSD tasks head=ridge_stats: [70.5, 78.66, 65.55, 68.42, 72.73]
+2026-10-21 17:50:42,012 [qsd.py] => QSD mech head=ridge_stats: {"task_prediction": 78.52, "pair_ratio": 0.74575}
+2026-10-21 17:50:42,012 [qsd.py] => QSD curve head=ridge_stats: [79.86, 81.52, 74.88, 72.43, 71.68]
+2026-10-21 17:50:42,012 [qsd.py] => QSD task=4 head=pgm_stale top1=70.31 old=70.27 new=70.45 task_pred=76.33 pair_ratio=0.9338068181818182
+2026-10-21 17:50:42,012 [qsd.py] => QSD tasks head=pgm_stale: [66.19, 80.49, 64.71, 66.92, 70.45]
+2026-10-21 17:50:42,012 [qsd.py] => QSD mech head=pgm_stale: {"task_prediction": 76.33, "pair_ratio": 0.9338068181818182}
+2026-10-21 17:50:42,012 [qsd.py] => QSD curve head=pgm_stale: [87.05, 84.49, 78.44, 72.97, 70.31]
+2026-10-21 17:50:42,012 [qsd.py] => QSD task=4 head=pgm_channel top1=70.86 old=70.99 new=70.45 task_pred=77.15 pair_ratio=0.8622282608695653
+2026-10-21 17:50:42,012 [qsd.py] => QSD tasks head=pgm_channel: [67.63, 81.1, 64.71, 67.67, 70.45]
+2026-10-21 17:50:42,012 [qsd.py] => QSD mech head=pgm_channel: {"task_prediction": 77.15, "pair_ratio": 0.8622282608695653}
+2026-10-21 17:50:42,012 [qsd.py] => QSD curve head=pgm_channel: [87.05, 83.83, 77.25, 72.61, 70.86]
+2026-10-21 17:50:42,012 [qsd.py] => QSD task=4 head=pgm_channel_hier top1=70.86 old=71.89 new=67.61 task_pred=76.88 pair_ratio=0.9122159090909091
+2026-10-21 17:50:42,012 [qsd.py] => QSD tasks head=pgm_channel_hier: [71.22, 80.49, 65.55, 67.67, 67.61]
+2026-10-21 17:50:42,012 [qsd.py] => QSD mech head=pgm_channel_hier: {"task_prediction": 76.88, "pair_ratio": 0.9122159090909091}
+2026-10-21 17:50:42,012 [qsd.py] => QSD curve head=pgm_channel_hier: [87.05, 84.82, 77.49, 73.87, 70.86]
+2026-10-21 17:50:42,012 [qsd.py] => QSD task=4 head=pgm_fuse top1=71.82 old=71.89 new=71.59 task_pred=76.74 pair_ratio=1.121527777777778
+2026-10-21 17:50:42,012 [qsd.py] => QSD tasks head=pgm_fuse: [69.06, 83.54, 63.87, 67.67, 71.59]
+2026-10-21 17:50:42,012 [qsd.py] => QSD mech head=pgm_fuse: {"task_prediction": 76.74, "pair_ratio": 1.121527777777778}
+2026-10-21 17:50:42,012 [qsd.py] => QSD curve head=pgm_fuse: [84.17, 83.83, 78.91, 75.32, 71.82]
+2026-10-21 17:50:42,012 [qsd.py] => QSD task=4 head=pgm_nonlinear top1=61.29 old=61.08 new=61.93 task_pred=67.99 pair_ratio=1.1341836734693878
+2026-10-21 17:50:42,012 [qsd.py] => QSD tasks head=pgm_nonlinear: [56.12, 70.12, 59.66, 56.39, 61.93]
+2026-10-21 17:50:42,012 [qsd.py] => QSD mech head=pgm_nonlinear: {"task_prediction": 67.99, "pair_ratio": 1.1341836734693878}
+2026-10-21 17:50:42,012 [qsd.py] => QSD curve head=pgm_nonlinear: [75.54, 74.59, 70.14, 63.96, 61.29]
+2026-10-21 17:50:42,012 [qsd.py] => QSD task=4 diag={"channel": {"deviation": 0.07388870316519565, "pairs": 709, "ridge": 0.09219765929778935}, "channel_nonlinear": {"deviation": 0.11425583586270494, "pairs": 709, "ridge": 0.03954266592303402}, "pgm_channel": {"effective_rank": 34.66183590403861}, "delta_sensitivity": {"0.01": 71.0, "0.1": 70.86, "1.0": 69.08}, "pgm_nonlinear": {"effective_rank": 183.34245946499476}, "ridge_sensitivity": {"0.01": 69.08, "0.1": 71.68, "1.0": 70.04}} seconds=8.8
+2026-10-21 17:50:42,028 [trainer.py] => CNN: {'total': 70.73, '00-19': 68.35, '20-39': 82.32, '40-59': 63.87, '60-79': 65.41, '80-99': 70.45, 'old': 70.81, 'new': 70.45}
+2026-10-21 17:50:42,028 [trainer.py] => Continual metrics after task 4: BWT=-8.1500, forgetting=8.1500, task_acc=[68.35, 82.32, 63.87, 65.41, 70.45]
+2026-10-21 17:50:42,028 [trainer.py] => CNN top1 curve: [83.45, 83.5, 78.2, 75.14, 70.73]
+2026-10-21 17:50:42,028 [trainer.py] => CNN top5 curve: [96.4, 96.37, 93.36, 90.63, 90.15]
+2026-10-21 17:50:42,028 [trainer.py] => Average Accuracy (CNN): 78.204
+2026-10-21 17:50:42,028 [trainer.py] => All params: 87065088
+2026-10-21 17:50:42,029 [trainer.py] => Trainable params: 1266432
+2026-10-21 17:50:42,029 [RSIAT_adapter.py] => Learning on 100-120
+2026-10-21 17:50:43,713 [toolkit.py] => All params: 87196160
+2026-10-21 17:50:43,713 [toolkit.py] => Trainable params: 1397504
+2026-10-21 17:52:15,820 [RSIAT_adapter.py] => Task 5, Epoch 15/15 => Loss 5.223, Loss_c 3.313, Losses_rt 1.910, Train_accy 78.21, Test_accy 70.96, Time 7.43s
+2026-10-21 17:52:15,820 [RSIAT_adapter.py] => Task 5 peak GPU memory: 4914.71 MiB
+2026-10-21 17:52:24,271 [base.py] => CA Task 5 => Loss 0.129, Test_accy skipped
+2026-10-21 17:52:25,656 [base.py] => CA Task 5 => Loss 0.110, Test_accy skipped
+2026-10-21 17:52:26,914 [base.py] => CA Task 5 => Loss 0.101, Test_accy skipped
+2026-10-21 17:52:27,618 [base.py] => CA Task 5 => Loss 0.097, Test_accy skipped
+2026-10-21 17:52:28,986 [base.py] => CA Task 5 => Loss 0.095, Test_accy skipped
+2026-10-21 17:52:30,351 [base.py] => CA Task 5 => Loss 0.092, Test_accy skipped
+2026-10-21 17:52:31,633 [base.py] => CA Task 5 => Loss 0.089, Test_accy skipped
+2026-10-21 17:52:32,958 [base.py] => CA Task 5 => Loss 0.088, Test_accy skipped
+2026-10-21 17:52:34,325 [base.py] => CA Task 5 => Loss 0.087, Test_accy skipped
+2026-10-21 17:52:37,604 [base.py] => CA Task 5 => Loss 0.088, Test_accy 71.070
+2026-10-21 17:52:47,938 [qsd.py] => QSD task=5 head=linear top1=71.07 old=69.22 new=79.87 task_pred=74.46 pair_ratio=1.4313333333333333
+2026-10-21 17:52:47,938 [qsd.py] => QSD tasks head=linear: [67.63, 80.49, 59.66, 66.17, 68.75, 79.87]
+2026-10-21 17:52:47,938 [qsd.py] => QSD mech head=linear: {"task_prediction": 74.46, "pair_ratio": 1.4313333333333333}
+2026-10-21 17:52:47,938 [qsd.py] => QSD curve head=linear: [83.45, 83.5, 78.2, 75.14, 70.73, 71.07]
+2026-10-21 17:52:47,938 [qsd.py] => QSD task=5 head=linear_rerun top1=70.96 old=69.08 new=79.87 task_pred=74.46 pair_ratio=1.3851612903225807
+2026-10-21 17:52:47,938 [qsd.py] => QSD tasks head=linear_rerun: [66.91, 79.88, 60.5, 65.41, 69.32, 79.87]
+2026-10-21 17:52:47,938 [qsd.py] => QSD mech head=linear_rerun: {"task_prediction": 74.46, "pair_ratio": 1.3851612903225807}
+2026-10-21 17:52:47,938 [qsd.py] => QSD curve head=linear_rerun: [83.45, 83.17, 77.96, 75.14, 71.55, 70.96]
+2026-10-21 17:52:47,938 [qsd.py] => QSD task=5 head=linear_noscale top1=70.73 old=68.81 new=79.87 task_pred=74.46 pair_ratio=1.3012121212121213
+2026-10-21 17:52:47,938 [qsd.py] => QSD tasks head=linear_noscale: [66.19, 79.27, 59.66, 66.17, 69.32, 79.87]
+2026-10-21 17:52:47,938 [qsd.py] => QSD mech head=linear_noscale: {"task_prediction": 74.46, "pair_ratio": 1.3012121212121213}
+2026-10-21 17:52:47,938 [qsd.py] => QSD curve head=linear_noscale: [83.45, 82.51, 78.44, 74.95, 71.14, 70.73]
+2026-10-21 17:52:47,938 [qsd.py] => QSD task=5 head=ridge_stats top1=70.62 old=68.95 new=78.57 task_pred=74.92 pair_ratio=1.1099999999999999
+2026-10-21 17:52:47,938 [qsd.py] => QSD tasks head=ridge_stats: [69.06, 75.61, 63.87, 65.41, 68.75, 78.57]
+2026-10-21 17:52:47,938 [qsd.py] => QSD mech head=ridge_stats: {"task_prediction": 74.92, "pair_ratio": 1.1099999999999999}
+2026-10-21 17:52:47,938 [qsd.py] => QSD curve head=ridge_stats: [79.86, 81.52, 74.88, 72.43, 71.68, 70.62]
+2026-10-21 17:52:47,938 [qsd.py] => QSD task=5 head=pgm_stale top1=70.06 old=68.4 new=77.92 task_pred=74.69 pair_ratio=1.038048780487805
+2026-10-21 17:52:47,938 [qsd.py] => QSD tasks head=pgm_stale: [67.63, 76.22, 63.03, 64.66, 68.18, 77.92]
+2026-10-21 17:52:47,938 [qsd.py] => QSD mech head=pgm_stale: {"task_prediction": 74.69, "pair_ratio": 1.038048780487805}
+2026-10-21 17:52:47,938 [qsd.py] => QSD curve head=pgm_stale: [87.05, 84.49, 78.44, 72.97, 70.31, 70.06]
+2026-10-21 17:52:47,938 [qsd.py] => QSD task=5 head=pgm_channel top1=69.60 old=68.13 new=76.62 task_pred=74.92 pair_ratio=0.8974468085106383
+2026-10-21 17:52:47,938 [qsd.py] => QSD tasks head=pgm_channel: [69.78, 76.83, 61.34, 63.16, 67.05, 76.62]
+2026-10-21 17:52:47,938 [qsd.py] => QSD mech head=pgm_channel: {"task_prediction": 74.92, "pair_ratio": 0.8974468085106383}
+2026-10-21 17:52:47,938 [qsd.py] => QSD curve head=pgm_channel: [87.05, 83.83, 77.25, 72.61, 70.86, 69.6]
+2026-10-21 17:52:47,938 [qsd.py] => QSD task=5 head=pgm_channel_hier top1=71.30 old=70.31 new=75.97 task_pred=76.05 pair_ratio=0.959047619047619
+2026-10-21 17:52:47,938 [qsd.py] => QSD tasks head=pgm_channel_hier: [71.94, 81.1, 60.5, 66.17, 68.75, 75.97]
+2026-10-21 17:52:47,938 [qsd.py] => QSD mech head=pgm_channel_hier: {"task_prediction": 76.05, "pair_ratio": 0.959047619047619}
+2026-10-21 17:52:47,938 [qsd.py] => QSD curve head=pgm_channel_hier: [87.05, 84.82, 77.49, 73.87, 70.86, 71.3]
+2026-10-21 17:52:47,938 [qsd.py] => QSD task=5 head=pgm_fuse top1=71.41 old=69.9 new=78.57 task_pred=75.25 pair_ratio=1.2238235294117648
+2026-10-21 17:52:47,938 [qsd.py] => QSD tasks head=pgm_fuse: [69.78, 79.88, 59.66, 66.92, 69.89, 78.57]
+2026-10-21 17:52:47,938 [qsd.py] => QSD mech head=pgm_fuse: {"task_prediction": 75.25, "pair_ratio": 1.2238235294117648}
+2026-10-21 17:52:47,938 [qsd.py] => QSD curve head=pgm_fuse: [84.17, 83.83, 78.91, 75.32, 71.82, 71.41]
+2026-10-21 17:52:47,939 [qsd.py] => QSD task=5 head=pgm_nonlinear top1=62.37 old=60.47 new=71.43 task_pred=68.36 pair_ratio=1.0037735849056604
+2026-10-21 17:52:47,939 [qsd.py] => QSD tasks head=pgm_nonlinear: [57.55, 68.29, 57.14, 55.64, 61.36, 71.43]
+2026-10-21 17:52:47,939 [qsd.py] => QSD mech head=pgm_nonlinear: {"task_prediction": 68.36, "pair_ratio": 1.0037735849056604}
+2026-10-21 17:52:47,939 [qsd.py] => QSD curve head=pgm_nonlinear: [75.54, 74.59, 70.14, 63.96, 61.29, 62.37]
+2026-10-21 17:52:47,939 [qsd.py] => QSD task=5 diag={"channel": {"deviation": 0.06723143870619666, "pairs": 615, "ridge": 0.0799739921976593}, "channel_nonlinear": {"deviation": 0.09529834778164939, "pairs": 615, "ridge": 0.034300055772448414}, "pgm_channel": {"effective_rank": 34.56175254686491}, "delta_sensitivity": {"0.01": 70.17, "0.1": 69.6, "1.0": 67.8}, "pgm_nonlinear": {"effective_rank": 187.74386038836954}, "ridge_sensitivity": {"0.01": 69.72, "0.1": 70.62, "1.0": 69.6}} seconds=8.4
+2026-10-21 17:52:47,955 [trainer.py] => CNN: {'total': 71.07, '00-19': 67.63, '20-39': 80.49, '40-59': 59.66, '60-79': 66.17, '80-99': 68.75, '100-119': 79.87, 'old': 69.22, 'new': 79.87}
+2026-10-21 17:52:47,955 [trainer.py] => Continual metrics after task 5: BWT=-8.0600, forgetting=8.0600, task_acc=[67.63, 80.49, 59.66, 66.17, 68.75, 79.87]
+2026-10-21 17:52:47,955 [trainer.py] => CNN top1 curve: [83.45, 83.5, 78.2, 75.14, 70.73, 71.07]
+2026-10-21 17:52:47,955 [trainer.py] => CNN top5 curve: [96.4, 96.37, 93.36, 90.63, 90.15, 89.6]
+2026-10-21 17:52:47,955 [trainer.py] => Average Accuracy (CNN): 77.015
+2026-10-21 17:52:47,956 [trainer.py] => All params: 87080448
+2026-10-21 17:52:47,956 [trainer.py] => Trainable params: 1281792
+2026-10-21 17:52:47,956 [RSIAT_adapter.py] => Learning on 120-140
+2026-10-21 17:52:49,876 [toolkit.py] => All params: 87211520
+2026-10-21 17:52:49,877 [toolkit.py] => Trainable params: 1412864
+2026-10-21 17:54:36,482 [RSIAT_adapter.py] => Task 6, Epoch 15/15 => Loss 4.805, Loss_c 2.935, Losses_rt 1.870, Train_accy 82.31, Test_accy 65.54, Time 7.62s
+2026-10-21 17:54:36,482 [RSIAT_adapter.py] => Task 6 peak GPU memory: 4917.87 MiB
+2026-10-21 17:54:47,512 [base.py] => CA Task 6 => Loss 0.134, Test_accy skipped
+2026-10-21 17:54:50,145 [base.py] => CA Task 6 => Loss 0.113, Test_accy skipped
+2026-10-21 17:54:52,576 [base.py] => CA Task 6 => Loss 0.109, Test_accy skipped
+2026-10-21 17:54:55,152 [base.py] => CA Task 6 => Loss 0.106, Test_accy skipped
+2026-10-21 17:54:57,714 [base.py] => CA Task 6 => Loss 0.101, Test_accy skipped
+2026-10-21 17:55:00,199 [base.py] => CA Task 6 => Loss 0.099, Test_accy skipped
+2026-10-21 17:55:02,734 [base.py] => CA Task 6 => Loss 0.096, Test_accy skipped
+2026-10-21 17:55:05,318 [base.py] => CA Task 6 => Loss 0.096, Test_accy skipped
+2026-10-21 17:55:07,761 [base.py] => CA Task 6 => Loss 0.096, Test_accy skipped
+2026-10-21 17:55:12,925 [base.py] => CA Task 6 => Loss 0.095, Test_accy 68.920
+2026-10-21 17:55:27,018 [qsd.py] => QSD task=6 head=linear top1=68.92 old=67.12 new=77.78 task_pred=71.74 pair_ratio=1.5886111111111112
+2026-10-21 17:55:27,018 [qsd.py] => QSD tasks head=linear: [63.31, 76.83, 53.78, 63.16, 68.18, 72.73, 77.78]
+2026-10-21 17:55:27,018 [qsd.py] => QSD mech head=linear: {"task_prediction": 71.74, "pair_ratio": 1.5886111111111112}
+2026-10-21 17:55:27,018 [qsd.py] => QSD curve head=linear: [83.45, 83.5, 78.2, 75.14, 70.73, 71.07, 68.92]
+2026-10-21 17:55:27,018 [qsd.py] => QSD task=6 head=linear_rerun top1=68.92 old=67.12 new=77.78 task_pred=71.64 pair_ratio=1.6488505747126438
+2026-10-21 17:55:27,019 [qsd.py] => QSD tasks head=linear_rerun: [63.31, 76.22, 54.62, 62.41, 68.75, 72.73, 77.78]
+2026-10-21 17:55:27,019 [qsd.py] => QSD mech head=linear_rerun: {"task_prediction": 71.64, "pair_ratio": 1.6488505747126438}
+2026-10-21 17:55:27,019 [qsd.py] => QSD curve head=linear_rerun: [83.45, 83.17, 77.96, 75.14, 71.55, 70.96, 68.92]
+2026-10-21 17:55:27,019 [qsd.py] => QSD task=6 head=linear_noscale top1=69.11 old=67.12 new=78.89 task_pred=72.02 pair_ratio=1.522043010752688
+2026-10-21 17:55:27,019 [qsd.py] => QSD tasks head=linear_noscale: [62.59, 76.22, 54.62, 63.16, 68.75, 72.73, 78.89]
+2026-10-21 17:55:27,019 [qsd.py] => QSD mech head=linear_noscale: {"task_prediction": 72.02, "pair_ratio": 1.522043010752688}
+2026-10-21 17:55:27,019 [qsd.py] => QSD curve head=linear_noscale: [83.45, 82.51, 78.44, 74.95, 71.14, 70.73, 69.11]
+2026-10-21 17:55:27,019 [qsd.py] => QSD task=6 head=ridge_stats top1=67.89 old=65.2 new=81.11 task_pred=71.27 pair_ratio=1.3458333333333334
+2026-10-21 17:55:27,019 [qsd.py] => QSD tasks head=ridge_stats: [62.59, 70.12, 57.98, 59.4, 65.34, 72.73, 81.11]
+2026-10-21 17:55:27,019 [qsd.py] => QSD mech head=ridge_stats: {"task_prediction": 71.27, "pair_ratio": 1.3458333333333334}
+2026-10-21 17:55:27,019 [qsd.py] => QSD curve head=ridge_stats: [79.86, 81.52, 74.88, 72.43, 71.68, 70.62, 67.89]
+2026-10-21 17:55:27,019 [qsd.py] => QSD task=6 head=pgm_stale top1=67.79 old=65.08 new=81.11 task_pred=71.55 pair_ratio=1.199375
+2026-10-21 17:55:27,019 [qsd.py] => QSD tasks head=pgm_stale: [63.31, 69.51, 56.3, 59.4, 67.61, 70.78, 81.11]
+2026-10-21 17:55:27,019 [qsd.py] => QSD mech head=pgm_stale: {"task_prediction": 71.55, "pair_ratio": 1.199375}
+2026-10-21 17:55:27,019 [qsd.py] => QSD curve head=pgm_stale: [87.05, 84.49, 78.44, 72.97, 70.31, 70.06, 67.79]
+2026-10-21 17:55:27,019 [qsd.py] => QSD task=6 head=pgm_channel top1=68.26 old=65.54 new=81.67 task_pred=72.39 pair_ratio=1.0579545454545456
+2026-10-21 17:55:27,019 [qsd.py] => QSD tasks head=pgm_channel: [66.91, 70.12, 57.14, 59.4, 66.48, 70.13, 81.67]
+2026-10-21 17:55:27,019 [qsd.py] => QSD mech head=pgm_channel: {"task_prediction": 72.39, "pair_ratio": 1.0579545454545456}
+2026-10-21 17:55:27,019 [qsd.py] => QSD curve head=pgm_channel: [87.05, 83.83, 77.25, 72.61, 70.86, 69.6, 68.26]
+2026-10-21 17:55:27,019 [qsd.py] => QSD task=6 head=pgm_channel_hier top1=69.77 old=67.8 new=79.44 task_pred=73.33 pair_ratio=1.1833333333333333
+2026-10-21 17:55:27,019 [qsd.py] => QSD tasks head=pgm_channel_hier: [70.5, 76.22, 57.14, 63.16, 65.91, 70.78, 79.44]
+2026-10-21 17:55:27,019 [qsd.py] => QSD mech head=pgm_channel_hier: {"task_prediction": 73.33, "pair_ratio": 1.1833333333333333}
+2026-10-21 17:55:27,019 [qsd.py] => QSD curve head=pgm_channel_hier: [87.05, 84.82, 77.49, 73.87, 70.86, 71.3, 69.77]
+2026-10-21 17:55:27,019 [qsd.py] => QSD task=6 head=pgm_fuse top1=69.77 old=67.91 new=78.89 task_pred=72.86 pair_ratio=1.3866161616161616
+2026-10-21 17:55:27,019 [qsd.py] => QSD tasks head=pgm_fuse: [64.75, 77.44, 53.78, 66.92, 68.18, 72.08, 78.89]
+2026-10-21 17:55:27,019 [qsd.py] => QSD mech head=pgm_fuse: {"task_prediction": 72.86, "pair_ratio": 1.3866161616161616}
+2026-10-21 17:55:27,019 [qsd.py] => QSD curve head=pgm_fuse: [84.17, 83.83, 78.91, 75.32, 71.82, 71.41, 69.77]
+2026-10-21 17:55:27,019 [qsd.py] => QSD task=6 head=pgm_nonlinear top1=60.56 old=58.64 new=70.0 task_pred=65.54 pair_ratio=1.096383647798742
+2026-10-21 17:55:27,019 [qsd.py] => QSD tasks head=pgm_nonlinear: [51.8, 61.59, 54.62, 54.14, 56.82, 70.78, 70.0]
+2026-10-21 17:55:27,019 [qsd.py] => QSD mech head=pgm_nonlinear: {"task_prediction": 65.54, "pair_ratio": 1.096383647798742}
+2026-10-21 17:55:27,019 [qsd.py] => QSD curve head=pgm_nonlinear: [75.54, 74.59, 70.14, 63.96, 61.29, 62.37, 60.56]
+2026-10-21 17:55:27,019 [qsd.py] => QSD task=6 diag={"channel": {"deviation": 0.0743040956214971, "pairs": 718, "ridge": 0.09336801040312093}, "channel_nonlinear": {"deviation": 0.11234902847844126, "pairs": 718, "ridge": 0.040044617958728386}, "pgm_channel": {"effective_rank": 34.6007297747487}, "delta_sensitivity": {"0.01": 68.45, "0.1": 68.26, "1.0": 66.29}, "pgm_nonlinear": {"effective_rank": 191.62837933015726}, "ridge_sensitivity": {"0.01": 67.7, "0.1": 67.89, "1.0": 67.23}} seconds=11.5
+2026-10-21 17:55:27,036 [trainer.py] => CNN: {'total': 68.92, '00-19': 63.31, '20-39': 76.83, '40-59': 53.78, '60-79': 63.16, '80-99': 68.18, '100-119': 72.73, '120-139': 77.78, 'old': 67.12, 'new': 77.78}
+2026-10-21 17:55:27,036 [trainer.py] => Continual metrics after task 6: BWT=-10.8133, forgetting=10.8133, task_acc=[63.31, 76.83, 53.78, 63.16, 68.18, 72.73, 77.78]
+2026-10-21 17:55:27,036 [trainer.py] => CNN top1 curve: [83.45, 83.5, 78.2, 75.14, 70.73, 71.07, 68.92]
+2026-10-21 17:55:27,036 [trainer.py] => CNN top5 curve: [96.4, 96.37, 93.36, 90.63, 90.15, 89.6, 89.39]
+2026-10-21 17:55:27,036 [trainer.py] => Average Accuracy (CNN): 75.85857142857142
+2026-10-21 17:55:27,036 [trainer.py] => All params: 87095808
+2026-10-21 17:55:27,037 [trainer.py] => Trainable params: 1297152
+2026-10-21 17:55:27,037 [RSIAT_adapter.py] => Learning on 140-160
+2026-10-21 17:55:28,629 [toolkit.py] => All params: 87226880
+2026-10-21 17:55:28,630 [toolkit.py] => Trainable params: 1428224
+2026-10-21 17:57:00,269 [RSIAT_adapter.py] => Task 7, Epoch 15/15 => Loss 4.194, Loss_c 2.390, Losses_rt 1.804, Train_accy 85.31, Test_accy 66.58, Time 5.94s
+2026-10-21 17:57:00,269 [RSIAT_adapter.py] => Task 7 peak GPU memory: 4933.07 MiB
+2026-10-21 17:57:10,546 [base.py] => CA Task 7 => Loss 0.124, Test_accy skipped
+2026-10-21 17:57:13,506 [base.py] => CA Task 7 => Loss 0.114, Test_accy skipped
+2026-10-21 17:57:16,442 [base.py] => CA Task 7 => Loss 0.106, Test_accy skipped
+2026-10-21 17:57:19,401 [base.py] => CA Task 7 => Loss 0.100, Test_accy skipped
+2026-10-21 17:57:22,399 [base.py] => CA Task 7 => Loss 0.101, Test_accy skipped
+2026-10-21 17:57:25,395 [base.py] => CA Task 7 => Loss 0.098, Test_accy skipped
+2026-10-21 17:57:28,367 [base.py] => CA Task 7 => Loss 0.099, Test_accy skipped
+2026-10-21 17:57:31,354 [base.py] => CA Task 7 => Loss 0.094, Test_accy skipped
+2026-10-21 17:57:34,336 [base.py] => CA Task 7 => Loss 0.096, Test_accy skipped
+2026-10-21 17:57:40,118 [base.py] => CA Task 7 => Loss 0.093, Test_accy 68.330
+2026-10-21 17:57:56,605 [qsd.py] => QSD task=7 head=linear top1=68.33 old=67.32 new=75.89 task_pred=71.14 pair_ratio=1.389075630252101
+2026-10-21 17:57:56,605 [qsd.py] => QSD tasks head=linear: [63.31, 75.61, 51.26, 61.65, 66.48, 69.48, 76.67, 75.89]
+2026-10-21 17:57:56,605 [qsd.py] => QSD mech head=linear: {"task_prediction": 71.14, "pair_ratio": 1.389075630252101}
+2026-10-21 17:57:56,605 [qsd.py] => QSD curve head=linear: [83.45, 83.5, 78.2, 75.14, 70.73, 71.07, 68.92, 68.33]
+2026-10-21 17:57:56,605 [qsd.py] => QSD task=7 head=linear_rerun top1=68.91 old=67.89 new=76.6 task_pred=71.48 pair_ratio=1.505990783410138
+2026-10-21 17:57:56,605 [qsd.py] => QSD tasks head=linear_rerun: [64.03, 75.61, 52.1, 62.41, 66.48, 69.48, 78.33, 76.6]
+2026-10-21 17:57:56,605 [qsd.py] => QSD mech head=linear_rerun: {"task_prediction": 71.48, "pair_ratio": 1.505990783410138}
+2026-10-21 17:57:56,605 [qsd.py] => QSD curve head=linear_rerun: [83.45, 83.17, 77.96, 75.14, 71.55, 70.96, 68.92, 68.91]
+2026-10-21 17:57:56,605 [qsd.py] => QSD task=7 head=linear_noscale top1=68.74 old=67.7 new=76.6 task_pred=71.39 pair_ratio=1.4631696428571426
+2026-10-21 17:57:56,605 [qsd.py] => QSD tasks head=linear_noscale: [62.59, 75.61, 52.1, 62.41, 66.48, 69.48, 78.33, 76.6]
+2026-10-21 17:57:56,605 [qsd.py] => QSD mech head=linear_noscale: {"task_prediction": 71.39, "pair_ratio": 1.4631696428571426}
+2026-10-21 17:57:56,605 [qsd.py] => QSD curve head=linear_noscale: [83.45, 82.51, 78.44, 74.95, 71.14, 70.73, 69.11, 68.74]
+2026-10-21 17:57:56,605 [qsd.py] => QSD task=7 head=ridge_stats top1=67.25 old=65.73 new=78.72 task_pred=70.98 pair_ratio=1.0555555555555556
+2026-10-21 17:57:56,605 [qsd.py] => QSD tasks head=ridge_stats: [58.27, 69.51, 55.46, 59.4, 64.2, 68.18, 78.89, 78.72]
+2026-10-21 17:57:56,605 [qsd.py] => QSD mech head=ridge_stats: {"task_prediction": 70.98, "pair_ratio": 1.0555555555555556}
+2026-10-21 17:57:56,605 [qsd.py] => QSD curve head=ridge_stats: [79.86, 81.52, 74.88, 72.43, 71.68, 70.62, 67.89, 67.25]
+2026-10-21 17:57:56,605 [qsd.py] => QSD task=7 head=pgm_stale top1=67.66 old=66.29 new=78.01 task_pred=71.23 pair_ratio=1.0951827242524919
+2026-10-21 17:57:56,605 [qsd.py] => QSD tasks head=pgm_stale: [58.27, 67.07, 55.46, 60.15, 67.05, 68.18, 81.11, 78.01]
+2026-10-21 17:57:56,605 [qsd.py] => QSD mech head=pgm_stale: {"task_prediction": 71.23, "pair_ratio": 1.0951827242524919}
+2026-10-21 17:57:56,605 [qsd.py] => QSD curve head=pgm_stale: [87.05, 84.49, 78.44, 72.97, 70.31, 70.06, 67.79, 67.66]
+2026-10-21 17:57:56,605 [qsd.py] => QSD task=7 head=pgm_channel top1=67.91 old=66.38 new=79.43 task_pred=71.72 pair_ratio=1.0060559006211178
+2026-10-21 17:57:56,605 [qsd.py] => QSD tasks head=pgm_channel: [61.15, 68.9, 55.46, 59.4, 67.05, 66.23, 80.0, 79.43]
+2026-10-21 17:57:56,605 [qsd.py] => QSD mech head=pgm_channel: {"task_prediction": 71.72, "pair_ratio": 1.0060559006211178}
+2026-10-21 17:57:56,605 [qsd.py] => QSD curve head=pgm_channel: [87.05, 83.83, 77.25, 72.61, 70.86, 69.6, 68.26, 67.91]
+2026-10-21 17:57:56,605 [qsd.py] => QSD task=7 head=pgm_channel_hier top1=68.91 old=67.61 new=78.72 task_pred=72.06 pair_ratio=1.2035714285714285
+2026-10-21 17:57:56,605 [qsd.py] => QSD tasks head=pgm_channel_hier: [67.63, 74.39, 56.3, 61.65, 62.5, 68.83, 77.22, 78.72]
+2026-10-21 17:57:56,606 [qsd.py] => QSD mech head=pgm_channel_hier: {"task_prediction": 72.06, "pair_ratio": 1.2035714285714285}
+2026-10-21 17:57:56,606 [qsd.py] => QSD curve head=pgm_channel_hier: [87.05, 84.82, 77.49, 73.87, 70.86, 71.3, 69.77, 68.91]
+2026-10-21 17:57:56,606 [qsd.py] => QSD task=7 head=pgm_fuse top1=69.32 old=68.36 new=76.6 task_pred=72.22 pair_ratio=1.2989795918367346
+2026-10-21 17:57:56,606 [qsd.py] => QSD tasks head=pgm_fuse: [62.59, 77.44, 53.78, 63.91, 67.05, 70.78, 76.67, 76.6]
+2026-10-21 17:57:56,606 [qsd.py] => QSD mech head=pgm_fuse: {"task_prediction": 72.22, "pair_ratio": 1.2989795918367346}
+2026-10-21 17:57:56,606 [qsd.py] => QSD curve head=pgm_fuse: [84.17, 83.83, 78.91, 75.32, 71.82, 71.41, 69.77, 69.32]
+2026-10-21 17:57:56,606 [qsd.py] => QSD task=7 head=pgm_nonlinear top1=60.61 old=58.87 new=73.76 task_pred=64.68 pair_ratio=1.179883381924198
+2026-10-21 17:57:56,606 [qsd.py] => QSD tasks head=pgm_nonlinear: [44.6, 62.8, 53.78, 50.38, 55.68, 68.83, 70.56, 73.76]
+2026-10-21 17:57:56,606 [qsd.py] => QSD mech head=pgm_nonlinear: {"task_prediction": 64.68, "pair_ratio": 1.179883381924198}
+2026-10-21 17:57:56,606 [qsd.py] => QSD curve head=pgm_nonlinear: [75.54, 74.59, 70.14, 63.96, 61.29, 62.37, 60.56, 60.61]
+2026-10-21 17:57:56,606 [qsd.py] => QSD task=7 diag={"channel": {"deviation": 0.06702890489724657, "pairs": 565, "ridge": 0.07347204161248375}, "channel_nonlinear": {"deviation": 0.09041050836375099, "pairs": 565, "ridge": 0.03151143335192415}, "pgm_channel": {"effective_rank": 34.19579162289397}, "delta_sensitivity": {"0.01": 67.99, "0.1": 67.91, "1.0": 66.42}, "pgm_nonlinear": {"effective_rank": 191.66570132313447}, "ridge_sensitivity": {"0.01": 66.92, "0.1": 67.25, "1.0": 67.91}} seconds=13.5
+2026-10-21 17:57:56,623 [trainer.py] => CNN: {'total': 68.33, '00-19': 63.31, '20-39': 75.61, '40-59': 51.26, '60-79': 61.65, '80-99': 66.48, '100-119': 69.48, '120-139': 76.67, '140-159': 75.89, 'old': 67.32, 'new': 75.89}
+2026-10-21 17:57:56,623 [trainer.py] => Continual metrics after task 7: BWT=-10.8843, forgetting=10.8843, task_acc=[63.31, 75.61, 51.26, 61.65, 66.48, 69.48, 76.67, 75.89]
+2026-10-21 17:57:56,623 [trainer.py] => CNN top1 curve: [83.45, 83.5, 78.2, 75.14, 70.73, 71.07, 68.92, 68.33]
+2026-10-21 17:57:56,623 [trainer.py] => CNN top5 curve: [96.4, 96.37, 93.36, 90.63, 90.15, 89.6, 89.39, 89.22]
+2026-10-21 17:57:56,623 [trainer.py] => Average Accuracy (CNN): 74.9175
+2026-10-21 17:57:56,623 [trainer.py] => All params: 87111168
+2026-10-21 17:57:56,624 [trainer.py] => Trainable params: 1312512
+2026-10-21 17:57:56,624 [RSIAT_adapter.py] => Learning on 160-180
+2026-10-21 17:57:58,254 [toolkit.py] => All params: 87242240
+2026-10-21 17:57:58,255 [toolkit.py] => Trainable params: 1443584
+2026-10-21 17:59:30,134 [RSIAT_adapter.py] => Task 8, Epoch 15/15 => Loss 4.699, Loss_c 2.935, Losses_rt 1.764, Train_accy 76.29, Test_accy 67.53, Time 5.78s
+2026-10-21 17:59:30,134 [RSIAT_adapter.py] => Task 8 peak GPU memory: 4934.29 MiB
+2026-10-21 17:59:40,794 [base.py] => CA Task 8 => Loss 0.131, Test_accy skipped
+2026-10-21 17:59:44,136 [base.py] => CA Task 8 => Loss 0.115, Test_accy skipped
+2026-10-21 17:59:47,597 [base.py] => CA Task 8 => Loss 0.112, Test_accy skipped
+2026-10-21 17:59:50,934 [base.py] => CA Task 8 => Loss 0.106, Test_accy skipped
+2026-10-21 17:59:54,241 [base.py] => CA Task 8 => Loss 0.105, Test_accy skipped
+2026-10-21 17:59:57,501 [base.py] => CA Task 8 => Loss 0.101, Test_accy skipped
+2026-10-21 18:00:00,719 [base.py] => CA Task 8 => Loss 0.100, Test_accy skipped
+2026-10-21 18:00:04,023 [base.py] => CA Task 8 => Loss 0.100, Test_accy skipped
+2026-10-21 18:00:07,494 [base.py] => CA Task 8 => Loss 0.099, Test_accy skipped
+2026-10-21 18:00:14,106 [base.py] => CA Task 8 => Loss 0.100, Test_accy 68.800
+2026-10-21 18:00:31,242 [qsd.py] => QSD task=8 head=linear top1=68.80 old=67.25 new=82.14 task_pred=70.65 pair_ratio=1.87625
+2026-10-21 18:00:31,242 [qsd.py] => QSD tasks head=linear: [62.59, 72.56, 51.26, 62.41, 65.34, 69.48, 75.0, 73.76, 82.14]
+2026-10-21 18:00:31,242 [qsd.py] => QSD mech head=linear: {"task_prediction": 70.65, "pair_ratio": 1.87625}
+2026-10-21 18:00:31,242 [qsd.py] => QSD curve head=linear: [83.45, 83.5, 78.2, 75.14, 70.73, 71.07, 68.92, 68.33, 68.8]
+2026-10-21 18:00:31,242 [qsd.py] => QSD task=8 head=linear_rerun top1=69.17 old=67.74 new=81.43 task_pred=71.17 pair_ratio=1.7064814814814813
+2026-10-21 18:00:31,242 [qsd.py] => QSD tasks head=linear_rerun: [63.31, 73.78, 52.1, 62.41, 65.91, 70.13, 75.56, 73.05, 81.43]
+2026-10-21 18:00:31,242 [qsd.py] => QSD mech head=linear_rerun: {"task_prediction": 71.17, "pair_ratio": 1.7064814814814813}
+2026-10-21 18:00:31,242 [qsd.py] => QSD curve head=linear_rerun: [83.45, 83.17, 77.96, 75.14, 71.55, 70.96, 68.92, 68.91, 69.17]
+2026-10-21 18:00:31,242 [qsd.py] => QSD task=8 head=linear_noscale top1=68.72 old=67.33 new=80.71 task_pred=70.80 pair_ratio=1.6667410714285715
+2026-10-21 18:00:31,242 [qsd.py] => QSD tasks head=linear_noscale: [62.59, 72.56, 50.42, 63.16, 65.34, 70.13, 74.44, 74.47, 80.71]
+2026-10-21 18:00:31,242 [qsd.py] => QSD mech head=linear_noscale: {"task_prediction": 70.8, "pair_ratio": 1.6667410714285715}
+2026-10-21 18:00:31,242 [qsd.py] => QSD curve head=linear_noscale: [83.45, 82.51, 78.44, 74.95, 71.14, 70.73, 69.11, 68.74, 68.72]
+2026-10-21 18:00:31,242 [qsd.py] => QSD task=8 head=ridge_stats top1=66.79 old=65.17 new=80.71 task_pred=69.76 pair_ratio=1.20828125
+2026-10-21 18:00:31,242 [qsd.py] => QSD tasks head=ridge_stats: [54.68, 65.85, 51.26, 59.4, 64.2, 68.18, 76.67, 75.18, 80.71]
+2026-10-21 18:00:31,242 [qsd.py] => QSD mech head=ridge_stats: {"task_prediction": 69.76, "pair_ratio": 1.20828125}
+2026-10-21 18:00:31,242 [qsd.py] => QSD curve head=ridge_stats: [79.86, 81.52, 74.88, 72.43, 71.68, 70.62, 67.89, 67.25, 66.79]
+2026-10-21 18:00:31,242 [qsd.py] => QSD task=8 head=pgm_stale top1=66.49 old=64.68 new=82.14 task_pred=69.32 pair_ratio=1.2906250000000001
+2026-10-21 18:00:31,242 [qsd.py] => QSD tasks head=pgm_stale: [53.96, 60.98, 52.1, 57.14, 65.34, 66.88, 77.78, 77.3, 82.14]
+2026-10-21 18:00:31,242 [qsd.py] => QSD mech head=pgm_stale: {"task_prediction": 69.32, "pair_ratio": 1.2906250000000001}
+2026-10-21 18:00:31,242 [qsd.py] => QSD curve head=pgm_stale: [87.05, 84.49, 78.44, 72.97, 70.31, 70.06, 67.79, 67.66, 66.49]
+2026-10-21 18:00:31,242 [qsd.py] => QSD task=8 head=pgm_channel top1=67.09 old=65.51 new=80.71 task_pred=70.28 pair_ratio=1.1046511627906976
+2026-10-21 18:00:31,242 [qsd.py] => QSD tasks head=pgm_channel: [58.27, 64.63, 52.1, 56.39, 66.48, 65.58, 77.78, 76.6, 80.71]
+2026-10-21 18:00:31,242 [qsd.py] => QSD mech head=pgm_channel: {"task_prediction": 70.28, "pair_ratio": 1.1046511627906976}
+2026-10-21 18:00:31,243 [qsd.py] => QSD curve head=pgm_channel: [87.05, 83.83, 77.25, 72.61, 70.86, 69.6, 68.26, 67.91, 67.09]
+2026-10-21 18:00:31,243 [qsd.py] => QSD task=8 head=pgm_channel_hier top1=68.80 old=67.25 new=82.14 task_pred=71.40 pair_ratio=1.30625
+2026-10-21 18:00:31,243 [qsd.py] => QSD tasks head=pgm_channel_hier: [66.91, 68.29, 54.62, 62.41, 63.64, 67.53, 74.44, 76.6, 82.14]
+2026-10-21 18:00:31,243 [qsd.py] => QSD mech head=pgm_channel_hier: {"task_prediction": 71.4, "pair_ratio": 1.30625}
+2026-10-21 18:00:31,243 [qsd.py] => QSD curve head=pgm_channel_hier: [87.05, 84.82, 77.49, 73.87, 70.86, 71.3, 69.77, 68.91, 68.8]
+2026-10-21 18:00:31,243 [qsd.py] => QSD task=8 head=pgm_fuse top1=69.47 old=67.91 new=82.86 task_pred=71.32 pair_ratio=1.8335
+2026-10-21 18:00:31,243 [qsd.py] => QSD tasks head=pgm_fuse: [61.87, 74.39, 52.1, 63.16, 65.91, 69.48, 76.11, 74.47, 82.86]
+2026-10-21 18:00:31,243 [qsd.py] => QSD mech head=pgm_fuse: {"task_prediction": 71.32, "pair_ratio": 1.8335}
+2026-10-21 18:00:31,243 [qsd.py] => QSD curve head=pgm_fuse: [84.17, 83.83, 78.91, 75.32, 71.82, 71.41, 69.77, 69.32, 69.47]
+2026-10-21 18:00:31,243 [qsd.py] => QSD task=8 head=pgm_nonlinear top1=59.66 old=58.13 new=72.86 task_pred=63.00 pair_ratio=1.3141666666666667
+2026-10-21 18:00:31,243 [qsd.py] => QSD tasks head=pgm_nonlinear: [41.73, 59.76, 50.42, 48.87, 53.98, 66.23, 68.33, 70.92, 72.86]
+2026-10-21 18:00:31,243 [qsd.py] => QSD mech head=pgm_nonlinear: {"task_prediction": 63.0, "pair_ratio": 1.3141666666666667}
+2026-10-21 18:00:31,243 [qsd.py] => QSD curve head=pgm_nonlinear: [75.54, 74.59, 70.14, 63.96, 61.29, 62.37, 60.56, 60.61, 59.66]
+2026-10-21 18:00:31,243 [qsd.py] => QSD task=8 diag={"channel": {"deviation": 0.06859985011529017, "pairs": 561, "ridge": 0.0729518855656697}, "channel_nonlinear": {"deviation": 0.08908591739508137, "pairs": 561, "ridge": 0.03128834355828221}, "pgm_channel": {"effective_rank": 33.99620153457598}, "delta_sensitivity": {"0.01": 67.24, "0.1": 67.09, "1.0": 65.45}, "pgm_nonlinear": {"effective_rank": 193.55617466092164}, "ridge_sensitivity": {"0.01": 66.49, "0.1": 66.79, "1.0": 66.27}} seconds=13.8
+2026-10-21 18:00:31,259 [trainer.py] => CNN: {'total': 68.8, '00-19': 62.59, '20-39': 72.56, '40-59': 51.26, '60-79': 62.41, '80-99': 65.34, '100-119': 69.48, '120-139': 75.0, '140-159': 73.76, '160-179': 82.14, 'old': 67.25, 'new': 82.14}
+2026-10-21 18:00:31,259 [trainer.py] => Continual metrics after task 8: BWT=-10.5175, forgetting=10.5175, task_acc=[62.59, 72.56, 51.26, 62.41, 65.34, 69.48, 75.0, 73.76, 82.14]
+2026-10-21 18:00:31,260 [trainer.py] => CNN top1 curve: [83.45, 83.5, 78.2, 75.14, 70.73, 71.07, 68.92, 68.33, 68.8]
+2026-10-21 18:00:31,260 [trainer.py] => CNN top5 curve: [96.4, 96.37, 93.36, 90.63, 90.15, 89.6, 89.39, 89.22, 89.3]
+2026-10-21 18:00:31,260 [trainer.py] => Average Accuracy (CNN): 74.23777777777778
+2026-10-21 18:00:31,260 [trainer.py] => All params: 87126528
+2026-10-21 18:00:31,260 [trainer.py] => Trainable params: 1327872
+2026-10-21 18:00:31,261 [RSIAT_adapter.py] => Learning on 180-200
+2026-10-21 18:00:32,961 [toolkit.py] => All params: 87257600
+2026-10-21 18:00:32,961 [toolkit.py] => Trainable params: 1458944
+2026-10-21 18:02:12,781 [RSIAT_adapter.py] => Task 9, Epoch 15/15 => Loss 4.407, Loss_c 2.597, Losses_rt 1.810, Train_accy 81.57, Test_accy 65.60, Time 6.45s
+2026-10-21 18:02:12,781 [RSIAT_adapter.py] => Task 9 peak GPU memory: 4948.40 MiB
+2026-10-21 18:02:24,506 [base.py] => CA Task 9 => Loss 0.132, Test_accy skipped
+2026-10-21 18:02:28,174 [base.py] => CA Task 9 => Loss 0.116, Test_accy skipped
+2026-10-21 18:02:31,829 [base.py] => CA Task 9 => Loss 0.111, Test_accy skipped
+2026-10-21 18:02:35,543 [base.py] => CA Task 9 => Loss 0.108, Test_accy skipped
+2026-10-21 18:02:39,969 [base.py] => CA Task 9 => Loss 0.107, Test_accy skipped
+2026-10-21 18:02:42,241 [base.py] => CA Task 9 => Loss 0.105, Test_accy skipped
+2026-10-21 18:02:44,417 [base.py] => CA Task 9 => Loss 0.103, Test_accy skipped
+2026-10-21 18:02:46,618 [base.py] => CA Task 9 => Loss 0.102, Test_accy skipped
+2026-10-21 18:02:49,021 [base.py] => CA Task 9 => Loss 0.101, Test_accy skipped
+2026-10-21 18:02:54,052 [base.py] => CA Task 9 => Loss 0.104, Test_accy 68.130
+2026-10-21 18:03:13,704 [qsd.py] => QSD task=9 head=linear top1=68.13 old=67.53 new=73.38 task_pred=69.93 pair_ratio=1.7631687242798355
+2026-10-21 18:03:13,705 [qsd.py] => QSD tasks head=linear: [62.59, 73.17, 52.1, 60.15, 64.2, 66.23, 73.33, 73.05, 78.57, 73.38]
+2026-10-21 18:03:13,705 [qsd.py] => QSD mech head=linear: {"task_prediction": 69.93, "pair_ratio": 1.7631687242798355}
+2026-10-21 18:03:13,705 [qsd.py] => QSD curve head=linear: [83.45, 83.5, 78.2, 75.14, 70.73, 71.07, 68.92, 68.33, 68.8, 68.13]
+2026-10-21 18:03:13,705 [qsd.py] => QSD task=9 head=linear_rerun top1=68.33 old=67.83 new=72.73 task_pred=70.13 pair_ratio=1.7514403292181073
+2026-10-21 18:03:13,705 [qsd.py] => QSD tasks head=linear_rerun: [64.03, 72.56, 52.1, 59.4, 64.2, 66.23, 73.89, 74.47, 79.29, 72.73]
+2026-10-21 18:03:13,705 [qsd.py] => QSD mech head=linear_rerun: {"task_prediction": 70.13, "pair_ratio": 1.7514403292181073}
+2026-10-21 18:03:13,705 [qsd.py] => QSD curve head=linear_rerun: [83.45, 83.17, 77.96, 75.14, 71.55, 70.96, 68.92, 68.91, 69.17, 68.33]
+2026-10-21 18:03:13,705 [qsd.py] => QSD task=9 head=linear_noscale top1=68.33 old=67.61 new=74.68 task_pred=70.27 pair_ratio=1.6233716475095785
+2026-10-21 18:03:13,705 [qsd.py] => QSD tasks head=linear_noscale: [62.59, 70.73, 51.26, 59.4, 63.64, 68.18, 73.89, 74.47, 80.0, 74.68]
+2026-10-21 18:03:13,705 [qsd.py] => QSD mech head=linear_noscale: {"task_prediction": 70.27, "pair_ratio": 1.6233716475095785}
+2026-10-21 18:03:13,705 [qsd.py] => QSD curve head=linear_noscale: [83.45, 82.51, 78.44, 74.95, 71.14, 70.73, 69.11, 68.74, 68.72, 68.33]
+2026-10-21 18:03:13,705 [qsd.py] => QSD task=9 head=ridge_stats top1=65.93 old=64.93 new=74.68 task_pred=68.93 pair_ratio=1.0930864197530865
+2026-10-21 18:03:13,705 [qsd.py] => QSD tasks head=ridge_stats: [55.4, 61.59, 52.94, 56.39, 61.36, 64.94, 75.56, 73.76, 78.57, 74.68]
+2026-10-21 18:03:13,705 [qsd.py] => QSD mech head=ridge_stats: {"task_prediction": 68.93, "pair_ratio": 1.0930864197530865}
+2026-10-21 18:03:13,705 [qsd.py] => QSD curve head=ridge_stats: [79.86, 81.52, 74.88, 72.43, 71.68, 70.62, 67.89, 67.25, 66.79, 65.93]
+2026-10-21 18:03:13,705 [qsd.py] => QSD task=9 head=pgm_stale top1=65.00 old=64.04 new=73.38 task_pred=67.67 pair_ratio=1.279861111111111
+2026-10-21 18:03:13,705 [qsd.py] => QSD tasks head=pgm_stale: [53.24, 57.32, 50.42, 54.89, 61.93, 63.64, 75.0, 75.89, 80.0, 73.38]
+2026-10-21 18:03:13,705 [qsd.py] => QSD mech head=pgm_stale: {"task_prediction": 67.67, "pair_ratio": 1.279861111111111}
+2026-10-21 18:03:13,705 [qsd.py] => QSD curve head=pgm_stale: [87.05, 84.49, 78.44, 72.97, 70.31, 70.06, 67.79, 67.66, 66.49, 65.0]
+2026-10-21 18:03:13,705 [qsd.py] => QSD task=9 head=pgm_channel top1=65.47 old=64.71 new=72.08 task_pred=68.33 pair_ratio=1.1660206718346253
+2026-10-21 18:03:13,705 [qsd.py] => QSD tasks head=pgm_channel: [58.99, 59.76, 50.42, 55.64, 61.93, 64.94, 73.89, 75.89, 77.14, 72.08]
+2026-10-21 18:03:13,705 [qsd.py] => QSD mech head=pgm_channel: {"task_prediction": 68.33, "pair_ratio": 1.1660206718346253}
+2026-10-21 18:03:13,705 [qsd.py] => QSD curve head=pgm_channel: [87.05, 83.83, 77.25, 72.61, 70.86, 69.6, 68.26, 67.91, 67.09, 65.47]
+2026-10-21 18:03:13,705 [qsd.py] => QSD task=9 head=pgm_channel_hier top1=66.73 old=65.97 new=73.38 task_pred=69.27 pair_ratio=1.2805555555555557
+2026-10-21 18:03:13,705 [qsd.py] => QSD tasks head=pgm_channel_hier: [64.03, 65.24, 52.94, 60.15, 59.66, 64.29, 70.56, 75.18, 80.0, 73.38]
+2026-10-21 18:03:13,705 [qsd.py] => QSD mech head=pgm_channel_hier: {"task_prediction": 69.27, "pair_ratio": 1.2805555555555557}
+2026-10-21 18:03:13,705 [qsd.py] => QSD curve head=pgm_channel_hier: [87.05, 84.82, 77.49, 73.87, 70.86, 71.3, 69.77, 68.91, 68.8, 66.73]
+2026-10-21 18:03:13,705 [qsd.py] => QSD task=9 head=pgm_fuse top1=68.67 old=68.05 new=74.03 task_pred=70.73 pair_ratio=1.4948028673835128
+2026-10-21 18:03:13,705 [qsd.py] => QSD tasks head=pgm_fuse: [62.59, 73.17, 51.26, 59.4, 64.77, 67.53, 75.0, 73.76, 80.0, 74.03]
+2026-10-21 18:03:13,705 [qsd.py] => QSD mech head=pgm_fuse: {"task_prediction": 70.73, "pair_ratio": 1.4948028673835128}
+2026-10-21 18:03:13,705 [qsd.py] => QSD curve head=pgm_fuse: [84.17, 83.83, 78.91, 75.32, 71.82, 71.41, 69.77, 69.32, 69.47, 68.67]
+2026-10-21 18:03:13,705 [qsd.py] => QSD task=9 head=pgm_nonlinear top1=58.87 old=57.36 new=72.08 task_pred=62.27 pair_ratio=1.1714596949891067
+2026-10-21 18:03:13,705 [qsd.py] => QSD tasks head=pgm_nonlinear: [43.88, 55.49, 47.9, 45.11, 51.14, 64.29, 65.0, 68.09, 72.14, 72.08]
+2026-10-21 18:03:13,705 [qsd.py] => QSD mech head=pgm_nonlinear: {"task_prediction": 62.27, "pair_ratio": 1.1714596949891067}
+2026-10-21 18:03:13,705 [qsd.py] => QSD curve head=pgm_nonlinear: [75.54, 74.59, 70.14, 63.96, 61.29, 62.37, 60.56, 60.61, 59.66, 58.87]
+2026-10-21 18:03:13,705 [qsd.py] => QSD task=9 diag={"channel": {"deviation": 0.0687463095095647, "pairs": 613, "ridge": 0.07971391417425228}, "channel_nonlinear": {"deviation": 0.0943633188202302, "pairs": 613, "ridge": 0.034188510875627444}, "pgm_channel": {"effective_rank": 34.024455286819084}, "delta_sensitivity": {"0.01": 65.67, "0.1": 65.47, "1.0": 63.8}, "pgm_nonlinear": {"effective_rank": 194.58583848990625}, "ridge_sensitivity": {"0.01": 65.53, "0.1": 65.93, "1.0": 65.2}} seconds=16.4
+2026-10-21 18:03:13,723 [trainer.py] => CNN: {'total': 68.13, '00-19': 62.59, '20-39': 73.17, '40-59': 52.1, '60-79': 60.15, '80-99': 64.2, '100-119': 66.23, '120-139': 73.33, '140-159': 73.05, '160-179': 78.57, '180-199': 73.38, 'old': 67.53, 'new': 73.38}
+2026-10-21 18:03:13,723 [trainer.py] => Continual metrics after task 9: BWT=-10.5878, forgetting=10.5878, task_acc=[62.59, 73.17, 52.1, 60.15, 64.2, 66.23, 73.33, 73.05, 78.57, 73.38]
+2026-10-21 18:03:13,723 [trainer.py] => CNN top1 curve: [83.45, 83.5, 78.2, 75.14, 70.73, 71.07, 68.92, 68.33, 68.8, 68.13]
+2026-10-21 18:03:13,724 [trainer.py] => CNN top5 curve: [96.4, 96.37, 93.36, 90.63, 90.15, 89.6, 89.39, 89.22, 89.3, 88.27]
+2026-10-21 18:03:13,724 [trainer.py] => Average Accuracy (CNN): 73.627
+2026-10-21 18:03:13,848 [trainer.py] => Average Seed Accuracy (CNN): 73.627

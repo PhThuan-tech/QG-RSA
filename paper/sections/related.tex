@@ -1,0 +1,39 @@
+\section{Related Work}
+\label{sec:related}
+
+\paragraph{EFCIL with pre-trained models.}
+Prompt- and adapter-based methods freeze a pre-trained backbone and learn a
+small number of parameters per task or shared across
+tasks~\cite{wang2022l2p,zhou2024ease}. Training only the adapter shrinks
+forgetting at the representation level. The classifier then becomes the
+weak point, because its old rows are never trained against new classes.
+SLCA~\cite{zhang2023slca} introduced classifier alignment with Gaussian
+pseudo-features. RSIAT~\cite{rsiat} adds a representation-steering loss on
+the base task and drift compensation of the stored means.
+
+\paragraph{Using class statistics directly.}
+Several methods classify with the stored statistics themselves rather than
+re-training a classifier on samples drawn from them.
+RanPAC~\cite{mcdonnell2023ranpac} solves a ridge regression in a random
+feature space. FeCAM~\cite{goswami2023fecam} uses per-class Mahalanobis
+distances. Drift-compensation methods~\cite{yu2020sdc,goswami2024adc,gomezvilla2024ldc}
+and EFC~\cite{magistri2024efc} focus on keeping the statistics valid.
+Our fusion is complementary to these works: it keeps the CA classifier and
+adds a generative score, and the oracle experiments
+(Section~\ref{sec:gap}) show that better statistics alone help little.
+
+\paragraph{Quantum kernels and measurements.}
+Quantum feature maps define kernels through state
+overlaps~\cite{havlicek2019supervised,schuld2019feature}. Projected quantum kernels
+compare reduced density matrices to mitigate the exponential concentration of
+fidelities~\cite{huang2021power,thanasilp2024concentration}. The pretty-good
+(square-root) measurement~\cite{hausladen1994pgm} discriminates a set of
+mixed states. It is within a square of the optimal success
+probability~\cite{barnum2002reversing} and coincides with the least-squares
+measurement~\cite{eldar2001srm}. That last property is the key to our
+negative result for the PGM.
+
+\paragraph{Variance in benchmarks.}
+Training randomness alone can produce differences comparable to published
+improvements~\cite{bouthillier2021accounting}. Our protocol follows this line
+of work and adapts it to incremental learning.

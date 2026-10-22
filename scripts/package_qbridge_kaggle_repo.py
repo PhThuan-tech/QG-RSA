@@ -30,6 +30,9 @@ def main():
         required = {"QG-RSA/main.py", "QG-RSA/utils/qbridge.py", "QG-RSA/utils/stats_diagnostics.py",
                     "QG-RSA/scripts/run_level_stats.py", "QG-RSA/QGRSA_EXPERIMENTS.ipynb",
                     "QG-RSA/utils/ca_heads.py", "QG-RSA/scripts/summarize_ca_heads.py",
+                    "QG-RSA/utils/qsd.py", "QG-RSA/scripts/summarize_qsd.py",
+                    "QG-RSA/scripts/summarize_qsd_a2.py", "QG-RSA/exps/qsd/qsd2_rep0.json",
+                    "QG-RSA/scripts/summarize_scf.py", "QG-RSA/exps/scf/scf.json", "QG-RSA/tests/test_scf.py",
                     "QG-RSA/scripts/qbridge_prepare.py", "QG-RSA/QBRIDGE_Kaggle.ipynb"}
         if required - names:
             raise RuntimeError("Incomplete package: " + str(required - names))

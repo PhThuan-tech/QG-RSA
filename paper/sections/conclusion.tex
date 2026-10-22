@@ -1,0 +1,39 @@
+\section{Discussion and Conclusion}
+\label{sec:conclusion}
+
+\paragraph{What helped and why.}
+The stored class statistics of EFCIL methods are used only to generate
+pseudo-features for the classifier. Using them a second time, as a
+generative score fused with the aligned classifier, corrects cross-task
+errors that the classifier makes on the oldest classes. The rule needs no
+training and no exemplars, and its weight transfers across datasets. It
+gains $+0.46$ to $+0.62$ AIA on held-out runs. The diagnosis of
+Section~\ref{sec:gap} explains the ceiling: about $3.4$ final-accuracy points
+of the gap to joint training lie in the representation, which no
+inference-time rule can change.
+
+\paragraph{Limitations.}
+\begin{itemize}
+  \item We study one baseline (RSIAT), two benchmarks and one split
+    (B0Inc20). The held-out set has 8 runs: 3 on ImageNet-R and 5 on
+    ImageNet-A.
+  \item The fusion weight was tuned on ImageNet-R with seed 1993. Its
+    transfer to other backbones and other EFCIL methods with stored
+    statistics (e.g.\ \cite{mcdonnell2023ranpac,goswami2023fecam}) is untested.
+  \item The three-source fusion is exploratory.
+  \item Our quantum circuits are small and simulated. The negative results
+    concern these specific placements and encodings, and do not cover
+    quantum models in general.
+\end{itemize}
+
+\paragraph{Outlook.}
+Since the representation is the bottleneck, the natural next step is to
+train the adapter so that the stored statistics remain discriminative,
+for example with a measurement- or ridge-based loss during the incremental
+tasks. The classical twin should be pre-registered as the control from the
+start.
+
+\paragraph{Reproducibility.}
+Configurations, logs, analysis scripts and pre-registered specifications
+are in the project repository under \texttt{exps/}. Every number in this
+paper is generated from these files.

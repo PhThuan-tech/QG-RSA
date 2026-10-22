@@ -1,17 +1,23 @@
 % Springer LNCS. Get llncs.cls / splncs04.bst from the Overleaf template
 % "Springer Lecture Notes in Computer Science" and put them next to this file.
+% Every number in this paper comes from exps/*/results/ (see exps/README.md);
+% figures are regenerated with `python paper/make_figures.py`.
 \documentclass[runningheads]{llncs}
 \usepackage[T1]{fontenc}
 \usepackage{amsmath,amssymb}
 \usepackage{graphicx}
 \usepackage{booktabs}
+\usepackage{multirow}
 \usepackage{hyperref}
+
+\newcommand{\Tr}{\mathrm{Tr}}
 
 \begin{document}
 
-\title{QG-RSA: Projected Quantum Kernels for Exemplar-Free
-Class-Incremental Learning}  % TODO: final title
-\titlerunning{QG-RSA}
+\title{Fusing Stored Statistics with the Aligned Classifier in
+Exemplar-Free Class-Incremental Learning:\\
+A Controlled Study that Includes Quantum Components}  % TODO: final title
+\titlerunning{Statistics--Classifier Fusion for Exemplar-Free CIL}
 \author{First Author\inst{1} \and Second Author\inst{1}}  % TODO
 \authorrunning{F. Author et al.}
 \institute{TODO Institution}
@@ -19,14 +25,38 @@ Class-Incremental Learning}  % TODO: final title
 \maketitle
 
 \begin{abstract}
-TODO (150--250 words) -- written after the confirmation experiments.
-\keywords{Class-incremental learning \and Exemplar-free \and Quantum kernels}
+Exemplar-free class-incremental learning (EFCIL) methods built on pre-trained
+transformers keep one mean and one covariance per class and use them only to
+re-align a cosine classifier with Gaussian pseudo-features. We show that the
+same statistics carry complementary information that the aligned classifier
+discards. A training-free fusion of the classifier logits with a generative
+score computed from the stored statistics, weighted by a label-free scale and
+a single weight chosen on one tuning benchmark, improves the RSIAT baseline
+on every held-out run: by $+0.46$ average incremental accuracy (95\% CI
+$[+0.28,+0.64]$) when the generative score is a pretty-good quantum
+measurement, and by $+0.62$ ($[+0.39,+0.85]$) when it is a closed-form ridge
+classifier. The study was designed to test quantum components, and it reports
+them under the same rules. Five placements of a quantum kernel or quantum
+measurement were evaluated: a steering metric, a separation metric, a
+classifier feature map, a stand-alone measurement and a fusion source. None
+of them outperformed its matched classical counterpart. We attribute these
+outcomes to a measurement protocol with paired replicates, in-run evaluation
+of all heads on one network with bit-identity checks, and decision rules
+written before each run. Under this protocol an earlier single-run
+improvement of $+0.36$ turned out to lie within training noise. We release
+the protocol and the logs.
+\keywords{Class-incremental learning \and Exemplar-free \and Pre-trained models
+\and Quantum machine learning \and Reproducibility}
 \end{abstract}
 
+\input{sections/intro}
+\input{sections/related}
+\input{sections/background}
+\input{sections/protocol}
+\input{sections/method}
+\input{sections/experiments}
 \input{sections/quantum}
-
-\section{Measurement Protocol}\label{sec:protocol}
-TODO.
+\input{sections/conclusion}
 
 \bibliographystyle{splncs04}
 \bibliography{references}

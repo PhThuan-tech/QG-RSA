@@ -1,0 +1,22 @@
+{
+  "prefix": "scf",
+  "ssca_mode": "legacy",
+  "rng_replicate": 0,
+  "stats_diagnostics": false,
+  "save_predictions": true,
+  "save_checkpoints": false,
+  "qsd_heads": [
+    "linear",
+    "ridge_stats",
+    "pgm_stats",
+    "pgm_stats_hier"
+  ],
+  "qsd_delta": 0.1,
+  "qsd_channel_ridge": 0.1,
+  "qsd_ridge": 0.1,
+  "qsd_seed": 20261022,
+  "qsd_batch": 128,
+  "qsd_fuse": true,
+  "qsd_save_scores": true,
+  "offline": true
+}

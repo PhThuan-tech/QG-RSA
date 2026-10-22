@@ -1,0 +1,56 @@
+\section{Introduction}
+\label{sec:intro}
+
+Class-incremental learning (CIL) trains a model on a sequence of tasks with
+disjoint classes and evaluates it on all classes seen so far. In the
+exemplar-free setting (EFCIL), no image of a past task may be stored. Methods
+built on a frozen pre-trained Vision Transformer with a small trainable
+adapter~\cite{zhou2024ease,zhang2023slca} handle this setting by storing
+\emph{statistics} instead of exemplars: a mean and a covariance per class. These
+statistics are used in two places. Drift compensation updates the old
+means~\cite{yu2020sdc}. Classifier alignment (CA) re-trains the cosine
+classifier on Gaussian pseudo-features sampled from the
+statistics~\cite{zhang2023slca}. RSIAT~\cite{rsiat} is a recent instance of this
+recipe and our baseline.
+
+This work started as an attempt to improve RSIAT with quantum machine-learning
+components: a projected quantum kernel~\cite{huang2021power} as a learned
+metric, and the pretty-good measurement (PGM)~\cite{hausladen1994pgm} as a
+classifier over class states. To decide whether any component helps, we first
+measured how much RSIAT varies when only the SGD randomness changes. On
+ImageNet-R the standard deviation of average incremental accuracy (AIA) is
+$0.14$ points, and on ImageNet-A it is $0.38$. An earlier single-run
+comparison in our own project, $+0.36$ AIA for a quantum-kernel variant, did
+not survive this check. We therefore adopted a protocol with three parts:
+paired replicates, in-run evaluation of all inference heads on one network,
+and decision rules written before each run (Section~\ref{sec:protocol}).
+
+Under this protocol, most of the changes we tried had no effect, but one
+consistently helped. The stored statistics define a generative classifier
+that is complementary to the aligned cosine classifier: on ImageNet-R the two
+disagree on $14\%$ of the test images, and the generative one is right on
+about a fifth of these. A training-free fusion of the two, calibrated by a
+label-free scale and a single weight tuned on one benchmark, improves RSIAT on
+all eight held-out runs (Section~\ref{sec:experiments}).
+
+\paragraph{Contributions.}
+\begin{itemize}
+  \item \emph{Statistics--classifier fusion} (SCF): a training-free,
+    exemplar-free inference rule that adds a calibrated generative score from
+    the stored class statistics to the CA logits. It improves AIA by $+0.46$
+    to $+0.62$ on held-out runs, which is two to three times the headroom
+    measured with oracle class statistics (Section~\ref{sec:method}).
+  \item A controlled evaluation of five quantum placements in EFCIL, each
+    tested against a matched classical counterpart under pre-registered rules.
+    None of them helps (Section~\ref{sec:quantum}). We explain the outcomes:
+    measurement concentration of local reduced states, degenerate
+    pseudo-data, and the equivalence of the PGM with least-squares
+    discrimination.
+  \item A diagnosis of where RSIAT loses accuracy. The oldest classes lose
+    9 points relative to joint training. The loss is due to cross-task
+    confusion, not to stale statistics: perfect statistics recover task~0 but
+    hurt newer tasks (Section~\ref{sec:gap}).
+  \item A measurement protocol for EFCIL with replicates, in-run multi-head
+    evaluation and bit-identity checks. Its paired differences have a
+    standard deviation of $0.03$--$0.05$ AIA (Section~\ref{sec:protocol}).
+\end{itemize}

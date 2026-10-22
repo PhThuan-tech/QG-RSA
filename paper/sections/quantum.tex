@@ -1,166 +1,102 @@
-% Quantum-kernel components of QG-RSA (QKSR base + Q-BRIDGE incremental).
-% Every quantity below corresponds to code in utils/quantum_kernel.py,
-% utils/qbridge.py, utils/qbridge_calibration.py and models/RSIAT_adapter.py.
-
-\section{Projected Quantum Kernels for Representation Steering}
+\section{Quantum Components under Controlled Comparison}
 \label{sec:quantum}
 
-RSIAT~\cite{rsiat} learns a shared adapter on a frozen ViT-B/16 and shapes
-its feature space with a cosine-similarity steering loss on the base task.
-We ask whether a \emph{projected quantum kernel} (PQK)~\cite{huang2021power}
-can replace this similarity with a non-linear, trainable metric, and
-whether the same metric can tell, during incremental tasks, which old
-classes a new sample is most likely to be confused with. The quantum
-module is used only at training time; inference keeps the classical
-ViT--adapter--cosine-classifier path unchanged.
+The project set out to improve RSIAT with quantum components, so we tested
+each one against a classical counterpart that receives the same input and
+the same budget. All circuits have at most 11 qubits and are simulated
+exactly, so they are classically tractable by construction. The question is
+therefore not quantum advantage. The question is whether a quantum
+inductive bias helps EFCIL. Table~\ref{tab:quantum} summarises the five
+placements we tested.
 
-\subsection{Projected Local Quantum Kernel}
-\label{sec:pqk}
+\paragraph{Projected quantum kernel (PQK).}
+A feature is projected to $q=8$ angles,
+$\boldsymbol\theta(\mathbf z)=\pi\tanh(W\,\mathrm{LN}(\mathbf z)+\mathbf b)$. The
+angles are loaded by $R_y$ rotations, followed by two variational layers of
+$R_y$ rotations and a ring of CNOTs. Two inputs are compared through their
+one-qubit reduced density matrices~\cite{huang2021power}:
+$k(\mathbf z,\mathbf z')=\exp(-\gamma\sum_j\|\rho_j(\mathbf z)-\rho_j(\mathbf z')\|_F^2)$.
+The bandwidth $\gamma$ is kept within a factor of 10 of the inverse median
+distance. The circuit and training details are documented in the project repository.
 
-\subsubsection{Classical projection.}
-A feature $\mathbf{z}\in\mathbb{R}^{768}$ is mapped to $q$ rotation angles
-\begin{equation}
-  \boldsymbol{\theta}(\mathbf{z}) = \pi \tanh\!\big(W\,\mathrm{LN}(\mathbf{z}) + \mathbf{b}\big)
-  \in (-\pi,\pi)^{q},
-  \label{eq:proj}
-\end{equation}
-where $\mathrm{LN}$ is a layer normalisation without affine parameters and
-$W\in\mathbb{R}^{q\times 768}$. We use $q=8$ qubits.
+\begin{table}[t]
+\centering
+\caption{Quantum placements and their matched classical controls. $\Delta$ is
+AIA in percentage points, with 95\% CI over paired runs. R: ImageNet-R,
+A: ImageNet-A.}
+\label{tab:quantum}
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{llll}
+\toprule
+Placement & Comparison & $\Delta$ AIA [CI] & $n$ \\
+\midrule
+1. PQK steering metric, task 0 & QKSR $-$ RSIAT (R) & $+0.06$ [$-0.07$, $+0.18$] & 3 \\
+2. PQK separation, tasks $>0$ & current $-$ old features (R) & $-0.02$ [$-0.06$, $+0.03$] & 3 \\
+\multirow{2}{*}{3. PQK feature map for CA} & PQK ridge $-$ linear head (A) & $-17.3$ [$-19.1$, $-15.6$] & 3 \\
+ & classical RFF ridge $-$ linear head (A) & $-1.4$ [$-2.5$, $-0.3$] & 3 \\
+\multirow{2}{*}{4. PGM, stand-alone} & PGM $-$ ridge, same statistics & $+0.09$ [$-0.23$, $+0.40$] & 11 \\
+ & two-copy encoding $-$ amplitude encoding & $-3.6$ (R), $-6.5$ (A) & 5+5 \\
+5. PGM as fusion source & SCF-PGM $-$ SCF-ridge, held-out & $-0.16$ [$-0.39$, $+0.07$] & 8 \\
+\bottomrule
+\end{tabular}
+\end{table}
 
-\subsubsection{Circuit.}
-The angles are loaded by single-qubit $R_y$ rotations and followed by $L=2$
-variational layers, each consisting of trainable $R_y(\phi_{l,j})$ rotations
-and a ring of CNOT gates $\mathrm{CNOT}_{j\to (j+1)\bmod q}$:
-\begin{equation}
-  |\psi(\mathbf{z})\rangle =
-  \prod_{l=1}^{L}\Big[U_{\mathrm{ent}}\bigotimes_{j=1}^{q} R_y(\phi_{l,j})\Big]
-  \bigotimes_{j=1}^{q} R_y\big(\theta_j(\mathbf{z})\big)\,|0\rangle^{\otimes q}.
-  \label{eq:circuit}
-\end{equation}
-Since $R_y$ and CNOT are real, the $2^{q}=256$ amplitudes are real. The
-circuit is simulated exactly and in batch as a differentiable statevector
-in PyTorch, so no sampling noise is involved.
+\paragraph{1--2. PQK as a learned metric.}
+Replacing the cosine similarity of the steering loss with the PQK on the
+base task (QKSR) changes AIA by $+0.06$. The CI bounds any effect below
+$+0.19$. Applying the frozen PQK as an old/new separation metric during the
+incremental tasks makes no difference whether it is evaluated on current
+or on previous-model features.
 
-\subsubsection{Local reduced density matrices and kernel.}
-Following~\cite{huang2021power}, we compare states through their one-qubit
-reduced density matrices
-$\rho_j(\mathbf{z}) = \mathrm{Tr}_{\bar{j}}\,|\psi(\mathbf{z})\rangle\langle\psi(\mathbf{z})|$
-rather than through the global fidelity. The global fidelity is known to
-concentrate as the number of qubits grows~\cite{thanasilp2024concentration}.
-The distance and kernel are
-\begin{equation}
-  D(\mathbf{z},\mathbf{z}') = \sum_{j=1}^{q}
-  \big\|\rho_j(\mathbf{z})-\rho_j(\mathbf{z}')\big\|_F^{2},
-  \qquad
-  k(\mathbf{z},\mathbf{z}') = \exp\!\big(-\gamma\,D(\mathbf{z},\mathbf{z}')\big).
-  \label{eq:pqk}
-\end{equation}
-The bandwidth is bounded around a data-driven scale,
-$\gamma = \gamma_0\,10^{\tanh(a)}$ with a trainable scalar $a$, where
-$\gamma_0 = 1/\mathrm{median}\,D$ is computed once on 512 base-task training
-features (off-diagonal pairs). Hence $\gamma$ stays within
-$[\gamma_0/10,\,10\,\gamma_0]$, which prevents the kernel from collapsing to
-the identity or to a constant matrix.
+The mechanism is visible in the losses. The PQK separation term stays at
+about $0.45$ throughout training, and the kernel between prototypes and
+new features stays at $0.5$--$0.6$. The adapter, constrained by the
+alignment loss, does not reduce the quantum similarity through an
+8-dimensional bottleneck.
 
-\subsection{QKSR: Quantum Kernel Steering on the Base Task}
-\label{sec:qksr}
+\paragraph{3. PQK as a feature map for classifier alignment.}
+We fitted ridge heads on the CA pseudo-features using PQK features, RFF
+features, random-projection features, or QDA, and compared each with the
+linear head inside the same run. Every nonlinear head was worse. The PQK
+was the worst, and entanglement made it worse still: the variant without
+CNOTs scored $-10.4$, against $-17.3$ with them.
 
-On the base task $t=0$, the PQK replaces the cosine similarity inside the
-RSIAT steering loss. For a batch with labels $y$, let
-$\mathcal{P}=\{(i,i'):y_i=y_{i'},\,i\neq i'\}$ and
-$\mathcal{N}=\{(i,i'):y_i\neq y_{i'}\}$. Then
-\begin{equation}
-  \mathcal{L}^{Q}_{\mathrm{RS}} =
-  \frac{1}{|\mathcal{P}|}\sum_{(i,i')\in\mathcal{P}}\big[1-k_{ii'}\big]_+
-  + \alpha\,\frac{1}{|\mathcal{N}|}\sum_{(i,i')\in\mathcal{N}}\big[k_{ii'}-m_q\big]_+ ,
-  \label{eq:qksr}
-\end{equation}
-where $k_{ii'}=k(\mathbf{z}_i,\mathbf{z}_{i'})$, $m_q=0.5$ and $\alpha=1$.
-The base objective is
-$\mathcal{L}_{\mathrm{cls}} + \lambda_{\mathrm{RS}}\min(1,e/E_w)\,\mathcal{L}^{Q}_{\mathrm{RS}}$
-with a linear warm-up over $E_w$ epochs. The projector is trained with the
-adapter learning rate, and the circuit parameters and $a$ with a ten times
-smaller rate. After the base task, the PQK is frozen.
-
-\subsection{Q-BRIDGE: Risk-Weighted Cross-Task Margins}
-\label{sec:qbridge}
-
-During incremental tasks $t>0$, RSIAT keeps the classification loss on the
-new classes, the feature alignment
-$\mathcal{L}_{\mathrm{align}}=\|\mathbf{z}-g(\mathbf{z}^{-})\|_2^2$ between
-the current feature and the projected feature of the previous model
-(mean-squared error, with $g$ the residual projector of RSIAT), and a
-separation term between old prototypes and new samples. Q-BRIDGE replaces
-the separation term with two margin losses and uses the frozen base PQK
-only to \emph{weight} them.
-
-\subsubsection{Cross-task margin.}
-Let $s_{ic}$ be the cosine score of sample $i$ for class $c$, computed with
-the old classifier rows detached so that the added losses cannot move old
-decision boundaries directly. For each new-class sample $i$ and old class
-$c$, the margin violation is
-$v_{ic}=[\,m_x + s_{ic} - s_{iy_i}\,]_+$, and the loss is
-\begin{equation}
-  \mathcal{L}_{\mathrm{cross}} = \frac{1}{B\,C_{\mathrm{old}}}
-  \sum_{i,c}\big(1 + g\,r_{ic}\big)\,v_{ic}^{2},
-  \qquad
-  r_{ic} = \sigma\!\big(\mathrm{softplus}(u)\,k(\mathbf{z}^{-}_i,\boldsymbol{\mu}_c)+b\big).
-  \label{eq:cross}
-\end{equation}
-Here $\mathbf{z}^{-}_i$ is the previous model's feature, $\boldsymbol{\mu}_c$ is
-the stored mean of old class $c$, and $g=0.5$. The risk $r_{ic}$ is
-detached. Its monotone calibrator $(u,b)$ is fitted once by unweighted
-binary cross-entropy on base-task training data only: prototypes, fitting
-and validation pairs come from a stratified 60/20/20 split. The target is
-whether the base classifier violates a margin of $0.1$ for that
-(sample, class) pair. Because the calibrator is monotone, it preserves the
-ranking of raw PQK similarities and only rescales them into a probability
-of confusion. The calibrator is never refitted on incremental data.
-
-\subsubsection{Old-anchor guard.}
-To keep old classes from being absorbed by new ones, the projected old
-prototypes $\mathbf{a}_c = g(\boldsymbol{\mu}_c)$ must score their own class
-above every new class by a margin $m_{\mathrm{old}}$:
-\begin{equation}
-  \mathcal{L}_{\mathrm{guard}} = \frac{1}{C_{\mathrm{old}}}\sum_{c}
-  \Big[\,m_{\mathrm{old}} + \max_{n\in\mathcal{C}_{\mathrm{new}}} s(\mathbf{a}_c,n)
-  - s(\mathbf{a}_c,c)\,\Big]_+^{2}.
-  \label{eq:guard}
-\end{equation}
-Both the anchors and the old classifier rows are detached, so this loss
-only moves the new-class rows away from old prototypes.
-The incremental objective is
-$\mathcal{L}_{\mathrm{cls}} + \beta\,\mathcal{L}_{\mathrm{align}}
-+ \lambda_x\mathcal{L}_{\mathrm{cross}} + \lambda_g\mathcal{L}_{\mathrm{guard}}$
-with $m_x=m_{\mathrm{old}}=0.1$ and $\lambda_x=\lambda_g=0.1$. The drift
-compensation of old statistics (SSCA) and the Gaussian classifier
-alignment of RSIAT are kept unchanged.
-
-\subsection{Controls for Attributing the Effect}
-\label{sec:controls}
-
-A gain from Eq.~\eqref{eq:cross} could come from the margins themselves,
-from any similarity-based weighting, or specifically from the quantum
-circuit. We therefore pre-register controls that differ from the full model
-(R6, calibrated PQK) in one factor each:
+Two effects explain this ranking.
 \begin{itemize}
-  \item \textbf{No separation:} CosFace over all seen classes with alignment only (R1).
-  \item \textbf{Margins only:} uniform weights ($g=0$), without guard (R2) and with guard (R3).
-  \item \textbf{Classical selectors:} cosine similarity (R4); an RBF kernel on the same
-        learned projection $\boldsymbol{\theta}(\mathbf{z})$, without the circuit (R7);
-        and a small MLP metric on $\boldsymbol{\theta}(\mathbf{z})$ (R8).
-  \item \textbf{Uncalibrated PQK:} raw PQK risk (R5).
-  \item \textbf{Information controls:} PQK risks shuffled among active pairs (R9) or replaced
-        by their mean (R10). These keep the weight distribution but remove the
-        pairing between risk and violation.
+  \item \emph{Degenerate pseudo-data.} With 30 images per class, the class
+    covariances have rank at most 29. The Gaussian pseudo-features are then
+    trivially separable: RFF reaches $100\%$ on held-out pseudo-data but only
+    about $67\%$ on test images. Flexible heads therefore memorise.
+  \item \emph{Lossy local reduced states.} The PQK sees only 8 projected
+    angles and reads only local reduced states. After random CNOT layers,
+    information moves into non-local correlations, so the local states
+    concentrate towards the maximally mixed state~\cite{thanasilp2024concentration}.
+    The measured kernel--target alignment is $0.34$ for the PQK, against
+    $0.37$--$0.38$ for the classical maps.
 \end{itemize}
-A quantum-specific contribution is claimed only if R6 outperforms R4, R7 and R8,
-and R5 outperforms R9 and R10.
 
-\subsubsection{Scope.}
-The circuit has $q=8$ qubits and is simulated exactly, so it is classically
-tractable by construction. We do not claim a quantum advantage. The
-question studied here is whether a PQK, used as an inductive bias for a
-learned metric, improves exemplar-free class-incremental learning relative
-to matched classical metrics under the measurement protocol of
-Section~\ref{sec:protocol}.
+\paragraph{4--5. Pretty-good measurement.}
+On the same stored statistics, the PGM and closed-form ridge are
+statistically indistinguishable. In fusion, the ridge source is at least as
+good: it is equal on ImageNet-R ($+0.06$ for the PGM) and better on
+ImageNet-A ($-0.29$ for the PGM). Two facts explain why.
+\begin{itemize}
+  \item \emph{Unitary invariance.} A unitary $U$ applied after the encoding
+    maps $\psi\mapsto U\psi$ and $\rho_c\mapsto U\rho_cU^{\dagger}$, and leaves every
+    $\Tr(E_c\psi\psi^{\dagger})$ unchanged. A variational circuit placed after
+    the amplitude encoding is therefore useless for the PGM.
+  \item \emph{Least-squares equivalence.} The PGM coincides with the
+    least-squares measurement~\cite{eldar2001srm}, so on second moments it is
+    a quadratic relative of ridge regression.
+\end{itemize}
+The only quantum-specific freedom left is the encoding. A nonlinear
+two-copy encoding, $(|0\rangle|\psi\rangle+|1\rangle|u\otimes u\rangle)/\sqrt2$
+on 11 qubits, lowered the accuracy, because it adds dimensions that the
+class statistics cannot support.
+
+\paragraph{Summary.}
+In none of the five placements did a quantum component outperform its
+classical control, and in two of them it was clearly harmful. The quantum
+view remains useful as a description: the PGM gives the fused score a
+principled form. Its benefit, however, comes from the generative use of
+the stored statistics and not from the measurement being quantum.

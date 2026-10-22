@@ -126,7 +126,7 @@ Tham chiếu khởi tạo và lifecycle projector: [supplementary RSIAT, Algorit
 
 ### 2.5 Hai log nói được gì?
 
-Nguồn: `logs/adapter/cifar224/0/10/all_1993_pretrained_vit_b16_224_in21k_adapter.log` và file QKSR trong Downloads mà người dùng cung cấp.
+Nguồn: `exps/archive/legacy_runs/logs/adapter/cifar224/0/10/all_1993_pretrained_vit_b16_224_in21k_adapter.log` và file QKSR trong Downloads mà người dùng cung cấp.
 
 | Task index | Baseline sau CA/eval hoàn tất (%) | QKSR (%) | QKSR − baseline (điểm %) |
 |---|---:|---:|---:|
