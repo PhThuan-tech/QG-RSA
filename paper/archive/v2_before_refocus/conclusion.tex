@@ -1,0 +1,50 @@
+\section{Discussion and Conclusion}
+\label{sec:conclusion}
+
+\paragraph{What helped.}
+Exemplar-free CIL methods keep class statistics only to re-train their
+classifier. Using the statistics a second time, as a calibrated generative
+score added to the classifier, improves RSIAT without training or new
+memory. Final accuracy rises on all four benchmarks, and average accuracy on
+three of them. The gain comes from correcting cross-task errors. Its size is
+bounded by the representation: about $3.4$ final-accuracy points of the gap
+to joint training on ImageNet-R lie in how the classes of different tasks
+overlap, which no inference-time rule can change.
+
+\paragraph{What did not.}
+\begin{itemize}
+  \item \emph{Transfer.} The pre-registered transfer test failed because
+    CUB-200 gains no average accuracy; its gain appears only in the last
+    stages.
+  \item \emph{Images per class.} Our expectation that the effect grows with
+    fewer images per class was wrong.
+  \item \emph{Quantum components.} None of the five quantum components
+    outperformed its classical counterpart. For the measurement-based
+    components this follows from theory: a circuit placed after the encoding
+    cannot change the PGM, and on second moments the PGM is the quantum form
+    of least-squares discrimination. For the kernel-based components the
+    mechanisms we measured were concentration of local reduced states and
+    degenerate pseudo-data.
+\end{itemize}
+
+\paragraph{Limitations.}
+\begin{itemize}
+  \item We study one baseline, four of RSIAT's six benchmarks and one split
+    per benchmark, with three seeds each.
+  \item The fusion weights were fixed on ImageNet-R. Their use with other
+    backbones or other statistics-based methods is untested.
+  \item Our quantum circuits are small and simulated. The negative results
+    concern these placements and encodings, not quantum models in general.
+\end{itemize}
+
+\paragraph{Outlook.}
+Since the representation is the bottleneck, the next step is to train the
+adapter so that the stored statistics stay discriminative, for example with
+a ridge- or measurement-based loss during the incremental tasks. The
+classical twin of any quantum component should be fixed as the control from
+the start, as done here.
+
+\paragraph{Reproducibility.}
+Configurations, logs, analysis scripts and the pre-registered specifications
+of every round are in the project repository under \texttt{exps/}. Every
+number in this paper is generated from these files.

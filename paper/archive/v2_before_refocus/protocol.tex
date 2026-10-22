@@ -1,0 +1,50 @@
+\section{Measurement Protocol}
+\label{sec:protocol}
+
+\paragraph{Reproduction.}
+With the authors' code and data partitions (seed 1993), our runs reproduce
+all twelve numbers of RSIAT's main table to within $0.01$: $\bar A$ and $A_B$
+on CIFAR-100, ImageNet-R, ImageNet-A, OmniBenchmark, CUB-200 and VTAB.
+Our experiments then use partitions we can redistribute:
+\begin{itemize}
+  \item CIFAR-100: the standard split;
+  \item ImageNet-R: a public fixed split with 23\,918 training and 6\,082 test images;
+  \item ImageNet-A: an 80/20 split per class with seed 67;
+  \item CUB-200: the official split with 5\,994 training and 5\,794 test images.
+\end{itemize}
+Absolute numbers therefore differ slightly from the published ones
+(Table~\ref{tab:main}). All comparisons are made within one protocol.
+
+\paragraph{Seeds and replicates.}
+Every dataset is run with seeds 1993, 2015 and 2026, which fix the class order
+and the ImageNet-A split. We report mean $\pm$ SD over the three seeds.
+
+To measure training noise, we also use replicates: a replicate re-seeds all
+SGD randomness from task~1 on and keeps the base task identical. On
+ImageNet-R (seed 1993, four replicates), RSIAT varies by $\pm0.14$ in
+$\bar A$ and $\pm0.23$ in $A_B$.
+
+\paragraph{All heads evaluated on the same network.}
+An inference-only method needs no training run of its own. After each task,
+the linear head and every candidate head are evaluated on the same features.
+All randomness inside the heads uses private generators, and the global
+random state is restored afterwards. Each run passes two checks:
+\begin{itemize}
+  \item the linear head reproduces the model's logged accuracy curve;
+  \item that curve equals, digit for digit, the curve of a plain RSIAT run
+    with the same seed and replicate.
+\end{itemize}
+Both checks held in every run. Training noise therefore cancels in
+head-to-head differences, and we report these paired differences with
+$t$-intervals.
+
+\paragraph{Pre-registration.}
+Each round had a written specification before it ran, fixing the heads,
+hyper-parameters and decision rules. Free choices, such as fusion weights,
+were made once, on a \emph{tuning group} (ImageNet-R, seed 1993, three
+replicates), and then frozen. Table~\ref{tab:tests} lists every
+pre-registered test and its outcome, including those that failed.
+
+Before adopting this protocol, a single quantum-kernel run had scored $+0.36$
+above a single RSIAT run made with an earlier code version. Under the
+protocol the difference is $+0.06$ ($[-0.07,+0.18]$, Section~\ref{sec:quantum}).

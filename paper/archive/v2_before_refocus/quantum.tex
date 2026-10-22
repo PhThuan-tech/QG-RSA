@@ -1,0 +1,108 @@
+\section{Quantum Components under Controlled Comparison}
+\label{sec:quantum}
+
+The project set out to improve RSIAT with quantum components, so we tested
+each one against a classical counterpart that receives the same input and
+the same budget. All circuits have at most 11 qubits and are simulated
+exactly, so they are classically tractable by construction. The question is
+therefore not quantum advantage. The question is whether a quantum
+inductive bias helps exemplar-free CIL. Table~\ref{tab:quantum} summarises the five
+placements we tested.
+
+\paragraph{Projected quantum kernel (PQK).}
+A feature is projected to $q=8$ angles,
+$\boldsymbol\theta(\mathbf z)=\pi\tanh(W\,\mathrm{LN}(\mathbf z)+\mathbf b)$. The
+angles are loaded by $R_y$ rotations, followed by two variational layers of
+$R_y$ rotations and a ring of CNOTs. Two inputs are compared through their
+one-qubit reduced density matrices~\cite{huang2021power}:
+$k(\mathbf z,\mathbf z')=\exp(-\gamma\sum_j\|\rho_j(\mathbf z)-\rho_j(\mathbf z')\|_F^2)$.
+The bandwidth $\gamma$ is kept within a factor of 10 of the inverse median
+distance. The circuit and training details are documented in the project repository.
+
+\begin{table}[t]
+\centering
+\caption{Quantum placements and their matched classical controls. $\Delta$ is
+AIA in percentage points, with 95\% CI over paired runs. R: ImageNet-R,
+A: ImageNet-A.}
+\label{tab:quantum}
+\setlength{\tabcolsep}{3pt}
+\begin{adjustbox}{max width=\textwidth}
+\begin{tabular}{llll}
+\toprule
+Placement & Comparison & $\Delta$ AIA [CI] & $n$ \\
+\midrule
+1. PQK steering metric, task 0 & QKSR $-$ RSIAT (R) & $+0.06$ [$-0.07$, $+0.18$] & 3 \\
+2. PQK separation, tasks $>0$ & current $-$ old features (R) & $-0.02$ [$-0.06$, $+0.03$] & 3 \\
+\multirow{2}{*}{3. PQK feature map for CA} & PQK ridge $-$ linear head (A) & $-17.3$ [$-19.1$, $-15.6$] & 3 \\
+ & classical RFF ridge $-$ linear head (A) & $-1.4$ [$-2.5$, $-0.3$] & 3 \\
+\multirow{2}{*}{4. PGM, stand-alone} & PGM $-$ ridge, same statistics & $+0.09$ [$-0.23$, $+0.40$] & 11 \\
+ & two-copy encoding $-$ amplitude encoding & $-3.6$ (R), $-6.5$ (A) & 5+5 \\
+5. PGM as fusion source & SCF-PGM $-$ SCF-ridge, 4 datasets & $-0.04$ [$-0.17$, $+0.08$] & 12 \\
+\bottomrule
+\end{tabular}
+\end{adjustbox}
+\end{table}
+
+\paragraph{1--2. PQK as a learned metric.}
+Replacing the cosine similarity of the steering loss with the PQK on the
+base task (QKSR) changes AIA by $+0.06$. The CI bounds any effect below
+$+0.19$. Applying the frozen PQK as an old/new separation metric during the
+incremental tasks makes no difference whether it is evaluated on current
+or on previous-model features.
+
+The mechanism is visible in the losses. The PQK separation term stays at
+about $0.45$ throughout training, and the kernel between prototypes and
+new features stays at $0.5$--$0.6$. The adapter, constrained by the
+alignment loss, does not reduce the quantum similarity through an
+8-dimensional bottleneck.
+
+\paragraph{3. PQK as a feature map for classifier alignment.}
+We fitted ridge heads on the CA pseudo-features using PQK features, RFF
+features, random-projection features, or QDA, and compared each with the
+linear head inside the same run. Every nonlinear head was worse. The PQK
+was the worst, and entanglement made it worse still: the variant without
+CNOTs scored $-10.4$, against $-17.3$ with them.
+
+Two effects explain this ranking.
+\begin{itemize}
+  \item \emph{Degenerate pseudo-data.} With 30 images per class, the class
+    covariances have rank at most 29. The Gaussian pseudo-features are then
+    trivially separable: RFF reaches $100\%$ on held-out pseudo-data but only
+    about $67\%$ on test images. Flexible heads therefore memorise.
+  \item \emph{Lossy local reduced states.} The PQK sees only 8 projected
+    angles and reads only local reduced states. After random CNOT layers,
+    information moves into non-local correlations, so the local states
+    concentrate towards the maximally mixed state~\cite{thanasilp2024concentration}.
+    The measured kernel--target alignment is $0.34$ for the PQK, against
+    $0.37$--$0.38$ for the classical maps.
+\end{itemize}
+
+\paragraph{4--5. Pretty-good measurement.}
+On the same stored statistics, the PGM and closed-form ridge are
+statistically indistinguishable. In fusion, the two sources are equivalent
+over four datasets and 12 runs (Table~
+ef{tab:main}). The PGM source is
+slightly ahead on ImageNet-R and CIFAR-100 and behind on ImageNet-A and
+CUB-200. Two facts explain why.
+\begin{itemize}
+  \item \emph{Unitary invariance} (Proposition~\ref{prop:unitary}). A
+    variational circuit placed after the amplitude encoding cannot change
+    the PGM.
+  \item \emph{Inert shrinkage} (Proposition~\ref{prop:shrink}). Mixing the
+    class states towards their average, the usual way to regularise them,
+    has no effect under uniform priors.
+  \item \emph{Least-squares equivalence.} The PGM coincides with the
+    least-squares measurement~\cite{eldar2001srm}, so on second moments it is
+    a quadratic relative of the ridge head of Eq.~\eqref{eq:ridge}.
+\end{itemize}
+The only quantum-specific freedom left is the encoding. A nonlinear
+two-copy encoding, $(|0\rangle|\psi\rangle+|1\rangle|u\otimes u\rangle)/\sqrt2$
+on 11 qubits, lowered the accuracy, because it adds dimensions that the
+class statistics cannot support.
+
+\paragraph{Summary.}
+In none of the five placements did a quantum component outperform its
+classical control, and in two of them it was clearly harmful. The quantum
+view remains useful as a description: the PGM gives the fused score a
+principled form. Its benefit, however, comes from the generative use of
+the stored statistics and not from the measurement being quantum.

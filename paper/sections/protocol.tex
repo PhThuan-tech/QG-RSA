@@ -1,46 +1,72 @@
 \section{Measurement Protocol}
 \label{sec:protocol}
 
-\paragraph{Replicates.}
-A run is identified by its seed, which fixes the class order and the data
-split, and by a replicate index $k$. The replicate re-seeds all SGD randomness
-from task~1 onwards and leaves the base task identical. For RSIAT on
-ImageNet-R (seed 1993, four replicates), the AIA is
-$87.347\pm0.144$ and the final accuracy is $82.59\pm0.23$; the base-task
-accuracy is $96.05$ in every replicate. On ImageNet-A the AIA standard
-deviation is $0.38$. A candidate is compared with the baseline of the same
-(seed, replicate), and the reported $95\%$ intervals are $t$-intervals over
-runs.
+\paragraph{How large is the noise?}
+We ran the baseline four times on ImageNet-R with one seed. The base task
+was identical in each run; only the SGD randomness of later tasks changed.
+The resulting spread is $\bar A=87.35\pm0.14$ and $A_B=82.59\pm0.23$; on
+ImageNet-A the spread of $\bar A$ is $0.38$. Changing the seed also changes
+the class order and adds more variation. A single run of a candidate
+against a single run of the baseline therefore cannot resolve effects below
+roughly half a point.
 
-\paragraph{In-run multi-head evaluation.}
-An inference-only change does not need a separate training run. After each
-task, every head is evaluated on the same network and the same test features.
-All randomness inside the heads uses private generators, and the global
-random state is saved and restored around them. Two checks guard each run:
+\paragraph{Reproduction.}
+Using the authors' code and data partitions, our runs reproduce all twelve
+numbers of the baseline's main table ($\bar A$ and $A_B$ on six benchmarks) to
+within $0.01$. Our experiments then use partitions we can redistribute:
 \begin{itemize}
-  \item the linear head reproduces the logged accuracy curve of the model;
-  \item that curve equals, digit for digit, the curve of the plain RSIAT run
-    with the same (seed, replicate).
+  \item the standard CIFAR-100 split;
+  \item a public fixed ImageNet-R split with 23\,918 training and 6\,082 test images;
+  \item an 80/20 per-class split of ImageNet-A, with seed 67;
+  \item the official CUB-200 split.
 \end{itemize}
-Both checks passed in every run reported here. Because training noise
-cancels in head-to-head differences, the standard deviation of the paired
-difference is $0.03$--$0.05$ AIA on ImageNet-R. Detecting $0.2$ points
-therefore takes only three runs.
+Absolute numbers therefore differ slightly from the published ones.
 
-\paragraph{Pre-registration and held-out runs.}
-Each experiment had a written specification before it was run, covering
-the heads, the hyper-parameters and the decision rules (a $95\%$ CI that
-excludes zero, and a minimum effect). Any free choice, such as a fusion
-weight, is made on a \emph{tuning group} only: ImageNet-R with seed 1993 and
-three replicates. The choice is then frozen and evaluated on
-\emph{held-out} runs: ImageNet-R with seeds 2015, 2026 and 2042, and
-ImageNet-A with seed 1993 (three replicates) and seeds 2015 and 2026. No
-choice is ever made on ImageNet-A. Analyses that were not specified in
-advance are labelled \emph{exploratory}.
+The protocol has four rules, described next.
 
-\paragraph{A cautionary example.}
-Before adopting the protocol, a single run of a quantum-kernel variant of
-RSIAT scored $87.28$ AIA, against $86.92$ for a single RSIAT run made with an
-earlier version of the code. Re-run under the protocol, the variant differs
-from RSIAT by $+0.057$ ($[-0.07,+0.18]$, three pairs;
-Section~\ref{sec:quantum}).
+\paragraph{Rule 1: pair everything.}
+Every dataset is run with the same three seeds, 1993, 2015 and 2026.
+Effects are reported as paired differences within a run, with 95\%
+$t$-intervals across runs.
+
+\paragraph{Rule 2: evaluate all heads on the same network.}
+A component that only changes inference does not need its own training run.
+After each task, the linear head and every candidate head are evaluated on
+the same test features. Each head draws its randomness from a private
+generator, and the global random state is saved and restored around the
+evaluation. Two checks are run every time:
+\begin{itemize}
+  \item the linear head reproduces the network's logged accuracy curve;
+  \item that curve matches, digit for digit, the curve of a plain baseline
+    run with the same seed and replicate.
+\end{itemize}
+Both held in all runs. Training noise then cancels in head-to-head
+differences. On ImageNet-R, the standard deviation of a paired difference is
+$0.03$--$0.05$ points instead of $0.2$, so three runs resolve $0.2$ points.
+
+Components that change training, such as a quantum steering loss, cannot
+use this rule. They are compared with baseline runs of the same seed and
+replicate, at the larger noise level.
+
+\paragraph{Rule 3: decide before looking.}
+Each round of experiments had a written specification before it ran. It
+fixed the components, the hyper-parameters, the decision rule and the
+minimum effect. Free choices, such as fusion weights, were made once, on a
+tuning group (ImageNet-R, seed 1993, three replicates), and then frozen.
+CIFAR-100 and CUB-200 were added only after all choices had been made, and
+serve as pure tests of transfer. Table~\ref{tab:tests} lists every test,
+including those that failed.
+
+\paragraph{Rule 4: a classical twin for every quantum component.}
+A quantum component is credited only if it beats a classical method that
+receives the same inputs and the same budget:
+\begin{itemize}
+  \item the PQK is compared with an RBF kernel or random features on the
+    same projection;
+  \item a circuit with entangling gates is compared with the same circuit
+    without them;
+  \item the PGM is compared with ridge regression on the same class
+    statistics.
+\end{itemize}
+Beating the baseline alone is not enough. The baseline does not use the
+extra information that the component and its twin share.

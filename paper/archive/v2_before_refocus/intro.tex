@@ -1,0 +1,53 @@
+\section{Introduction}
+\label{sec:intro}
+
+In class-incremental learning (CIL), a model learns a sequence of tasks with
+disjoint classes and must classify all classes seen so far. In the
+exemplar-free setting, no image of a past task may be kept. RSIAT~\cite{rsiat}
+is a strong recent method for this setting. It trains one shared adapter on a
+frozen ViT-B/16. After every task it stores the mean and covariance of each
+new class, and it uses them to re-train the classifier on sampled
+pseudo-features (\emph{classifier alignment}, CA~\cite{zhang2023slca}). The
+statistics are therefore already in memory, but at inference time only the
+re-trained classifier is used.
+
+\paragraph{Goal.}
+This work had two aims. The first was to improve RSIAT with quantum
+machine-learning components: a projected quantum kernel~\cite{huang2021power}
+as a learned metric, and the pretty-good measurement
+(PGM)~\cite{hausladen1994pgm} as a classifier over class states. The second
+was to decide, with measurements rather than single runs, whether any change
+truly helps. Training randomness alone moves RSIAT by $0.14$ points of
+average incremental accuracy on ImageNet-R and by $0.38$ on ImageNet-A, which
+is as large as many reported improvements.
+
+\paragraph{Idea.}
+A diagnosis of RSIAT (Section~\ref{sec:gap}) shows that the remaining errors
+are mostly confusions between classes of different tasks, concentrated on
+the oldest classes. It also shows that better statistics alone do not fix
+them. However, the stored statistics define a \emph{generative} classifier
+that errs on different images than the CA classifier. We therefore add
+the two scores at inference time, after putting them on a common scale. The
+fusion needs no training, no new parameters and no exemplars. The generative
+score can be computed classically (ridge regression on the stored moments)
+or as a quantum measurement (a PGM on class density matrices), which gives a
+direct test of the quantum component.
+
+\paragraph{Contributions.}
+\begin{itemize}
+  \item \emph{Statistics--classifier fusion} (SCF), a training-free inference
+    rule for exemplar-free CIL methods that store class statistics
+    (Section~\ref{sec:method}). On four benchmarks with three seeds, it
+    raises final accuracy on all four. It raises average accuracy on three
+    of them, and not on CUB-200.
+  \item A controlled evaluation of five quantum placements, each against a
+    matched classical counterpart. None helps, and we explain why
+    (Section~\ref{sec:quantum}).
+  \item A diagnosis of where RSIAT loses accuracy: cross-task confusion of
+    the oldest classes, which oracle statistics only move to newer classes
+    (Section~\ref{sec:gap}).
+  \item A measurement protocol for CIL: paired seeds, all inference heads
+    evaluated on the same network with bit-identity checks, and
+    pre-registered decision rules, including the tests that failed
+    (Section~\ref{sec:protocol}).
+\end{itemize}

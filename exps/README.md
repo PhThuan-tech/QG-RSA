@@ -39,8 +39,8 @@ Tình trạng (✓ = đã có run A2 với đủ head SCF; mọi run đều ch�
 |---|:-:|:-:|:-:|---|
 | ImageNet-R (B0Inc20) | ✓ | ✓ | ✓ | `qsd/results/a2/` |
 | ImageNet-A (B0Inc20) | ✓ | ✓ | ✓ | `qsd/results/a2/` |
-| CIFAR-100 (B0Inc10) | | | | vòng A3 (`scf/`), sẵn sàng chạy |
-| CUB-200 (B0Inc10, 20 task) | | | | vòng A3 (`scf/`), split chính thức |
+| CIFAR-100 (B0Inc10) | ✓ | ✓ | ✓ | `scf/results/kaggle1/`, `scf/results/kaggle2/` |
+| CUB-200 (B0Inc10, 20 task) | ✓ | ✓ | ✓ | `scf/results/kaggle2/`, split chính thức 5 994 / 5 794 |
 
 ## Danh mục (theo thứ tự thời gian)
 
@@ -54,7 +54,7 @@ Tình trạng (✓ = đã có run A2 với đủ head SCF; mọi run đều ch�
 | QRF-CA (head CA phi tuyến, PQK) | `qrfca/README.md` | `qrfca/results/README.md` | Mọi head phi tuyến kém hơn; PQK −17.3 AIA |
 | QSD-CIL giai đoạn A | `qsd/README.md` | `qsd/results/stage_a/README.md` | PGM/kênh kém linear; chỉ `pgm_fuse` thắng ở 10/10 run (R +0.25, A +0.44) |
 | QSD-CIL vòng A2 (**kết quả chính của paper**) | `qsd/README_A2.md` | `qsd/results/a2/README.md` | SCF ĐẠT (held-out +0.46 đến +0.62 AIA); ridge cổ điển ngang hoặc hơn PGM, nên không có đóng góp lượng tử; forgetting tăng nhẹ |
-| **SCF vòng A3 (đang chạy)**: CIFAR-100, CUB-200, 3 seed | `scf/README.md` | `scf/results/` | |
+| SCF vòng A3: CIFAR-100, CUB-200, 3 seed | `scf/README.md` | `scf/results/README.md` | Chuyển giao KHÔNG ĐẠT theo quy tắc: CIFAR +0.20 AIA (CI > 0), CUB +0.02. Final tăng ở cả 4 dataset; PGM − ridge = −0.04 trên 12 run |
 
 `archive/qksr/`: config QKSR cũ (CIFAR, CUB), không còn dùng.
 

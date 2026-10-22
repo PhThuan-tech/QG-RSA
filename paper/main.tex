@@ -8,16 +8,17 @@
 \usepackage{graphicx}
 \usepackage{booktabs}
 \usepackage{multirow}
+\usepackage{adjustbox}
+\usepackage[table]{xcolor}
 \usepackage{hyperref}
 
 \newcommand{\Tr}{\mathrm{Tr}}
 
 \begin{document}
 
-\title{Fusing Stored Statistics with the Aligned Classifier in
-Exemplar-Free Class-Incremental Learning:\\
-A Controlled Study that Includes Quantum Components}  % TODO: final title
-\titlerunning{Statistics--Classifier Fusion for Exemplar-Free CIL}
+\title{Does Quantum Help Class-Incremental Learning?\\
+A Measurement-First Study}  % TODO: final title
+\titlerunning{Does Quantum Help Class-Incremental Learning?}
 \author{First Author\inst{1} \and Second Author\inst{1}}  % TODO
 \authorrunning{F. Author et al.}
 \institute{TODO Institution}
@@ -25,37 +26,35 @@ A Controlled Study that Includes Quantum Components}  % TODO: final title
 \maketitle
 
 \begin{abstract}
-Exemplar-free class-incremental learning (EFCIL) methods built on pre-trained
-transformers keep one mean and one covariance per class and use them only to
-re-align a cosine classifier with Gaussian pseudo-features. We show that the
-same statistics carry complementary information that the aligned classifier
-discards. A training-free fusion of the classifier logits with a generative
-score computed from the stored statistics, weighted by a label-free scale and
-a single weight chosen on one tuning benchmark, improves the RSIAT baseline
-on every held-out run: by $+0.46$ average incremental accuracy (95\% CI
-$[+0.28,+0.64]$) when the generative score is a pretty-good quantum
-measurement, and by $+0.62$ ($[+0.39,+0.85]$) when it is a closed-form ridge
-classifier. The study was designed to test quantum components, and it reports
-them under the same rules. Five placements of a quantum kernel or quantum
-measurement were evaluated: a steering metric, a separation metric, a
-classifier feature map, a stand-alone measurement and a fusion source. None
-of them outperformed its matched classical counterpart. We attribute these
-outcomes to a measurement protocol with paired replicates, in-run evaluation
-of all heads on one network with bit-identity checks, and decision rules
-written before each run. Under this protocol an earlier single-run
-improvement of $+0.36$ turned out to lie within training noise. We release
-the protocol and the logs.
-\keywords{Class-incremental learning \and Exemplar-free \and Pre-trained models
-\and Quantum machine learning \and Reproducibility}
+Quantum machine-learning components are often reported to improve classical
+pipelines by margins smaller than the run-to-run variation of those
+pipelines. We study whether quantum components help exemplar-free
+class-incremental learning, starting from a strong pre-trained baseline,
+under a protocol designed to resolve effects of a few tenths of a point.
+The protocol has four parts: paired seeds; every inference head evaluated
+on the same network, with digit-level identity checks; decision rules
+written before each run; and, for every quantum component, a classical
+counterpart with the same inputs. We test five placements: a projected
+quantum kernel as a steering metric, as a separation metric and as a
+classifier feature map; and a pretty-good measurement over class density
+matrices, used alone and fused with the classifier. None outperforms its
+classical counterpart. The kernel loses up to 17 points through
+concentration of its local reduced states. The measurement matches ridge
+regression on the same statistics ($-0.04$ over 12 runs), as theory
+predicts. We prove that circuits placed after the encoding and the usual
+state regularisation cannot change the measurement. The study also yields
+a positive result that is not quantum: fusing the classifier with a
+calibrated score computed from the stored class statistics raises final
+accuracy on four benchmarks, by $+0.38$ to $+0.67$ points.
+\keywords{Quantum machine learning \and Class-incremental learning \and
+Quantum state discrimination \and Reproducibility}
 \end{abstract}
 
 \input{sections/intro}
-\input{sections/related}
-\input{sections/background}
+\input{sections/setting}
 \input{sections/protocol}
-\input{sections/method}
-\input{sections/experiments}
 \input{sections/quantum}
+\input{sections/results}
 \input{sections/conclusion}
 
 \bibliographystyle{splncs04}

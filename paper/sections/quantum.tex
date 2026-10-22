@@ -1,102 +1,216 @@
-\section{Quantum Components under Controlled Comparison}
+\section{Quantum Components}
 \label{sec:quantum}
 
-The project set out to improve RSIAT with quantum components, so we tested
-each one against a classical counterpart that receives the same input and
-the same budget. All circuits have at most 11 qubits and are simulated
-exactly, so they are classically tractable by construction. The question is
-therefore not quantum advantage. The question is whether a quantum
-inductive bias helps EFCIL. Table~\ref{tab:quantum} summarises the five
-placements we tested.
+All circuits have at most 11 qubits and are simulated exactly as state
+vectors, so they are classically tractable by construction. We do not ask
+whether there is a quantum advantage. We ask whether a quantum inductive
+bias helps class-incremental learning when compared with its classical twin.
 
-\paragraph{Projected quantum kernel (PQK).}
-A feature is projected to $q=8$ angles,
-$\boldsymbol\theta(\mathbf z)=\pi\tanh(W\,\mathrm{LN}(\mathbf z)+\mathbf b)$. The
-angles are loaded by $R_y$ rotations, followed by two variational layers of
-$R_y$ rotations and a ring of CNOTs. Two inputs are compared through their
-one-qubit reduced density matrices~\cite{huang2021power}:
-$k(\mathbf z,\mathbf z')=\exp(-\gamma\sum_j\|\rho_j(\mathbf z)-\rho_j(\mathbf z')\|_F^2)$.
-The bandwidth $\gamma$ is kept within a factor of 10 of the inverse median
-distance. The circuit and training details are documented in the project repository.
+\subsection{A Projected Quantum Kernel in Three Places}
+\label{sec:pqk}
 
-\begin{table}[t]
-\centering
-\caption{Quantum placements and their matched classical controls. $\Delta$ is
-AIA in percentage points, with 95\% CI over paired runs. R: ImageNet-R,
-A: ImageNet-A.}
-\label{tab:quantum}
-\setlength{\tabcolsep}{3pt}
-\begin{tabular}{llll}
-\toprule
-Placement & Comparison & $\Delta$ AIA [CI] & $n$ \\
-\midrule
-1. PQK steering metric, task 0 & QKSR $-$ RSIAT (R) & $+0.06$ [$-0.07$, $+0.18$] & 3 \\
-2. PQK separation, tasks $>0$ & current $-$ old features (R) & $-0.02$ [$-0.06$, $+0.03$] & 3 \\
-\multirow{2}{*}{3. PQK feature map for CA} & PQK ridge $-$ linear head (A) & $-17.3$ [$-19.1$, $-15.6$] & 3 \\
- & classical RFF ridge $-$ linear head (A) & $-1.4$ [$-2.5$, $-0.3$] & 3 \\
-\multirow{2}{*}{4. PGM, stand-alone} & PGM $-$ ridge, same statistics & $+0.09$ [$-0.23$, $+0.40$] & 11 \\
- & two-copy encoding $-$ amplitude encoding & $-3.6$ (R), $-6.5$ (A) & 5+5 \\
-5. PGM as fusion source & SCF-PGM $-$ SCF-ridge, held-out & $-0.16$ [$-0.39$, $+0.07$] & 8 \\
-\bottomrule
-\end{tabular}
-\end{table}
+\paragraph{Kernel.}
+A feature is mapped to $q=8$ rotation angles,
+$\boldsymbol\theta(\mathbf z)=\pi\tanh\big(W\,\mathrm{LN}(\mathbf z)+\mathbf b\big)$.
+The circuit loads the angles with $R_y$ rotations and then applies $L=2$
+variational layers, each of trainable $R_y$ rotations followed by a ring of
+CNOTs:
+\begin{equation}
+  |\psi(\mathbf z)\rangle=\prod_{l=1}^{L}\Big[U_{\mathrm{ent}}\textstyle\bigotimes_jR_y(\phi_{l,j})\Big]
+  \textstyle\bigotimes_jR_y(\theta_j(\mathbf z))\,|0\rangle^{\otimes q}.
+\end{equation}
+Following~\cite{huang2021power}, we compare two states through their
+one-qubit reduced density matrices $\rho_j(\mathbf z)$:
+\begin{equation}
+  k(\mathbf z,\mathbf z')=\exp\Big(-\gamma\sum_{j=1}^{q}\big\|\rho_j(\mathbf z)-\rho_j(\mathbf z')\big\|_F^2\Big).
+  \label{eq:pqk}
+\end{equation}
+Local reduced matrices are used because global fidelities concentrate
+exponentially in the number of qubits~\cite{thanasilp2024concentration}. The
+bandwidth $\gamma$ is kept within a factor of 10 of the inverse median
+distance.
 
-\paragraph{1--2. PQK as a learned metric.}
-Replacing the cosine similarity of the steering loss with the PQK on the
-base task (QKSR) changes AIA by $+0.06$. The CI bounds any effect below
-$+0.19$. Applying the frozen PQK as an old/new separation metric during the
-incremental tasks makes no difference whether it is evaluated on current
-or on previous-model features.
+\paragraph{Placements.}
+\begin{enumerate}
+  \item \emph{Steering metric.} In the base task, $k$ replaces the cosine
+    similarity of the baseline's pairwise steering loss. The loss pulls
+    same-class pairs towards $k=1$ and pushes other pairs below a margin.
+    The kernel is trained with the adapter and then frozen.
+  \item \emph{Separation metric.} In incremental tasks, the frozen $k$
+    penalises similarity between new features and old class means. We
+    evaluate it on either current or previous-model features.
+  \item \emph{Classifier feature map.} Ridge heads are fitted on the
+    classifier-alignment pseudo-features mapped through the PQK, and
+    compared, within the same run, with the linear head and with classical
+    maps on the same inputs (random Fourier features, random projections,
+    QDA). A variant without CNOTs isolates the role of entanglement.
+\end{enumerate}
 
-The mechanism is visible in the losses. The PQK separation term stays at
-about $0.45$ throughout training, and the kernel between prototypes and
-new features stays at $0.5$--$0.6$. The adapter, constrained by the
-alignment loss, does not reduce the quantum similarity through an
-8-dimensional bottleneck.
+\subsection{Class-Incremental Learning as State Discrimination}
+\label{sec:qsd}
 
-\paragraph{3. PQK as a feature map for classifier alignment.}
-We fitted ridge heads on the CA pseudo-features using PQK features, RFF
-features, random-projection features, or QDA, and compared each with the
-linear head inside the same run. Every nonlinear head was worse. The PQK
-was the worst, and entanglement made it worse still: the variant without
-CNOTs scored $-10.4$, against $-17.3$ with them.
+\paragraph{Encoding.}
+Let $\mathbf m_0$ be the mean feature of task~0 and $s_0^2$ the trace of its
+covariance; both are fixed after task~0. Each feature is lifted and
+normalised:
+\begin{equation}
+  \mathbf v(\mathbf z)=\begin{bmatrix}(\mathbf z-\mathbf m_0)/s_0\\1\end{bmatrix}\in\mathbb R^{D},\qquad
+  \psi(\mathbf z)=\frac{\mathbf v(\mathbf z)}{\|\mathbf v(\mathbf z)\|},\qquad D=769.
+  \label{eq:encoding}
+\end{equation}
+$\psi$ is the amplitude vector of a 10-qubit pure state, zero-padded to
+$2^{10}$ entries; the padding changes nothing below. The constant entry makes
+the encoding injective: $\mathbf z$ can be recovered from $\psi$.
 
-Two effects explain this ranking.
+\paragraph{Class states from the memory.}
+A class becomes the second-moment state of its lifted features:
+\begin{equation}
+  \rho_c=\frac{\mathbb E_c[\mathbf v\mathbf v^{\top}]}{\mathbb E_c\|\mathbf v\|^2},\qquad
+  \mathbb E_c[\mathbf v\mathbf v^{\top}]=
+  \begin{bmatrix}\tilde\Sigma_c+\tilde{\boldsymbol\mu}_c\tilde{\boldsymbol\mu}_c^{\top} & \tilde{\boldsymbol\mu}_c\\
+  \tilde{\boldsymbol\mu}_c^{\top}&1\end{bmatrix},
+  \label{eq:state}
+\end{equation}
+where $\tilde{\boldsymbol\mu}_c=(\boldsymbol\mu_c-\mathbf m_0)/s_0$ and
+$\tilde\Sigma_c=\Sigma_c/s_0^2$. The state is computed from $\mathcal M_t$
+alone. It therefore needs no stored features, takes no more memory than the
+baseline, and follows the drift correction of the means. We also tested two
+alternatives:
 \begin{itemize}
-  \item \emph{Degenerate pseudo-data.} With 30 images per class, the class
-    covariances have rank at most 29. The Gaussian pseudo-features are then
-    trivially separable: RFF reaches $100\%$ on held-out pseudo-data but only
-    about $67\%$ on test images. Flexible heads therefore memorise.
-  \item \emph{Lossy local reduced states.} The PQK sees only 8 projected
-    angles and reads only local reduced states. After random CNOT layers,
-    information moves into non-local correlations, so the local states
-    concentrate towards the maximally mixed state~\cite{thanasilp2024concentration}.
-    The measured kernel--target alignment is $0.34$ for the PQK, against
-    $0.37$--$0.38$ for the classical maps.
+  \item states built from the stored per-sample features, which is close
+    to storing exemplars;
+  \item those states transported between tasks by a channel
+    $\rho\mapsto A_t\rho A_t^{\top}/\Tr(\cdot)$, with $A_t$ fitted in closed form
+    on the current task's features before and after training.
 \end{itemize}
 
-\paragraph{4--5. Pretty-good measurement.}
-On the same stored statistics, the PGM and closed-form ridge are
-statistically indistinguishable. In fusion, the ridge source is at least as
-good: it is equal on ImageNet-R ($+0.06$ for the PGM) and better on
-ImageNet-A ($-0.29$ for the PGM). Two facts explain why.
+\paragraph{Pretty-good measurement.}
+With uniform priors, the PGM~\cite{hausladen1994pgm} uses the operators
+\begin{equation}
+  E_c=\frac1{C_t}\bar\rho_\delta^{-1/2}\rho_c\,\bar\rho_\delta^{-1/2},\qquad
+  \bar\rho_\delta=\frac1{C_t}\sum_c\rho_c+\delta I,\qquad
+  p(c\mid\mathbf z)=\frac{\psi^{\top}E_c\psi}{\sum_{c'}\psi^{\top}E_{c'}\psi},
+  \label{eq:pgm}
+\end{equation}
+with $\delta=0.1/2^{10}$; $\psi^{\top}E_c\psi=\Tr(E_c\psi\psi^{\top})$ is the Born
+probability of outcome $c$. Because CIL errors are mostly cross-task
+(Section~\ref{sec:gap}), we also use a \emph{hierarchical} measurement:
 \begin{itemize}
-  \item \emph{Unitary invariance.} A unitary $U$ applied after the encoding
-    maps $\psi\mapsto U\psi$ and $\rho_c\mapsto U\rho_cU^{\dagger}$, and leaves every
-    $\Tr(E_c\psi\psi^{\dagger})$ unchanged. A variational circuit placed after
-    the amplitude encoding is therefore useless for the PGM.
-  \item \emph{Least-squares equivalence.} The PGM coincides with the
-    least-squares measurement~\cite{eldar2001srm}, so on second moments it is
-    a quadratic relative of ridge regression.
+  \item it first measures the task, $E_T=\sum_{c\in\mathcal Y_T}E_c$;
+  \item it then measures the class inside the task, whitened by the task
+    state $\rho_T$.
 \end{itemize}
-The only quantum-specific freedom left is the encoding. A nonlinear
-two-copy encoding, $(|0\rangle|\psi\rangle+|1\rangle|u\otimes u\rangle)/\sqrt2$
-on 11 qubits, lowered the accuracy, because it adds dimensions that the
-class statistics cannot support.
+The resulting score is $p(c\mid\mathbf z)=p(T\mid\mathbf z)\,p(c\mid\mathbf z,T)$
+with $T=\tau(c)$.
 
-\paragraph{Summary.}
-In none of the five placements did a quantum component outperform its
-classical control, and in two of them it was clearly harmful. The quantum
-view remains useful as a description: the PGM gives the fused score a
-principled form. Its benefit, however, comes from the generative use of
-the stored statistics and not from the measurement being quantum.
+\paragraph{Richer encoding.}
+To give the measurement a non-linear feature space, we add a flag qubit and
+a two-copy block:
+$\big(|0\rangle|\psi\rangle+|1\rangle|\mathbf u\otimes\mathbf u\rangle\big)/\sqrt2$,
+where $\mathbf u$ is a normalised random projection of $\mathbf z$ to 32
+dimensions. This uses 11 qubits.
+
+\subsection{What the Measurement Can and Cannot Do}
+\label{sec:theory}
+
+\begin{proposition}[valid states]\label{prop:state}
+$\rho_c$ is positive semi-definite with unit trace. It is the mixture
+$\mathbb E_c[\pi(\mathbf z)\psi\psi^{\top}]$ of the encoded pure states, with
+weights $\pi(\mathbf z)=\|\mathbf v(\mathbf z)\|^2/\mathbb E_c\|\mathbf v\|^2$.
+\end{proposition}
+\begin{proof}
+$\mathbf v\mathbf v^{\top}=\|\mathbf v\|^2\psi\psi^{\top}$. Taking expectations gives a
+non-negative combination of rank-one projectors, with trace
+$\mathbb E_c\|\mathbf v\|^2$.
+\end{proof}
+
+\begin{proposition}[unitary invariance]\label{prop:unitary}
+For any unitary $U$ acting after the encoding ($\psi\mapsto U\psi$,
+$\rho_c\mapsto U\rho_cU^{\dagger}$), every $p(c\mid\mathbf z)$ in
+Eq.~\eqref{eq:pgm} is unchanged.
+\end{proposition}
+\begin{proof}
+$\bar\rho_\delta\mapsto U\bar\rho_\delta U^{\dagger}$. Matrix functions commute with
+unitary conjugation, so $E_c\mapsto UE_cU^{\dagger}$, and
+$(U\psi)^{\dagger}UE_cU^{\dagger}U\psi=\psi^{\dagger}E_c\psi$.
+\end{proof}
+
+\begin{proposition}[shrinkage is inert]\label{prop:shrink}
+Replacing every $\rho_c$ by $(1-\varepsilon)\rho_c+\varepsilon\bar\rho$, with
+$\varepsilon\in[0,1)$, leaves $\arg\max_cp(c\mid\mathbf z)$ unchanged.
+\end{proposition}
+\begin{proof}
+$\bar\rho$ and $\bar\rho_\delta$ do not change. Each numerator becomes
+$(1-\varepsilon)\psi^{\top}E_c\psi+\varepsilon\psi^{\top}\bar E\psi$, with
+$\bar E=\frac1{C_t}\bar\rho_\delta^{-1/2}\bar\rho\,\bar\rho_\delta^{-1/2}$. The
+denominator is unchanged. This is one increasing affine map, applied to
+every class alike.
+\end{proof}
+
+\paragraph{Consequences.}
+\begin{itemize}
+  \item A variational circuit placed after the amplitude encoding is a
+    unitary. By Proposition~\ref{prop:unitary}, training one cannot change
+    the classifier.
+  \item By Proposition~\ref{prop:shrink}, the usual way of regularising
+    class states has no effect, so $\delta$ is the only effective
+    regulariser.
+  \item The PGM coincides with the least-squares measurement~\cite{eldar2001srm}.
+    On second moments it is therefore the quantum counterpart of
+    least-squares classification, which gives its classical twin below.
+\end{itemize}
+What remains as a quantum degree of freedom is the encoding itself.
+
+\subsection{Measurement Fusion and its Classical Twin}
+\label{sec:fusion}
+
+\paragraph{Classical twin.}
+Treat each class as $\mathcal N(\boldsymbol\mu_c,\Sigma_c)$ and regress one-hot
+targets with squared loss and ridge penalty. The normal equations give
+\begin{equation}
+  \Big(\sum_c\big(\Sigma_c+\boldsymbol\mu_c\boldsymbol\mu_c^{\top}\big)+\lambda I\Big)W=
+  [\boldsymbol\mu_1,\dots,\boldsymbol\mu_{C_t}],\qquad g^{\mathrm R}_c(\mathbf z)=\mathbf z^{\top}W_{:,c},
+  \label{eq:ridge}
+\end{equation}
+with $\lambda=0.1\,\mathrm{tr}(\cdot)/d$. Like the PGM, this uses only
+$\mathcal M_t$. Closed-form heads of this kind are known in pre-trained
+CIL~\cite{mcdonnell2023ranpac}.
+
+\paragraph{Fusion.}
+A generative score $g$ (the PGM log-probability $g^{\mathrm Q}=\log p$, or
+$g^{\mathrm R}$) is added to the linear-head logits:
+\begin{equation}
+  \hat y(\mathbf z)=\arg\max_c\;\ell_c(\mathbf z)+w\,\kappa\,g_c(\mathbf z),\qquad
+  \kappa=\frac{\frac1n\sum_i\mathrm{sd}_c\,\ell_c(\mathbf x_i)}{\frac1n\sum_i\mathrm{sd}_c\,g_c(\mathbf x_i)}.
+  \label{eq:fusion}
+\end{equation}
+Here $\mathrm{sd}_c$ is the spread across classes, and $\mathbf x_i$ are the
+training images of the current task. $\kappa$ needs no labels. The weight
+$w\in\{0.25,0.5,1,2,4\}$ is chosen once on the tuning group and frozen.
+
+For the PGM, the softmax of the fused score is
+$p_{\mathrm{lin}}(c\mid\mathbf z)\,p(c\mid\mathbf z)^{w\kappa}$ up to normalisation. For
+an integer $k$, $p(c\mid\mathbf z)^k$ is the Born probability of the product
+measurement $E_c^{\otimes k}$ on $k$ copies of the state. The weight
+therefore acts as an effective number of measured copies.
+
+\begin{proposition}[scale invariance]\label{prop:scale}
+For any $a>0$ and any class-independent $b(\mathbf z)$, replacing $g_c$ by
+$a\,g_c+b$ leaves $\hat y$ in Eq.~\eqref{eq:fusion} unchanged.
+\end{proposition}
+\begin{proof}
+$\kappa\mapsto\kappa/a$, so $\kappa g_c\mapsto\kappa g_c+\kappa b/a$, and the
+added term does not depend on $c$.
+\end{proof}
+\noindent Because of Proposition~\ref{prop:scale}, the same $w$ means the same
+thing for both sources and on every dataset. This is what makes a frozen
+weight a fair comparison between the PGM and its twin.
+
+\paragraph{Cost.}
+Neither source stores anything beyond $\mathcal M_t$.
+\begin{itemize}
+  \item Ridge: one $d\times d$ solve per task.
+  \item PGM: one $D\times D$ eigendecomposition per task, then one quadratic
+    form per class and test image. At the last ImageNet-R task this is
+    about $1.4$ TFLOP, under one second on a GPU.
+\end{itemize}
