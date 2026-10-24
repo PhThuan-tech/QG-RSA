@@ -68,6 +68,21 @@ displacement vector. Prototype and SSC fields report the old-class prototype
 shift before and after the existing semantic-shift compensation; they are
 observational metrics only and do not affect training or compensation.
 
+### Optional global SSCA decay
+
+The default SSCA update remains unchanged for configurations without
+`ssca_scale_mode`. To run the opt-in global decay ablation, set
+`ssca_scale_mode` to `global_decay` and provide `ssca_global_gamma` in `[0, 1]`.
+For incremental task index `t` (`_cur_task`), the full prototype displacement is
+scaled by `gamma ** (t - 1)`: task 1 keeps the original update, task 2 uses
+`gamma`, and task 5 uses `gamma ** 4`. A single scalar is applied to every old
+class prototype in that task. `ssca: false` still disables prototype
+compensation.
+
+The KeepLoRA + AdamW experiment uses:
+
+    python main.py --config ./exps/keeplora_adamw_ssca_global_g090.json
+
 ### KeepLoRA replacement
 
 The KeepLoRA smoke configuration keeps the RSIAT learner, cosine classifier,

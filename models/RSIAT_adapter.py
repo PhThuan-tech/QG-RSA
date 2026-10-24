@@ -19,6 +19,48 @@ from KeepLora.keeplora_controller import KeepLoRAController
 import math
 num_workers = 8
 
+
+def _validate_ssca_scale_config(args):
+    if "ssca_scale_mode" not in args:
+        return "legacy", None
+
+    mode = args["ssca_scale_mode"]
+    if mode == "legacy":
+        return mode, None
+    if mode != "global_decay":
+        raise ValueError(
+            "ssca_scale_mode must be 'legacy' or 'global_decay', got {!r}."
+            .format(mode)
+        )
+
+    gamma = args.get("ssca_global_gamma")
+    if isinstance(gamma, bool):
+        raise ValueError("ssca_global_gamma must be a finite number in [0, 1].")
+    try:
+        gamma = float(gamma)
+    except (OverflowError, TypeError, ValueError):
+        raise ValueError(
+            "ssca_global_gamma must be a finite number in [0, 1]."
+        ) from None
+    if not math.isfinite(gamma) or not 0 <= gamma <= 1:
+        raise ValueError("ssca_global_gamma must be a finite number in [0, 1].")
+    return mode, gamma
+
+
+def _ssca_scale_for_task(args, task_index):
+    mode, gamma = _validate_ssca_scale_config(args)
+    if mode == "legacy" or task_index <= 1:
+        return 1.0
+    return gamma ** (task_index - 1)
+
+
+def _apply_ssca_gap(class_means, known_classes, gap, enabled, scale):
+    if enabled:
+        old_class_mean = class_means[:known_classes]
+        old_class_mean += scale * gap
+        class_means[:known_classes] = old_class_mean
+
+
 class Learner(BaseLearner):
     def __init__(self, args):
         super().__init__(args)
@@ -36,6 +78,7 @@ class Learner(BaseLearner):
         self.weight_decay = args["weight_decay"] if args["weight_decay"] is not None else 0.0005
         self.min_lr = args['min_lr'] if args['min_lr'] is not None else 1e-8
         self.args = args
+        _validate_ssca_scale_config(self.args)
         self.semantic_drift = SemanticDriftObserver(self)
 
         self._old_most_sentive = []
@@ -634,9 +677,13 @@ class Learner(BaseLearner):
             gap = self.displacement(
                 train_embeddings_old, train_embeddings_new, old_class_mean, 4.0
             )
-            if self.args["ssca"] is True:
-                old_class_mean += gap
-                self._class_means[:self._known_classes] = old_class_mean
+            _apply_ssca_gap(
+                self._class_means,
+                self._known_classes,
+                gap,
+                enabled=self.args["ssca"] is True,
+                scale=_ssca_scale_for_task(self.args, self._cur_task),
+            )
             if self.semantic_drift.enabled:
                 self.semantic_drift.record_ssca(
                     means_before_ssca, self._class_means
