@@ -82,6 +82,11 @@ compensation.
 The KeepLoRA + AdamW experiment uses:
 
     python main.py --config ./exps/keeplora_adamw_ssca_global_g090.json
+    python main.py --config ./exps/keeplora_adamw_mlp_ssca_global_g090.json
+
+The first configuration applies KeepLoRA to attention Q/K/V/O; the second
+applies it to the MLP fc1/fc2 projections. They share the same SSCA decay and
+semantic-drift diagnostics but use separate output prefixes.
 
 ### KeepLoRA replacement
 
