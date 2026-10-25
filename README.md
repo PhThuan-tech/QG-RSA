@@ -83,10 +83,18 @@ The KeepLoRA + AdamW experiment uses:
 
     python main.py --config ./exps/keeplora_adamw_ssca_global_g090.json
     python main.py --config ./exps/keeplora_adamw_mlp_ssca_global_g090.json
+    python main.py --config ./exps/keeplora_adamw_ssca_age_g090.json
+    python main.py --config ./exps/keeplora_adamw_mlp_ssca_age_g090.json
 
 The first configuration applies KeepLoRA to attention Q/K/V/O; the second
 applies it to the MLP fc1/fc2 projections. They share the same SSCA decay and
 semantic-drift diagnostics but use separate output prefixes.
+
+The age-aware configuration instead scales each old prototype using
+`ssca_scale_mode: "age_decay"` and `ssca_age_gamma`. Its class-to-task mapping
+uses the actual `task_sizes` recorded by the data manager, including an uneven
+final task. This mode is independent of `global_decay`; do not combine their
+factors in a single run.
 
 ### KeepLoRA replacement
 

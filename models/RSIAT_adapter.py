@@ -22,36 +22,126 @@ num_workers = 8
 
 def _validate_ssca_scale_config(args):
     if "ssca_scale_mode" not in args:
-        return "legacy", None
+        return "none", None
 
     mode = args["ssca_scale_mode"]
-    if mode == "legacy":
+    if mode in ("legacy", "none"):
         return mode, None
-    if mode != "global_decay":
+    if mode not in ("global_decay", "age_decay"):
         raise ValueError(
-            "ssca_scale_mode must be 'legacy' or 'global_decay', got {!r}."
+            "ssca_scale_mode must be 'none', 'global_decay', or 'age_decay', "
+            "got {!r}."
             .format(mode)
         )
 
-    gamma = args.get("ssca_global_gamma")
+    gamma_key = (
+        "ssca_global_gamma" if mode == "global_decay" else "ssca_age_gamma"
+    )
+    gamma = args.get(gamma_key)
     if isinstance(gamma, bool):
-        raise ValueError("ssca_global_gamma must be a finite number in [0, 1].")
+        raise ValueError(
+            "{} must be a finite number in [0, 1].".format(gamma_key)
+        )
     try:
         gamma = float(gamma)
     except (OverflowError, TypeError, ValueError):
         raise ValueError(
-            "ssca_global_gamma must be a finite number in [0, 1]."
+            "{} must be a finite number in [0, 1].".format(gamma_key)
         ) from None
     if not math.isfinite(gamma) or not 0 <= gamma <= 1:
-        raise ValueError("ssca_global_gamma must be a finite number in [0, 1].")
+        raise ValueError(
+            "{} must be a finite number in [0, 1].".format(gamma_key)
+        )
     return mode, gamma
 
 
 def _ssca_scale_for_task(args, task_index):
+    if (
+        isinstance(task_index, (bool, np.bool_))
+        or not isinstance(task_index, (int, np.integer))
+        or task_index < 0
+    ):
+        raise ValueError("task_index must be a non-negative integer.")
     mode, gamma = _validate_ssca_scale_config(args)
-    if mode == "legacy" or task_index <= 1:
+    if mode in ("none", "legacy"):
+        return 1.0
+    if mode != "global_decay":
+        raise ValueError(
+            "_ssca_scale_for_task only supports none and global_decay modes."
+        )
+    if task_index <= 1:
         return 1.0
     return gamma ** (task_index - 1)
+
+
+def _ssca_scales_for_classes(args, task_index, task_sizes, known_classes, dtype):
+    mode, gamma = _validate_ssca_scale_config(args)
+    if (
+        isinstance(task_index, (bool, np.bool_))
+        or not isinstance(task_index, (int, np.integer))
+        or task_index < 0
+    ):
+        raise ValueError("task_index must be a non-negative integer.")
+    if (
+        isinstance(known_classes, (bool, np.bool_))
+        or not isinstance(known_classes, (int, np.integer))
+        or known_classes < 0
+    ):
+        raise ValueError("known_classes must be a non-negative integer.")
+
+    if mode in ("none", "legacy"):
+        scales = np.ones(known_classes, dtype=dtype)
+        groups = [("all_old", 1.0)] if known_classes else []
+    elif mode == "global_decay":
+        scale = _ssca_scale_for_task(args, task_index)
+        scales = np.full(known_classes, scale, dtype=dtype)
+        groups = [("all_old", scale)] if known_classes else []
+    else:
+        try:
+            raw_sizes = list(task_sizes)
+        except TypeError:
+            raise ValueError(
+                "age_decay task_sizes must contain positive integers."
+            ) from None
+        if any(
+            isinstance(size, (bool, np.bool_))
+            or not isinstance(size, (int, np.integer))
+            for size in raw_sizes
+        ):
+            raise ValueError(
+                "age_decay task_sizes must contain positive integers."
+            )
+        sizes = [int(size) for size in raw_sizes]
+        if len(sizes) != task_index + 1 or any(size <= 0 for size in sizes):
+            raise ValueError(
+                "age_decay requires positive task_sizes through the current "
+                "task; task_index={}, task_sizes={!r}."
+                .format(task_index, task_sizes)
+            )
+        if sum(sizes[:-1]) != known_classes:
+            raise ValueError(
+                "age_decay task sizes do not match old-class prototypes: "
+                "sum(previous_task_sizes)={}, known_classes={}."
+                .format(sum(sizes[:-1]), known_classes)
+            )
+
+        class_origins = np.repeat(
+            np.arange(len(sizes) - 1, dtype=np.int64),
+            np.asarray(sizes[:-1], dtype=np.int64),
+        )
+        exponents = np.maximum(task_index - class_origins - 1, 0)
+        scales = np.power(gamma, exponents).astype(dtype, copy=False)
+        groups = []
+        start = 0
+        for origin_task, size in enumerate(sizes[:-1]):
+            end = start + size
+            if end > start:
+                groups.append(
+                    (origin_task, float(scales[start]))
+                )
+            start = end
+
+    return mode, gamma, scales.reshape(known_classes, 1), groups
 
 
 def _apply_ssca_gap(class_means, known_classes, gap, enabled, scale):
@@ -677,13 +767,49 @@ class Learner(BaseLearner):
             gap = self.displacement(
                 train_embeddings_old, train_embeddings_new, old_class_mean, 4.0
             )
-            _apply_ssca_gap(
-                self._class_means,
-                self._known_classes,
-                gap,
-                enabled=self.args["ssca"] is True,
-                scale=_ssca_scale_for_task(self.args, self._cur_task),
-            )
+            if self.args["ssca"] is True:
+                mode, gamma, alpha_per_class, task_groups = (
+                    _ssca_scales_for_classes(
+                        self.args,
+                        self._cur_task,
+                        self.task_sizes,
+                        self._known_classes,
+                        gap.dtype,
+                    )
+                )
+                _apply_ssca_gap(
+                    self._class_means,
+                    self._known_classes,
+                    gap,
+                    enabled=True,
+                    scale=alpha_per_class,
+                )
+                group_summary = ", ".join(
+                    "task{}={:.6f}".format(task, scale)
+                    if isinstance(task, int)
+                    else "{}={:.6f}".format(task, scale)
+                    for task, scale in task_groups
+                )
+                logging.info(
+                    "SSCA scale mode=%s task=%d gamma=%s "
+                    "alpha_min=%.6f alpha_max=%.6f alpha_mean=%.6f "
+                    "origin_task_scales=[%s]",
+                    mode,
+                    self._cur_task,
+                    "n/a" if gamma is None else "{:.6f}".format(gamma),
+                    float(alpha_per_class.min()) if self._known_classes else 1.0,
+                    float(alpha_per_class.max()) if self._known_classes else 1.0,
+                    float(alpha_per_class.mean()) if self._known_classes else 1.0,
+                    group_summary,
+                )
+            else:
+                _apply_ssca_gap(
+                    self._class_means,
+                    self._known_classes,
+                    gap,
+                    enabled=False,
+                    scale=1.0,
+                )
             if self.semantic_drift.enabled:
                 self.semantic_drift.record_ssca(
                     means_before_ssca, self._class_means
