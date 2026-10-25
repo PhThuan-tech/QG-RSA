@@ -344,6 +344,31 @@ class SSCAGlobalDecayTests(unittest.TestCase):
         self.assertTrue(mlp["semantic_drift"]["enabled"])
         self.assertTrue(mlp["semantic_drift"]["compute_ssca_diagnostic"])
 
+    def test_adamw_mlp_baseline_enables_matching_semantic_drift_diagnostics(self):
+        root = pathlib.Path(__file__).resolve().parents[1]
+        baseline = json.loads(
+            (root / "exps" / "keeplora_adamw_mlp.json").read_text(
+                encoding="utf-8"
+            )
+        )
+        age_decay = json.loads(
+            (root / "exps" / "keeplora_adamw_mlp_ssca_age_g090.json").read_text(
+                encoding="utf-8"
+            )
+        )
+        global_decay = json.loads(
+            (
+                root / "exps" / "keeplora_adamw_mlp_ssca_global_g090.json"
+            ).read_text(encoding="utf-8")
+        )
+
+        self.assertEqual(baseline["semantic_drift"], age_decay["semantic_drift"])
+        self.assertEqual(baseline["semantic_drift"], global_decay["semantic_drift"])
+        self.assertTrue(baseline["semantic_drift"]["enabled"])
+        self.assertTrue(baseline["semantic_drift"]["compute_ssca_diagnostic"])
+        self.assertTrue(baseline["ssca"])
+        self.assertTrue(baseline["isolate_runs"])
+
 
 if __name__ == "__main__":
     unittest.main()

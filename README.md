@@ -89,6 +89,9 @@ The KeepLoRA + AdamW experiment uses:
 The first configuration applies KeepLoRA to attention Q/K/V/O; the second
 applies it to the MLP fc1/fc2 projections. They share the same SSCA decay and
 semantic-drift diagnostics but use separate output prefixes.
+The original MLP baseline (`exps/keeplora_adamw_mlp.json`) also enables the
+same diagnostics so its drift reports can be compared with the global- and
+age-decay MLP runs.
 
 The age-aware configuration instead scales each old prototype using
 `ssca_scale_mode: "age_decay"` and `ssca_age_gamma`. Its class-to-task mapping

@@ -57,5 +57,19 @@
   "keeplora_feature_threshold": 0.99,
   "keeplora_feature_samples": 0,
   "keeplora_grad_batches": 0,
-  "keeplora_feature_batches": 0
+  "keeplora_feature_batches": 0,
+  "semantic_drift": {
+    "enabled": true,
+    "probe_source": "test",
+    "probe_mode": "test",
+    "max_samples_per_class": null,
+    "compute_sample_metrics": true,
+    "compute_prototype_metrics": true,
+    "compute_distribution_metrics": true,
+    "compute_separation_metrics": true,
+    "compute_relational_metrics": true,
+    "compute_ssca_diagnostic": true,
+    "save_per_class": true,
+    "save_per_sample": false
+  }
 }
