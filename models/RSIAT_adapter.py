@@ -825,6 +825,7 @@ class Learner(BaseLearner):
 
     def _train(self, train_loader, test_loader):
         self._network.to(self._device)
+        self._rae_optimizer_mode()
         if self._uses_keeplora:
             self._initialize_keeplora_task(self.keeplora_accum_loader)
         if self._cur_task == 0:
@@ -855,12 +856,120 @@ class Learner(BaseLearner):
             param_groups.append(
                 {'name': 'rae', 'params': self.old_ae.parameters(),
                  'lr': self.args['ae_init_lr'], 'weight_decay': self.args['ae_weight_decay']})
-            optimizer = self._build_main_optimizer(param_groups, incremental=True)
+            optimizer, rae_optimizer = self._build_incremental_optimizers(
+                param_groups
+            )
             scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=self.tuned_epochs, eta_min=self.min_lr)
+            rae_scheduler = (
+                optim.lr_scheduler.CosineAnnealingLR(
+                    rae_optimizer, T_max=self.tuned_epochs, eta_min=self.min_lr
+                )
+                if rae_optimizer is not None
+                else None
+            )
             log_count_parameter(param_groups)
-            self._init_train(train_loader, test_loader, optimizer, scheduler, self.args['warmup_epoch'])
+            self._init_train(
+                train_loader,
+                test_loader,
+                optimizer,
+                scheduler,
+                self.args['warmup_epoch'],
+                rae_optimizer=rae_optimizer,
+                rae_scheduler=rae_scheduler,
+            )
 
-    def _build_main_optimizer(self, param_groups, incremental):
+    def _rae_optimizer_mode(self):
+        mode = str(self.args.get("rae_optimizer", "main")).lower()
+        if mode not in ("main", "sgd"):
+            raise ValueError(
+                "rae_optimizer must be 'main' or 'sgd', got {!r}."
+                .format(mode)
+            )
+        main_optimizer = str(self.args.get("optimizer", "sgd")).lower()
+        if mode == "sgd" and main_optimizer != "adamw":
+            raise ValueError(
+                "rae_optimizer='sgd' requires optimizer='adamw'."
+            )
+        return mode
+
+    def _build_incremental_optimizers(self, param_groups):
+        if self._rae_optimizer_mode() != "sgd":
+            return self._build_main_optimizer(
+                param_groups, incremental=True
+            ), None
+
+        for group in param_groups:
+            group["params"] = list(group["params"])
+        rae_groups = [group for group in param_groups if group["name"] == "rae"]
+        if len(rae_groups) != 1:
+            raise RuntimeError(
+                "Separate RAE SGD requires exactly one RAE parameter group."
+            )
+        rae_group = rae_groups[0]
+        main_groups = [
+            group for group in param_groups if group["name"] != "rae"
+        ]
+        main_optimizer = self._build_main_optimizer(
+            main_groups, incremental=True, include_rae=False
+        )
+        rae_optimizer = self._build_rae_sgd_optimizer(rae_group)
+        main_ids = {
+            id(parameter)
+            for group in main_optimizer.param_groups
+            for parameter in group["params"]
+        }
+        rae_ids = {
+            id(parameter)
+            for group in rae_optimizer.param_groups
+            for parameter in group["params"]
+        }
+        expected_rae_ids = {
+            id(parameter)
+            for parameter in self.old_ae.parameters()
+            if parameter.requires_grad
+        }
+        if main_ids & rae_ids or rae_ids != expected_rae_ids:
+            raise RuntimeError(
+                "Separate RAE optimizer parameter coverage mismatch."
+            )
+        return main_optimizer, rae_optimizer
+
+    def _build_rae_sgd_optimizer(self, group):
+        parameters = [
+            parameter
+            for parameter in group["params"]
+            if parameter.requires_grad
+        ]
+        if not parameters:
+            raise RuntimeError("RAE SGD parameter group is empty.")
+
+        lr = float(group["lr"])
+        weight_decay = float(group["weight_decay"])
+        momentum = float(self.args.get("rae_sgd_momentum", 0.9))
+        if not math.isfinite(lr) or lr <= 0:
+            raise ValueError("RAE SGD learning rate must be finite and > 0.")
+        if not math.isfinite(weight_decay) or weight_decay < 0:
+            raise ValueError(
+                "RAE SGD weight decay must be finite and >= 0."
+            )
+        if not math.isfinite(momentum) or momentum < 0:
+            raise ValueError("rae_sgd_momentum must be finite and >= 0.")
+
+        optimizer = optim.SGD(
+            [{"name": "rae", "params": parameters}],
+            lr=lr,
+            momentum=momentum,
+            weight_decay=weight_decay,
+        )
+        logging.info(
+            "RAE optimizer=SGD lr=%g momentum=%g weight_decay=%g",
+            lr,
+            momentum,
+            weight_decay,
+        )
+        return optimizer
+
+    def _build_main_optimizer(self, param_groups, incremental, include_rae=True):
         for group in param_groups:
             group["params"] = list(group["params"])
         grouped_ids = [
@@ -947,7 +1056,7 @@ class Learner(BaseLearner):
             for parameter in network.parameters()
             if parameter.requires_grad
         }
-        if incremental and self.old_ae is not None:
+        if incremental and include_rae and self.old_ae is not None:
             expected_parameters.update(
                 id(parameter)
                 for parameter in self.old_ae.parameters()
@@ -1004,7 +1113,16 @@ class Learner(BaseLearner):
             )
         return optimizer
 
-    def _init_train(self, train_loader, test_loader, optimizer, scheduler, warmup_epoch):
+    def _init_train(
+        self,
+        train_loader,
+        test_loader,
+        optimizer,
+        scheduler,
+        warmup_epoch,
+        rae_optimizer=None,
+        rae_scheduler=None,
+    ):
         prog_bar = tqdm(range(self.tuned_epochs))
         eval_interval = self.args.get("eval_interval", 0)
         
@@ -1020,8 +1138,12 @@ class Learner(BaseLearner):
                 logits, loss_c, loss_rt = self._compute_rt_loss(inputs, targets, epoch, warmup_epoch)
                 loss = loss_c + loss_rt
                 optimizer.zero_grad()
+                if rae_optimizer is not None:
+                    rae_optimizer.zero_grad()
                 loss.backward()
                 optimizer.step()
+                if rae_optimizer is not None:
+                    rae_optimizer.step()
                 losses += loss.item()
                 losses_c += loss_c.item()
                 losses_rt += loss_rt.item()
@@ -1029,6 +1151,8 @@ class Learner(BaseLearner):
                 correct += preds.eq(targets.expand_as(preds)).cpu().sum()
                 total += len(targets)
             scheduler.step()
+            if rae_scheduler is not None:
+                rae_scheduler.step()
 
             train_acc = np.around(tensor2numpy(correct) * 100 / total, decimals=2)
             if self._should_eval_epoch(epoch, self.tuned_epochs, eval_interval):

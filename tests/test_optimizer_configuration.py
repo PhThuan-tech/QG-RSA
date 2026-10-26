@@ -46,6 +46,15 @@ class OptimizerConfigurationTests(unittest.TestCase):
         learner._build_main_optimizer = MethodType(
             Learner._build_main_optimizer, learner
         )
+        learner._rae_optimizer_mode = MethodType(
+            Learner._rae_optimizer_mode, learner
+        )
+        learner._build_incremental_optimizers = MethodType(
+            Learner._build_incremental_optimizers, learner
+        )
+        learner._build_rae_sgd_optimizer = MethodType(
+            Learner._build_rae_sgd_optimizer, learner
+        )
         if incremental:
             groups = [
                 {
@@ -225,6 +234,139 @@ class OptimizerConfigurationTests(unittest.TestCase):
         )
         self.assertIn(id(learner.old_ae.weight), {id(p) for p in trainable})
 
+    def test_adamw_backbone_and_sgd_momentum_rae_use_separate_optimizers(self):
+        learner, groups = self.make_learner("adamw", incremental=True)
+        learner.args["rae_optimizer"] = "sgd"
+        learner.args["rae_sgd_momentum"] = 0.9
+
+        main_optimizer, rae_optimizer = (
+            learner._build_incremental_optimizers(groups)
+        )
+
+        self.assertIsInstance(main_optimizer, torch.optim.AdamW)
+        self.assertIsInstance(rae_optimizer, torch.optim.SGD)
+        self.assertEqual(
+            [group["name"] for group in main_optimizer.param_groups],
+            ["backbone", "classifier"],
+        )
+        self.assertEqual(len(rae_optimizer.param_groups), 1)
+        rae_group = rae_optimizer.param_groups[0]
+        self.assertEqual(rae_group["name"], "rae")
+        self.assertEqual(rae_group["lr"], 5e-4)
+        self.assertEqual(rae_group["weight_decay"], 0.002)
+        self.assertEqual(rae_group["momentum"], 0.9)
+
+        main_ids = {
+            id(parameter)
+            for group in main_optimizer.param_groups
+            for parameter in group["params"]
+        }
+        rae_ids = {
+            id(parameter)
+            for group in rae_optimizer.param_groups
+            for parameter in group["params"]
+        }
+        self.assertFalse(main_ids & rae_ids)
+        self.assertEqual(
+            main_ids | rae_ids,
+            {
+                id(parameter)
+                for parameter in learner._network.parameters()
+                if parameter.requires_grad
+            }
+            | {
+                id(parameter)
+                for parameter in learner.old_ae.parameters()
+                if parameter.requires_grad
+            },
+        )
+
+        all_parameters = [
+            parameter
+            for group in main_optimizer.param_groups + rae_optimizer.param_groups
+            for parameter in group["params"]
+        ]
+        before = [parameter.detach().clone() for parameter in all_parameters]
+        main_optimizer.zero_grad(set_to_none=True)
+        rae_optimizer.zero_grad(set_to_none=True)
+        sum(parameter.square().sum() for parameter in all_parameters).backward()
+        main_optimizer.step()
+        rae_optimizer.step()
+        self.assertTrue(
+            all(
+                parameter.grad is not None and not torch.equal(parameter, old)
+                for parameter, old in zip(all_parameters, before)
+            )
+        )
+
+    def test_default_rae_optimizer_preserves_single_adamw(self):
+        learner, groups = self.make_learner("adamw", incremental=True)
+        optimizer, rae_optimizer = learner._build_incremental_optimizers(groups)
+        self.assertIsInstance(optimizer, torch.optim.AdamW)
+        self.assertIsNone(rae_optimizer)
+        self.assertEqual(
+            [group["name"] for group in optimizer.param_groups],
+            ["backbone", "classifier", "rae"],
+        )
+
+    def test_separate_rae_sgd_requires_adamw_backbone_optimizer(self):
+        learner, _ = self.make_learner("sgd", incremental=True)
+        learner.args["rae_optimizer"] = "sgd"
+        with self.assertRaisesRegex(ValueError, "requires optimizer='adamw'"):
+            learner._rae_optimizer_mode()
+
+    def test_incremental_training_steps_both_optimizers_and_schedulers(self):
+        learner, groups = self.make_learner("adamw", incremental=True)
+        learner.args.update(
+            {"rae_optimizer": "sgd", "rae_sgd_momentum": 0.9, "eval_interval": 0}
+        )
+        main_optimizer, rae_optimizer = (
+            learner._build_incremental_optimizers(groups)
+        )
+        main_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
+            main_optimizer, T_max=1, eta_min=0
+        )
+        rae_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
+            rae_optimizer, T_max=1, eta_min=0
+        )
+        learner._device = torch.device("cpu")
+        learner._cur_task = 1
+        learner.tuned_epochs = 1
+        learner.min_lr = 0
+        learner._init_train = MethodType(Learner._init_train, learner)
+
+        def compute_losses(self, inputs, targets, epoch, warmup_epoch):
+            logits = self._network.fc(inputs)
+            classification_loss = logits.square().mean()
+            rae_loss = sum(
+                parameter.square().mean()
+                for parameter in self.old_ae.parameters()
+            )
+            return logits, classification_loss, rae_loss
+
+        learner._compute_rt_loss = MethodType(compute_losses, learner)
+        learner._should_eval_epoch = MethodType(
+            lambda self, epoch, total_epochs, interval: False, learner
+        )
+        train_loader = [
+            (None, torch.ones(2, 4), torch.tensor([0, 1]))
+        ]
+
+        learner._init_train(
+            train_loader,
+            [],
+            main_optimizer,
+            main_scheduler,
+            warmup_epoch=0,
+            rae_optimizer=rae_optimizer,
+            rae_scheduler=rae_scheduler,
+        )
+
+        self.assertIn("step", main_optimizer.state[learner._network.fc.weight])
+        self.assertIn("momentum_buffer", rae_optimizer.state[learner.old_ae.weight])
+        self.assertEqual(main_scheduler.last_epoch, 1)
+        self.assertEqual(rae_scheduler.last_epoch, 1)
+
     def test_duplicate_parameters_are_rejected(self):
         learner, groups = self.make_learner("adamw")
         groups.append(
@@ -256,6 +398,33 @@ class OptimizerConfigurationTests(unittest.TestCase):
             BaseLearner._validate_checkpoint(
                 current,
                 {"run_metadata": saved},
+            )
+
+    def test_rae_optimizer_metadata_prevents_cross_optimizer_resume(self):
+        base_args = {
+            "optimizer": "adamw",
+            "adamw_lr": 1e-3,
+            "adamw_weight_decay": 0.01,
+            "adamw_betas": [0.9, 0.999],
+            "adamw_eps": 1e-8,
+        }
+        saved = BaseLearner._checkpoint_run_metadata(
+            SimpleNamespace(args=base_args)
+        )
+        mixed_args = {
+            **base_args,
+            "rae_optimizer": "sgd",
+            "rae_sgd_momentum": 0.9,
+            "ae_init_lr": 5e-4,
+            "ae_weight_decay": 0.002,
+        }
+        current = SimpleNamespace(args=mixed_args, class_order=None)
+        current._checkpoint_run_metadata = MethodType(
+            BaseLearner._checkpoint_run_metadata, current
+        )
+        with self.assertRaisesRegex(ValueError, "rae_optimizer"):
+            BaseLearner._validate_checkpoint(
+                current, {"run_metadata": saved}
             )
 
     def test_four_configs_are_isolated_and_paired(self):
@@ -297,6 +466,51 @@ class OptimizerConfigurationTests(unittest.TestCase):
             "adamw_rae_lr", "adamw_rae_weight_decay",
         ):
             self.assertEqual(adam_adapter[key], adam_keeplora[key])
+
+    def test_mixed_rae_optimizer_configs_preserve_the_backbone_recipes(self):
+        configs = {
+            name: json.loads((ROOT / "exps" / name).read_text(encoding="utf-8"))
+            for name in (
+                "keeplora_adamw.json",
+                "keeplora_adamw_mlp.json",
+                "keeplora_adamw_sgd_rae.json",
+                "keeplora_adamw_mlp_sgd_rae.json",
+            )
+        }
+        semantic_drift = configs["keeplora_adamw_mlp.json"]["semantic_drift"]
+        for source_name, experiment_name in (
+            ("keeplora_adamw.json", "keeplora_adamw_sgd_rae.json"),
+            ("keeplora_adamw_mlp.json", "keeplora_adamw_mlp_sgd_rae.json"),
+        ):
+            source = configs[source_name].copy()
+            experiment = configs[experiment_name]
+            for key in (
+                "adamw_rae_lr",
+                "adamw_rae_weight_decay",
+                "semantic_drift",
+            ):
+                source.pop(key, None)
+            expected = source.copy()
+            expected.update(
+                {
+                    "prefix": experiment["prefix"],
+                    "rae_optimizer": "sgd",
+                    "rae_sgd_momentum": 0.9,
+                    "semantic_drift": semantic_drift,
+                }
+            )
+            self.assertEqual(experiment, expected)
+            self.assertFalse(experiment["resume"])
+            self.assertTrue(experiment["isolate_runs"])
+            self.assertTrue(experiment["ssca"])
+            self.assertTrue(experiment["ca"])
+            self.assertEqual(experiment["optimizer"], "adamw")
+            self.assertEqual(
+                experiment["ae_init_lr"], source["ae_init_lr"]
+            )
+            self.assertEqual(
+                experiment["ae_weight_decay"], source["ae_weight_decay"]
+            )
 
 
 if __name__ == "__main__":

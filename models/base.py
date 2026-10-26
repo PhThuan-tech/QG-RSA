@@ -169,6 +169,9 @@ class BaseLearner(object):
         metadata = {
             "format_version": 2,
             "optimizer": str(self.args.get("optimizer", "sgd")).lower(),
+            "rae_optimizer": str(
+                self.args.get("rae_optimizer", "main")
+            ).lower(),
             "keeplora_init_mode": str(
                 self.args.get("keeplora_init_mode", "cosine")
             ).lower(),
@@ -176,6 +179,14 @@ class BaseLearner(object):
             "rae_lifecycle": str(self.args.get("rae_lifecycle", "shared")).lower(),
             **{key: self.args.get(key) for key in keys if key in self.args},
         }
+        if metadata["rae_optimizer"] == "sgd":
+            metadata.update(
+                rae_sgd_lr=float(self.args["ae_init_lr"]),
+                rae_sgd_weight_decay=float(self.args["ae_weight_decay"]),
+                rae_sgd_momentum=float(
+                    self.args.get("rae_sgd_momentum", 0.9)
+                ),
+            )
         if metadata["optimizer"] in ("adam", "adamw"):
             metadata.update(
                 adamw_lr=float(self.args.get("adamw_lr", 1e-3)),
@@ -318,7 +329,9 @@ class BaseLearner(object):
                 "keeplora_fc1_alpha", "keeplora_fc2_alpha",
                 "optimizer", "adamw_lr", "adamw_weight_decay",
                 "adamw_betas", "adamw_eps", "adamw_rae_lr",
-                "adamw_rae_weight_decay",
+                "adamw_rae_weight_decay", "rae_optimizer",
+                "rae_sgd_lr", "rae_sgd_weight_decay",
+                "rae_sgd_momentum",
             }
             missing_metadata = [
                 key for key in current_metadata
@@ -339,6 +352,19 @@ class BaseLearner(object):
             and key in saved_metadata
             and saved_metadata[key] != current_metadata[key]
         ]
+        if (
+            "rae_optimizer" in current_metadata
+            and "rae_optimizer" not in saved_metadata
+        ):
+            saved_rae_optimizer = saved_metadata.get(
+                "rae_optimizer", "main"
+            )
+            if saved_rae_optimizer != current_metadata["rae_optimizer"]:
+                mismatches.append(
+                    "rae_optimizer (checkpoint={!r}, current={!r})".format(
+                        saved_rae_optimizer, current_metadata["rae_optimizer"]
+                    )
+                )
         if "keeplora_target" in current_metadata:
             saved_target = str(
                 saved_metadata.get("keeplora_target", "attention")

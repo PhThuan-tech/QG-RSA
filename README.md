@@ -99,6 +99,21 @@ uses the actual `task_sizes` recorded by the data manager, including an uneven
 final task. This mode is independent of `global_decay`; do not combine their
 factors in a single run.
 
+### KeepLoRA AdamW with an SGD RAE
+
+To keep AdamW for the KeepLoRA backbone and classifier while using the RSIAT
+baseline's SGD momentum optimizer for the RAE, run either paired target recipe:
+
+    python main.py --config ./exps/keeplora_adamw_sgd_rae.json
+    python main.py --config ./exps/keeplora_adamw_mlp_sgd_rae.json
+
+Both runs keep SSCA and CA enabled, use SGD momentum `0.9` for the incremental
+RAE, and take its learning rate and weight decay from `ae_init_lr` and
+`ae_weight_decay`. The backbone/classifier remain on the existing AdamW recipe.
+The separate RAE optimizer uses the same per-epoch cosine schedule as the main
+optimizer. Semantic-drift diagnostics are enabled for analysis only. These
+isolated configs use fresh prefixes and do not resume existing checkpoints.
+
 ### KeepLoRA replacement
 
 The KeepLoRA smoke configuration keeps the RSIAT learner, cosine classifier,
