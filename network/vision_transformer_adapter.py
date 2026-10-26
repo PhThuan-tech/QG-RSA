@@ -167,8 +167,9 @@ class Block(nn.Module):
         
         #Đoạn này của Adapter, nếu config.ffn_adapt = True và layer_id <= 12 thì sẽ thực hiện thêm một bước xử lý với adaptmlp. Nếu config.ffn_option = 'parallel' thì sẽ tính toán adapt_x từ adaptmlp(x) và lưu lại để cộng vào x sau khi qua MLP. Nếu config.ffn_option = 'sequential' thì sẽ thực hiện adaptmlp(x) trực tiếp sau MLP.
         if self.config.ffn_adapt and self.config.ffn_option == 'parallel' and self.layer_id <= 12:
-            adapt_x = self.adaptmlp(x, add_residual=False)
+            adapt_x = self.adaptmlp(x, add_residual=False) #Adapter output without residual connection
 
+        #Forward qua MLP
         residual = x
         mlp_input = self.norm2(x)
         fc1_output = self.fc1(mlp_input)
@@ -219,7 +220,7 @@ class VisionTransformer(nn.Module):
 
         self.cls_token = nn.Parameter(torch.zeros(1, 1, embed_dim))
         self.dist_token = nn.Parameter(torch.zeros(1, 1, embed_dim)) if distilled else None
-        self.pos_embed = nn.Parameter(torch.zeros(1, num_patches + self.num_tokens, embed_dim))
+        self.pos_embed = nn.Parameter(torch.zeros(1, num_patches + self.num_tokens, embed_dim)) #Chỉ có 1 position embedding cho từng vị trí patch xuyên suốt mọi đầu và 
         self.pos_drop = nn.Dropout(p=drop_rate)
 
         dpr = [x.item() for x in torch.linspace(0, drop_path_rate, depth)]  # stochastic depth decay rule
@@ -242,7 +243,7 @@ class VisionTransformer(nn.Module):
         else:
             self.pre_logits = nn.Identity()
 
-        # Classifier head(s)
+        # Classifier head(s) - Cosine classifier
         self.head = nn.Linear(self.num_features, num_classes) if num_classes > 0 else nn.Identity()
         self.head_dist = None
         if distilled:
@@ -301,11 +302,11 @@ class VisionTransformer(nn.Module):
                 x = x[:, self.tuning_config.vpt_num:, :]
 
         if self.global_pool:
-            x = x[:, 1:, :].mean(dim=1)  # global pool without cls token
+            x = x[:, 1:, :].mean(dim=1)  # global pool without cls token - tính trung bình các patch embedding
             outcome = self.fc_norm(x)
         else:
             x = self.norm(x)
-            outcome = x[:, 0]
+            outcome = x[:, 0] #Sử dụng embedding của token cls để dự đoán lớp
 
         return outcome
 
