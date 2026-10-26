@@ -165,17 +165,26 @@ class Block(nn.Module):
     def forward(self, x):
         x = x + self.drop_path(self.attn(self.norm1(x)))
         
+        #Đoạn này của Adapter, nếu config.ffn_adapt = True và layer_id <= 12 thì sẽ thực hiện thêm một bước xử lý với adaptmlp. Nếu config.ffn_option = 'parallel' thì sẽ tính toán adapt_x từ adaptmlp(x) và lưu lại để cộng vào x sau khi qua MLP. Nếu config.ffn_option = 'sequential' thì sẽ thực hiện adaptmlp(x) trực tiếp sau MLP.
         if self.config.ffn_adapt and self.config.ffn_option == 'parallel' and self.layer_id <= 12:
             adapt_x = self.adaptmlp(x, add_residual=False) #Adapter output without residual connection
 
         #Forward qua MLP
         residual = x
-        x = self.mlp_drop(self.act(self.fc1(self.norm2(x))))
-        x = self.drop_path(self.mlp_drop(self.fc2(x)))
+        mlp_input = self.norm2(x)
+        fc1_output = self.fc1(mlp_input)
+        if hasattr(self, "keeplora_mlp"):
+            fc1_output = fc1_output + self.keeplora_mlp["fc1"](mlp_input)
+        x = self.mlp_drop(self.act(fc1_output))
+        fc2_output = self.fc2(x)
+        if hasattr(self, "keeplora_mlp"):
+            fc2_output = fc2_output + self.keeplora_mlp["fc2"](x)
+        x = self.drop_path(self.mlp_drop(fc2_output))
 
         """
-         Change the inserted layers
+         Change the inserted layers 
         """
+        #Đoạn này của Adapter, nếu config.ffn_adapt = True và layer_id <= 12 thì sẽ thực hiện thêm một bước xử lý với adaptmlp. Nếu config.ffn_option = 'parallel' thì sẽ tính toán adapt_x từ adaptmlp(x) và lưu lại để cộng vào x sau khi qua MLP. Nếu config.ffn_option = 'sequential' thì sẽ thực hiện adaptmlp(x) trực tiếp sau MLP.
         if self.config.ffn_adapt and self.layer_id <= 12:
             if self.config.ffn_option == 'sequential':
                 x = self.adaptmlp(x)

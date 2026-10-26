@@ -14,14 +14,148 @@ from models.base import BaseLearner
 from utils.toolkit import count_parameters, log_count_parameter, target2onehot, tensor2numpy
 from utils.loss import AngularPenaltySMLoss
 from utils.toolkit import AutoencoderSigmoid
+from utils.semantic_drift import SemanticDriftObserver
+from KeepLora.keeplora_controller import KeepLoRAController
 import math
 num_workers = 8
+
+
+def _validate_ssca_scale_config(args):
+    if "ssca_scale_mode" not in args:
+        return "none", None
+
+    mode = args["ssca_scale_mode"]
+    if mode in ("legacy", "none"):
+        return mode, None
+    if mode not in ("global_decay", "age_decay"):
+        raise ValueError(
+            "ssca_scale_mode must be 'none', 'global_decay', or 'age_decay', "
+            "got {!r}."
+            .format(mode)
+        )
+
+    gamma_key = (
+        "ssca_global_gamma" if mode == "global_decay" else "ssca_age_gamma"
+    )
+    gamma = args.get(gamma_key)
+    if isinstance(gamma, bool):
+        raise ValueError(
+            "{} must be a finite number in [0, 1].".format(gamma_key)
+        )
+    try:
+        gamma = float(gamma)
+    except (OverflowError, TypeError, ValueError):
+        raise ValueError(
+            "{} must be a finite number in [0, 1].".format(gamma_key)
+        ) from None
+    if not math.isfinite(gamma) or not 0 <= gamma <= 1:
+        raise ValueError(
+            "{} must be a finite number in [0, 1].".format(gamma_key)
+        )
+    return mode, gamma
+
+
+def _ssca_scale_for_task(args, task_index):
+    if (
+        isinstance(task_index, (bool, np.bool_))
+        or not isinstance(task_index, (int, np.integer))
+        or task_index < 0
+    ):
+        raise ValueError("task_index must be a non-negative integer.")
+    mode, gamma = _validate_ssca_scale_config(args)
+    if mode in ("none", "legacy"):
+        return 1.0
+    if mode != "global_decay":
+        raise ValueError(
+            "_ssca_scale_for_task only supports none and global_decay modes."
+        )
+    if task_index <= 1:
+        return 1.0
+    return gamma ** (task_index - 1)
+
+
+def _ssca_scales_for_classes(args, task_index, task_sizes, known_classes, dtype):
+    mode, gamma = _validate_ssca_scale_config(args)
+    if (
+        isinstance(task_index, (bool, np.bool_))
+        or not isinstance(task_index, (int, np.integer))
+        or task_index < 0
+    ):
+        raise ValueError("task_index must be a non-negative integer.")
+    if (
+        isinstance(known_classes, (bool, np.bool_))
+        or not isinstance(known_classes, (int, np.integer))
+        or known_classes < 0
+    ):
+        raise ValueError("known_classes must be a non-negative integer.")
+
+    if mode in ("none", "legacy"):
+        scales = np.ones(known_classes, dtype=dtype)
+        groups = [("all_old", 1.0)] if known_classes else []
+    elif mode == "global_decay":
+        scale = _ssca_scale_for_task(args, task_index)
+        scales = np.full(known_classes, scale, dtype=dtype)
+        groups = [("all_old", scale)] if known_classes else []
+    else:
+        try:
+            raw_sizes = list(task_sizes)
+        except TypeError:
+            raise ValueError(
+                "age_decay task_sizes must contain positive integers."
+            ) from None
+        if any(
+            isinstance(size, (bool, np.bool_))
+            or not isinstance(size, (int, np.integer))
+            for size in raw_sizes
+        ):
+            raise ValueError(
+                "age_decay task_sizes must contain positive integers."
+            )
+        sizes = [int(size) for size in raw_sizes]
+        if len(sizes) != task_index + 1 or any(size <= 0 for size in sizes):
+            raise ValueError(
+                "age_decay requires positive task_sizes through the current "
+                "task; task_index={}, task_sizes={!r}."
+                .format(task_index, task_sizes)
+            )
+        if sum(sizes[:-1]) != known_classes:
+            raise ValueError(
+                "age_decay task sizes do not match old-class prototypes: "
+                "sum(previous_task_sizes)={}, known_classes={}."
+                .format(sum(sizes[:-1]), known_classes)
+            )
+
+        class_origins = np.repeat(
+            np.arange(len(sizes) - 1, dtype=np.int64),
+            np.asarray(sizes[:-1], dtype=np.int64),
+        )
+        exponents = np.maximum(task_index - class_origins - 1, 0)
+        scales = np.power(gamma, exponents).astype(dtype, copy=False)
+        groups = []
+        start = 0
+        for origin_task, size in enumerate(sizes[:-1]):
+            end = start + size
+            if end > start:
+                groups.append(
+                    (origin_task, float(scales[start]))
+                )
+            start = end
+
+    return mode, gamma, scales.reshape(known_classes, 1), groups
+
+
+def _apply_ssca_gap(class_means, known_classes, gap, enabled, scale):
+    if enabled:
+        old_class_mean = class_means[:known_classes]
+        old_class_mean += scale * gap
+        class_means[:known_classes] = old_class_mean
+
 
 class Learner(BaseLearner):
     def __init__(self, args):
         super().__init__(args)
-        if 'adapter' not in args["convnet_type"]:
-            raise NotImplementedError('Adapter requires Adapter backbone')
+        if not any(token in args["convnet_type"] for token in ("adapter", "keeplora")):
+            raise NotImplementedError("RSIAT requires an adapter or KeepLoRA backbone")
         self._network = SimpleVitNet(args, True)
         self.batch_size = args["batch_size"]
         self.num_workers = int(args.get("num_workers", num_workers))
@@ -34,6 +168,8 @@ class Learner(BaseLearner):
         self.weight_decay = args["weight_decay"] if args["weight_decay"] is not None else 0.0005
         self.min_lr = args['min_lr'] if args['min_lr'] is not None else 1e-8
         self.args = args
+        _validate_ssca_scale_config(self.args)
+        self.semantic_drift = SemanticDriftObserver(self)
 
         self._old_most_sentive = []
         self._update_grads = {}
@@ -43,6 +179,121 @@ class Learner(BaseLearner):
         self.task_sizes = []
         self.rs_loss_func = RS_Loss(self.args["alpha"], self.args["rs_margin"])
         self.old_ae = None
+        self.rae_zero_init = bool(args.get("rae_zero_init", False))
+        self.rae_lifecycle = str(args.get("rae_lifecycle", "shared")).lower()
+        if self.rae_lifecycle not in ("shared", "per_task"):
+            raise ValueError(
+                "rae_lifecycle must be 'shared' or 'per_task', got {!r}."
+                .format(self.rae_lifecycle)
+            )
+        self.rae_generation = 0
+        self.rae_task_id = None
+        self._rae_last_state_snapshot = None
+        self._uses_keeplora = "keeplora" in args["convnet_type"].lower()
+        self.keeplora_init_mode = str(args.get("keeplora_init_mode", "cosine")).lower()
+        convnet_trainable = sum(
+            parameter.numel()
+            for parameter in self._network.convnet.parameters()
+            if parameter.requires_grad
+        )
+        if self._uses_keeplora:
+            adaptation_name = "KeepLoRA-{}".format(
+                str(args.get("keeplora_target", "attention")).lower()
+            )
+            logging.info(
+                "%s trainable adaptation parameters=%d; "
+                "convnet trainable parameters=%d",
+                adaptation_name,
+                convnet_trainable,
+                convnet_trainable,
+            )
+        else:
+            adapter_trainable = sum(
+                parameter.numel()
+                for name, parameter in self._network.convnet.named_parameters()
+                if parameter.requires_grad and "adaptmlp" in name
+            )
+            logging.info(
+                "RSIAT-Adapter trainable adaptation parameters=%d; "
+                "convnet trainable parameters=%d",
+                adapter_trainable,
+                convnet_trainable,
+            )
+        if self.keeplora_init_mode not in ("cosine", "full_rsiat"):
+            raise ValueError(
+                "keeplora_init_mode must be 'cosine' or 'full_rsiat', got {!r}."
+                .format(self.keeplora_init_mode)
+            )
+        self._log_trainable_parameter_budget("initialization")
+
+    def _log_trainable_parameter_budget(self, stage):
+        network = self._network.module if isinstance(self._network, nn.DataParallel) else self._network
+        named_parameters = list(network.named_parameters())
+        total_network_trainable = sum(
+            parameter.numel()
+            for _, parameter in named_parameters
+            if parameter.requires_grad
+        )
+        if self._uses_keeplora:
+            adaptation_marker = "keeplora"
+            method = "KeepLoRA-{}".format(
+                str(self.args.get("keeplora_target", "attention")).lower()
+            )
+        else:
+            adaptation_marker = "adaptmlp"
+            method = "RSIAT-Adapter"
+        adaptation_trainable = sum(
+            parameter.numel()
+            for name, parameter in named_parameters
+            if parameter.requires_grad and adaptation_marker in name
+        )
+        classifier_trainable = sum(
+            parameter.numel()
+            for parameter in network.fc.parameters()
+            if parameter.requires_grad
+        ) if network.fc is not None else 0
+        rae_trainable = sum(
+            parameter.numel()
+            for parameter in self.old_ae.parameters()
+            if parameter.requires_grad
+        ) if self.old_ae is not None else 0
+        logging.info(
+            "Parameter budget stage=%s method=%s adaptation_trainable=%d "
+            "classifier_trainable=%d rae_trainable=%d model_trainable=%d",
+            stage,
+            method,
+            adaptation_trainable,
+            classifier_trainable,
+            rae_trainable,
+            total_network_trainable + rae_trainable,
+        )
+        if self._uses_keeplora:
+            targets = list(network.convnet.named_keeplora_targets())
+            layer_ids = {
+                name.split(".")[1]
+                for name, _, _ in targets
+                if name.startswith("blocks.")
+            }
+            if self.args.get("keeplora_target", "attention") == "mlp":
+                fc1_count = sum(
+                    adapter.lora_B.numel()
+                    for name, _, adapter in targets
+                    if name.endswith(".fc1") and adapter.lora_B.requires_grad
+                )
+                fc2_count = sum(
+                    adapter.lora_B.numel()
+                    for name, _, adapter in targets
+                    if name.endswith(".fc2") and adapter.lora_B.requires_grad
+                )
+                logging.info(
+                    "KeepLoRA-MLP layers=%d fc1_rank=%d fc2_rank=%d "
+                    "fc1_trainable=%d fc2_trainable=%d",
+                    len(layer_ids),
+                    int(self.args.get("keeplora_fc1_rank", self.args.get("keeplora_rank", 32))),
+                    int(self.args.get("keeplora_fc2_rank", self.args.get("keeplora_rank", 32))),
+                    fc1_count,
+                    fc2_count,
+                )
 
     def _after_load_checkpoint(self, checkpoint):
         """Restore learner-specific state after BaseLearner restores the network."""
@@ -50,6 +301,7 @@ class Learner(BaseLearner):
             self.old_ae = AutoencoderSigmoid(
                 input_dims=768,
                 code_dims=self.args["ae_code_dims"],
+                zero_residual=self.rae_zero_init,
             )
             if "old_ae_state_dict" not in checkpoint:
                 raise ValueError(
@@ -58,17 +310,356 @@ class Learner(BaseLearner):
                 )
             self.old_ae.load_state_dict(checkpoint["old_ae_state_dict"])
             self.old_ae.to(self._device)
+            self.rae_generation = int(
+                checkpoint.get("rae_generation", self.rae_generation + 1)
+            )
+            self.rae_task_id = checkpoint.get("rae_task_id", self._cur_task)
+            self._rae_last_state_snapshot = self._rae_state_snapshot()
 
         self._network_module_ptr = self._network
         self.old_network_module_ptr = self._old_network
 
     def after_task(self):
+        if self._uses_keeplora:
+            self._finalize_keeplora_task()
+        if self.old_ae is not None:
+            self._rae_last_state_snapshot = self._rae_state_snapshot()
         self._known_classes = self._total_classes
         self._old_network = self._network.copy().freeze()
         if hasattr(self._old_network,"module"):
             self.old_network_module_ptr = self._old_network.module
         else:
             self.old_network_module_ptr = self._old_network
+
+    def _keeplora_convnet(self):
+        network = self._network.module if isinstance(self._network, nn.DataParallel) else self._network
+        return network, network.convnet
+
+    def _create_rae(self, task_id):
+        self.old_ae = AutoencoderSigmoid(
+            input_dims=768,
+            code_dims=self.args["ae_code_dims"],
+            zero_residual=self.rae_zero_init,
+        ).to(self._device)
+        self.rae_generation += 1
+        self.rae_task_id = task_id
+        self._rae_last_state_snapshot = None
+
+    def _prepare_rae_for_task(self):
+        if self._cur_task >= 1 and (
+            self.old_ae is None or self.rae_lifecycle == "per_task"
+        ):
+            self._create_rae(self._cur_task)
+        elif self._cur_task >= 1 and self.old_ae is not None:
+            same_state = (
+                self._rae_last_state_snapshot is None
+                or self._rae_state_matches_snapshot()
+            )
+            logging.info(
+                "RAE mode=%s task_id=%d projector_generation_id=%d "
+                "shared_projector_reused=true same_state_as_previous_task=%s "
+                "object_id=%d",
+                self._rae_mode(),
+                self._cur_task,
+                self.rae_generation,
+                same_state,
+                id(self.old_ae),
+            )
+
+    def _rae_mode(self):
+        if self.rae_zero_init and self.rae_lifecycle == "shared":
+            if not getattr(self, "_uses_keeplora", False):
+                return "zero_shared_baseline"
+            return "zero_shared"
+        return "{}_{}".format(
+            "zero" if self.rae_zero_init else "random",
+            self.rae_lifecycle,
+        )
+
+    def _rae_state_snapshot(self):
+        if self.old_ae is None:
+            return None
+        return {
+            name: tensor.detach().cpu().clone()
+            for name, tensor in self.old_ae.state_dict().items()
+        }
+
+    def _rae_state_matches_snapshot(self):
+        if self.old_ae is None or self._rae_last_state_snapshot is None:
+            return False
+        current = self.old_ae.state_dict()
+        return (
+            current.keys() == self._rae_last_state_snapshot.keys()
+            and all(
+                torch.equal(
+                    tensor.detach().cpu(),
+                    self._rae_last_state_snapshot[name],
+                )
+                for name, tensor in current.items()
+            )
+        )
+
+    def _diagnose_rae_initialization(self, train_loader):
+        if self.old_ae is None or self._cur_task < 1:
+            return
+        cpu_rng_state = torch.get_rng_state()
+        cuda_rng_state = (
+            torch.cuda.get_rng_state_all() if torch.cuda.is_available() else None
+        )
+        try:
+            _, inputs, _ = next(iter(train_loader))
+        finally:
+            torch.set_rng_state(cpu_rng_state)
+            if cuda_rng_state is not None:
+                torch.cuda.set_rng_state_all(cuda_rng_state)
+        inputs = inputs[:8].to(self._device, non_blocking=True)
+        was_training = self.old_ae.training
+        self.old_ae.eval()
+        reference = self._old_network.extract_vector(inputs)
+        with torch.no_grad():
+            residual = self.old_ae.decoder(self.old_ae.encoder(reference))
+            denominator = torch.linalg.vector_norm(reference).clamp_min(1e-12)
+            residual_ratio = torch.linalg.vector_norm(residual) / denominator
+            identity_error = torch.linalg.vector_norm(residual) / denominator
+
+        align_loss = None
+        align_gradient_norm = None
+        orth_gradient_norm = None
+        representative_name = None
+        representative_weight = None
+        current_features = self._network_module_ptr.extract_vector(inputs)
+        align_loss, orth_loss = self._inc_loss_components(
+            current_features, reference
+        )
+        if self._uses_keeplora:
+            _, convnet = self._keeplora_convnet()
+            targets = list(convnet.named_keeplora_targets())
+            if targets:
+                representative_name, representative_weight, _ = targets[0]
+                was_requires_grad = representative_weight.requires_grad
+                representative_weight.requires_grad_(True)
+                try:
+                    align_gradient = torch.autograd.grad(
+                        align_loss,
+                        representative_weight,
+                        allow_unused=True,
+                        retain_graph=True,
+                    )[0]
+                    orth_gradient = torch.autograd.grad(
+                        orth_loss,
+                        representative_weight,
+                        allow_unused=True,
+                    )[0]
+                    align_gradient_norm = (
+                        0.0
+                        if align_gradient is None
+                        else align_gradient.detach().norm().item()
+                    )
+                    orth_gradient_norm = (
+                        0.0
+                        if orth_gradient is None
+                        else orth_gradient.detach().norm().item()
+                    )
+                finally:
+                    representative_weight.requires_grad_(was_requires_grad)
+        if was_training:
+            self.old_ae.train()
+        logging.info(
+            "RAE mode=%s task_id=%d projector_generation_id=%d "
+            "initial_residual_ratio=%.8g initial_identity_error=%.8g "
+            "initial_L_align=%s initial_grad_norm_L_align=%s "
+            "initial_grad_norm_L_orth=%s representative_weight=%s "
+            "object_id=%d",
+            self._rae_mode(),
+            self._cur_task,
+            self.rae_generation,
+            residual_ratio.item(),
+            identity_error.item(),
+            "n/a" if align_loss is None else "%.8g" % align_loss.detach().item(),
+            "n/a" if align_gradient_norm is None else "%.8g" % align_gradient_norm,
+            "n/a" if orth_gradient_norm is None else "%.8g" % orth_gradient_norm,
+            representative_name or "n/a",
+            id(self.old_ae),
+        )
+
+    def _initialize_keeplora_task(self, train_loader):
+        """Initialize KeepLoRA from the configured RSIAT loss gradient."""
+        network, convnet = self._keeplora_convnet()
+        targets = list(convnet.named_keeplora_targets())
+        if not targets:
+            return
+
+        weights = [weight for _, weight, _ in targets]
+        for weight in weights:
+            weight.requires_grad_(True)
+        gradients = {name: torch.zeros_like(weight) for name, weight, _ in targets}
+        # KeepLoRA estimates its initialization gradient over the task loader.
+        # A positive limit remains available for quick smoke experiments.
+        batches = int(self.args.get("keeplora_grad_batches", 0))
+        seen_batches = 0
+        loss_cos = AngularPenaltySMLoss(
+            loss_type="cosface", eps=1e-7, s=self.args["scale"], m=self.args["margin"]
+        )
+        verify_invariance = bool(
+            self.args.get("keeplora_verify_init_invariance", False)
+        )
+        probe_inputs = None
+        reference_features = None
+        reference_logits = None
+        loss_sums = {}
+        total_loss_sum = 0.0
+
+        network.train()
+        try:
+            for batch_index, (_, inputs, targets_label) in enumerate(train_loader):
+                if batches > 0 and batch_index >= batches:
+                    break
+                seen_batches += 1
+                inputs = inputs.to(self._device, non_blocking=True)
+                targets_label = targets_label.to(self._device, non_blocking=True)
+
+                if verify_invariance and probe_inputs is None:
+                    probe_inputs = inputs.detach().clone()
+                    network.eval()
+                    with torch.no_grad():
+                        reference_features = network.extract_vector(probe_inputs)
+                        reference_logits = network.fc(reference_features)["logits"]
+                    network.train()
+
+                _, loss, loss_components = self._keeplora_initialization_loss(
+                    network, inputs, targets_label, loss_cos
+                )
+                current_grads = torch.autograd.grad(loss, weights, allow_unused=True)
+                for (name, _, _), gradient in zip(targets, current_grads):
+                    if gradient is not None:
+                        gradients[name].add_(gradient)
+                for name, value in loss_components.items():
+                    loss_sums[name] = loss_sums.get(name, 0.0) + value.detach().item()
+                total_loss_sum += loss.detach().item()
+        finally:
+            for weight in weights:
+                weight.requires_grad_(False)
+
+        if seen_batches == 0:
+            raise RuntimeError("KeepLoRA requires at least one batch to initialize a task.")
+        for name in gradients:
+            gradients[name].div_(seen_batches)
+
+        controller = KeepLoRAController(convnet, logging.info)
+        gradient_stats = controller.initialize_from_gradients(
+            gradients, verify_invariance=verify_invariance
+        )
+        network.zero_grad(set_to_none=True)
+        logging.info(
+            "KeepLoRA initialization mode=%s, task=%d, gradient_batches=%d, "
+            "full_initialization_loss=%.6f",
+            self.keeplora_init_mode,
+            self._cur_task,
+            seen_batches,
+            total_loss_sum / seen_batches,
+        )
+        for name, total in loss_sums.items():
+            logging.info(
+                "KeepLoRA initialization task=%d mean_%s=%.6f",
+                self._cur_task,
+                name,
+                total / seen_batches,
+            )
+        for name, stats in gradient_stats.items():
+            logging.info(
+                "KeepLoRA initialization task=%d target=%s "
+                "gradient_norm_before_projection=%.6f "
+                "gradient_norm_after_projection=%.6f",
+                self._cur_task,
+                name,
+                stats["gradient_norm_before_projection"],
+                stats["gradient_norm_after_projection"],
+            )
+            if verify_invariance:
+                logging.info(
+                    "KeepLoRA initialization task=%d target=%s "
+                    "weight_merge_max_abs_error=%.8g",
+                    self._cur_task,
+                    name,
+                    stats["weight_merge_max_abs_error"],
+                )
+
+        if self.keeplora_init_mode == "full_rsiat" and self._cur_task > 0:
+            logging.info(
+                "L_orth is included in the scalar full RSIAT initialization loss; "
+                "its direct gradient with respect to current KeepLoRA weights "
+                "may be zero under the existing RSIAT computational graph."
+            )
+
+        if verify_invariance:
+            network.eval()
+            with torch.no_grad():
+                actual_features = network.extract_vector(probe_inputs)
+                actual_logits = network.fc(actual_features)["logits"]
+            network.train()
+            feature_error = (actual_features - reference_features).abs().max().item()
+            logit_error = (actual_logits - reference_logits).abs().max().item()
+            logging.info(
+                "KeepLoRA initialization forward invariance task=%d "
+                "feature_max_abs_error=%.8g logit_max_abs_error=%.8g",
+                self._cur_task,
+                feature_error,
+                logit_error,
+            )
+            if not torch.allclose(
+                actual_features, reference_features, rtol=1e-4, atol=1e-3
+            ) or not torch.allclose(
+                actual_logits, reference_logits, rtol=1e-4, atol=1e-5
+            ):
+                raise RuntimeError(
+                    "KeepLoRA initialization changed the model output beyond "
+                    "the configured numerical tolerance."
+                )  #tolerance values are set to match the original KeepLoRA implementation - mong muốn là sau khi mới khởi tạo keepLora thì các đầu ra phải giống ban đầu (nhưng do python float32 nên có sai số nhỏ, nên phải dùng allclose để kiểm tra)
+
+    def _keeplora_initialization_loss(self, network, inputs, targets, loss_cos):
+        features = network.extract_vector(inputs)
+        logits = network.fc(features)["logits"]
+        loss_c = loss_cos(
+            logits[:, self._known_classes:], targets - self._known_classes
+        )
+        components = {"L_cos": loss_c}
+
+        if self.keeplora_init_mode == "cosine":
+            components["L_init"] = loss_c
+            return logits, loss_c, components
+
+        if self._cur_task == 0:
+            loss_rs = self.rs_loss_func(features, targets)
+            full_loss = loss_c + self.args["lambda_rs"] * loss_rs
+            components["L_RS"] = loss_rs
+        else:
+            features_old = self.old_network_module_ptr.extract_vector(inputs)
+            loss_align, loss_orth = self._inc_loss_components(features, features_old)
+            full_loss = (
+                loss_c
+                + self.args["beta"] * loss_align
+                + self.args["gamma"] * loss_orth
+            )
+            components["L_align"] = loss_align
+            components["L_orth"] = loss_orth
+
+        components["L_init"] = full_loss
+        return logits, full_loss, components
+
+    def _finalize_keeplora_task(self):
+        """Persist task directions, then merge the task-local update into the ViT."""
+        network, convnet = self._keeplora_convnet()
+        controller = KeepLoRAController(convnet, logging.info)
+        controller.begin_feature_collection()
+        network.eval()
+        max_batches = int(self.args.get("keeplora_feature_batches", 0))
+        with torch.no_grad():
+            for batch_index, (_, inputs, _) in enumerate(self.keeplora_accum_loader):
+                if max_batches > 0 and batch_index >= max_batches:
+                    break
+                network.extract_vector(inputs.to(self._device, non_blocking=True))
+        controller.finish_task()
+        logging.info("Merged KeepLoRA update and saved feature subspaces for task %d.", self._cur_task)
 
 
     def extract_features(self, trainloader, model, args):
@@ -91,15 +682,14 @@ class Learner(BaseLearner):
     def incremental_train(self, data_manager):
         self._cur_task += 1
         
-        if self._cur_task == 1:
-            self.old_ae = AutoencoderSigmoid(input_dims=768, code_dims=self.args["ae_code_dims"])
-            self.old_ae.to(self._device)
+        self._prepare_rae_for_task()
             
         task_size = data_manager.get_task_size(self._cur_task)
         self.task_sizes.append(task_size)
         self._total_classes = self._known_classes + task_size
         # self._network.update_fc(data_manager.get_task_size(self._cur_task)*4)
         self._network.update_fc(task_size)
+        self._log_trainable_parameter_budget("task_{}".format(self._cur_task))
         self._network_module_ptr = self._network
         logging.info("Learning on {}-{}".format(self._known_classes, self._total_classes))
     
@@ -118,6 +708,19 @@ class Learner(BaseLearner):
             pin_memory=self.pin_memory,
             persistent_workers=self.persistent_workers,
         )
+        # KeepLoRA's framework uses a separate shuffled, drop-last loader for
+        # its gradient-estimation and feature-subspace passes.  The primary
+        # RSIAT training loader remains unchanged.
+        if self._uses_keeplora:
+            self.keeplora_accum_loader = DataLoader(
+                train_dataset,
+                batch_size=self.batch_size,
+                shuffle=True,
+                drop_last=True,
+                num_workers=self.num_workers,
+                pin_memory=self.pin_memory,
+                persistent_workers=self.persistent_workers,
+            )
         test_dataset = data_manager.get_dataset(np.arange(0, self._total_classes), source="test", mode="test")
         self.test_loader = DataLoader(
             test_dataset,
@@ -132,24 +735,86 @@ class Learner(BaseLearner):
             print('Multiple GPUs')
             self._network = nn.DataParallel(self._network, self._multiple_gpus)
 
-      
+        if self.semantic_drift.enabled:
+            self.semantic_drift.record_parameter_audit(self._network)
+
+        if self._cur_task > 0 and self.semantic_drift.enabled:
+            self.semantic_drift.prepare(
+                self.test_loader.dataset, self.old_network_module_ptr
+            )
+
         if self._cur_task >0:
             self._network.to(self._device)
             train_embeddings_old, _ = self.extract_features(self.train_loader, self._network, None)
 
+        self._diagnose_rae_initialization(self.train_loader)
         self._train(self.train_loader, self.test_loader)
         
         if len(self._multiple_gpus) > 1:
             self._network = self._network.module
 
-      
-        if self._cur_task >0:
-            train_embeddings_new, _ = self.extract_features(self.train_loader, self._network, None)
+        if self._cur_task > 0 and self.semantic_drift.enabled:
+            self.semantic_drift.measure_post(
+                self.test_loader.dataset, self._network
+            )
+
+        if self._cur_task > 0:
+            train_embeddings_new, _ = self.extract_features(
+                self.train_loader, self._network, None
+            )
+            means_before_ssca = self._class_means.copy()
             old_class_mean = self._class_means[:self._known_classes]
-            gap = self.displacement(train_embeddings_old, train_embeddings_new, old_class_mean, 4.0)
-            if self.args['ssca'] is True:
-                old_class_mean +=gap
-                self._class_means[:self._known_classes] = old_class_mean
+            gap = self.displacement(
+                train_embeddings_old, train_embeddings_new, old_class_mean, 4.0
+            )
+            if self.args["ssca"] is True:
+                mode, gamma, alpha_per_class, task_groups = (
+                    _ssca_scales_for_classes(
+                        self.args,
+                        self._cur_task,
+                        self.task_sizes,
+                        self._known_classes,
+                        gap.dtype,
+                    )
+                )
+                _apply_ssca_gap(
+                    self._class_means,
+                    self._known_classes,
+                    gap,
+                    enabled=True,
+                    scale=alpha_per_class,
+                )
+                group_summary = ", ".join(
+                    "task{}={:.6f}".format(task, scale)
+                    if isinstance(task, int)
+                    else "{}={:.6f}".format(task, scale)
+                    for task, scale in task_groups
+                )
+                logging.info(
+                    "SSCA scale mode=%s task=%d gamma=%s "
+                    "alpha_min=%.6f alpha_max=%.6f alpha_mean=%.6f "
+                    "origin_task_scales=[%s]",
+                    mode,
+                    self._cur_task,
+                    "n/a" if gamma is None else "{:.6f}".format(gamma),
+                    float(alpha_per_class.min()) if self._known_classes else 1.0,
+                    float(alpha_per_class.max()) if self._known_classes else 1.0,
+                    float(alpha_per_class.mean()) if self._known_classes else 1.0,
+                    group_summary,
+                )
+            else:
+                _apply_ssca_gap(
+                    self._class_means,
+                    self._known_classes,
+                    gap,
+                    enabled=False,
+                    scale=1.0,
+                )
+            if self.semantic_drift.enabled:
+                self.semantic_drift.record_ssca(
+                    means_before_ssca, self._class_means
+                )
+                self.semantic_drift.write_task()
 
         self._network.fc.backup()
         self._compute_class_mean(data_manager, check_diff=False, oracle=False)
@@ -160,21 +825,21 @@ class Learner(BaseLearner):
 
     def _train(self, train_loader, test_loader):
         self._network.to(self._device)
+        if self._uses_keeplora:
+            self._initialize_keeplora_task(self.keeplora_accum_loader)
         if self._cur_task == 0:
             self.tuned_epochs = self.args["init_epochs"]
             param_groups = [
-                {'params': self._network.convnet.blocks[-1].parameters(), 'lr': 0.01,
+                {'name': 'backbone_last_block',
+                 'params': self._network.convnet.blocks[-1].parameters(), 'lr': 0.01,
                  'weight_decay': self.args['weight_decay']},
-                {'params': self._network.convnet.blocks[:-1].parameters(), 'lr': 0.01,
+                {'name': 'backbone_other_blocks',
+                 'params': self._network.convnet.blocks[:-1].parameters(), 'lr': 0.01,
                  'weight_decay': self.args['weight_decay']},
-                {'params': self._network.fc.parameters(), 'lr': 0.01, 'weight_decay': self.args['weight_decay']}
+                {'name': 'classifier', 'params': self._network.fc.parameters(),
+                 'lr': 0.01, 'weight_decay': self.args['weight_decay']}
             ]
-
-            if self.args['optimizer'] == 'sgd':
-                optimizer = optim.SGD(param_groups, momentum=0.9, lr=self.init_lr, weight_decay=self.weight_decay)
-            elif self.args['optimizer'] == 'adam':
-                optimizer = optim.AdamW(self._network.parameters(), lr=self.init_lr, weight_decay=self.weight_decay)
-                
+            optimizer = self._build_main_optimizer(param_groups, incremental=False)
             scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=self.tuned_epochs, eta_min=self.min_lr)
             log_count_parameter(param_groups)
             self._init_train(train_loader, test_loader, optimizer, scheduler, self.args['warmup_epoch'])
@@ -182,20 +847,162 @@ class Learner(BaseLearner):
             self.tuned_epochs = self.args['inc_epochs']
             param_groups = []
             param_groups.append(
-                {'params': self._network.convnet.parameters(), 'lr': self.init_lr, 'weight_decay': self.weight_decay})
+                {'name': 'backbone', 'params': self._network.convnet.parameters(),
+                 'lr': self.init_lr, 'weight_decay': self.weight_decay})
             param_groups.append(
-                {'params': self._network.fc.parameters(), 'lr': self.init_lr, 'weight_decay': self.weight_decay})
+                {'name': 'classifier', 'params': self._network.fc.parameters(),
+                 'lr': self.init_lr, 'weight_decay': self.weight_decay})
             param_groups.append(
-                {'params': self.old_ae.parameters(), 'lr': self.args['ae_init_lr'], 'weight_decay': self.args['ae_weight_decay']})
-            
-            if self.args['optimizer'] == 'sgd':
-                optimizer = optim.SGD(param_groups, momentum=0.9)
-            elif self.args['optimizer'] == 'adam':
-                optimizer = optim.AdamW(self._network.parameters(), lr=self.init_lr, weight_decay=self.weight_decay)
-
+                {'name': 'rae', 'params': self.old_ae.parameters(),
+                 'lr': self.args['ae_init_lr'], 'weight_decay': self.args['ae_weight_decay']})
+            optimizer = self._build_main_optimizer(param_groups, incremental=True)
             scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=self.tuned_epochs, eta_min=self.min_lr)
             log_count_parameter(param_groups)
             self._init_train(train_loader, test_loader, optimizer, scheduler, self.args['warmup_epoch'])
+
+    def _build_main_optimizer(self, param_groups, incremental):
+        for group in param_groups:
+            group["params"] = list(group["params"])
+        grouped_ids = [
+            id(parameter)
+            for group in param_groups
+            for parameter in group["params"]
+        ]
+        if len(grouped_ids) != len(set(grouped_ids)):
+            raise RuntimeError("Optimizer parameter groups contain duplicates.")
+
+        optimizer_name = str(self.args.get("optimizer", "sgd")).lower()
+        if optimizer_name == "sgd":
+            if incremental:
+                optimizer = optim.SGD(param_groups, momentum=0.9)
+            else:
+                optimizer = optim.SGD(
+                    param_groups,
+                    momentum=0.9,
+                    lr=self.init_lr,
+                    weight_decay=self.weight_decay,
+                )
+            logging.info("SGD settings momentum=%g", optimizer.defaults["momentum"])
+        elif optimizer_name in ("adam", "adamw"):
+            lr = float(self.args.get("adamw_lr", 1e-3))
+            weight_decay = float(self.args.get("adamw_weight_decay", 0.01))
+            betas = tuple(
+                float(value)
+                for value in self.args.get("adamw_betas", (0.9, 0.999))
+            )
+            eps = float(self.args.get("adamw_eps", 1e-8))
+            if lr <= 0 or weight_decay < 0 or eps <= 0 or len(betas) != 2:
+                raise ValueError(
+                    "AdamW requires lr > 0, weight_decay >= 0, eps > 0, "
+                    "and exactly two beta values."
+                )
+            if any(beta < 0 or beta >= 1 for beta in betas):
+                raise ValueError("AdamW beta values must be in [0, 1).")
+
+            for group in param_groups:
+                group["params"] = [
+                    parameter
+                    for parameter in group["params"]
+                    if parameter.requires_grad
+                ]
+                group["lr"] = lr
+                group["weight_decay"] = weight_decay
+                if incremental and group["name"] == "rae":
+                    group["lr"] = float(self.args.get("adamw_rae_lr", lr))
+                    group["weight_decay"] = float(
+                        self.args.get("adamw_rae_weight_decay", weight_decay)
+                    )
+                if not group["params"]:
+                    raise RuntimeError(
+                        "Optimizer parameter group {!r} is empty."
+                        .format(group["name"])
+                    )
+            optimizer = optim.AdamW(
+                param_groups,
+                lr=lr,
+                weight_decay=weight_decay,
+                betas=betas,
+                eps=eps,
+            )
+            logging.info(
+                "AdamW settings lr=%g weight_decay=%g betas=%s eps=%g",
+                lr,
+                weight_decay,
+                betas,
+                eps,
+            )
+        else:
+            raise ValueError(
+                "optimizer must be 'sgd' or 'adamw', got {!r}."
+                .format(optimizer_name)
+            )
+
+        network = (
+            self._network.module
+            if isinstance(self._network, nn.DataParallel)
+            else self._network
+        )
+        expected_parameters = {
+            id(parameter)
+            for parameter in network.parameters()
+            if parameter.requires_grad
+        }
+        if incremental and self.old_ae is not None:
+            expected_parameters.update(
+                id(parameter)
+                for parameter in self.old_ae.parameters()
+                if parameter.requires_grad
+            )
+
+        grouped_ids = [
+            id(parameter)
+            for group in optimizer.param_groups
+            for parameter in group["params"]
+        ]
+        if len(grouped_ids) != len(set(grouped_ids)):
+            raise RuntimeError("Optimizer parameter groups contain duplicates.")
+        grouped_trainable = {
+            id(parameter)
+            for group in optimizer.param_groups
+            for parameter in group["params"]
+            if parameter.requires_grad
+        }
+        missing_parameters = expected_parameters - grouped_trainable
+        unexpected_parameters = grouped_trainable - expected_parameters
+        if missing_parameters or unexpected_parameters:
+            raise RuntimeError(
+                "Optimizer parameter coverage mismatch: missing={}, unexpected={}"
+                .format(len(missing_parameters), len(unexpected_parameters))
+            )
+
+        logging.info(
+            "Main optimizer=%s stage=%s scheduler=CosineAnnealingLR "
+            "scheduler_step=per_epoch trainable_parameters=%d",
+            optimizer.__class__.__name__,
+            "incremental" if incremental else "initial",
+            sum(
+                parameter.numel()
+                for group in optimizer.param_groups
+                for parameter in group["params"]
+                if parameter.requires_grad
+            ),
+        )
+        for index, group in enumerate(optimizer.param_groups):
+            logging.info(
+                "Optimizer group=%s index=%d tensors=%d trainable_parameters=%d "
+                "lr=%g weight_decay=%g",
+                group.get("name", "group_{}".format(index)),
+                index,
+                len(group["params"]),
+                sum(
+                    parameter.numel()
+                    for parameter in group["params"]
+                    if parameter.requires_grad
+                ),
+                group["lr"],
+                group["weight_decay"],
+            )
+        return optimizer
 
     def _init_train(self, train_loader, test_loader, optimizer, scheduler, warmup_epoch):
         prog_bar = tqdm(range(self.tuned_epochs))
@@ -244,15 +1051,26 @@ class Learner(BaseLearner):
         logging.info(info)
 
     def _inc_loss(self, features, features_old):
+        loss_align, loss_orth = self._inc_loss_components(features, features_old)
+        return self.args["beta"] * loss_align + self.args["gamma"] * loss_orth
+
+    def _inc_loss_components(self, features, features_old):
         features_old = self.old_ae(features_old)
         loss_align = nn.MSELoss()(features, features_old)
         features_old_norm = F.normalize(features_old, p=2, dim=1)
         protos = torch.from_numpy(self._class_means).float().to(self._device,non_blocking=True)
-        protos = self.old_ae(protos)
+        prototype_mode = self.args.get("lorth_prototype_mode", "projected")
+        if prototype_mode == "projected":
+            protos = self.old_ae(protos)
+        elif prototype_mode != "raw":
+            raise ValueError(
+                "lorth_prototype_mode must be 'projected' or 'raw', got {!r}."
+                .format(prototype_mode)
+            )
         protos = F.normalize(protos, p=2, dim=1)
         similarity = torch.matmul(protos, features_old_norm.t())
         loss_orth = similarity.sum() / (similarity.shape[0]*similarity.shape[1])
-        return self.args["beta"] * loss_align + self.args["gamma"] * loss_orth
+        return loss_align, loss_orth
         
     def _compute_rt_loss(self, inputs, targets, epoch=None, warmup_epoch=10):     
         loss_cos=AngularPenaltySMLoss(loss_type='cosface', eps=1e-7, s=self.args["scale"], m=self.args["margin"])

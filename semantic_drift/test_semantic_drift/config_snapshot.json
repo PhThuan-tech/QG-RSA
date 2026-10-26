@@ -1,0 +1,7 @@
+{
+  "output_root": "",
+  "prefix": "test_semantic_drift",
+  "semantic_drift": {
+    "enabled": true
+  }
+}

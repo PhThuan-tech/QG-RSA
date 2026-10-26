@@ -59,6 +59,171 @@ Optionally set `"resume_path"` to a specific `task_N.pkl`, `"keep_last_checkpoin
 
 `eval_interval: 0` and `ca_eval_interval: 0` evaluate only the final epoch of each training stage. This avoids repeated full validation passes without changing gradients, optimizer steps, or the cosine scheduler. Set either value to a positive number when intermediate validation curves are needed. `num_workers`, `stats_num_workers`, `pin_memory`, and `persistent_workers` configure data loading; the provided values are suitable starting points for a GPU runtime.
 
+### Semantic-shift diagnostics
+
+After each incremental task, the existing RSIAT log records `feature_shift` and
+`prototype_drift` diagnostics. `sample_drift_mean_norm` is the mean per-sample
+feature displacement, while `sample_drift_norm_mean` is the norm of the mean
+displacement vector. Prototype and SSC fields report the old-class prototype
+shift before and after the existing semantic-shift compensation; they are
+observational metrics only and do not affect training or compensation.
+
+### Optional global SSCA decay
+
+The default SSCA update remains unchanged for configurations without
+`ssca_scale_mode`. To run the opt-in global decay ablation, set
+`ssca_scale_mode` to `global_decay` and provide `ssca_global_gamma` in `[0, 1]`.
+For incremental task index `t` (`_cur_task`), the full prototype displacement is
+scaled by `gamma ** (t - 1)`: task 1 keeps the original update, task 2 uses
+`gamma`, and task 5 uses `gamma ** 4`. A single scalar is applied to every old
+class prototype in that task. `ssca: false` still disables prototype
+compensation.
+
+The KeepLoRA + AdamW experiment uses:
+
+    python main.py --config ./exps/keeplora_adamw_ssca_global_g090.json
+    python main.py --config ./exps/keeplora_adamw_mlp_ssca_global_g090.json
+    python main.py --config ./exps/keeplora_adamw_ssca_age_g090.json
+    python main.py --config ./exps/keeplora_adamw_mlp_ssca_age_g090.json
+
+The first configuration applies KeepLoRA to attention Q/K/V/O; the second
+applies it to the MLP fc1/fc2 projections. They share the same SSCA decay and
+semantic-drift diagnostics but use separate output prefixes.
+The original MLP baseline (`exps/keeplora_adamw_mlp.json`) also enables the
+same diagnostics so its drift reports can be compared with the global- and
+age-decay MLP runs.
+
+The age-aware configuration instead scales each old prototype using
+`ssca_scale_mode: "age_decay"` and `ssca_age_gamma`. Its class-to-task mapping
+uses the actual `task_sizes` recorded by the data manager, including an uneven
+final task. This mode is independent of `global_decay`; do not combine their
+factors in a single run.
+
+### KeepLoRA replacement
+
+The KeepLoRA smoke configuration keeps the RSIAT learner, cosine classifier,
+representation-steering loss, residual autoencoder alignment, prototype update,
+and CIL evaluation protocol. It disables the parallel AdaptFormer adapter and
+instead applies KeepLoRA to the ViT attention Q/K/V/output projections.
+
+By default, at the start of every task the implementation projects the
+cosine-loss gradient away from the pre-trained weight principal subspace and
+prior task feature subspaces, then initializes a frozen A and trainable B. At
+task completion the update is merged into the ViT and the new feature
+directions are saved in the regular RSIAT checkpoint. Run:
+
+    python main.py --config ./exps/keeplora_cifar224_smoke.json
+
+The matched full benchmark configurations are:
+
+    python main.py --config ./exps/keeplora_cifar224.json
+    python main.py --config ./exps/keeplora_cub.json
+    python main.py --config ./exps/keeplora_imageneta.json
+    python main.py --config ./exps/keeplora_imagenetr.json
+    python main.py --config ./exps/keeplora_omnibench.json
+    python main.py --config ./exps/keeplora_vtab.json
+
+For a comparison with RSIAT, keep the dataset split, seed, epochs, classifier
+alignment settings, and losses identical; vary only model_name, convnet_type,
+and the keeplora settings. The default rank 32 matches the rough
+trainable-parameter budget of RSIAT's bottleneck-64 adapter over Q/K/V/O;
+alpha 2 preserves the original KeepLoRA scaling of 1/16 at that rank.
+For a full KeepLoRA experiment, omit the optional batch limits or set
+keeplora_grad_batches and keeplora_feature_batches to 0, which processes every
+batch in the current task. The paper-derived starting thresholds are 0.85 for
+the PTM weight principal subspace and 0.99 for task-feature subspaces.
+Feature accumulation uses a fixed-size second-moment matrix, whose left
+singular vectors match those of the full activation matrix; it therefore
+processes a whole task without retaining every ViT token in memory.
+Accumulation is enabled only during the explicit end-of-task feature pass, so
+the RSIAT training loop has no feature-statistics overhead. KeepLoRA checkpoint
+metadata records every PEFT setting and rejects incompatible resumes.
+
+### KeepLoRA MLP placement experiments
+
+The CUB and CIFAR-100 semantic-drift configurations for the MLP-only variant are:
+
+    python main.py --config ./exps/keeplora_cub_mlp_semantic_drift.json
+    python main.py --config ./exps/keeplora_cifar224_mlp_semantic_drift.json
+    python main.py --config ./exps/keeplora_cifar224_mlp_semantic_drift_scaling_matched.json
+
+Each configuration keeps the corresponding dataset split, seed, epochs, RSIAT
+losses, and semantic-drift probes from its attention KeepLoRA config, while
+using a distinct run/checkpoint prefix. KeepLoRA is attached only to each ViT
+block's `fc1` and `fc2`: the `fc1` update is added to the linear output before
+activation, and the `fc2` update is added before the MLP dropout and residual
+path. The attention projections remain untouched. Adapter execution and configurations without
+`keeplora_target` (or with `keeplora_target: "attention"`) retain their
+existing paths.
+
+The `keeplora_cifar224_mlp_semantic_drift_scaling_matched.json` variant keeps
+the same CIFAR-100 experiment settings and rank budget, but uses
+`keeplora_fc1_alpha: 1.5625` and `keeplora_fc2_alpha: 1.8125`. With
+`scaling = lora_alpha / rank`, both MLP updates then have scaling `0.0625`,
+matching the CIFAR attention configuration's `2 / 32`. This is a controlled
+scaling comparison, not a claim that the matched scale is optimal.
+
+For the ViT-B/16 bottleneck-64 comparison, RSIAT Adapter has 1,189,632
+trainable adapter parameters across 12 blocks. MLP KeepLoRA uses
+`keeplora_fc1_rank: 25` and `keeplora_fc2_rank: 29`, giving 1,188,864
+trainable factor-B parameters (0.0646% fewer; classifier and RAE parameters
+are excluded). Each MLP config inherits its dataset's batch size and other
+training settings: 128 for CUB and 64 for CIFAR-100. Both leave KeepLoRA
+gradient/feature passes uncapped to match their attention configurations.
+Initialization may exceed the memory available on a 16-GB Kaggle GPU for CUB;
+reducing the batch or limiting those passes is a separate smoke/debug run, not
+the matched experiment.
+
+### KeepLoRA full-RSIAT initialization experiment (E1)
+
+E1 changes only the loss used to estimate the KeepLoRA initialization
+gradient. Task 0 uses `L_cos + lambda_RS * L_RS` with the full configured
+coefficient, and later tasks use `L_cos + beta * L_align + gamma * L_orth`.
+The normal RSIAT training loss, including its task-0 warmup schedule, remains
+unchanged. Configurations without `keeplora_init_mode` retain the original
+cosine-only initialization behavior.
+
+Run the isolated CIFAR-100 E1 experiment with:
+
+    python main.py --config ./exps/keeplora_cifar224_fullinit.json
+
+It uses the same training and KeepLoRA settings as `keeplora_cifar224.json`,
+sets `resume: false`, and uses a separate `keeplora_fullinit` checkpoint
+prefix. `keeplora_cifar224_fullinit_smoke.json` is a one-task, one-epoch
+smoke configuration with one gradient batch. The logs include the
+initialization loss components, per-target gradient norms before and after
+residual-subspace projection, and optional forward-invariance diagnostics.
+`L_orth` is included in the scalar initialization objective, but under RSIAT's
+existing graph its direct gradient with respect to current KeepLoRA weights
+can be zero; its formula is not altered.
+
+### Controlled RAE initialization experiments
+
+The RAE controls are independent of the RSIAT and KeepLoRA objectives:
+
+- `rae_zero_init: true` keeps the hidden dimensions but makes the residual
+  branch exactly zero at construction, so the projector starts as identity.
+- `rae_lifecycle: "shared"` preserves the current lifecycle: one RAE is
+  created at the first incremental task and reused afterward.
+- `rae_lifecycle: "per_task"` creates a fresh zero-initialized RAE before
+  each incremental task's KeepLoRA initialization and normal training.
+
+The three controlled CIFAR-100 configurations are:
+
+    python main.py --config ./exps/keeplora_cifar224_fullinit.json
+    python main.py --config ./exps/keeplora_cifar224_fullinit_pertask_rae.json
+    python main.py --config ./exps/adapter_cifar224_zero_rae.json
+    python main.py --config ./exps/adapter_cifar224_zero_rae_pertask.json
+
+They correspond respectively to E1 (full-RSIAT KeepLoRA with zero/shared RAE),
+E2 (full-RSIAT KeepLoRA with zero/per-task RAE), and E3 (Adapter baseline with
+zero/shared RAE). The fourth configuration is E4 (Adapter baseline with
+zero/per-task RAE). At each incremental task, the log reports the RAE
+generation, lifecycle, residual ratio `||AE(x)||/||x||`, and identity error
+`||P(x)-x||/||x||` on a small deterministic batch. Checkpoints continue to
+store the active `old_ae_state_dict`; when resuming a completed task it is
+restored, and a per-task run creates a new projector when the next task starts.
+
 For a Google Colab smoke test that verifies data loading, training, checkpoint creation, and resume at task 1, use [RSIAT_Colab.ipynb](RSIAT_Colab.ipynb).
 
 ## Citation
@@ -80,3 +245,40 @@ If you find this useful in your research, please consider citing:
 This repo is based on [PILOT](https://github.com/LAMDA-CL/LAMDA-PILOT) and [SSIAT](https://github.com/HAIV-Lab/SSIAT).
 
 Thanks for their wonderful work!!!
+## Optional semantic-drift diagnostics
+
+The opt-in `semantic_drift` configuration observes representation changes without
+changing training, losses, optimizer state, CA, SSCA, displacement, or
+checkpoint compatibility. It captures deterministic test probes with
+`shuffle=false`, validates sample IDs and labels between the frozen pre-task
+network and the trained network, and writes one JSON file per incremental task
+plus `summary.csv` under `semantic_drift/<prefix>/`.
+
+The six ready-to-run configurations are:
+
+- `exps/adapter_cifar224_semantic_drift.json`
+- `exps/keeplora_cifar224_semantic_drift.json`
+- `exps/adapter_cifar224_semantic_drift_nossca.json`
+- `exps/keeplora_cifar224_semantic_drift_nossca.json`
+- `exps/adapter_cifar224_semantic_drift_noca.json`
+- `exps/keeplora_cifar224_semantic_drift_noca.json`
+
+The primary pair keeps the existing Adapter and KeepLoRA settings with both
+SSCA and CA enabled. The ablations disable one correction at a time. These are
+diagnostics only; do not compare their metrics to a run with different data,
+seed, optimizer, or schedule.
+
+Each task JSON also includes old/new sample and prototype drift, covariance and
+within-class dispersion changes, old-old relational drift, old-new centroid
+separation, SSCA direction/magnitude/error diagnostics, prototype-memory
+mismatch, effective CA mean scaling, evaluation (overall/old/new), and the
+trainable-parameter audit. The observer uses `torch.no_grad()`, restores model
+mode and RNG state, and never calls backward or an optimizer step. The existing
+shuffled training loader used by displacement is intentionally unchanged.
+
+Optional plots A-G can be generated from a run directory:
+
+    python tools/plot_semantic_drift.py semantic_drift/<prefix>/summary.csv
+
+The script reads the per-task JSON files beside `summary.csv` and writes
+`semantic_drift_plots.png`.

@@ -124,6 +124,8 @@ def _train(args):
         
         model.incremental_train(data_manager)
         cnn_accy = model.eval_task()
+        if hasattr(model, "semantic_drift"):
+            model.semantic_drift.record_evaluation(cnn_accy)
         model.after_task()
      
         logging.info("CNN: {}".format(cnn_accy["grouped"]))

@@ -4,3 +4,10 @@ python main.py --config ./exps/adapter_imageneta.json
 python main.py --config ./exps/adapter_imagenetr.json
 python main.py --config ./exps/adapter_omnibench.json
 python main.py --config ./exps/adapter_vtab.json
+python main.py --config ./exps/keeplora_cifar224_smoke.json
+python main.py --config ./exps/keeplora_cifar224.json
+python main.py --config ./exps/keeplora_cub.json
+python main.py --config ./exps/keeplora_imageneta.json
+python main.py --config ./exps/keeplora_imagenetr.json
+python main.py --config ./exps/keeplora_omnibench.json
+python main.py --config ./exps/keeplora_vtab.json

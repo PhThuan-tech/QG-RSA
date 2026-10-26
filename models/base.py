@@ -72,6 +72,14 @@ class BaseLearner(object):
 
         optimizer = optim.SGD(network_params, lr=self.init_lr, momentum=0.9, weight_decay=self.weight_decay)
         scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer=optimizer, T_max=run_epochs)
+        logging.info(
+            "CA optimizer=SGD lr=%g weight_decay=%g momentum=0.9 "
+            "scheduler=CosineAnnealingLR scheduler_step=per_epoch "
+            "trainable_parameters=%d",
+            self.init_lr,
+            self.weight_decay,
+            sum(parameter.numel() for parameter in param_list),
+        )
 
         self._network.to(self._device)
 
@@ -152,11 +160,71 @@ class BaseLearner(object):
 
     def _checkpoint_run_metadata(self):
         """Return the fields that must not change when resuming a run."""
-        keys = ("dataset", "seed", "init_cls", "increment", "model_name", "convnet_type")
-        return {
-            "format_version": 1,
+        keys = (
+            "dataset", "seed", "init_cls", "increment", "model_name", "convnet_type",
+            "ffn_num", "keeplora_rank", "keeplora_alpha", "keeplora_targets",
+            "keeplora_weight_threshold", "keeplora_feature_threshold",
+            "keeplora_feature_samples", "keeplora_grad_batches", "keeplora_feature_batches",
+        )
+        metadata = {
+            "format_version": 2,
+            "optimizer": str(self.args.get("optimizer", "sgd")).lower(),
+            "keeplora_init_mode": str(
+                self.args.get("keeplora_init_mode", "cosine")
+            ).lower(),
+            "rae_zero_init": bool(self.args.get("rae_zero_init", False)),
+            "rae_lifecycle": str(self.args.get("rae_lifecycle", "shared")).lower(),
             **{key: self.args.get(key) for key in keys if key in self.args},
         }
+        if metadata["optimizer"] in ("adam", "adamw"):
+            metadata.update(
+                adamw_lr=float(self.args.get("adamw_lr", 1e-3)),
+                adamw_weight_decay=float(
+                    self.args.get("adamw_weight_decay", 0.01)
+                ),
+                adamw_betas=tuple(
+                    float(value)
+                    for value in self.args.get("adamw_betas", (0.9, 0.999))
+                ),
+                adamw_eps=float(self.args.get("adamw_eps", 1e-8)),
+                adamw_rae_lr=float(
+                    self.args.get(
+                        "adamw_rae_lr", self.args.get("adamw_lr", 1e-3)
+                    )
+                ),
+                adamw_rae_weight_decay=float(
+                    self.args.get(
+                        "adamw_rae_weight_decay",
+                        self.args.get("adamw_weight_decay", 0.01),
+                    )
+                ),
+            )
+        if "keeplora" in str(self.args.get("convnet_type", "")).lower():
+            rank = int(self.args.get("keeplora_rank", 32))
+            metadata.update(
+                keeplora_target=str(
+                    self.args.get("keeplora_target", "attention")
+                ).lower(),
+                keeplora_fc1_rank=int(
+                    self.args.get("keeplora_fc1_rank", rank)
+                ),
+                keeplora_fc2_rank=int(
+                    self.args.get("keeplora_fc2_rank", rank)
+                ),
+                keeplora_fc1_alpha=float(
+                    self.args.get(
+                        "keeplora_fc1_alpha",
+                        self.args.get("keeplora_alpha", 2),
+                    )
+                ),
+                keeplora_fc2_alpha=float(
+                    self.args.get(
+                        "keeplora_fc2_alpha",
+                        self.args.get("keeplora_alpha", 2),
+                    )
+                ),
+            )
+        return metadata
 
     def save_checkpoint(self, filepath):
         """Persist the completed task state needed to start the next task.
@@ -205,6 +273,8 @@ class BaseLearner(object):
                 key: value.detach().cpu()
                 for key, value in self.old_ae.state_dict().items()
             }
+            checkpoint["rae_generation"] = int(getattr(self, "rae_generation", 0))
+            checkpoint["rae_task_id"] = getattr(self, "rae_task_id", None)
         if hasattr(self, "cnn_curve"):
             checkpoint["cnn_curve"] = self.cnn_curve
         if hasattr(self, "nme_curve"):
@@ -241,6 +311,25 @@ class BaseLearner(object):
     def _validate_checkpoint(self, checkpoint):
         saved_metadata = checkpoint.get("run_metadata", {})
         current_metadata = self._checkpoint_run_metadata()
+        if saved_metadata.get("format_version", 1) >= 2:
+            optional_metadata_keys = {
+                "keeplora_init_mode", "rae_zero_init", "rae_lifecycle",
+                "keeplora_target", "keeplora_fc1_rank", "keeplora_fc2_rank",
+                "keeplora_fc1_alpha", "keeplora_fc2_alpha",
+                "optimizer", "adamw_lr", "adamw_weight_decay",
+                "adamw_betas", "adamw_eps", "adamw_rae_lr",
+                "adamw_rae_weight_decay",
+            }
+            missing_metadata = [
+                key for key in current_metadata
+                if key != "format_version"
+                and key not in optional_metadata_keys
+                and key not in saved_metadata
+            ]
+            if missing_metadata:
+                raise ValueError(
+                    "Checkpoint is missing run metadata: {}".format(missing_metadata)
+                )
         mismatches = [
             "{} (checkpoint={!r}, current={!r})".format(
                 key, saved_metadata[key], current_metadata[key]
@@ -250,6 +339,40 @@ class BaseLearner(object):
             and key in saved_metadata
             and saved_metadata[key] != current_metadata[key]
         ]
+        if "keeplora_target" in current_metadata:
+            saved_target = str(
+                saved_metadata.get("keeplora_target", "attention")
+            ).lower()
+            current_target = current_metadata["keeplora_target"]
+            if saved_target != current_target:
+                mismatches.append(
+                    "keeplora_target (checkpoint={!r}, current={!r})".format(
+                        saved_target, current_target
+                    )
+                )
+            for key in ("keeplora_fc1_rank", "keeplora_fc2_rank"):
+                saved_rank = saved_metadata.get(
+                    key, saved_metadata.get("keeplora_rank")
+                )
+                if saved_rank is not None and saved_rank != current_metadata[key]:
+                    mismatches.append(
+                        "{} (checkpoint={!r}, current={!r})".format(
+                            key, saved_rank, current_metadata[key]
+                        )
+                    )
+            for key in ("keeplora_fc1_alpha", "keeplora_fc2_alpha"):
+                saved_alpha = saved_metadata.get(
+                    key, saved_metadata.get("keeplora_alpha")
+                )
+                if (
+                    saved_alpha is not None
+                    and saved_alpha != current_metadata[key]
+                ):
+                    mismatches.append(
+                        "{} (checkpoint={!r}, current={!r})".format(
+                            key, saved_alpha, current_metadata[key]
+                        )
+                    )
         if mismatches:
             raise ValueError("Checkpoint does not match this experiment: " + ", ".join(mismatches))
 
