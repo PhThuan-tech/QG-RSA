@@ -1,0 +1,51 @@
+{
+  "gpu": "NVIDIA RTX PRO 6000 Blackwell Server Edition",
+  "torch": "2.11.0+cu128",
+  "cuda": "12.8",
+  "timm": "1.0.29",
+  "plan": {
+    "name": "W01_svf",
+    "jobs": [
+      [
+        [
+          "imagenetr"
+        ],
+        [
+          1993
+        ],
+        [
+          "svf"
+        ]
+      ]
+    ],
+    "max_parallel": 1,
+    "overrides": {
+      "save_checkpoints": false
+    },
+    "tests": [
+      "test_qsd.py",
+      "test_svf.py"
+    ],
+    "summaries": [
+      "scripts/summarize_svf.py"
+    ]
+  },
+  "jobs": [
+    [
+      "imagenetr",
+      "svf",
+      1993
+    ]
+  ],
+  "base": "c7bc4fd4ddcae36d3023e1aa9935fd97e9c797a0",
+  "patch_built": "2026-10-29 08:48",
+  "patch_files": [
+    "exps/svf/svf.json",
+    "scripts/build_experiments_notebook.py",
+    "scripts/build_wave.py",
+    "scripts/pack_base.py",
+    "scripts/summarize_svf.py",
+    "tests/test_svf.py",
+    "utils/qsd.py"
+  ]
+}

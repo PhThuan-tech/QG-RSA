@@ -55,6 +55,7 @@ Tình trạng (✓ = đã có run A2 với đủ head SCF; mọi run đều ch�
 | QSD-CIL giai đoạn A | `qsd/README.md` | `qsd/results/stage_a/README.md` | PGM/kênh kém linear; chỉ `pgm_fuse` thắng ở 10/10 run (R +0.25, A +0.44) |
 | QSD-CIL vòng A2 (**kết quả chính của paper**) | `qsd/README_A2.md` | `qsd/results/a2/README.md` | SCF ĐẠT (held-out +0.46 đến +0.62 AIA); ridge cổ điển ngang hoặc hơn PGM, nên không có đóng góp lượng tử; forgetting tăng nhẹ |
 | SCF vòng A3: CIFAR-100, CUB-200, 3 seed | `scf/README.md` | `scf/results/README.md` | Chuyển giao KHÔNG ĐẠT theo quy tắc: CIFAR +0.20 AIA (CI > 0), CUB +0.02. Final tăng ở cả 4 dataset; PGM − ridge = −0.04 trên 12 run |
+| SVF giai đoạn A: view plastic + view snapshot task 0 (chỉ suy luận) | `svf/README.md` | `svf/results/README.md` | DỪNG theo luật sàng lọc (W01, R 1993): SVF + SCF − SCF ridge = +0.11 < 0.3. SVF − RSIAT +0.41 final, ngang SCF. Snapshot giữ task 0 ở 87.6 nhưng lớp mới bị lấn: cùng đường đánh đổi với oracle |
 
 `archive/qksr/`: config QKSR cũ (CIFAR, CUB), không còn dùng.
 

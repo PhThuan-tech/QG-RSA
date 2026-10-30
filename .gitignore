@@ -52,3 +52,4 @@ exps/**/console/
 
 # Duplicates waiting for manual deletion
 _duplicates_to_delete/
+waves/w01_svf/results/

@@ -17,6 +17,11 @@ Round A2 (exps/qsd/README_A2.md) adds states built only from the mean and
 covariance RSIAT already stores (exemplar-free, SSCA-updated means), an oracle
 control, calibrated fusion with the CA head for every source, and saved scores.
 
+SVF (exps/svf/README.md) adds a second view: a frozen copy of the network after task 0.
+Its class statistics are computed when each class is learned and are exact forever (the
+snapshot never changes), so ``snap_ridge`` is closed-form ridge on them, fused with the
+plastic CA head like any other source.
+
 Evaluation only, like utils/ca_heads.py: everything runs after eval_task with
 private generators inside preserve_rng and never feeds back into training.
 """
@@ -34,11 +39,15 @@ from torch.nn import functional as F
 HEADS = ("linear", "linear_rerun", "linear_noscale", "ridge_stats", "pgm_stale", "pgm_channel",
          "pgm_channel_hier", "pgm_fuse", "pgm_nonlinear",
          # Round A2: states from stored statistics (exemplar-free) and the oracle control.
-         "pgm_stats_stale", "pgm_stats", "pgm_stats_hier", "pgm_stats_oracle")
+         "pgm_stats_stale", "pgm_stats", "pgm_stats_hier", "pgm_stats_oracle",
+         # SVF: ridge on exact statistics of the frozen task-0 snapshot view.
+         "snap_ridge")
 # Round A2 fusion: argmax(scale * cos + w * k_s * score_s), k_s = sigma_linear / sigma_s measured
 # label-free on the current task's training images, so w is a relative weight for every source.
-FUSE_SOURCES = ("ridge_stats", "pgm_channel", "pgm_channel_hier", "pgm_stats", "pgm_stats_hier")
+FUSE_SOURCES = ("ridge_stats", "pgm_channel", "pgm_channel_hier", "pgm_stats", "pgm_stats_hier", "snap_ridge")
 FUSE_WEIGHTS = (0.25, 0.5, 1.0, 2.0, 4.0)
+# SVF three-way fusion: linear + SCF ridge at its weight frozen in round A2 + w * snapshot view.
+SCF_RIDGE_WEIGHT = 0.25
 # Pre-registered settings (exps/qsd/README.md). Do not edit after seeing results.
 DEFAULTS = {
     "qsd_delta": 0.1,          # whitening ridge, times 1/d (d = 2^qubits of the encoding)
@@ -76,12 +85,17 @@ def qsd_settings(args):
     cfg["fuse"] = [(s, w) for s in FUSE_SOURCES if s in base for w in FUSE_WEIGHTS] if cfg["qsd_fuse"] else []
     if cfg["qsd_fuse"] and not cfg["fuse"]:
         raise ValueError("qsd_fuse needs at least one of {} in qsd_heads.".format(list(FUSE_SOURCES)))
-    cfg["heads"] = base + [fuse_name(s, w) for s, w in cfg["fuse"]]
+    cfg["fuse3"] = list(FUSE_WEIGHTS) if cfg["qsd_fuse"] and {"ridge_stats", "snap_ridge"} <= set(base) else []
+    cfg["heads"] = base + [fuse_name(s, w) for s, w in cfg["fuse"]] + [fuse3_name(w) for w in cfg["fuse3"]]
     return cfg
 
 
 def fuse_name(source, weight):
     return "fuse_{}_b{}".format(source, "{:g}".format(weight).replace(".", "p"))  # b0p25: log-safe \w name
+
+
+def fuse3_name(weight):
+    return "fuse3_snap_b{}".format("{:g}".format(weight).replace(".", "p"))
 
 
 # ----------------------------------------------------------------------------- encoding
@@ -503,6 +517,27 @@ def _evaluate(learner, cfg, task, linear_pred):
                                                         delta).argmax(1).cpu().numpy()
             diagnostics["oracle_mean_error"] = float(((means.double() - o_means).norm(dim=1)
                                                       / o_means.norm(dim=1)).mean())
+        train_view = {}  # sources scored on another view's features: their training-image scores
+        if "snap_ridge" in wanted:
+            if "snapshot" not in state:
+                if task != 0:
+                    raise RuntimeError("SVF must observe task 0 to take its snapshot.")
+                snapshot = copy.deepcopy(learner._network).eval()
+                snapshot.requires_grad_(False)
+                state.update(snapshot=snapshot, snap_means=[], snap_covs=[])
+            z0_new, y0_new = _extract(state["snapshot"], loader, device)
+            if not torch.equal(y0_new, y_new):
+                raise RuntimeError("SVF snapshot visited samples in a different order.")
+            new_means, new_covs = class_statistics(z0_new, y0_new - known, total - known)
+            state["snap_means"].append(new_means.float())  # appended once, never updated
+            state["snap_covs"].append(new_covs)
+            snap_means, snap_covs = torch.cat(state["snap_means"]), torch.cat(state["snap_covs"])
+            z0_test, y0_test = _extract(state["snapshot"], learner.test_loader, device)
+            if not np.array_equal(y0_test.cpu().numpy(), np.asarray(target)):
+                raise RuntimeError("SVF snapshot test pass visited samples in a different order.")
+            test_scores["snap_ridge"] = ridge_scores(snap_means, snap_covs, z0_test, cfg["qsd_ridge"])
+            train_view["snap_ridge"] = ridge_scores(snap_means, snap_covs, z0_new, cfg["qsd_ridge"])
+            predictions["snap_ridge"] = test_scores["snap_ridge"].argmax(1).cpu().numpy()
         for name, fn in sources.items():
             if name not in test_scores:
                 test_scores[name] = fn(z_test, psi_test)
@@ -514,11 +549,17 @@ def _evaluate(learner, cfg, task, linear_pred):
             train_logits = learner.args["scale"] * learner._network.fc(z_new)["logits"][:, :total]
             diagnostics["fuse_scale"] = {}
             for source in dict.fromkeys(s for s, _ in cfg["fuse"]):
-                k = fusion_scale(train_logits, sources[source](z_new, psi_new))
+                train_scores = train_view[source] if source in train_view else sources[source](z_new, psi_new)
+                k = fusion_scale(train_logits, train_scores)
                 diagnostics["fuse_scale"][source] = k
                 for weight in FUSE_WEIGHTS:
                     fused = logits.double() + weight * k * test_scores[source].double()
                     predictions[fuse_name(source, weight)] = fused.argmax(1).cpu().numpy()
+            scale = diagnostics["fuse_scale"]
+            for weight in cfg["fuse3"]:
+                fused = (logits.double() + SCF_RIDGE_WEIGHT * scale["ridge_stats"] * test_scores["ridge_stats"].double()
+                         + weight * scale["snap_ridge"] * test_scores["snap_ridge"].double())
+                predictions[fuse3_name(weight)] = fused.argmax(1).cpu().numpy()
         scores = {}
         if cfg["qsd_save_scores"]:  # float16 is enough to redo any fusion offline
             scores = {name: s.float().cpu().numpy().astype(np.float16)

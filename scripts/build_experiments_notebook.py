@@ -14,7 +14,8 @@ Một notebook cho mọi vòng thí nghiệm. Chọn `PLAN` ở cell 1: mỗi pl
 
 | Vòng | Variant | Dataset | Mục đích |
 |---|---|---|---|
-| **SCF vòng A3 (hiện tại)** | `SCF` | `cifar224`, `cub` theo `PLAN` | RSIAT + fusion thống kê–classifier với trọng số đã khoá, 3 seed 1993/2015/2026 (`exps/scf/README.md`) |
+| **SVF giai đoạn A (hiện tại)** | `SVF` | `imagenetr`, `imageneta` × 3 seed | view plastic (RSIAT) + view snapshot task 0 đóng băng, fusion có hiệu chỉnh, chỉ suy luận (`exps/svf/README.md`) |
+| SCF vòng A3 | `SCF` | `cifar224`, `cub` theo `PLAN` | RSIAT + fusion thống kê–classifier với trọng số đã khoá, 3 seed 1993/2015/2026 (`exps/scf/README.md`) |
 | QSD-CIL vòng A2 | `QSD2` | R + A (đã chạy: `exps/qsd/results/a2/`) | fusion có hiệu chỉnh (5 nguồn × 5 trọng số), trạng thái từ thống kê đã lưu (mean SSCA / mean cũ), oracle đối chứng, lưu điểm số (`exps/qsd/README_A2.md`) |
 | QSD-CIL giai đoạn A | `QSD` | R + A (đã chạy: `exps/qsd/results/stage_a/`) | 9 head PGM/kênh/phân cấp/fusion trong cùng run (`exps/qsd/README.md`) |
 | QRF-CA | `QRFCA` | `imageneta` (đã chạy: `exps/qrfca/results/`) | 6 head CA (linear, QDA, RFF, ReLU-RP, PQK, PQK không CNOT) trong cùng run (`exps/qrfca/README.md`) |
@@ -41,18 +42,23 @@ QRFCA    = ["qrfca_rep0", "qrfca_rep1", "qrfca_rep2"]
 QSD      = ["qsd_rep0", "qsd_rep1", "qsd_rep2"]
 QSD2     = ["qsd2_rep0", "qsd2_rep1", "qsd2_rep2"]
 SCF      = ["scf"]
+SVF      = ["svf"]
 SEEDS3   = [1993, 2015, 2026]   # quy ước chung cho mọi dataset (exps/README.md)
-# Vòng A3 (SCF) trên 2 tài khoản Kaggle: chỉ đổi PLAN ở mỗi tài khoản.
 # Mỗi plan = danh sách nhóm (datasets, seeds, variants); job = tích của từng nhóm.
 PLANS = {
-    "kaggle1": [(["cifar224"], [1993, 2015], SCF)],                        # CIFAR-100: 2 run, ~4 giờ (ước tính)
-    "kaggle2": [(["cifar224"], [2026], SCF), (["cub"], SEEDS3, SCF)],      # CIFAR 1 run + CUB 3 run, ~4 giờ
+    # SVF giai đoạn A: một tài khoản chạy svf_all; nếu chia 2 tài khoản thì dùng svf_r / svf_a.
+    "svf_all": [(["imagenetr", "imageneta"], SEEDS3, SVF)],                # 6 run, ~3–4 giờ (ước tính)
+    "svf_r":   [(["imagenetr"], SEEDS3, SVF)],                             # gồm run tuning R 1993
+    "svf_a":   [(["imageneta"], SEEDS3, SVF)],
+    # Vòng A3 (SCF, đã chạy), giữ để tái lập:
+    "kaggle1": [(["cifar224"], [1993, 2015], SCF)],
+    "kaggle2": [(["cifar224"], [2026], SCF), (["cub"], SEEDS3, SCF)],
     # Vòng A2 (đã chạy), giữ để tái lập:
     "a2_kaggle1": [(["imagenetr"], [1993], QSD2)],
     "a2_kaggle2": [(["imageneta"], [1993], QSD2), (["imagenetr"], [2042], ["qsd2_rep0"])],
     "a2_kaggle3": [(["imagenetr", "imageneta"], [2015, 2026], ["qsd2_rep0"])],
 }
-PLAN = "kaggle1"
+PLAN = "svf_all"
 JOBS = [(ds, v, s) for datasets, seeds, variants in PLANS[PLAN] for ds in datasets for s in seeds for v in variants]
 DATASETS = sorted({ds for ds, _, _ in JOBS})
 SEEDS = sorted({s for _, _, s in JOBS})
@@ -357,7 +363,7 @@ for ds in DATASETS:
 md("## 6. Test nhanh (CPU, ~15 giây)")
 code(r'''
 if RUN_TESTS:
-    for pattern in ("test_stats_diagnostics.py", "test_run_level_stats.py", "test_ca_heads.py", "test_qsd.py", "test_scf.py"):
+    for pattern in ("test_stats_diagnostics.py", "test_run_level_stats.py", "test_ca_heads.py", "test_qsd.py", "test_scf.py", "test_svf.py"):
         r = subprocess.run([sys.executable, "-B", "-m", "unittest", "discover", "-s", "tests", "-p", pattern],
                            capture_output=True, text=True)
         print(pattern, r.stderr.strip().splitlines()[-1]); assert r.returncode == 0, r.stderr[-3000:]
@@ -473,6 +479,12 @@ if "scf" in VARIANTS:   # mỗi tài khoản chỉ có một phần run: bảng 
                        capture_output=True, text=True)
     assert r.returncode == 0, r.stderr[-3000:]
     display(Markdown((OUT/"scf_summary.md").read_text(encoding="utf-8")))
+if "svf" in VARIANTS:   # chia nhiều tài khoản thì bảng ở đây là tạm
+    r = subprocess.run([sys.executable, "-B", "scripts/summarize_svf.py", "--root", str(OUT/"logs"),
+                        "--output", str(OUT/"svf_summary.md"), "--json", str(OUT/"svf_summary.json")],
+                       capture_output=True, text=True)
+    assert r.returncode == 0, r.stderr[-3000:]
+    display(Markdown((OUT/"svf_summary.md").read_text(encoding="utf-8")))
 if any(v.startswith("qrfca") for v in VARIANTS):
     r = subprocess.run([sys.executable, "-B", "scripts/summarize_ca_heads.py", "--root", str(OUT/"logs"),
                         "--output", str(OUT/"qrfca_summary.md"), "--json", str(OUT/"qrfca_summary.json")],
