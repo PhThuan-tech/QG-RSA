@@ -55,6 +55,12 @@ class Learner(BaseLearner):
         from utils.qsd import qsd_settings
         head_settings(args)
         qsd_settings(args)
+        # Holevo-CIL / Holevo-POVM (exps/holevo, exps/holevo_povm); None (off) leaves RSIAT unchanged.
+        from utils.holevo import HolevoRuntime, holevo_settings
+        holevo_cfg = holevo_settings(args)
+        if holevo_cfg is not None and self.qbridge_config is not None:
+            raise ValueError("holevo_mode / hp_mode cannot be combined with Q-BRIDGE.")
+        self.holevo = HolevoRuntime(holevo_cfg, args["warmup_epoch"], self._device) if holevo_cfg else None
         self.tuned_epochs = None
         self.task_sizes = []
         self.rs_loss_func = RS_Loss(self.args["alpha"], self.args["rs_margin"])
@@ -332,20 +338,25 @@ class Learner(BaseLearner):
             self._network.to(self._device)
             # The legacy pass always runs: it fixes the global RNG stream so
             # ssca_mode changes only the drift estimate, not training.
-            train_embeddings_old, _ = self.extract_features(self.train_loader, self._network, None)
+            train_embeddings_old, train_labels_old = self.extract_features(self.train_loader, self._network, None)
             if stats_cfg["needs_paired"]:
                 paired_loader = stats_diagnostics.deterministic_loader(
                     data_manager.get_eval_view(train_dataset), self.batch_size, self.num_workers,
                     self.pin_memory, int(self.args["seed"]) + self._cur_task)
                 paired_old, paired_labels = self.extract_features(paired_loader, self._network, None)
 
+        if getattr(self, "holevo", None) is not None and self._cur_task > 0:
+            # Queue initialised from the mandatory pass above: no extra data pass, RNG unchanged.
+            self.holevo.start_task(self, train_embeddings_old, train_labels_old)
         if self.qbridge_config is not None and self._cur_task > 0:
             self._start_qbridge_task()
         evaluation_loader = self.val_loader if self.val_loader is not None else self.test_loader
         self._train(self.train_loader, evaluation_loader)
-        
+
         if len(self._multiple_gpus) > 1:
             self._network = self._network.module
+        if getattr(self, "holevo", None) is not None and self._cur_task > 0:
+            self.holevo.end_task(self)
 
         if self.args.get("qbridge_experiment", False) and self._cur_task > 0:
             from utils.qbridge_experiment import evaluate_stage
@@ -386,6 +397,8 @@ class Learner(BaseLearner):
 
         self._network.fc.backup()
         self._compute_class_mean(data_manager, check_diff=False, oracle=False)
+        if getattr(self, "holevo", None) is not None and self._cur_task == 0:
+            self.holevo.fix_encoder(self)
         if self._cur_task > 0 and stats_cfg["needs_oracle"]:
             self._old_statistics_oracle(data_manager, stats_cfg, estimates, kernel_report)
         if self.args.get("qbridge_experiment", False):
@@ -667,6 +680,8 @@ class Learner(BaseLearner):
                 correct += preds.eq(targets.expand_as(preds)).cpu().sum()
                 total += len(targets)
             scheduler.step()
+            if getattr(self, "holevo", None) is not None and self._cur_task > 0:
+                self.holevo.end_epoch(self._cur_task, epoch)
             epoch_seconds = time.perf_counter() - epoch_start
 
             train_acc = np.around(tensor2numpy(correct) * 100 / total, decimals=2)
@@ -806,6 +821,10 @@ class Learner(BaseLearner):
                 bridge.last["total_loss_module_gradient_norms"] = module_norms
             return logits, loss_c, self.args["beta"] * loss_align + added
         loss_inc = self._inc_loss(features, features_old)
+        if getattr(self, "holevo", None) is not None:
+            extra = self.holevo.step_loss(self, features, targets, loss_c, epoch)
+            if extra is not None:  # None at ramp weight 0 and in diag mode: update identical to RSIAT
+                loss_inc = loss_inc + extra.float()
         return logits, loss_c, loss_inc
     
 class RS_Loss(nn.Module):

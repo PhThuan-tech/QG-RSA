@@ -49,6 +49,9 @@ reports/qbridge_v1_1/
 !exps/**/logs/
 exps/**/*_stats/
 exps/**/console/
+# Raw Kaggle downloads (results_<wave>.zip): extracted into results/<source>/, so the zip is a duplicate.
+exps/**/result/
+exps/**/*.zip
 
 # Duplicates waiting for manual deletion
 _duplicates_to_delete/

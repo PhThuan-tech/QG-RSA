@@ -31,8 +31,9 @@ def excluded(path):
 
 
 def build_patch(base):
-    changed = git("diff", "--name-status", "--no-renames", base, "--").decode().splitlines()
-    untracked = git("ls-files", "--others", "--exclude-standard").decode().splitlines()
+    # quotepath off: non-ASCII paths (e.g. research_notes/) come back verbatim, not quoted and escaped.
+    changed = git("-c", "core.quotepath=off", "diff", "--name-status", "--no-renames", base, "--").decode().splitlines()
+    untracked = git("-c", "core.quotepath=off", "ls-files", "--others", "--exclude-standard").decode().splitlines()
     files, base_sha, deleted = {}, {}, []
     entries = [line.split("\t", 1) for line in changed] + [["A", p] for p in untracked]
     for status, path in sorted(entries, key=lambda e: e[1]):

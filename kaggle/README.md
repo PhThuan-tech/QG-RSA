@@ -55,3 +55,5 @@ Run đã xong được bỏ qua khi chạy lại. Kết quả nằm ở `runs/SU
 | Wave | Thí nghiệm | Base |
 |---|---|---|
 | `w01_svf` | SVF giai đoạn A (`exps/svf/README.md`) | `c7bc4fd` |
+| `w02_holevo` | Holevo-CIL giai đoạn A, sàng lọc (`exps/holevo/README.md`) | `c7bc4fd` |
+| `w03_hp` | Holevo-POVM giai đoạn A, sàng lọc, chạy sau W02 (`exps/holevo_povm/README.md`) | `c7bc4fd` |

@@ -1,0 +1,43 @@
+{
+  "name": "W02_holevo",
+  "title": "Holevo-CIL giai đoạn A (sàng lọc), ImageNet-R seed 1993 (Kaggle RTX PRO 6000)",
+  "base": "c7bc4fd",
+  "description": [
+    "Hướng A: adapter được huấn luyện thêm −λ·χ̃, với χ là Holevo χ của mọi lớp đã thấy (lớp cũ: trạng thái dựng từ mean + cov đã lưu; lớp mới: queue feature của task hiện tại). Spec: `exps/holevo/README.md`.",
+    "",
+    "3 run song song trên ImageNet-R seed 1993 (run sàng lọc): `holevo_vn` (phương pháp chính), `holevo_mcr2` (bản classical tương đương: log-det MCR²), `holevo_spread` (chỉ S(ρ̄)). λ tự hiệu chỉnh ở epoch 0 của task 1 theo tỉ số gradient; chẩn đoán χ_oracle bật (đọc ảnh lớp cũ, chỉ để phân tích). Ước tính 2,5–3 giờ.",
+    "",
+    "`SUMMARY.txt` tính các luật R/G/M/O/P so với baseline 4 run `noise` (đã đăng ký trong `scripts/summarize_holevo.py`). Held-out sẽ ghi \"chưa đủ run (0/5)\"."
+  ],
+  "inputs": [
+    "qgrsa-base-c7bc4fd",
+    "zaphat206/imagenet-r",
+    "ViT-B/16 224 in21k"
+  ],
+  "jobs": [
+    [
+      [
+        "imagenetr"
+      ],
+      [
+        1993
+      ],
+      [
+        "holevo_vn",
+        "holevo_mcr2",
+        "holevo_spread"
+      ]
+    ]
+  ],
+  "max_parallel": 3,
+  "overrides": {
+    "save_checkpoints": false
+  },
+  "tests": [
+    "test_holevo.py",
+    "test_qsd.py"
+  ],
+  "summaries": [
+    "scripts/summarize_holevo.py"
+  ]
+}

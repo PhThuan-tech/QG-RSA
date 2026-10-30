@@ -1,0 +1,32 @@
+{
+  "prefix": "hp_twin_povm",
+  "ssca_mode": "legacy",
+  "rng_replicate": 0,
+  "stats_diagnostics": false,
+  "save_predictions": true,
+  "save_checkpoints": false,
+  "offline": true,
+  "hp_mode": "twin_povm",
+  "holevo_lambda": "auto",
+  "holevo_grad_ratio": 0.5,
+  "holevo_calib_steps": 20,
+  "holevo_queue_cap": 256,
+  "holevo_eps": 1e-08,
+  "holevo_mcr2_eps2": 0.5,
+  "holevo_oracle_diag": true,
+  "holevo_log_every": 25,
+  "hp_tau": 1.0,
+  "hp_eps_omega": 1e-06,
+  "hp_grad_ratio": 0.5,
+  "qsd_heads": [
+    "linear",
+    "ridge_stats",
+    "pgm_stats"
+  ],
+  "qsd_delta": 1.3316,
+  "qsd_ridge": 0.1,
+  "qsd_seed": 20261022,
+  "qsd_batch": 128,
+  "qsd_fuse": true,
+  "qsd_save_scores": false
+}

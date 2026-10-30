@@ -1,0 +1,587 @@
+2026-10-30 13:49:24,669 [trainer.py] => config: /kaggle/working/runs/configs/imagenetr_holevo_mcr2_1993.json
+2026-10-30 13:49:24,669 [trainer.py] => overlay: []
+2026-10-30 13:49:24,669 [trainer.py] => prefix: holevo_mcr2
+2026-10-30 13:49:24,669 [trainer.py] => dataset: imagenetr
+2026-10-30 13:49:24,669 [trainer.py] => save_checkpoints: False
+2026-10-30 13:49:24,669 [trainer.py] => resume: False
+2026-10-30 13:49:24,669 [trainer.py] => isolate_runs: True
+2026-10-30 13:49:24,669 [trainer.py] => keep_last_checkpoint: True
+2026-10-30 13:49:24,669 [trainer.py] => compact_diagonal_checkpoint: False
+2026-10-30 13:49:24,669 [trainer.py] => eval_interval: 0
+2026-10-30 13:49:24,669 [trainer.py] => ca_eval_interval: 0
+2026-10-30 13:49:24,670 [trainer.py] => num_workers: 4
+2026-10-30 13:49:24,670 [trainer.py] => stats_num_workers: 2
+2026-10-30 13:49:24,670 [trainer.py] => pin_memory: True
+2026-10-30 13:49:24,670 [trainer.py] => persistent_workers: True
+2026-10-30 13:49:24,670 [trainer.py] => shuffle: True
+2026-10-30 13:49:24,670 [trainer.py] => ssca: True
+2026-10-30 13:49:24,670 [trainer.py] => ca: True
+2026-10-30 13:49:24,670 [trainer.py] => init_cls: 20
+2026-10-30 13:49:24,670 [trainer.py] => increment: 20
+2026-10-30 13:49:24,670 [trainer.py] => model_name: adapter
+2026-10-30 13:49:24,670 [trainer.py] => convnet_type: pretrained_vit_b16_224_in21k_adapter
+2026-10-30 13:49:24,670 [trainer.py] => device: [device(type='cuda', index=0)]
+2026-10-30 13:49:24,670 [trainer.py] => seed: 1993
+2026-10-30 13:49:24,670 [trainer.py] => init_epochs: 30
+2026-10-30 13:49:24,670 [trainer.py] => warmup_epoch: 4
+2026-10-30 13:49:24,670 [trainer.py] => inc_epochs: 30
+2026-10-30 13:49:24,670 [trainer.py] => ca_epochs: 10
+2026-10-30 13:49:24,670 [trainer.py] => init_lr: 0.006734973446816302
+2026-10-30 13:49:24,670 [trainer.py] => batch_size: 48
+2026-10-30 13:49:24,670 [trainer.py] => weight_decay: 1.0711992196950609e-06
+2026-10-30 13:49:24,670 [trainer.py] => min_lr: 0
+2026-10-30 13:49:24,670 [trainer.py] => ffn_num: 64
+2026-10-30 13:49:24,670 [trainer.py] => optimizer: sgd
+2026-10-30 13:49:24,670 [trainer.py] => scale: 50.0
+2026-10-30 13:49:24,670 [trainer.py] => margin: 0.2
+2026-10-30 13:49:24,670 [trainer.py] => alpha: 1.5
+2026-10-30 13:49:24,670 [trainer.py] => rs_margin: 0.4
+2026-10-30 13:49:24,670 [trainer.py] => lambda_rs: 0.5
+2026-10-30 13:49:24,670 [trainer.py] => beta: 3.0
+2026-10-30 13:49:24,670 [trainer.py] => gamma: 1.5
+2026-10-30 13:49:24,670 [trainer.py] => ae_code_dims: 384
+2026-10-30 13:49:24,670 [trainer.py] => ae_init_lr: 0.00016714136601737281
+2026-10-30 13:49:24,670 [trainer.py] => ae_weight_decay: 0.004098198825078632
+2026-10-30 13:49:24,670 [trainer.py] => algorithm: rsiat
+2026-10-30 13:49:24,670 [trainer.py] => use_quantum_kernel_base: False
+2026-10-30 13:49:24,670 [trainer.py] => use_quantum_kernel_inc: False
+2026-10-30 13:49:24,670 [trainer.py] => ssca_mode: legacy
+2026-10-30 13:49:24,670 [trainer.py] => rng_replicate: 0
+2026-10-30 13:49:24,670 [trainer.py] => stats_diagnostics: False
+2026-10-30 13:49:24,670 [trainer.py] => save_predictions: True
+2026-10-30 13:49:24,670 [trainer.py] => offline: True
+2026-10-30 13:49:24,670 [trainer.py] => holevo_mode: mcr2
+2026-10-30 13:49:24,670 [trainer.py] => holevo_lambda: auto
+2026-10-30 13:49:24,670 [trainer.py] => holevo_grad_ratio: 0.5
+2026-10-30 13:49:24,670 [trainer.py] => holevo_calib_steps: 20
+2026-10-30 13:49:24,670 [trainer.py] => holevo_queue_cap: 256
+2026-10-30 13:49:24,670 [trainer.py] => holevo_eps: 1e-08
+2026-10-30 13:49:24,670 [trainer.py] => holevo_mcr2_eps2: 0.5
+2026-10-30 13:49:24,670 [trainer.py] => holevo_oracle_diag: True
+2026-10-30 13:49:24,670 [trainer.py] => holevo_log_every: 25
+2026-10-30 13:49:24,670 [trainer.py] => data_root: /kaggle/input/datasets/zaphat206/imagenet-r/imagenet-r
+2026-10-30 13:49:24,670 [trainer.py] => pretrained_path: /kaggle/working/vit_b16_224.pt
+2026-10-30 13:49:24,670 [trainer.py] => output_root: /kaggle/working/runs
+2026-10-30 13:49:24,670 [trainer.py] => class_order_seed: 1993
+2026-10-30 13:49:24,670 [trainer.py] => train_seed: 1993
+2026-10-30 13:49:24,670 [trainer.py] => partition_seed: 1993
+2026-10-30 13:49:24,670 [trainer.py] => _run_log_prefix: /kaggle/working/runs/logs/adapter/imagenetr/0/20/holevo_mcr2_1993_pretrained_vit_b16_224_in21k_adapter
+2026-10-30 13:49:34,754 [data_manager.py] => [168, 136, 51, 9, 183, 101, 171, 99, 42, 159, 191, 70, 16, 188, 27, 10, 175, 26, 68, 187, 98, 6, 85, 35, 112, 43, 100, 0, 103, 181, 88, 59, 4, 2, 116, 174, 94, 80, 106, 1, 147, 17, 141, 131, 72, 23, 173, 54, 197, 118, 87, 32, 79, 104, 91, 19, 135, 107, 178, 36, 11, 199, 142, 8, 122, 3, 28, 57, 153, 172, 190, 56, 49, 44, 97, 62, 151, 169, 194, 55, 192, 12, 189, 78, 66, 180, 15, 137, 109, 134, 92, 119, 126, 52, 170, 40, 148, 65, 144, 64, 138, 45, 77, 89, 154, 90, 71, 193, 74, 30, 113, 143, 96, 84, 67, 50, 186, 156, 69, 21, 18, 111, 108, 58, 125, 157, 150, 110, 182, 129, 166, 83, 81, 60, 13, 165, 14, 176, 63, 117, 5, 22, 145, 121, 38, 41, 82, 127, 114, 20, 31, 53, 37, 163, 196, 130, 152, 162, 86, 76, 24, 34, 184, 149, 33, 128, 198, 155, 146, 167, 139, 120, 140, 102, 47, 25, 158, 123, 46, 164, 61, 7, 115, 75, 133, 160, 105, 132, 179, 124, 48, 73, 93, 39, 95, 195, 29, 177, 185, 161]
+2026-10-30 13:49:35,736 [trainer.py] => All params: 86988288
+2026-10-30 13:49:35,737 [trainer.py] => Trainable params: 1189632
+2026-10-30 13:49:35,737 [RSIAT_adapter.py] => Learning on 0-20
+2026-10-30 13:49:36,104 [toolkit.py] => All params: 86259456
+2026-10-30 13:49:36,104 [toolkit.py] => Trainable params: 1204992
+2026-10-30 13:59:12,147 [RSIAT_adapter.py] => Task 0, Epoch 30/30 => Loss 2.094, Loss_c 1.812, Losses_rt 0.282, Train_accy 93.07, Test_accy 96.05, Time 20.17s
+2026-10-30 13:59:12,147 [RSIAT_adapter.py] => Task 0 peak GPU memory: 4417.41 MiB
+2026-10-30 13:59:25,822 [holevo.py] => HOLEVO encoder classes=20 D=769 scale=43.769274
+2026-10-30 13:59:27,508 [trainer.py] => CNN: {'total': 96.05, '00-19': 96.05, 'old': 0.0, 'new': 96.05}
+2026-10-30 13:59:27,508 [trainer.py] => CNN top1 curve: [96.05]
+2026-10-30 13:59:27,508 [trainer.py] => CNN top5 curve: [99.58]
+2026-10-30 13:59:27,508 [trainer.py] => Average Accuracy (CNN): 96.05
+2026-10-30 13:59:27,508 [trainer.py] => All params: 87003648
+2026-10-30 13:59:27,508 [trainer.py] => Trainable params: 1204992
+2026-10-30 13:59:27,524 [RSIAT_adapter.py] => Learning on 20-40
+2026-10-30 13:59:35,339 [holevo.py] => HOLEVO start task=1 old=20 new=20 {"queue": {"20": 196, "21": 142, "22": 77, "23": 64, "24": 105, "25": 42, "26": 128, "27": 184, "28": 107, "29": 168, "30": 121, "31": 137, "32": 177, "33": 152, "34": 62, "35": 138, "36": 115, "37": 216, "38": 51, "39": 165}, "residual_share": null, "eta": null}
+2026-10-30 13:59:50,065 [holevo.py] => HOLEVO oracle task=1 phase=start {"oracle": {"vn": 0.4012547987791, "mcr2": 26.019096137737137, "spread": 0.914143529512332}, "stale": {"vn": 0.3821448844238874, "mcr2": 25.82273256444262, "spread": 0.9126048553727809}}
+2026-10-30 13:59:50,068 [toolkit.py] => All params: 87167744
+2026-10-30 13:59:50,068 [toolkit.py] => Trainable params: 1369088
+2026-10-30 14:00:17,796 [holevo.py] => HOLEVO lambda {"enc": {"lambda": 8.592592315090705, "raw": 8.592592315090705, "clamped": false, "steps": 20, "target": 0.5, "median_gc_over_go": 17.18518463018141}}
+2026-10-30 14:00:34,544 [holevo.py] => HOLEVO epoch task=1 epoch=1 {"objective": 26.058114406464338, "loss_enc": -26.058114406464338, "weight": 0.0}
+2026-10-30 14:01:21,031 [holevo.py] => HOLEVO epoch task=1 epoch=2 {"objective": 26.42403206104006, "loss_enc": -26.42403206104006, "weight": 0.25, "r_enc": 0.13323715738459946}
+2026-10-30 14:02:06,465 [holevo.py] => HOLEVO epoch task=1 epoch=3 {"objective": 26.84286873070703, "loss_enc": -26.84286873070703, "weight": 0.5, "r_enc": 0.2934267047693513}
+2026-10-30 14:02:52,493 [holevo.py] => HOLEVO epoch task=1 epoch=4 {"objective": 27.40560599027938, "loss_enc": -27.40560599027938, "weight": 0.75, "r_enc": 0.43139653406330297}
+2026-10-30 14:03:38,371 [holevo.py] => HOLEVO epoch task=1 epoch=5 {"objective": 27.951619511239876, "loss_enc": -27.951619511239876, "weight": 1.0, "r_enc": 0.6892345301280436}
+2026-10-30 14:04:24,115 [holevo.py] => HOLEVO epoch task=1 epoch=6 {"objective": 28.26117949688874, "loss_enc": -28.26117949688874, "weight": 1.0, "r_enc": 0.5547073260494366}
+2026-10-30 14:05:10,003 [holevo.py] => HOLEVO epoch task=1 epoch=7 {"objective": 28.274066770908618, "loss_enc": -28.274066770908618, "weight": 1.0, "r_enc": 0.6718244175682434}
+2026-10-30 14:05:55,845 [holevo.py] => HOLEVO epoch task=1 epoch=8 {"objective": 28.31784758829604, "loss_enc": -28.31784758829604, "weight": 1.0, "r_enc": 0.9039282830302717}
+2026-10-30 14:06:41,744 [holevo.py] => HOLEVO epoch task=1 epoch=9 {"objective": 28.349718826821523, "loss_enc": -28.349718826821523, "weight": 1.0, "r_enc": 0.8069310856659171}
+2026-10-30 14:07:27,497 [holevo.py] => HOLEVO epoch task=1 epoch=10 {"objective": 28.39558808213145, "loss_enc": -28.39558808213145, "weight": 1.0, "r_enc": 0.7921966615541101}
+2026-10-30 14:08:13,207 [holevo.py] => HOLEVO epoch task=1 epoch=11 {"objective": 28.415262289311695, "loss_enc": -28.415262289311695, "weight": 1.0, "r_enc": 0.6431821922452767}
+2026-10-30 14:08:59,060 [holevo.py] => HOLEVO epoch task=1 epoch=12 {"objective": 28.447277742823445, "loss_enc": -28.447277742823445, "weight": 1.0, "r_enc": 0.7282406036430447}
+2026-10-30 14:09:45,293 [holevo.py] => HOLEVO epoch task=1 epoch=13 {"objective": 28.4405263435268, "loss_enc": -28.4405263435268, "weight": 1.0, "r_enc": 0.6023355463754976}
+2026-10-30 14:10:30,964 [holevo.py] => HOLEVO epoch task=1 epoch=14 {"objective": 28.398974295967125, "loss_enc": -28.398974295967125, "weight": 1.0, "r_enc": 0.7051870009143976}
+2026-10-30 14:11:16,761 [holevo.py] => HOLEVO epoch task=1 epoch=15 {"objective": 28.432011684849144, "loss_enc": -28.432011684849144, "weight": 1.0, "r_enc": 0.7508049175477548}
+2026-10-30 14:12:02,791 [holevo.py] => HOLEVO epoch task=1 epoch=16 {"objective": 28.443957023325467, "loss_enc": -28.443957023325467, "weight": 1.0, "r_enc": 0.8181428136315959}
+2026-10-30 14:12:48,605 [holevo.py] => HOLEVO epoch task=1 epoch=17 {"objective": 28.398266152484858, "loss_enc": -28.398266152484858, "weight": 1.0, "r_enc": 0.580774813872982}
+2026-10-30 14:13:34,194 [holevo.py] => HOLEVO epoch task=1 epoch=18 {"objective": 28.426769699373878, "loss_enc": -28.426769699373878, "weight": 1.0, "r_enc": 0.6411695534038215}
+2026-10-30 14:14:20,212 [holevo.py] => HOLEVO epoch task=1 epoch=19 {"objective": 28.4654083403679, "loss_enc": -28.4654083403679, "weight": 1.0, "r_enc": 0.5384185275680359}
+2026-10-30 14:15:06,131 [holevo.py] => HOLEVO epoch task=1 epoch=20 {"objective": 28.482791402895412, "loss_enc": -28.482791402895412, "weight": 1.0, "r_enc": 0.7655810669633574}
+2026-10-30 14:15:51,832 [holevo.py] => HOLEVO epoch task=1 epoch=21 {"objective": 28.446054826585144, "loss_enc": -28.446054826585144, "weight": 1.0, "r_enc": 0.6643348305231573}
+2026-10-30 14:16:37,816 [holevo.py] => HOLEVO epoch task=1 epoch=22 {"objective": 28.45805340539454, "loss_enc": -28.45805340539454, "weight": 1.0, "r_enc": 0.7401135572238746}
+2026-10-30 14:17:23,771 [holevo.py] => HOLEVO epoch task=1 epoch=23 {"objective": 28.48703327833586, "loss_enc": -28.48703327833586, "weight": 1.0, "r_enc": 0.9214686991637997}
+2026-10-30 14:18:09,263 [holevo.py] => HOLEVO epoch task=1 epoch=24 {"objective": 28.50765040240585, "loss_enc": -28.50765040240585, "weight": 1.0, "r_enc": 0.765309703549469}
+2026-10-30 14:19:00,356 [holevo.py] => HOLEVO epoch task=1 epoch=25 {"objective": 28.38076276726966, "loss_enc": -28.38076276726966, "weight": 1.0, "r_enc": 0.7085834555523669}
+2026-10-30 14:19:49,408 [holevo.py] => HOLEVO epoch task=1 epoch=26 {"objective": 28.53089380948635, "loss_enc": -28.53089380948635, "r_enc": 0.6879192686820335, "weight": 1.0}
+2026-10-30 14:20:37,163 [holevo.py] => HOLEVO epoch task=1 epoch=27 {"objective": 28.472833332636718, "loss_enc": -28.472833332636718, "weight": 1.0, "r_enc": 0.7009473781853182}
+2026-10-30 14:21:22,528 [holevo.py] => HOLEVO epoch task=1 epoch=28 {"objective": 28.518852330633496, "loss_enc": -28.518852330633496, "weight": 1.0, "r_enc": 0.771456874467061}
+2026-10-30 14:22:10,215 [holevo.py] => HOLEVO epoch task=1 epoch=29 {"objective": 28.48947062204942, "loss_enc": -28.48947062204942, "weight": 1.0, "r_enc": 0.5988313060531545}
+2026-10-30 14:23:00,136 [holevo.py] => HOLEVO epoch task=1 epoch=30 {"objective": 28.480152228881373, "loss_enc": -28.480152228881373, "weight": 1.0, "r_enc": 0.663875130049561}
+2026-10-30 14:23:03,289 [RSIAT_adapter.py] => Task 1, Epoch 30/30 => Loss -240.761, Loss_c 2.512, Losses_rt -243.274, Train_accy 84.88, Test_accy 91.66, Time 49.92s
+2026-10-30 14:23:03,289 [RSIAT_adapter.py] => Task 1 peak GPU memory: 4975.95 MiB
+2026-10-30 14:23:17,802 [holevo.py] => HOLEVO oracle task=1 phase=end {"oracle": {"vn": 0.4319010757808811, "mcr2": 30.246465448019016, "spread": 1.0151525858806139}, "stale": {"vn": 0.4047109653782205, "mcr2": 28.304549774172703, "spread": 0.9675753285295222}, "trace_distance": {"mean": 0.02472404371901057, "max": 0.03693973320448491}}
+2026-10-30 14:23:17,802 [holevo.py] => HOLEVO end task=1 lambdas={"enc": 8.592592315090705}
+2026-10-30 14:23:36,830 [base.py] => CA Task 1 => Loss 0.035, Test_accy skipped
+2026-10-30 14:23:37,418 [base.py] => CA Task 1 => Loss 0.029, Test_accy skipped
+2026-10-30 14:23:38,020 [base.py] => CA Task 1 => Loss 0.028, Test_accy skipped
+2026-10-30 14:23:38,618 [base.py] => CA Task 1 => Loss 0.022, Test_accy skipped
+2026-10-30 14:23:39,261 [base.py] => CA Task 1 => Loss 0.024, Test_accy skipped
+2026-10-30 14:23:39,830 [base.py] => CA Task 1 => Loss 0.023, Test_accy skipped
+2026-10-30 14:23:40,366 [base.py] => CA Task 1 => Loss 0.021, Test_accy skipped
+2026-10-30 14:23:40,955 [base.py] => CA Task 1 => Loss 0.024, Test_accy skipped
+2026-10-30 14:23:41,542 [base.py] => CA Task 1 => Loss 0.023, Test_accy skipped
+2026-10-30 14:23:45,141 [base.py] => CA Task 1 => Loss 0.027, Test_accy 91.730
+2026-10-30 14:23:48,119 [trainer.py] => CNN: {'total': 91.73, '00-19': 94.49, '20-39': 88.72, 'old': 94.49, 'new': 88.72}
+2026-10-30 14:23:48,119 [trainer.py] => Continual metrics after task 1: BWT=-1.5600, forgetting=1.5600, task_acc=[94.49, 88.72]
+2026-10-30 14:23:48,119 [trainer.py] => CNN top1 curve: [96.05, 91.73]
+2026-10-30 14:23:48,119 [trainer.py] => CNN top5 curve: [99.58, 98.67]
+2026-10-30 14:23:48,119 [trainer.py] => Average Accuracy (CNN): 93.89
+2026-10-30 14:23:48,119 [trainer.py] => All params: 87019008
+2026-10-30 14:23:48,120 [trainer.py] => Trainable params: 1220352
+2026-10-30 14:23:48,120 [RSIAT_adapter.py] => Learning on 40-60
+2026-10-30 14:23:56,629 [holevo.py] => HOLEVO start task=2 old=40 new=20 {"queue": {"40": 62, "41": 114, "42": 136, "43": 83, "44": 122, "45": 148, "46": 128, "47": 63, "48": 136, "49": 128, "50": 180, "51": 65, "52": 138, "53": 181, "54": 78, "55": 128, "56": 120, "57": 106, "58": 72, "59": 165}, "residual_share": null, "eta": null}
+2026-10-30 14:24:15,701 [holevo.py] => HOLEVO oracle task=2 phase=start {"oracle": {"vn": 0.38926539348791783, "mcr2": 29.462692475765955, "spread": 0.93465981306884}, "stale": {"vn": 0.3739357907620285, "mcr2": 28.25580807408494, "spread": 0.9055776428630052}}
+2026-10-30 14:24:15,703 [toolkit.py] => All params: 87183104
+2026-10-30 14:24:15,703 [toolkit.py] => Trainable params: 1384448
+2026-10-30 14:24:39,384 [holevo.py] => HOLEVO epoch task=2 epoch=1 {"objective": 28.392316429873787, "loss_enc": -28.392316429873787, "weight": 0.0}
+2026-10-30 14:25:21,485 [holevo.py] => HOLEVO epoch task=2 epoch=2 {"objective": 28.52773090008383, "loss_enc": -28.52773090008383, "weight": 0.25, "r_enc": 0.10858953924815178}
+2026-10-30 14:26:03,444 [holevo.py] => HOLEVO epoch task=2 epoch=3 {"objective": 28.740792321943765, "loss_enc": -28.740792321943765, "weight": 0.5, "r_enc": 0.22516551326967585}
+2026-10-30 14:26:45,217 [holevo.py] => HOLEVO epoch task=2 epoch=4 {"objective": 28.917609359862297, "loss_enc": -28.917609359862297, "weight": 0.75, "r_enc": 0.3323105017395375}
+2026-10-30 14:27:27,302 [holevo.py] => HOLEVO epoch task=2 epoch=5 {"objective": 29.085836068181496, "loss_enc": -29.085836068181496, "weight": 1.0, "r_enc": 0.39076347506714804}
+2026-10-30 14:28:09,415 [holevo.py] => HOLEVO epoch task=2 epoch=6 {"objective": 29.253907928296627, "loss_enc": -29.253907928296627, "weight": 1.0, "r_enc": 0.39588977141623194}
+2026-10-30 14:28:51,318 [holevo.py] => HOLEVO epoch task=2 epoch=7 {"objective": 29.260485724273874, "loss_enc": -29.260485724273874, "weight": 1.0, "r_enc": 0.540690023017433}
+2026-10-30 14:29:33,346 [holevo.py] => HOLEVO epoch task=2 epoch=8 {"objective": 29.247337504535334, "loss_enc": -29.247337504535334, "weight": 1.0, "r_enc": 0.37099988794254946}
+2026-10-30 14:30:15,387 [holevo.py] => HOLEVO epoch task=2 epoch=9 {"objective": 29.19401073075993, "loss_enc": -29.19401073075993, "weight": 1.0, "r_enc": 0.45819333645742855}
+2026-10-30 14:30:57,183 [holevo.py] => HOLEVO epoch task=2 epoch=10 {"objective": 29.273119651828257, "loss_enc": -29.273119651828257, "weight": 1.0, "r_enc": 0.41842274913540256}
+2026-10-30 14:31:38,969 [holevo.py] => HOLEVO epoch task=2 epoch=11 {"objective": 29.32800981292198, "loss_enc": -29.32800981292198, "weight": 1.0, "r_enc": 0.4018066156271419}
+2026-10-30 14:32:20,872 [holevo.py] => HOLEVO epoch task=2 epoch=12 {"objective": 29.307546217462324, "loss_enc": -29.307546217462324, "weight": 1.0, "r_enc": 0.3950061277502783}
+2026-10-30 14:33:02,606 [holevo.py] => HOLEVO epoch task=2 epoch=13 {"objective": 29.340401487465105, "loss_enc": -29.340401487465105, "weight": 1.0, "r_enc": 0.48114926606395314}
+2026-10-30 14:33:44,738 [holevo.py] => HOLEVO epoch task=2 epoch=14 {"objective": 29.314265921504447, "loss_enc": -29.314265921504447, "weight": 1.0, "r_enc": 0.41346912376689593}
+2026-10-30 14:34:26,723 [holevo.py] => HOLEVO epoch task=2 epoch=15 {"objective": 29.3401439369791, "loss_enc": -29.3401439369791, "weight": 1.0, "r_enc": 0.3804117423860568}
+2026-10-30 14:35:09,050 [holevo.py] => HOLEVO epoch task=2 epoch=16 {"objective": 29.308526890957147, "loss_enc": -29.308526890957147, "weight": 1.0, "r_enc": 0.4283067255213999}
+2026-10-30 14:35:51,231 [holevo.py] => HOLEVO epoch task=2 epoch=17 {"objective": 29.322951039880397, "loss_enc": -29.322951039880397, "weight": 1.0, "r_enc": 0.5059349735922412}
+2026-10-30 14:36:33,368 [holevo.py] => HOLEVO epoch task=2 epoch=18 {"objective": 29.34503429082752, "loss_enc": -29.34503429082752, "weight": 1.0, "r_enc": 0.4281472989682977}
+2026-10-30 14:37:22,103 [holevo.py] => HOLEVO epoch task=2 epoch=19 {"objective": 29.346844653951415, "loss_enc": -29.346844653951415, "weight": 1.0, "r_enc": 0.5081801568319047}
+2026-10-30 14:38:05,342 [holevo.py] => HOLEVO epoch task=2 epoch=20 {"objective": 29.342650552241725, "loss_enc": -29.342650552241725, "weight": 1.0, "r_enc": 0.49598286077793363}
+2026-10-30 14:38:53,599 [holevo.py] => HOLEVO epoch task=2 epoch=21 {"objective": 29.382572460513995, "loss_enc": -29.382572460513995, "weight": 1.0, "r_enc": 0.5117097071778317}
+2026-10-30 14:39:35,399 [holevo.py] => HOLEVO epoch task=2 epoch=22 {"objective": 29.33772251136371, "loss_enc": -29.33772251136371, "weight": 1.0, "r_enc": 0.4960841025115065}
+2026-10-30 14:40:17,304 [holevo.py] => HOLEVO epoch task=2 epoch=23 {"objective": 29.343048762001953, "loss_enc": -29.343048762001953, "weight": 1.0, "r_enc": 0.4163809995957033}
+2026-10-30 14:40:59,308 [holevo.py] => HOLEVO epoch task=2 epoch=24 {"objective": 29.32869376552503, "loss_enc": -29.32869376552503, "weight": 1.0, "r_enc": 0.46140758236019075}
+2026-10-30 14:41:41,465 [holevo.py] => HOLEVO epoch task=2 epoch=25 {"objective": 29.35291829190897, "loss_enc": -29.35291829190897, "weight": 1.0, "r_enc": 0.5244935476988946}
+2026-10-30 14:42:23,541 [holevo.py] => HOLEVO epoch task=2 epoch=26 {"objective": 29.316800448058498, "loss_enc": -29.316800448058498, "weight": 1.0, "r_enc": 0.5467375969622312}
+2026-10-30 14:43:05,421 [holevo.py] => HOLEVO epoch task=2 epoch=27 {"objective": 29.342409753805832, "loss_enc": -29.342409753805832, "weight": 1.0, "r_enc": 0.4469075369578863}
+2026-10-30 14:43:47,393 [holevo.py] => HOLEVO epoch task=2 epoch=28 {"objective": 29.335084651019717, "loss_enc": -29.335084651019717, "weight": 1.0, "r_enc": 0.5390095753785541}
+2026-10-30 14:44:32,784 [holevo.py] => HOLEVO epoch task=2 epoch=29 {"objective": 29.346771189974167, "loss_enc": -29.346771189974167, "weight": 1.0, "r_enc": 0.5802858331520835}
+2026-10-30 14:45:19,411 [holevo.py] => HOLEVO epoch task=2 epoch=30 {"objective": 29.331492181571345, "loss_enc": -29.331492181571345, "weight": 1.0, "r_enc": 0.45301379439015776}
+2026-10-30 14:45:24,769 [RSIAT_adapter.py] => Task 2, Epoch 30/30 => Loss -248.178, Loss_c 2.558, Losses_rt -250.736, Train_accy 82.92, Test_accy 89.85, Time 46.63s
+2026-10-30 14:45:24,769 [RSIAT_adapter.py] => Task 2 peak GPU memory: 4966.10 MiB
+2026-10-30 14:45:45,159 [holevo.py] => HOLEVO oracle task=2 phase=end {"oracle": {"vn": 0.40958876093819946, "mcr2": 31.712699865603508, "spread": 0.9882577710957505}, "stale": {"vn": 0.38693044714218183, "mcr2": 29.163765513750665, "spread": 0.9236279405579206}, "trace_distance": {"mean": 0.031176434283325817, "max": 0.03934511649915165}}
+2026-10-30 14:45:45,160 [holevo.py] => HOLEVO end task=2 lambdas={"enc": 8.592592315090705}
+2026-10-30 14:46:03,462 [base.py] => CA Task 2 => Loss 0.048, Test_accy skipped
+2026-10-30 14:46:04,250 [base.py] => CA Task 2 => Loss 0.046, Test_accy skipped
+2026-10-30 14:46:05,172 [base.py] => CA Task 2 => Loss 0.039, Test_accy skipped
+2026-10-30 14:46:06,080 [base.py] => CA Task 2 => Loss 0.037, Test_accy skipped
+2026-10-30 14:46:06,860 [base.py] => CA Task 2 => Loss 0.036, Test_accy skipped
+2026-10-30 14:46:07,724 [base.py] => CA Task 2 => Loss 0.036, Test_accy skipped
+2026-10-30 14:46:08,603 [base.py] => CA Task 2 => Loss 0.033, Test_accy skipped
+2026-10-30 14:46:09,549 [base.py] => CA Task 2 => Loss 0.031, Test_accy skipped
+2026-10-30 14:46:10,439 [base.py] => CA Task 2 => Loss 0.034, Test_accy skipped
+2026-10-30 14:46:15,608 [base.py] => CA Task 2 => Loss 0.032, Test_accy 90.110
+2026-10-30 14:46:19,816 [trainer.py] => CNN: {'total': 90.11, '00-19': 92.94, '20-39': 87.48, '40-59': 89.6, 'old': 90.33, 'new': 89.6}
+2026-10-30 14:46:19,816 [trainer.py] => Continual metrics after task 2: BWT=-2.1750, forgetting=2.1750, task_acc=[92.94, 87.48, 89.6]
+2026-10-30 14:46:19,816 [trainer.py] => CNN top1 curve: [96.05, 91.73, 90.11]
+2026-10-30 14:46:19,816 [trainer.py] => CNN top5 curve: [99.58, 98.67, 97.69]
+2026-10-30 14:46:19,816 [trainer.py] => Average Accuracy (CNN): 92.63
+2026-10-30 14:46:19,817 [trainer.py] => All params: 87034368
+2026-10-30 14:46:19,817 [trainer.py] => Trainable params: 1235712
+2026-10-30 14:46:19,817 [RSIAT_adapter.py] => Learning on 60-80
+2026-10-30 14:46:29,909 [holevo.py] => HOLEVO start task=3 old=60 new=20 {"queue": {"60": 132, "61": 151, "62": 58, "63": 188, "64": 102, "65": 82, "66": 210, "67": 104, "68": 98, "69": 77, "70": 160, "71": 86, "72": 83, "73": 44, "74": 134, "75": 172, "76": 77, "77": 198, "78": 53, "79": 76}, "residual_share": null, "eta": null}
+2026-10-30 14:46:54,979 [holevo.py] => HOLEVO oracle task=3 phase=start {"oracle": {"vn": 0.3862993456550707, "mcr2": 30.8164713783828, "spread": 0.9317453861785725}, "stale": {"vn": 0.3704227326380494, "mcr2": 29.06501831403275, "spread": 0.8873151925441338}}
+2026-10-30 14:46:54,981 [toolkit.py] => All params: 87198464
+2026-10-30 14:46:54,981 [toolkit.py] => Trainable params: 1399808
+2026-10-30 14:47:17,987 [holevo.py] => HOLEVO epoch task=3 epoch=1 {"objective": 29.195164721366865, "loss_enc": -29.195164721366865, "weight": 0.0}
+2026-10-30 14:47:57,942 [holevo.py] => HOLEVO epoch task=3 epoch=2 {"objective": 29.22446840806031, "loss_enc": -29.22446840806031, "weight": 0.25, "r_enc": 0.08652575130384345}
+2026-10-30 14:48:37,791 [holevo.py] => HOLEVO epoch task=3 epoch=3 {"objective": 29.36537281090166, "loss_enc": -29.36537281090166, "weight": 0.5, "r_enc": 0.1738193475087687}
+2026-10-30 14:49:17,655 [holevo.py] => HOLEVO epoch task=3 epoch=4 {"objective": 29.443216573768108, "loss_enc": -29.443216573768108, "weight": 0.75, "r_enc": 0.26781196095121895}
+2026-10-30 14:49:57,522 [holevo.py] => HOLEVO epoch task=3 epoch=5 {"objective": 29.54277385000382, "loss_enc": -29.54277385000382, "weight": 1.0, "r_enc": 0.32979982765210636}
+2026-10-30 14:50:37,296 [holevo.py] => HOLEVO epoch task=3 epoch=6 {"objective": 29.581954205009037, "loss_enc": -29.581954205009037, "weight": 1.0, "r_enc": 0.36915398367394126}
+2026-10-30 14:51:17,172 [holevo.py] => HOLEVO epoch task=3 epoch=7 {"objective": 29.586096653134476, "loss_enc": -29.586096653134476, "weight": 1.0, "r_enc": 0.27111670142624084}
+2026-10-30 14:51:57,019 [holevo.py] => HOLEVO epoch task=3 epoch=8 {"objective": 29.593242926551056, "loss_enc": -29.593242926551056, "weight": 1.0, "r_enc": 0.28234181959480087}
+2026-10-30 14:52:37,041 [holevo.py] => HOLEVO epoch task=3 epoch=9 {"objective": 29.626887750204187, "loss_enc": -29.626887750204187, "weight": 1.0, "r_enc": 0.340485685725332}
+2026-10-30 14:53:16,559 [holevo.py] => HOLEVO epoch task=3 epoch=10 {"objective": 29.616711389997295, "loss_enc": -29.616711389997295, "weight": 1.0, "r_enc": 0.3581472964660766}
+2026-10-30 14:53:56,434 [holevo.py] => HOLEVO epoch task=3 epoch=11 {"objective": 29.630443223650783, "loss_enc": -29.630443223650783, "r_enc": 0.29676509352362834, "weight": 1.0}
+2026-10-30 14:54:36,108 [holevo.py] => HOLEVO epoch task=3 epoch=12 {"objective": 29.613408049723983, "loss_enc": -29.613408049723983, "weight": 1.0, "r_enc": 0.42881807403473177}
+2026-10-30 14:55:23,813 [holevo.py] => HOLEVO epoch task=3 epoch=13 {"objective": 29.64261245474837, "loss_enc": -29.64261245474837, "weight": 1.0, "r_enc": 0.30276621060069187}
+2026-10-30 14:56:01,486 [holevo.py] => HOLEVO epoch task=3 epoch=14 {"objective": 29.613124055924537, "loss_enc": -29.613124055924537, "weight": 1.0, "r_enc": 0.3658184723606062}
+2026-10-30 14:56:52,145 [holevo.py] => HOLEVO epoch task=3 epoch=15 {"objective": 29.65489173246227, "loss_enc": -29.65489173246227, "weight": 1.0, "r_enc": 0.31870529938269776}
+2026-10-30 14:57:32,778 [holevo.py] => HOLEVO epoch task=3 epoch=16 {"objective": 29.642794088798762, "loss_enc": -29.642794088798762, "weight": 1.0, "r_enc": 0.3298135297018403}
+2026-10-30 14:58:12,488 [holevo.py] => HOLEVO epoch task=3 epoch=17 {"objective": 29.647733889122865, "loss_enc": -29.647733889122865, "weight": 1.0, "r_enc": 0.33231059495686793}
+2026-10-30 14:58:52,304 [holevo.py] => HOLEVO epoch task=3 epoch=18 {"objective": 29.643079625206386, "loss_enc": -29.643079625206386, "weight": 1.0, "r_enc": 0.37536839269084954}
+2026-10-30 14:59:32,277 [holevo.py] => HOLEVO epoch task=3 epoch=19 {"objective": 29.637275644823465, "loss_enc": -29.637275644823465, "weight": 1.0, "r_enc": 0.3702102392547136}
+2026-10-30 15:00:12,066 [holevo.py] => HOLEVO epoch task=3 epoch=20 {"objective": 29.651715870589708, "loss_enc": -29.651715870589708, "weight": 1.0, "r_enc": 0.4398124822732822}
+2026-10-30 15:00:51,921 [holevo.py] => HOLEVO epoch task=3 epoch=21 {"objective": 29.6400723832704, "loss_enc": -29.6400723832704, "weight": 1.0, "r_enc": 0.3568039454643927}
+2026-10-30 15:01:31,798 [holevo.py] => HOLEVO epoch task=3 epoch=22 {"objective": 29.671432113865556, "loss_enc": -29.671432113865556, "weight": 1.0, "r_enc": 0.291678642658843}
+2026-10-30 15:02:11,288 [holevo.py] => HOLEVO epoch task=3 epoch=23 {"objective": 29.629442101439626, "loss_enc": -29.629442101439626, "weight": 1.0, "r_enc": 0.2854308113857231}
+2026-10-30 15:02:51,233 [holevo.py] => HOLEVO epoch task=3 epoch=24 {"objective": 29.63886590084714, "loss_enc": -29.63886590084714, "weight": 1.0, "r_enc": 0.3347842279747861}
+2026-10-30 15:03:31,150 [holevo.py] => HOLEVO epoch task=3 epoch=25 {"objective": 29.65944858515939, "loss_enc": -29.65944858515939, "weight": 1.0, "r_enc": 0.38636172697230076}
+2026-10-30 15:04:11,134 [holevo.py] => HOLEVO epoch task=3 epoch=26 {"objective": 29.63147454668295, "loss_enc": -29.63147454668295, "weight": 1.0, "r_enc": 0.3517155631732941}
+2026-10-30 15:04:51,022 [holevo.py] => HOLEVO epoch task=3 epoch=27 {"objective": 29.639503369643954, "loss_enc": -29.639503369643954, "weight": 1.0, "r_enc": 0.37748115516079717}
+2026-10-30 15:05:31,112 [holevo.py] => HOLEVO epoch task=3 epoch=28 {"objective": 29.669952745083535, "loss_enc": -29.669952745083535, "weight": 1.0, "r_enc": 0.32844806055846726}
+2026-10-30 15:06:15,684 [holevo.py] => HOLEVO epoch task=3 epoch=29 {"objective": 29.66941821219173, "loss_enc": -29.66941821219173, "weight": 1.0, "r_enc": 0.4391166426161954}
+2026-10-30 15:06:55,961 [holevo.py] => HOLEVO epoch task=3 epoch=30 {"objective": 29.607905924048254, "loss_enc": -29.607905924048254, "weight": 1.0, "r_enc": 0.35633203882014397}
+2026-10-30 15:07:02,929 [RSIAT_adapter.py] => Task 3, Epoch 30/30 => Loss -250.790, Loss_c 2.423, Losses_rt -253.213, Train_accy 81.79, Test_accy 88.54, Time 40.28s
+2026-10-30 15:07:02,929 [RSIAT_adapter.py] => Task 3 peak GPU memory: 4971.92 MiB
+2026-10-30 15:07:32,335 [holevo.py] => HOLEVO oracle task=3 phase=end {"oracle": {"vn": 0.398542888933804, "mcr2": 32.27385609543842, "spread": 0.9665899998383359}, "stale": {"vn": 0.3766095185709458, "mcr2": 29.503793343634705, "spread": 0.8958401445204737}, "trace_distance": {"mean": 0.030548727539653795, "max": 0.03905542450741267}}
+2026-10-30 15:07:32,335 [holevo.py] => HOLEVO end task=3 lambdas={"enc": 8.592592315090705}
+2026-10-30 15:07:50,984 [base.py] => CA Task 3 => Loss 0.061, Test_accy skipped
+2026-10-30 15:07:52,162 [base.py] => CA Task 3 => Loss 0.052, Test_accy skipped
+2026-10-30 15:07:53,375 [base.py] => CA Task 3 => Loss 0.051, Test_accy skipped
+2026-10-30 15:07:54,527 [base.py] => CA Task 3 => Loss 0.045, Test_accy skipped
+2026-10-30 15:07:55,571 [base.py] => CA Task 3 => Loss 0.045, Test_accy skipped
+2026-10-30 15:07:56,737 [base.py] => CA Task 3 => Loss 0.048, Test_accy skipped
+2026-10-30 15:07:57,864 [base.py] => CA Task 3 => Loss 0.042, Test_accy skipped
+2026-10-30 15:07:59,034 [base.py] => CA Task 3 => Loss 0.046, Test_accy skipped
+2026-10-30 15:08:00,191 [base.py] => CA Task 3 => Loss 0.042, Test_accy skipped
+2026-10-30 15:08:06,700 [base.py] => CA Task 3 => Loss 0.039, Test_accy 88.540
+2026-10-30 15:08:12,094 [trainer.py] => CNN: {'total': 88.54, '00-19': 91.24, '20-39': 87.33, '40-59': 88.26, '60-79': 86.87, 'old': 89.03, 'new': 86.87}
+2026-10-30 15:08:12,095 [trainer.py] => Continual metrics after task 3: BWT=-2.5133, forgetting=2.5133, task_acc=[91.24, 87.33, 88.26, 86.87]
+2026-10-30 15:08:12,095 [trainer.py] => CNN top1 curve: [96.05, 91.73, 90.11, 88.54]
+2026-10-30 15:08:12,095 [trainer.py] => CNN top5 curve: [99.58, 98.67, 97.69, 96.64]
+2026-10-30 15:08:12,095 [trainer.py] => Average Accuracy (CNN): 91.6075
+2026-10-30 15:08:12,095 [trainer.py] => All params: 87049728
+2026-10-30 15:08:12,095 [trainer.py] => Trainable params: 1251072
+2026-10-30 15:08:12,096 [RSIAT_adapter.py] => Learning on 80-100
+2026-10-30 15:08:23,507 [holevo.py] => HOLEVO start task=4 old=80 new=20 {"queue": {"80": 93, "81": 160, "82": 140, "83": 184, "84": 50, "85": 228, "86": 84, "87": 116, "88": 89, "89": 232, "90": 51, "91": 94, "92": 133, "93": 59, "94": 88, "95": 63, "96": 63, "97": 44, "98": 78, "99": 72}, "residual_share": null, "eta": null}
+2026-10-30 15:08:53,107 [holevo.py] => HOLEVO oracle task=4 phase=start {"oracle": {"vn": 0.38152549813139286, "mcr2": 31.498439792968725, "spread": 0.9231119318835294}, "stale": {"vn": 0.3651412994483756, "mcr2": 29.449225425716516, "spread": 0.869995300351911}}
+2026-10-30 15:08:53,109 [toolkit.py] => All params: 87213824
+2026-10-30 15:08:53,109 [toolkit.py] => Trainable params: 1415168
+2026-10-30 15:09:14,678 [holevo.py] => HOLEVO epoch task=4 epoch=1 {"objective": 29.525981329069886, "loss_enc": -29.525981329069886, "weight": 0.0}
+2026-10-30 15:09:50,997 [holevo.py] => HOLEVO epoch task=4 epoch=2 {"objective": 29.533755627803316, "loss_enc": -29.533755627803316, "weight": 0.25, "r_enc": 0.054460713398480805}
+2026-10-30 15:10:27,675 [holevo.py] => HOLEVO epoch task=4 epoch=3 {"objective": 29.614774958955284, "loss_enc": -29.614774958955284, "r_enc": 0.10462895763453461, "weight": 0.5}
+2026-10-30 15:11:04,082 [holevo.py] => HOLEVO epoch task=4 epoch=4 {"objective": 29.670804326322735, "loss_enc": -29.670804326322735, "weight": 0.75, "r_enc": 0.18377034269496562}
+2026-10-30 15:11:40,636 [holevo.py] => HOLEVO epoch task=4 epoch=5 {"objective": 29.733150689319483, "loss_enc": -29.733150689319483, "weight": 1.0, "r_enc": 0.24129420083577363}
+2026-10-30 15:12:21,255 [holevo.py] => HOLEVO epoch task=4 epoch=6 {"objective": 29.777337982104857, "loss_enc": -29.777337982104857, "weight": 1.0, "r_enc": 0.24244985932620777}
+2026-10-30 15:13:00,483 [holevo.py] => HOLEVO epoch task=4 epoch=7 {"objective": 29.76727584297665, "loss_enc": -29.76727584297665, "weight": 1.0, "r_enc": 0.19142979566001858}
+2026-10-30 15:13:41,791 [holevo.py] => HOLEVO epoch task=4 epoch=8 {"objective": 29.79367032239137, "loss_enc": -29.79367032239137, "r_enc": 0.3400344675412562, "weight": 1.0}
+2026-10-30 15:14:26,891 [holevo.py] => HOLEVO epoch task=4 epoch=9 {"objective": 29.772528965410068, "loss_enc": -29.772528965410068, "weight": 1.0, "r_enc": 0.2643469423523514}
+2026-10-30 15:15:04,443 [holevo.py] => HOLEVO epoch task=4 epoch=10 {"objective": 29.807398700831286, "loss_enc": -29.807398700831286, "weight": 1.0, "r_enc": 0.2824342932147121}
+2026-10-30 15:15:41,023 [holevo.py] => HOLEVO epoch task=4 epoch=11 {"objective": 29.80248918676941, "loss_enc": -29.80248918676941, "weight": 1.0, "r_enc": 0.3234105954939118}
+2026-10-30 15:16:17,331 [holevo.py] => HOLEVO epoch task=4 epoch=12 {"objective": 29.796577589843416, "loss_enc": -29.796577589843416, "weight": 1.0, "r_enc": 0.21612487420522147}
+2026-10-30 15:16:54,083 [holevo.py] => HOLEVO epoch task=4 epoch=13 {"objective": 29.805649888297822, "loss_enc": -29.805649888297822, "r_enc": 0.2635471132324136, "weight": 1.0}
+2026-10-30 15:17:30,572 [holevo.py] => HOLEVO epoch task=4 epoch=14 {"objective": 29.78141855057494, "loss_enc": -29.78141855057494, "weight": 1.0, "r_enc": 0.3245748116098873}
+2026-10-30 15:18:07,276 [holevo.py] => HOLEVO epoch task=4 epoch=15 {"objective": 29.787939156869665, "loss_enc": -29.787939156869665, "weight": 1.0, "r_enc": 0.29881388199181635}
+2026-10-30 15:18:44,004 [holevo.py] => HOLEVO epoch task=4 epoch=16 {"objective": 29.834145252775876, "loss_enc": -29.834145252775876, "weight": 1.0, "r_enc": 0.272234677494988}
+2026-10-30 15:19:20,372 [holevo.py] => HOLEVO epoch task=4 epoch=17 {"objective": 29.796872137756342, "loss_enc": -29.796872137756342, "weight": 1.0, "r_enc": 0.2784238623772424}
+2026-10-30 15:19:56,980 [holevo.py] => HOLEVO epoch task=4 epoch=18 {"objective": 29.829991703393105, "loss_enc": -29.829991703393105, "r_enc": 0.34322181264441315, "weight": 1.0}
+2026-10-30 15:20:33,788 [holevo.py] => HOLEVO epoch task=4 epoch=19 {"objective": 29.799594639843587, "loss_enc": -29.799594639843587, "weight": 1.0, "r_enc": 0.26576153129684066}
+2026-10-30 15:21:10,303 [holevo.py] => HOLEVO epoch task=4 epoch=20 {"objective": 29.79885443496413, "loss_enc": -29.79885443496413, "weight": 1.0, "r_enc": 0.25437491422460234}
+2026-10-30 15:21:46,961 [holevo.py] => HOLEVO epoch task=4 epoch=21 {"objective": 29.818315403621327, "loss_enc": -29.818315403621327, "weight": 1.0, "r_enc": 0.25655518654230225}
+2026-10-30 15:22:23,305 [holevo.py] => HOLEVO epoch task=4 epoch=22 {"objective": 29.838575915226606, "loss_enc": -29.838575915226606, "weight": 1.0, "r_enc": 0.2466109089706838}
+2026-10-30 15:22:59,584 [holevo.py] => HOLEVO epoch task=4 epoch=23 {"objective": 29.807091004861157, "loss_enc": -29.807091004861157, "r_enc": 0.23973253511004872, "weight": 1.0}
+2026-10-30 15:23:36,180 [holevo.py] => HOLEVO epoch task=4 epoch=24 {"objective": 29.817273455429053, "loss_enc": -29.817273455429053, "weight": 1.0, "r_enc": 0.2494684223387887}
+2026-10-30 15:24:12,647 [holevo.py] => HOLEVO epoch task=4 epoch=25 {"objective": 29.79900796918607, "loss_enc": -29.79900796918607, "weight": 1.0, "r_enc": 0.24919418244751051}
+2026-10-30 15:24:49,137 [holevo.py] => HOLEVO epoch task=4 epoch=26 {"objective": 29.82777206792368, "loss_enc": -29.82777206792368, "weight": 1.0, "r_enc": 0.265460491301154}
+2026-10-30 15:25:25,427 [holevo.py] => HOLEVO epoch task=4 epoch=27 {"objective": 29.804632968631143, "loss_enc": -29.804632968631143, "weight": 1.0, "r_enc": 0.2759353762564688}
+2026-10-30 15:26:04,030 [holevo.py] => HOLEVO epoch task=4 epoch=28 {"objective": 29.826248507054967, "loss_enc": -29.826248507054967, "r_enc": 0.3312016750843426, "weight": 1.0}
+2026-10-30 15:26:45,733 [holevo.py] => HOLEVO epoch task=4 epoch=29 {"objective": 29.831330502911975, "loss_enc": -29.831330502911975, "weight": 1.0, "r_enc": 0.3452376600462712}
+2026-10-30 15:27:19,635 [holevo.py] => HOLEVO epoch task=4 epoch=30 {"objective": 29.8146363553584, "loss_enc": -29.8146363553584, "weight": 1.0, "r_enc": 0.25835426806955436}
+2026-10-30 15:27:28,100 [RSIAT_adapter.py] => Task 4, Epoch 30/30 => Loss -252.359, Loss_c 2.656, Losses_rt -255.016, Train_accy 79.44, Test_accy 85.80, Time 33.90s
+2026-10-30 15:27:28,101 [RSIAT_adapter.py] => Task 4 peak GPU memory: 4964.52 MiB
+2026-10-30 15:28:02,766 [holevo.py] => HOLEVO oracle task=4 phase=end {"oracle": {"vn": 0.39170306440843594, "mcr2": 32.51188897023673, "spread": 0.9480907405760658}, "stale": {"vn": 0.36951695669933227, "mcr2": 29.714809870879957, "spread": 0.8749804870402361}, "trace_distance": {"mean": 0.035244130575024304, "max": 0.048077971857668184}}
+2026-10-30 15:28:02,766 [holevo.py] => HOLEVO end task=4 lambdas={"enc": 8.592592315090705}
+2026-10-30 15:28:22,983 [base.py] => CA Task 4 => Loss 0.066, Test_accy skipped
+2026-10-30 15:28:24,491 [base.py] => CA Task 4 => Loss 0.055, Test_accy skipped
+2026-10-30 15:28:26,039 [base.py] => CA Task 4 => Loss 0.055, Test_accy skipped
+2026-10-30 15:28:27,591 [base.py] => CA Task 4 => Loss 0.052, Test_accy skipped
+2026-10-30 15:28:29,095 [base.py] => CA Task 4 => Loss 0.050, Test_accy skipped
+2026-10-30 15:28:30,608 [base.py] => CA Task 4 => Loss 0.049, Test_accy skipped
+2026-10-30 15:28:32,182 [base.py] => CA Task 4 => Loss 0.050, Test_accy skipped
+2026-10-30 15:28:33,694 [base.py] => CA Task 4 => Loss 0.048, Test_accy skipped
+2026-10-30 15:28:35,293 [base.py] => CA Task 4 => Loss 0.046, Test_accy skipped
+2026-10-30 15:28:43,333 [base.py] => CA Task 4 => Loss 0.045, Test_accy 86.030
+2026-10-30 15:28:49,918 [trainer.py] => CNN: {'total': 86.03, '00-19': 89.27, '20-39': 86.09, '40-59': 86.07, '60-79': 86.01, '80-99': 81.7, 'old': 86.96, 'new': 81.7}
+2026-10-30 15:28:49,918 [trainer.py] => Continual metrics after task 4: BWT=-3.4500, forgetting=3.4500, task_acc=[89.27, 86.09, 86.07, 86.01, 81.7]
+2026-10-30 15:28:49,918 [trainer.py] => CNN top1 curve: [96.05, 91.73, 90.11, 88.54, 86.03]
+2026-10-30 15:28:49,918 [trainer.py] => CNN top5 curve: [99.58, 98.67, 97.69, 96.64, 95.77]
+2026-10-30 15:28:49,918 [trainer.py] => Average Accuracy (CNN): 90.492
+2026-10-30 15:28:49,919 [trainer.py] => All params: 87065088
+2026-10-30 15:28:49,919 [trainer.py] => Trainable params: 1266432
+2026-10-30 15:28:49,919 [RSIAT_adapter.py] => Learning on 100-120
+2026-10-30 15:29:04,210 [holevo.py] => HOLEVO start task=5 old=100 new=20 {"queue": {"100": 135, "101": 93, "102": 131, "103": 132, "104": 109, "105": 63, "106": 159, "107": 118, "108": 102, "109": 117, "110": 78, "111": 106, "112": 216, "113": 132, "114": 48, "115": 59, "116": 256, "117": 163, "118": 72, "119": 256}, "residual_share": null, "eta": null}
+2026-10-30 15:29:41,168 [holevo.py] => HOLEVO oracle task=5 phase=start {"oracle": {"vn": 0.37734024917113995, "mcr2": 31.515031678391082, "spread": 0.9139124045653173}, "stale": {"vn": 0.3606973732142398, "mcr2": 29.328512548401733, "spread": 0.8553737131740392}}
+2026-10-30 15:29:41,171 [toolkit.py] => All params: 87229184
+2026-10-30 15:29:41,171 [toolkit.py] => Trainable params: 1430528
+2026-10-30 15:30:08,106 [holevo.py] => HOLEVO epoch task=5 epoch=1 {"objective": 29.422539274407438, "loss_enc": -29.422539274407438, "weight": 0.0}
+2026-10-30 15:30:55,625 [holevo.py] => HOLEVO epoch task=5 epoch=2 {"objective": 29.41977244635551, "loss_enc": -29.41977244635551, "weight": 0.25, "r_enc": 0.045580066398516916}
+2026-10-30 15:31:43,555 [holevo.py] => HOLEVO epoch task=5 epoch=3 {"objective": 29.44471806627929, "loss_enc": -29.44471806627929, "weight": 0.5, "r_enc": 0.07893362785197527}
+2026-10-30 15:32:30,934 [holevo.py] => HOLEVO epoch task=5 epoch=4 {"objective": 29.463519472481405, "loss_enc": -29.463519472481405, "weight": 0.75, "r_enc": 0.12028664008923261}
+2026-10-30 15:33:18,479 [holevo.py] => HOLEVO epoch task=5 epoch=5 {"objective": 29.485326617901716, "loss_enc": -29.485326617901716, "weight": 1.0, "r_enc": 0.16006371493433486}
+2026-10-30 15:34:14,798 [holevo.py] => HOLEVO epoch task=5 epoch=6 {"objective": 29.507722622414935, "loss_enc": -29.507722622414935, "weight": 1.0, "r_enc": 0.16078346340648797}
+2026-10-30 15:35:00,798 [holevo.py] => HOLEVO epoch task=5 epoch=7 {"objective": 29.49643037808376, "loss_enc": -29.49643037808376, "weight": 1.0, "r_enc": 0.15202660722898353}
+2026-10-30 15:36:01,365 [holevo.py] => HOLEVO epoch task=5 epoch=8 {"objective": 29.51786923099192, "loss_enc": -29.51786923099192, "weight": 1.0, "r_enc": 0.16409590839886995}
+2026-10-30 15:36:53,979 [holevo.py] => HOLEVO epoch task=5 epoch=9 {"objective": 29.521422722866564, "loss_enc": -29.521422722866564, "weight": 1.0, "r_enc": 0.14051170156007206}
+2026-10-30 15:37:41,398 [holevo.py] => HOLEVO epoch task=5 epoch=10 {"objective": 29.523042767872543, "loss_enc": -29.523042767872543, "weight": 1.0, "r_enc": 0.23015201376756284}
+2026-10-30 15:38:28,764 [holevo.py] => HOLEVO epoch task=5 epoch=11 {"objective": 29.533404653172532, "loss_enc": -29.533404653172532, "weight": 1.0, "r_enc": 0.09247755437614891}
+2026-10-30 15:39:15,889 [holevo.py] => HOLEVO epoch task=5 epoch=12 {"objective": 29.519659347838807, "loss_enc": -29.519659347838807, "weight": 1.0, "r_enc": 0.16678298382009227}
+2026-10-30 15:40:02,881 [holevo.py] => HOLEVO epoch task=5 epoch=13 {"objective": 29.53867304867884, "loss_enc": -29.53867304867884, "weight": 1.0, "r_enc": 0.19175965464313993}
+2026-10-30 15:40:49,923 [holevo.py] => HOLEVO epoch task=5 epoch=14 {"objective": 29.54955262621067, "loss_enc": -29.54955262621067, "weight": 1.0, "r_enc": 0.18003880084243046}
+2026-10-30 15:41:37,647 [holevo.py] => HOLEVO epoch task=5 epoch=15 {"objective": 29.52460894855366, "loss_enc": -29.52460894855366, "weight": 1.0, "r_enc": 0.16247795353090505}
+2026-10-30 15:42:25,383 [holevo.py] => HOLEVO epoch task=5 epoch=16 {"objective": 29.547641239767596, "loss_enc": -29.547641239767596, "r_enc": 0.18197154152358302, "weight": 1.0}
+2026-10-30 15:43:12,687 [holevo.py] => HOLEVO epoch task=5 epoch=17 {"objective": 29.525466009661894, "loss_enc": -29.525466009661894, "weight": 1.0, "r_enc": 0.18580381308928332}
+2026-10-30 15:44:00,200 [holevo.py] => HOLEVO epoch task=5 epoch=18 {"objective": 29.52529288666808, "loss_enc": -29.52529288666808, "weight": 1.0, "r_enc": 0.15710847614584064}
+2026-10-30 15:44:47,527 [holevo.py] => HOLEVO epoch task=5 epoch=19 {"objective": 29.54796531512211, "loss_enc": -29.54796531512211, "weight": 1.0, "r_enc": 0.18591242811892167}
+2026-10-30 15:45:35,338 [holevo.py] => HOLEVO epoch task=5 epoch=20 {"objective": 29.534841924677643, "loss_enc": -29.534841924677643, "weight": 1.0, "r_enc": 0.15340519677741798}
+2026-10-30 15:46:22,767 [holevo.py] => HOLEVO epoch task=5 epoch=21 {"objective": 29.54714086449464, "loss_enc": -29.54714086449464, "weight": 1.0, "r_enc": 0.16277003652820926}
+2026-10-30 15:47:10,160 [holevo.py] => HOLEVO epoch task=5 epoch=22 {"objective": 29.527279620891026, "loss_enc": -29.527279620891026, "weight": 1.0, "r_enc": 0.19118185146643166}
+2026-10-30 15:47:57,498 [holevo.py] => HOLEVO epoch task=5 epoch=23 {"objective": 29.538872275134754, "loss_enc": -29.538872275134754, "weight": 1.0, "r_enc": 0.1780404586205807}
+2026-10-30 15:48:45,117 [holevo.py] => HOLEVO epoch task=5 epoch=24 {"objective": 29.53746672050287, "loss_enc": -29.53746672050287, "weight": 1.0, "r_enc": 0.1799687800033807}
+2026-10-30 15:49:32,508 [holevo.py] => HOLEVO epoch task=5 epoch=25 {"objective": 29.539810401774933, "loss_enc": -29.539810401774933, "weight": 1.0, "r_enc": 0.1637927205040354}
+2026-10-30 15:50:19,844 [holevo.py] => HOLEVO epoch task=5 epoch=26 {"objective": 29.53189040979266, "loss_enc": -29.53189040979266, "weight": 1.0, "r_enc": 0.15516573176322346}
+2026-10-30 15:51:07,082 [holevo.py] => HOLEVO epoch task=5 epoch=27 {"objective": 29.540126181954484, "loss_enc": -29.540126181954484, "weight": 1.0, "r_enc": 0.15971264985481715}
+2026-10-30 15:51:57,563 [holevo.py] => HOLEVO epoch task=5 epoch=28 {"objective": 29.533238277050728, "loss_enc": -29.533238277050728, "weight": 1.0, "r_enc": 0.1978958436185186}
+2026-10-30 15:53:01,954 [holevo.py] => HOLEVO epoch task=5 epoch=29 {"objective": 29.542691710195893, "loss_enc": -29.542691710195893, "weight": 1.0, "r_enc": 0.20155160930854707}
+2026-10-30 15:53:43,283 [holevo.py] => HOLEVO epoch task=5 epoch=30 {"objective": 29.544640560252063, "loss_enc": -29.544640560252063, "weight": 1.0, "r_enc": 0.15620071304019006}
+2026-10-30 15:53:52,194 [RSIAT_adapter.py] => Task 5, Epoch 30/30 => Loss -250.453, Loss_c 2.294, Losses_rt -252.747, Train_accy 82.17, Test_accy 84.83, Time 41.33s
+2026-10-30 15:53:52,194 [RSIAT_adapter.py] => Task 5 peak GPU memory: 4981.00 MiB
+2026-10-30 15:54:43,915 [holevo.py] => HOLEVO oracle task=5 phase=end {"oracle": {"vn": 0.3836476863944666, "mcr2": 32.05726116201299, "spread": 0.9279185751136477}, "stale": {"vn": 0.3631854049906324, "mcr2": 29.463201235245684, "spread": 0.8575564166154465}, "trace_distance": {"mean": 0.03418286433954401, "max": 0.05046701921827845}}
+2026-10-30 15:54:43,915 [holevo.py] => HOLEVO end task=5 lambdas={"enc": 8.592592315090705}
+2026-10-30 15:55:10,436 [base.py] => CA Task 5 => Loss 0.066, Test_accy skipped
+2026-10-30 15:55:12,316 [base.py] => CA Task 5 => Loss 0.060, Test_accy skipped
+2026-10-30 15:55:14,567 [base.py] => CA Task 5 => Loss 0.061, Test_accy skipped
+2026-10-30 15:55:16,655 [base.py] => CA Task 5 => Loss 0.057, Test_accy skipped
+2026-10-30 15:55:18,835 [base.py] => CA Task 5 => Loss 0.053, Test_accy skipped
+2026-10-30 15:55:21,003 [base.py] => CA Task 5 => Loss 0.052, Test_accy skipped
+2026-10-30 15:55:23,033 [base.py] => CA Task 5 => Loss 0.052, Test_accy skipped
+2026-10-30 15:55:25,204 [base.py] => CA Task 5 => Loss 0.052, Test_accy skipped
+2026-10-30 15:55:27,052 [base.py] => CA Task 5 => Loss 0.053, Test_accy skipped
+2026-10-30 15:55:37,279 [base.py] => CA Task 5 => Loss 0.053, Test_accy 85.310
+2026-10-30 15:55:45,465 [trainer.py] => CNN: {'total': 85.31, '00-19': 87.57, '20-39': 84.7, '40-59': 85.57, '60-79': 84.8, '80-99': 82.62, '100-119': 85.86, 'old': 85.18, 'new': 85.86}
+2026-10-30 15:55:45,465 [trainer.py] => Continual metrics after task 5: BWT=-3.5360, forgetting=3.5360, task_acc=[87.57, 84.7, 85.57, 84.8, 82.62, 85.86]
+2026-10-30 15:55:45,465 [trainer.py] => CNN top1 curve: [96.05, 91.73, 90.11, 88.54, 86.03, 85.31]
+2026-10-30 15:55:45,465 [trainer.py] => CNN top5 curve: [99.58, 98.67, 97.69, 96.64, 95.77, 95.51]
+2026-10-30 15:55:45,465 [trainer.py] => Average Accuracy (CNN): 89.62833333333333
+2026-10-30 15:55:45,465 [trainer.py] => All params: 87080448
+2026-10-30 15:55:45,466 [trainer.py] => Trainable params: 1281792
+2026-10-30 15:55:45,466 [RSIAT_adapter.py] => Learning on 120-140
+2026-10-30 15:56:00,578 [holevo.py] => HOLEVO start task=6 old=120 new=20 {"queue": {"120": 88, "121": 141, "122": 161, "123": 66, "124": 142, "125": 64, "126": 63, "127": 138, "128": 66, "129": 58, "130": 184, "131": 133, "132": 64, "133": 40, "134": 59, "135": 117, "136": 140, "137": 89, "138": 250, "139": 82}, "residual_share": null, "eta": null}
+2026-10-30 15:56:42,552 [holevo.py] => HOLEVO oracle task=6 phase=start {"oracle": {"vn": 0.3740047460545993, "mcr2": 31.65895948916531, "spread": 0.9028292862700549}, "stale": {"vn": 0.35772672034874287, "mcr2": 29.47677195610772, "spread": 0.8438417415718498}}
+2026-10-30 15:56:42,555 [toolkit.py] => All params: 87244544
+2026-10-30 15:56:42,555 [toolkit.py] => Trainable params: 1445888
+2026-10-30 15:57:04,161 [holevo.py] => HOLEVO epoch task=6 epoch=1 {"objective": 29.551060331703674, "loss_enc": -29.551060331703674, "weight": 0.0}
+2026-10-30 15:57:40,992 [holevo.py] => HOLEVO epoch task=6 epoch=2 {"objective": 29.57360944516452, "loss_enc": -29.57360944516452, "weight": 0.25, "r_enc": 0.04044413843728681}
+2026-10-30 15:58:17,650 [holevo.py] => HOLEVO epoch task=6 epoch=3 {"objective": 29.592539055353814, "loss_enc": -29.592539055353814, "weight": 0.5, "r_enc": 0.08845909025958035}
+2026-10-30 15:58:54,709 [holevo.py] => HOLEVO epoch task=6 epoch=4 {"objective": 29.61514577385211, "loss_enc": -29.61514577385211, "r_enc": 0.15545328033890288, "weight": 0.75}
+2026-10-30 15:59:31,607 [holevo.py] => HOLEVO epoch task=6 epoch=5 {"objective": 29.639429227916498, "loss_enc": -29.639429227916498, "weight": 1.0, "r_enc": 0.16793846292972592}
+2026-10-30 16:00:08,569 [holevo.py] => HOLEVO epoch task=6 epoch=6 {"objective": 29.652984712357537, "loss_enc": -29.652984712357537, "weight": 1.0, "r_enc": 0.16946453378927787}
+2026-10-30 16:00:45,298 [holevo.py] => HOLEVO epoch task=6 epoch=7 {"objective": 29.671115730943505, "loss_enc": -29.671115730943505, "weight": 1.0, "r_enc": 0.1719311377895869}
+2026-10-30 16:01:21,825 [holevo.py] => HOLEVO epoch task=6 epoch=8 {"objective": 29.675426493403208, "loss_enc": -29.675426493403208, "weight": 1.0, "r_enc": 0.16442868283879417}
+2026-10-30 16:01:58,817 [holevo.py] => HOLEVO epoch task=6 epoch=9 {"objective": 29.656992527614484, "loss_enc": -29.656992527614484, "r_enc": 0.17576090254046178, "weight": 1.0}
+2026-10-30 16:02:35,708 [holevo.py] => HOLEVO epoch task=6 epoch=10 {"objective": 29.66224895675083, "loss_enc": -29.66224895675083, "weight": 1.0, "r_enc": 0.17028696759574877}
+2026-10-30 16:03:12,544 [holevo.py] => HOLEVO epoch task=6 epoch=11 {"objective": 29.652859995493042, "loss_enc": -29.652859995493042, "weight": 1.0, "r_enc": 0.16872589037804353}
+2026-10-30 16:03:49,558 [holevo.py] => HOLEVO epoch task=6 epoch=12 {"objective": 29.663124198744647, "loss_enc": -29.663124198744647, "weight": 1.0, "r_enc": 0.16751454434277915}
+2026-10-30 16:04:26,252 [holevo.py] => HOLEVO epoch task=6 epoch=13 {"objective": 29.664551699177665, "loss_enc": -29.664551699177665, "weight": 1.0, "r_enc": 0.18757563397677635}
+2026-10-30 16:05:03,165 [holevo.py] => HOLEVO epoch task=6 epoch=14 {"objective": 29.670434300551555, "loss_enc": -29.670434300551555, "r_enc": 0.15645662620074618, "weight": 1.0}
+2026-10-30 16:05:40,033 [holevo.py] => HOLEVO epoch task=6 epoch=15 {"objective": 29.668991884106866, "loss_enc": -29.668991884106866, "weight": 1.0, "r_enc": 0.16454885427611138}
+2026-10-30 16:06:16,669 [holevo.py] => HOLEVO epoch task=6 epoch=16 {"objective": 29.690977408572348, "loss_enc": -29.690977408572348, "weight": 1.0, "r_enc": 0.1451343991090749}
+2026-10-30 16:06:53,152 [holevo.py] => HOLEVO epoch task=6 epoch=17 {"objective": 29.672856711850685, "loss_enc": -29.672856711850685, "weight": 1.0, "r_enc": 0.17129184068910153}
+2026-10-30 16:07:29,615 [holevo.py] => HOLEVO epoch task=6 epoch=18 {"objective": 29.663910950279103, "loss_enc": -29.663910950279103, "weight": 1.0, "r_enc": 0.17554061321578482}
+2026-10-30 16:08:06,434 [holevo.py] => HOLEVO epoch task=6 epoch=19 {"objective": 29.674933003141437, "loss_enc": -29.674933003141437, "r_enc": 0.18517574608920762, "weight": 1.0}
+2026-10-30 16:08:43,238 [holevo.py] => HOLEVO epoch task=6 epoch=20 {"objective": 29.67518824686223, "loss_enc": -29.67518824686223, "weight": 1.0, "r_enc": 0.19516762247301775}
+2026-10-30 16:09:20,088 [holevo.py] => HOLEVO epoch task=6 epoch=21 {"objective": 29.681447758755816, "loss_enc": -29.681447758755816, "weight": 1.0, "r_enc": 0.17413633486950114}
+2026-10-30 16:09:56,960 [holevo.py] => HOLEVO epoch task=6 epoch=22 {"objective": 29.68251743153646, "loss_enc": -29.68251743153646, "weight": 1.0, "r_enc": 0.17261908036205528}
+2026-10-30 16:10:33,153 [holevo.py] => HOLEVO epoch task=6 epoch=23 {"objective": 29.679976190632253, "loss_enc": -29.679976190632253, "weight": 1.0, "r_enc": 0.17429793960484055}
+2026-10-30 16:11:10,125 [holevo.py] => HOLEVO epoch task=6 epoch=24 {"objective": 29.682385902249216, "loss_enc": -29.682385902249216, "r_enc": 0.15829253185123537, "weight": 1.0}
+2026-10-30 16:11:46,985 [holevo.py] => HOLEVO epoch task=6 epoch=25 {"objective": 29.679333424997, "loss_enc": -29.679333424997, "weight": 1.0, "r_enc": 0.1767654858952692}
+2026-10-30 16:12:23,893 [holevo.py] => HOLEVO epoch task=6 epoch=26 {"objective": 29.67925006941627, "loss_enc": -29.67925006941627, "weight": 1.0, "r_enc": 0.16070599954469236}
+2026-10-30 16:13:00,853 [holevo.py] => HOLEVO epoch task=6 epoch=27 {"objective": 29.667075952333622, "loss_enc": -29.667075952333622, "weight": 1.0, "r_enc": 0.15902176925101696}
+2026-10-30 16:13:37,309 [holevo.py] => HOLEVO epoch task=6 epoch=28 {"objective": 29.686079347920046, "loss_enc": -29.686079347920046, "weight": 1.0, "r_enc": 0.16684862059656716}
+2026-10-30 16:14:20,342 [holevo.py] => HOLEVO epoch task=6 epoch=29 {"objective": 29.67622296943307, "loss_enc": -29.67622296943307, "r_enc": 0.19690633195145912, "weight": 1.0}
+2026-10-30 16:14:59,647 [holevo.py] => HOLEVO epoch task=6 epoch=30 {"objective": 29.658593381502303, "loss_enc": -29.658593381502303, "weight": 1.0, "r_enc": 0.18182470923121957}
+2026-10-30 16:15:07,812 [RSIAT_adapter.py] => Task 6, Epoch 30/30 => Loss -251.504, Loss_c 2.235, Losses_rt -253.739, Train_accy 81.31, Test_accy 84.55, Time 39.30s
+2026-10-30 16:15:07,813 [RSIAT_adapter.py] => Task 6 peak GPU memory: 4965.94 MiB
+2026-10-30 16:15:59,743 [holevo.py] => HOLEVO oracle task=6 phase=end {"oracle": {"vn": 0.38032447138425696, "mcr2": 32.22820308383945, "spread": 0.9169219311725497}, "stale": {"vn": 0.3596398026388504, "mcr2": 29.596503482657454, "spread": 0.8458429105531214}, "trace_distance": {"mean": 0.03351843493613482, "max": 0.04520539975451109}}
+2026-10-30 16:15:59,743 [holevo.py] => HOLEVO end task=6 lambdas={"enc": 8.592592315090705}
+2026-10-30 16:16:25,475 [base.py] => CA Task 6 => Loss 0.062, Test_accy skipped
+2026-10-30 16:16:27,956 [base.py] => CA Task 6 => Loss 0.059, Test_accy skipped
+2026-10-30 16:16:31,095 [base.py] => CA Task 6 => Loss 0.052, Test_accy skipped
+2026-10-30 16:16:35,969 [base.py] => CA Task 6 => Loss 0.053, Test_accy skipped
+2026-10-30 16:16:37,050 [base.py] => CA Task 6 => Loss 0.053, Test_accy skipped
+2026-10-30 16:16:37,953 [base.py] => CA Task 6 => Loss 0.052, Test_accy skipped
+2026-10-30 16:16:39,252 [base.py] => CA Task 6 => Loss 0.050, Test_accy skipped
+2026-10-30 16:16:40,243 [base.py] => CA Task 6 => Loss 0.048, Test_accy skipped
+2026-10-30 16:16:40,764 [base.py] => CA Task 6 => Loss 0.050, Test_accy skipped
+2026-10-30 16:16:53,988 [base.py] => CA Task 6 => Loss 0.048, Test_accy 84.690
+2026-10-30 16:17:04,534 [trainer.py] => CNN: {'total': 84.69, '00-19': 86.3, '20-39': 83.15, '40-59': 85.07, '60-79': 83.94, '80-99': 81.33, '100-119': 85.57, '120-139': 87.04, 'old': 84.34, 'new': 87.04}
+2026-10-30 16:17:04,534 [trainer.py] => Continual metrics after task 6: BWT=-3.9067, forgetting=4.0600, task_acc=[86.3, 83.15, 85.07, 83.94, 81.33, 85.57, 87.04]
+2026-10-30 16:17:04,534 [trainer.py] => CNN top1 curve: [96.05, 91.73, 90.11, 88.54, 86.03, 85.31, 84.69]
+2026-10-30 16:17:04,534 [trainer.py] => CNN top5 curve: [99.58, 98.67, 97.69, 96.64, 95.77, 95.51, 95.11]
+2026-10-30 16:17:04,534 [trainer.py] => Average Accuracy (CNN): 88.92285714285715
+2026-10-30 16:17:04,535 [trainer.py] => All params: 87095808
+2026-10-30 16:17:04,535 [trainer.py] => Trainable params: 1297152
+2026-10-30 16:17:04,536 [RSIAT_adapter.py] => Learning on 140-160
+2026-10-30 16:17:21,821 [holevo.py] => HOLEVO start task=7 old=140 new=20 {"queue": {"140": 160, "141": 256, "142": 109, "143": 67, "144": 124, "145": 120, "146": 256, "147": 81, "148": 74, "149": 101, "150": 256, "151": 96, "152": 64, "153": 152, "154": 168, "155": 73, "156": 61, "157": 109, "158": 200, "159": 182}, "residual_share": null, "eta": null}
+2026-10-30 16:18:17,059 [holevo.py] => HOLEVO oracle task=7 phase=start {"oracle": {"vn": 0.3701866352247585, "mcr2": 31.523371207806957, "spread": 0.8948360419526099}, "stale": {"vn": 0.35293750254199563, "mcr2": 29.342387298993742, "spread": 0.8346090590627266}}
+2026-10-30 16:18:17,062 [toolkit.py] => All params: 87259904
+2026-10-30 16:18:17,062 [toolkit.py] => Trainable params: 1461248
+2026-10-30 16:18:55,806 [holevo.py] => HOLEVO epoch task=7 epoch=1 {"objective": 29.3997966856421, "loss_enc": -29.3997966856421, "weight": 0.0}
+2026-10-30 16:19:51,670 [holevo.py] => HOLEVO epoch task=7 epoch=2 {"objective": 29.383841819897278, "loss_enc": -29.383841819897278, "weight": 0.25, "r_enc": 0.020882028301206924}
+2026-10-30 16:20:42,549 [holevo.py] => HOLEVO epoch task=7 epoch=3 {"objective": 29.40815291594025, "loss_enc": -29.40815291594025, "weight": 0.5, "r_enc": 0.040197669172003694}
+2026-10-30 16:21:33,922 [holevo.py] => HOLEVO epoch task=7 epoch=4 {"objective": 29.407404135685496, "loss_enc": -29.407404135685496, "weight": 0.75, "r_enc": 0.07462743878829657}
+2026-10-30 16:22:24,974 [holevo.py] => HOLEVO epoch task=7 epoch=5 {"objective": 29.423909058826574, "loss_enc": -29.423909058826574, "weight": 1.0, "r_enc": 0.10164201742160814}
+2026-10-30 16:23:16,123 [holevo.py] => HOLEVO epoch task=7 epoch=6 {"objective": 29.430951454405545, "loss_enc": -29.430951454405545, "weight": 1.0, "r_enc": 0.10427590456565158}
+2026-10-30 16:24:07,544 [holevo.py] => HOLEVO epoch task=7 epoch=7 {"objective": 29.433572821321345, "loss_enc": -29.433572821321345, "weight": 1.0, "r_enc": 0.11103548725681925}
+2026-10-30 16:24:58,683 [holevo.py] => HOLEVO epoch task=7 epoch=8 {"objective": 29.442523753224677, "loss_enc": -29.442523753224677, "weight": 1.0, "r_enc": 0.0866303988277303}
+2026-10-30 16:25:49,633 [holevo.py] => HOLEVO epoch task=7 epoch=9 {"objective": 29.448630885251156, "loss_enc": -29.448630885251156, "weight": 1.0, "r_enc": 0.08982503003540714}
+2026-10-30 16:26:40,996 [holevo.py] => HOLEVO epoch task=7 epoch=10 {"objective": 29.447353360106593, "loss_enc": -29.447353360106593, "weight": 1.0, "r_enc": 0.10524754719649286}
+2026-10-30 16:27:32,545 [holevo.py] => HOLEVO epoch task=7 epoch=11 {"objective": 29.44910393582648, "loss_enc": -29.44910393582648, "weight": 1.0, "r_enc": 0.09138193050361532}
+2026-10-30 16:28:23,620 [holevo.py] => HOLEVO epoch task=7 epoch=12 {"objective": 29.44346267318538, "loss_enc": -29.44346267318538, "weight": 1.0, "r_enc": 0.08244353914366997}
+2026-10-30 16:29:14,964 [holevo.py] => HOLEVO epoch task=7 epoch=13 {"objective": 29.452632281339348, "loss_enc": -29.452632281339348, "weight": 1.0, "r_enc": 0.10024654316290756}
+2026-10-30 16:30:05,973 [holevo.py] => HOLEVO epoch task=7 epoch=14 {"objective": 29.44611437665808, "loss_enc": -29.44611437665808, "weight": 1.0, "r_enc": 0.1499917797553586}
+2026-10-30 16:30:56,923 [holevo.py] => HOLEVO epoch task=7 epoch=15 {"objective": 29.4459228833679, "loss_enc": -29.4459228833679, "weight": 1.0, "r_enc": 0.11118740625561475}
+2026-10-30 16:31:48,298 [holevo.py] => HOLEVO epoch task=7 epoch=16 {"objective": 29.451612274589916, "loss_enc": -29.451612274589916, "r_enc": 0.12486640824183075, "weight": 1.0}
+2026-10-30 16:32:39,594 [holevo.py] => HOLEVO epoch task=7 epoch=17 {"objective": 29.443276086260827, "loss_enc": -29.443276086260827, "weight": 1.0, "r_enc": 0.11026927682961316}
+2026-10-30 16:33:38,262 [holevo.py] => HOLEVO epoch task=7 epoch=18 {"objective": 29.44709961770984, "loss_enc": -29.44709961770984, "weight": 1.0, "r_enc": 0.08984920540768393}
+2026-10-30 16:34:36,608 [holevo.py] => HOLEVO epoch task=7 epoch=19 {"objective": 29.457956185502063, "loss_enc": -29.457956185502063, "weight": 1.0, "r_enc": 0.10697598155412383}
+2026-10-30 16:35:29,067 [holevo.py] => HOLEVO epoch task=7 epoch=20 {"objective": 29.449646157706056, "loss_enc": -29.449646157706056, "weight": 1.0, "r_enc": 0.10083154648958387}
+2026-10-30 16:36:37,773 [holevo.py] => HOLEVO epoch task=7 epoch=21 {"objective": 29.447006251120143, "loss_enc": -29.447006251120143, "weight": 1.0, "r_enc": 0.10151149590444582}
+2026-10-30 16:37:31,960 [holevo.py] => HOLEVO epoch task=7 epoch=22 {"objective": 29.44534968400988, "loss_enc": -29.44534968400988, "weight": 1.0, "r_enc": 0.10893799456365989}
+2026-10-30 16:38:23,049 [holevo.py] => HOLEVO epoch task=7 epoch=23 {"objective": 29.447571492177943, "loss_enc": -29.447571492177943, "weight": 1.0, "r_enc": 0.11095151483561524}
+2026-10-30 16:39:14,610 [holevo.py] => HOLEVO epoch task=7 epoch=24 {"objective": 29.44840184250935, "loss_enc": -29.44840184250935, "weight": 1.0, "r_enc": 0.09335527376518174}
+2026-10-30 16:40:05,886 [holevo.py] => HOLEVO epoch task=7 epoch=25 {"objective": 29.45025915607133, "loss_enc": -29.45025915607133, "weight": 1.0, "r_enc": 0.10849279062861811}
+2026-10-30 16:40:56,987 [holevo.py] => HOLEVO epoch task=7 epoch=26 {"objective": 29.468430296262333, "loss_enc": -29.468430296262333, "weight": 1.0, "r_enc": 0.13449059765204813}
+2026-10-30 16:41:48,421 [holevo.py] => HOLEVO epoch task=7 epoch=27 {"objective": 29.44874689051562, "loss_enc": -29.44874689051562, "weight": 1.0, "r_enc": 0.09719376596973157}
+2026-10-30 16:42:39,669 [holevo.py] => HOLEVO epoch task=7 epoch=28 {"objective": 29.457860384832703, "loss_enc": -29.457860384832703, "weight": 1.0, "r_enc": 0.11768321023898584}
+2026-10-30 16:43:31,110 [holevo.py] => HOLEVO epoch task=7 epoch=29 {"objective": 29.45793214078703, "loss_enc": -29.45793214078703, "weight": 1.0, "r_enc": 0.1039758106196873}
+2026-10-30 16:44:33,021 [holevo.py] => HOLEVO epoch task=7 epoch=30 {"objective": 29.450961954053415, "loss_enc": -29.450961954053415, "weight": 1.0, "r_enc": 0.1105897875082793}
+2026-10-30 16:44:44,806 [RSIAT_adapter.py] => Task 7, Epoch 30/30 => Loss -249.856, Loss_c 2.117, Losses_rt -251.973, Train_accy 80.97, Test_accy 83.81, Time 61.91s
+2026-10-30 16:44:44,806 [RSIAT_adapter.py] => Task 7 peak GPU memory: 4987.35 MiB
+2026-10-30 16:45:36,964 [holevo.py] => HOLEVO oracle task=7 phase=end {"oracle": {"vn": 0.37484844493355673, "mcr2": 31.80757317473635, "spread": 0.9028935575376362}, "stale": {"vn": 0.35474654574207576, "mcr2": 29.391680088860323, "spread": 0.8352713804998989}, "trace_distance": {"mean": 0.03278646918488015, "max": 0.05186835752006662}}
+2026-10-30 16:45:36,965 [holevo.py] => HOLEVO end task=7 lambdas={"enc": 8.592592315090705}
+2026-10-30 16:46:05,111 [base.py] => CA Task 7 => Loss 0.064, Test_accy skipped
+2026-10-30 16:46:08,621 [base.py] => CA Task 7 => Loss 0.058, Test_accy skipped
+2026-10-30 16:46:10,398 [base.py] => CA Task 7 => Loss 0.057, Test_accy skipped
+2026-10-30 16:46:12,654 [base.py] => CA Task 7 => Loss 0.054, Test_accy skipped
+2026-10-30 16:46:15,188 [base.py] => CA Task 7 => Loss 0.054, Test_accy skipped
+2026-10-30 16:46:17,387 [base.py] => CA Task 7 => Loss 0.050, Test_accy skipped
+2026-10-30 16:46:19,986 [base.py] => CA Task 7 => Loss 0.049, Test_accy skipped
+2026-10-30 16:46:22,377 [base.py] => CA Task 7 => Loss 0.050, Test_accy skipped
+2026-10-30 16:46:24,952 [base.py] => CA Task 7 => Loss 0.051, Test_accy skipped
+2026-10-30 16:46:40,886 [base.py] => CA Task 7 => Loss 0.049, Test_accy 83.710
+2026-10-30 16:46:54,684 [trainer.py] => CNN: {'total': 83.71, '00-19': 83.76, '20-39': 81.92, '40-59': 83.56, '60-79': 84.28, '80-99': 80.41, '100-119': 84.82, '120-139': 85.77, '140-159': 84.82, 'old': 83.52, 'new': 84.82}
+2026-10-30 16:46:54,684 [trainer.py] => Continual metrics after task 7: BWT=-4.4743, forgetting=4.6057, task_acc=[83.76, 81.92, 83.56, 84.28, 80.41, 84.82, 85.77, 84.82]
+2026-10-30 16:46:54,684 [trainer.py] => CNN top1 curve: [96.05, 91.73, 90.11, 88.54, 86.03, 85.31, 84.69, 83.71]
+2026-10-30 16:46:54,684 [trainer.py] => CNN top5 curve: [99.58, 98.67, 97.69, 96.64, 95.77, 95.51, 95.11, 94.53]
+2026-10-30 16:46:54,684 [trainer.py] => Average Accuracy (CNN): 88.27125
+2026-10-30 16:46:54,685 [trainer.py] => All params: 87111168
+2026-10-30 16:46:54,685 [trainer.py] => Trainable params: 1312512
+2026-10-30 16:46:54,685 [RSIAT_adapter.py] => Learning on 160-180
+2026-10-30 16:47:14,473 [holevo.py] => HOLEVO start task=8 old=160 new=20 {"queue": {"160": 98, "161": 65, "162": 69, "163": 63, "164": 111, "165": 213, "166": 121, "167": 100, "168": 68, "169": 66, "170": 75, "171": 172, "172": 56, "173": 100, "174": 71, "175": 64, "176": 72, "177": 104, "178": 60, "179": 184}, "residual_share": null, "eta": null}
+2026-10-30 16:48:08,474 [holevo.py] => HOLEVO oracle task=8 phase=start {"oracle": {"vn": 0.36766887536848875, "mcr2": 31.55738471287892, "spread": 0.8845160725320732}, "stale": {"vn": 0.3502736321385234, "mcr2": 29.45395019547793, "spread": 0.825025075208647}}
+2026-10-30 16:48:08,476 [toolkit.py] => All params: 87275264
+2026-10-30 16:48:08,476 [toolkit.py] => Trainable params: 1476608
+2026-10-30 16:48:27,889 [holevo.py] => HOLEVO epoch task=8 epoch=1 {"objective": 29.48101999612968, "loss_enc": -29.48101999612968, "weight": 0.0}
+2026-10-30 16:49:01,066 [holevo.py] => HOLEVO epoch task=8 epoch=2 {"objective": 29.499780331327777, "loss_enc": -29.499780331327777, "weight": 0.25, "r_enc": 0.02653836198633835}
+2026-10-30 16:49:34,409 [holevo.py] => HOLEVO epoch task=8 epoch=3 {"objective": 29.527012242720865, "loss_enc": -29.527012242720865, "weight": 0.5, "r_enc": 0.05692010145932546}
+2026-10-30 16:50:07,426 [holevo.py] => HOLEVO epoch task=8 epoch=4 {"objective": 29.54125579216483, "loss_enc": -29.54125579216483, "weight": 0.75, "r_enc": 0.09550495124490116}
+2026-10-30 16:50:40,898 [holevo.py] => HOLEVO epoch task=8 epoch=5 {"objective": 29.5553811337953, "loss_enc": -29.5553811337953, "weight": 1.0, "r_enc": 0.13289948231393575}
+2026-10-30 16:51:14,256 [holevo.py] => HOLEVO epoch task=8 epoch=6 {"objective": 29.553614085218545, "loss_enc": -29.553614085218545, "weight": 1.0, "r_enc": 0.15480052389787152}
+2026-10-30 16:51:47,191 [holevo.py] => HOLEVO epoch task=8 epoch=7 {"objective": 29.57398222637044, "loss_enc": -29.57398222637044, "weight": 1.0, "r_enc": 0.10649639760097017}
+2026-10-30 16:52:20,412 [holevo.py] => HOLEVO epoch task=8 epoch=8 {"objective": 29.566553950470514, "loss_enc": -29.566553950470514, "weight": 1.0, "r_enc": 0.11746957232789465}
+2026-10-30 16:52:53,755 [holevo.py] => HOLEVO epoch task=8 epoch=9 {"objective": 29.573826601472753, "loss_enc": -29.573826601472753, "weight": 1.0, "r_enc": 0.12157266771022124}
+2026-10-30 16:53:26,489 [holevo.py] => HOLEVO epoch task=8 epoch=10 {"objective": 29.569370450658425, "loss_enc": -29.569370450658425, "weight": 1.0, "r_enc": 0.15666546149120716}
+2026-10-30 16:54:08,556 [holevo.py] => HOLEVO epoch task=8 epoch=11 {"objective": 29.566659937759802, "loss_enc": -29.566659937759802, "weight": 1.0, "r_enc": 0.11931136249351008}
+2026-10-30 16:54:49,961 [holevo.py] => HOLEVO epoch task=8 epoch=12 {"objective": 29.569998056726934, "loss_enc": -29.569998056726934, "weight": 1.0, "r_enc": 0.12959581720754176}
+2026-10-30 16:55:18,191 [holevo.py] => HOLEVO epoch task=8 epoch=13 {"objective": 29.583423522636117, "loss_enc": -29.583423522636117, "weight": 1.0, "r_enc": 0.16259504835177105}
+2026-10-30 16:55:49,731 [holevo.py] => HOLEVO epoch task=8 epoch=14 {"objective": 29.569561138924694, "loss_enc": -29.569561138924694, "weight": 1.0, "r_enc": 0.11979462368939428}
+2026-10-30 16:56:20,600 [holevo.py] => HOLEVO epoch task=8 epoch=15 {"objective": 29.588917075845853, "loss_enc": -29.588917075845853, "weight": 1.0, "r_enc": 0.12881337465041434}
+2026-10-30 16:56:43,363 [holevo.py] => HOLEVO epoch task=8 epoch=16 {"objective": 29.581158889648652, "loss_enc": -29.581158889648652, "r_enc": 0.11262132247984008, "weight": 1.0}
+2026-10-30 16:57:06,210 [holevo.py] => HOLEVO epoch task=8 epoch=17 {"objective": 29.581819274221527, "loss_enc": -29.581819274221527, "weight": 1.0, "r_enc": 0.12552711016851026}
+2026-10-30 16:57:28,747 [holevo.py] => HOLEVO epoch task=8 epoch=18 {"objective": 29.588751702416666, "loss_enc": -29.588751702416666, "weight": 1.0, "r_enc": 0.14387936902475448}
+2026-10-30 16:57:51,214 [holevo.py] => HOLEVO epoch task=8 epoch=19 {"objective": 29.5853891472073, "loss_enc": -29.5853891472073, "weight": 1.0, "r_enc": 0.13546965940772604}
+2026-10-30 16:58:13,701 [holevo.py] => HOLEVO epoch task=8 epoch=20 {"objective": 29.587557423566786, "loss_enc": -29.587557423566786, "weight": 1.0, "r_enc": 0.13038304620902239}
+2026-10-30 16:58:36,176 [holevo.py] => HOLEVO epoch task=8 epoch=21 {"objective": 29.58146671550115, "loss_enc": -29.58146671550115, "weight": 1.0, "r_enc": 0.10289284070249007}
+2026-10-30 16:58:58,895 [holevo.py] => HOLEVO epoch task=8 epoch=22 {"objective": 29.593825485486033, "loss_enc": -29.593825485486033, "weight": 1.0, "r_enc": 0.13147821247470726}
+2026-10-30 16:59:21,622 [holevo.py] => HOLEVO epoch task=8 epoch=23 {"objective": 29.57496686794201, "loss_enc": -29.57496686794201, "weight": 1.0, "r_enc": 0.11692502382428833}
+2026-10-30 16:59:44,109 [holevo.py] => HOLEVO epoch task=8 epoch=24 {"objective": 29.586994707881562, "loss_enc": -29.586994707881562, "weight": 1.0, "r_enc": 0.14230057055072212}
+2026-10-30 17:00:06,850 [holevo.py] => HOLEVO epoch task=8 epoch=25 {"objective": 29.58177736906754, "loss_enc": -29.58177736906754, "weight": 1.0, "r_enc": 0.12677655879170815}
+2026-10-30 17:00:29,486 [holevo.py] => HOLEVO epoch task=8 epoch=26 {"objective": 29.576313747680395, "loss_enc": -29.576313747680395, "weight": 1.0, "r_enc": 0.07482264911618976}
+2026-10-30 17:00:51,968 [holevo.py] => HOLEVO epoch task=8 epoch=27 {"objective": 29.590597702552856, "loss_enc": -29.590597702552856, "weight": 1.0, "r_enc": 0.13394276774168506}
+2026-10-30 17:01:14,703 [holevo.py] => HOLEVO epoch task=8 epoch=28 {"objective": 29.591971445344278, "loss_enc": -29.591971445344278, "weight": 1.0, "r_enc": 0.12682185476137736}
+2026-10-30 17:01:39,354 [holevo.py] => HOLEVO epoch task=8 epoch=29 {"objective": 29.598146706580025, "loss_enc": -29.598146706580025, "weight": 1.0, "r_enc": 0.14963772990177693}
+2026-10-30 17:02:00,017 [holevo.py] => HOLEVO epoch task=8 epoch=30 {"objective": 29.589640506872662, "loss_enc": -29.589640506872662, "weight": 1.0, "r_enc": 0.1332174398795664}
+2026-10-30 17:02:12,160 [RSIAT_adapter.py] => Task 8, Epoch 30/30 => Loss -250.570, Loss_c 2.556, Losses_rt -253.127, Train_accy 78.83, Test_accy 83.03, Time 20.66s
+2026-10-30 17:02:12,160 [RSIAT_adapter.py] => Task 8 peak GPU memory: 4963.06 MiB
+2026-10-30 17:03:06,872 [holevo.py] => HOLEVO oracle task=8 phase=end {"oracle": {"vn": 0.3723244400972793, "mcr2": 31.942830296982383, "spread": 0.8946674867749541}, "stale": {"vn": 0.3521570758285268, "mcr2": 29.542938495123895, "spread": 0.8262232466198882}, "trace_distance": {"mean": 0.03514100892361773, "max": 0.058727297505479004}}
+2026-10-30 17:03:06,872 [holevo.py] => HOLEVO end task=8 lambdas={"enc": 8.592592315090705}
+2026-10-30 17:03:27,591 [base.py] => CA Task 8 => Loss 0.062, Test_accy skipped
+2026-10-30 17:03:28,065 [base.py] => CA Task 8 => Loss 0.059, Test_accy skipped
+2026-10-30 17:03:28,946 [base.py] => CA Task 8 => Loss 0.054, Test_accy skipped
+2026-10-30 17:03:29,816 [base.py] => CA Task 8 => Loss 0.056, Test_accy skipped
+2026-10-30 17:03:30,494 [base.py] => CA Task 8 => Loss 0.052, Test_accy skipped
+2026-10-30 17:03:31,383 [base.py] => CA Task 8 => Loss 0.050, Test_accy skipped
+2026-10-30 17:03:32,219 [base.py] => CA Task 8 => Loss 0.051, Test_accy skipped
+2026-10-30 17:03:33,011 [base.py] => CA Task 8 => Loss 0.051, Test_accy skipped
+2026-10-30 17:03:33,849 [base.py] => CA Task 8 => Loss 0.053, Test_accy skipped
+2026-10-30 17:03:46,443 [base.py] => CA Task 8 => Loss 0.051, Test_accy 83.170
+2026-10-30 17:03:58,645 [trainer.py] => CNN: {'total': 83.17, '00-19': 83.19, '20-39': 82.23, '40-59': 83.56, '60-79': 82.38, '80-99': 78.93, '100-119': 83.93, '120-139': 85.77, '140-159': 84.26, '160-179': 84.01, 'old': 83.09, 'new': 84.01}
+2026-10-30 17:03:58,645 [trainer.py] => Continual metrics after task 8: BWT=-4.5512, forgetting=4.6662, task_acc=[83.19, 82.23, 83.56, 82.38, 78.93, 83.93, 85.77, 84.26, 84.01]
+2026-10-30 17:03:58,645 [trainer.py] => CNN top1 curve: [96.05, 91.73, 90.11, 88.54, 86.03, 85.31, 84.69, 83.71, 83.17]
+2026-10-30 17:03:58,645 [trainer.py] => CNN top5 curve: [99.58, 98.67, 97.69, 96.64, 95.77, 95.51, 95.11, 94.53, 94.24]
+2026-10-30 17:03:58,645 [trainer.py] => Average Accuracy (CNN): 87.70444444444445
+2026-10-30 17:03:58,646 [trainer.py] => All params: 87126528
+2026-10-30 17:03:58,646 [trainer.py] => Trainable params: 1327872
+2026-10-30 17:03:58,647 [RSIAT_adapter.py] => Learning on 180-200
+2026-10-30 17:04:18,377 [holevo.py] => HOLEVO start task=9 old=180 new=20 {"queue": {"180": 120, "181": 44, "182": 77, "183": 256, "184": 49, "185": 108, "186": 178, "187": 114, "188": 90, "189": 109, "190": 212, "191": 46, "192": 137, "193": 57, "194": 148, "195": 74, "196": 64, "197": 196, "198": 108, "199": 73}, "residual_share": null, "eta": null}
+2026-10-30 17:05:16,403 [holevo.py] => HOLEVO oracle task=9 phase=start {"oracle": {"vn": 0.3668777285841414, "mcr2": 31.572760082199064, "spread": 0.8783943051237529}, "stale": {"vn": 0.3491873712094466, "mcr2": 29.44866072246634, "spread": 0.8173862584018712}}
+2026-10-30 17:05:16,406 [toolkit.py] => All params: 87290624
+2026-10-30 17:05:16,406 [toolkit.py] => Trainable params: 1491968
+2026-10-30 17:05:31,815 [holevo.py] => HOLEVO epoch task=9 epoch=1 {"objective": 29.493884438761334, "loss_enc": -29.493884438761334, "weight": 0.0}
+2026-10-30 17:05:59,269 [holevo.py] => HOLEVO epoch task=9 epoch=2 {"objective": 29.48091954815612, "loss_enc": -29.48091954815612, "weight": 0.25, "r_enc": 0.01806315230383833}
+2026-10-30 17:06:26,527 [holevo.py] => HOLEVO epoch task=9 epoch=3 {"objective": 29.496537225793414, "loss_enc": -29.496537225793414, "weight": 0.5, "r_enc": 0.04313157602936184}
+2026-10-30 17:06:54,100 [holevo.py] => HOLEVO epoch task=9 epoch=4 {"objective": 29.500214737047454, "loss_enc": -29.500214737047454, "weight": 0.75, "r_enc": 0.05526631683692512}
+2026-10-30 17:07:21,614 [holevo.py] => HOLEVO epoch task=9 epoch=5 {"objective": 29.51371799282973, "loss_enc": -29.51371799282973, "weight": 1.0, "r_enc": 0.10918002003802081}
+2026-10-30 17:07:48,706 [holevo.py] => HOLEVO epoch task=9 epoch=6 {"objective": 29.5205184279809, "loss_enc": -29.5205184279809, "weight": 1.0, "r_enc": 0.07982934738642014}
+2026-10-30 17:08:15,754 [holevo.py] => HOLEVO epoch task=9 epoch=7 {"objective": 29.534409516683418, "loss_enc": -29.534409516683418, "weight": 1.0, "r_enc": 0.0500047283116168}
+2026-10-30 17:08:43,140 [holevo.py] => HOLEVO epoch task=9 epoch=8 {"objective": 29.52597537409581, "loss_enc": -29.52597537409581, "weight": 1.0, "r_enc": 0.1054718364132096}
+2026-10-30 17:09:10,776 [holevo.py] => HOLEVO epoch task=9 epoch=9 {"objective": 29.52124767560969, "loss_enc": -29.52124767560969, "weight": 1.0, "r_enc": 0.09761446893563729}
+2026-10-30 17:09:38,432 [holevo.py] => HOLEVO epoch task=9 epoch=10 {"objective": 29.531084345372225, "loss_enc": -29.531084345372225, "weight": 1.0, "r_enc": 0.10917594352908341}
+2026-10-30 17:10:05,715 [holevo.py] => HOLEVO epoch task=9 epoch=11 {"objective": 29.526282958984183, "loss_enc": -29.526282958984183, "weight": 1.0, "r_enc": 0.07867127674683552}
+2026-10-30 17:10:33,018 [holevo.py] => HOLEVO epoch task=9 epoch=12 {"objective": 29.525903499178707, "loss_enc": -29.525903499178707, "weight": 1.0, "r_enc": 0.0828933155397984}
+2026-10-30 17:11:00,314 [holevo.py] => HOLEVO epoch task=9 epoch=13 {"objective": 29.53902022777196, "loss_enc": -29.53902022777196, "weight": 1.0, "r_enc": 0.09725506727684133}
+2026-10-30 17:11:27,579 [holevo.py] => HOLEVO epoch task=9 epoch=14 {"objective": 29.525862944131593, "loss_enc": -29.525862944131593, "weight": 1.0, "r_enc": 0.11677425310703024}
+2026-10-30 17:11:54,882 [holevo.py] => HOLEVO epoch task=9 epoch=15 {"objective": 29.54118752857307, "loss_enc": -29.54118752857307, "weight": 1.0, "r_enc": 0.09344757418715213}
+2026-10-30 17:12:22,184 [holevo.py] => HOLEVO epoch task=9 epoch=16 {"objective": 29.540586536697926, "loss_enc": -29.540586536697926, "weight": 1.0, "r_enc": 0.09674313387949884}
+2026-10-30 17:12:49,511 [holevo.py] => HOLEVO epoch task=9 epoch=17 {"objective": 29.528809711218738, "loss_enc": -29.528809711218738, "weight": 1.0, "r_enc": 0.07878125157760327}
+2026-10-30 17:13:16,823 [holevo.py] => HOLEVO epoch task=9 epoch=18 {"objective": 29.53243966638716, "loss_enc": -29.53243966638716, "weight": 1.0, "r_enc": 0.09154008499310728}
+2026-10-30 17:13:44,238 [holevo.py] => HOLEVO epoch task=9 epoch=19 {"objective": 29.535056531885633, "loss_enc": -29.535056531885633, "weight": 1.0, "r_enc": 0.06689630504929729}
+2026-10-30 17:14:11,399 [holevo.py] => HOLEVO epoch task=9 epoch=20 {"objective": 29.527093416246515, "loss_enc": -29.527093416246515, "weight": 1.0, "r_enc": 0.0835377621306589}
+2026-10-30 17:14:38,685 [holevo.py] => HOLEVO epoch task=9 epoch=21 {"objective": 29.53951936783324, "loss_enc": -29.53951936783324, "r_enc": 0.1024090799143701, "weight": 1.0}
+2026-10-30 17:15:05,947 [holevo.py] => HOLEVO epoch task=9 epoch=22 {"objective": 29.541775937052677, "loss_enc": -29.541775937052677, "weight": 1.0, "r_enc": 0.10515998437576946}
+2026-10-30 17:15:33,219 [holevo.py] => HOLEVO epoch task=9 epoch=23 {"objective": 29.537490966416932, "loss_enc": -29.537490966416932, "weight": 1.0, "r_enc": 0.08520090454827128}
+2026-10-30 17:16:00,490 [holevo.py] => HOLEVO epoch task=9 epoch=24 {"objective": 29.5466532992781, "loss_enc": -29.5466532992781, "weight": 1.0, "r_enc": 0.0807538096059694}
+2026-10-30 17:16:27,785 [holevo.py] => HOLEVO epoch task=9 epoch=25 {"objective": 29.538438520299177, "loss_enc": -29.538438520299177, "weight": 1.0, "r_enc": 0.10512413874333254}
+2026-10-30 17:16:55,055 [holevo.py] => HOLEVO epoch task=9 epoch=26 {"objective": 29.538434147842384, "loss_enc": -29.538434147842384, "weight": 1.0, "r_enc": 0.0932325804046547}
+2026-10-30 17:17:22,286 [holevo.py] => HOLEVO epoch task=9 epoch=27 {"objective": 29.536578109627687, "loss_enc": -29.536578109627687, "weight": 1.0, "r_enc": 0.06783364926706917}
+2026-10-30 17:17:49,730 [holevo.py] => HOLEVO epoch task=9 epoch=28 {"objective": 29.534168061471448, "loss_enc": -29.534168061471448, "weight": 1.0, "r_enc": 0.11809355217249003}
+2026-10-30 17:18:17,832 [holevo.py] => HOLEVO epoch task=9 epoch=29 {"objective": 29.531141845332368, "loss_enc": -29.531141845332368, "weight": 1.0, "r_enc": 0.10122032131298546}
+2026-10-30 17:18:42,630 [holevo.py] => HOLEVO epoch task=9 epoch=30 {"objective": 29.54234605980846, "loss_enc": -29.54234605980846, "weight": 1.0, "r_enc": 0.10191530025175034}
+2026-10-30 17:18:55,668 [RSIAT_adapter.py] => Task 9, Epoch 30/30 => Loss -250.639, Loss_c 2.130, Losses_rt -252.769, Train_accy 80.31, Test_accy 82.28, Time 24.80s
+2026-10-30 17:18:55,668 [RSIAT_adapter.py] => Task 9 peak GPU memory: 4977.11 MiB
+2026-10-30 17:19:54,714 [holevo.py] => HOLEVO oracle task=9 phase=end {"oracle": {"vn": 0.37033789270258105, "mcr2": 31.771461297616757, "spread": 0.8844781750972043}, "stale": {"vn": 0.3504527317878708, "mcr2": 29.490420404655527, "spread": 0.8180756890655686}, "trace_distance": {"mean": 0.03166729481136011, "max": 0.04320767218746112}}
+2026-10-30 17:19:54,714 [holevo.py] => HOLEVO end task=9 lambdas={"enc": 8.592592315090705}
+2026-10-30 17:20:10,834 [base.py] => CA Task 9 => Loss 0.067, Test_accy skipped
+2026-10-30 17:20:11,436 [base.py] => CA Task 9 => Loss 0.064, Test_accy skipped
+2026-10-30 17:20:12,038 [base.py] => CA Task 9 => Loss 0.060, Test_accy skipped
+2026-10-30 17:20:12,638 [base.py] => CA Task 9 => Loss 0.059, Test_accy skipped
+2026-10-30 17:20:13,239 [base.py] => CA Task 9 => Loss 0.059, Test_accy skipped
+2026-10-30 17:20:13,840 [base.py] => CA Task 9 => Loss 0.056, Test_accy skipped
+2026-10-30 17:20:14,440 [base.py] => CA Task 9 => Loss 0.056, Test_accy skipped
+2026-10-30 17:20:15,042 [base.py] => CA Task 9 => Loss 0.053, Test_accy skipped
+2026-10-30 17:20:15,644 [base.py] => CA Task 9 => Loss 0.052, Test_accy skipped
+2026-10-30 17:20:23,354 [base.py] => CA Task 9 => Loss 0.054, Test_accy 82.540
+2026-10-30 17:20:30,434 [trainer.py] => CNN: {'total': 82.54, '00-19': 81.5, '20-39': 80.53, '40-59': 82.38, '60-79': 82.73, '80-99': 78.19, '100-119': 82.59, '120-139': 85.04, '140-159': 84.12, '160-179': 82.59, '180-199': 85.66, 'old': 82.21, 'new': 85.66}
+2026-10-30 17:20:30,434 [trainer.py] => Continual metrics after task 9: BWT=-5.0000, forgetting=5.1022, task_acc=[81.5, 80.53, 82.38, 82.73, 78.19, 82.59, 85.04, 84.12, 82.59, 85.66]
+2026-10-30 17:20:30,434 [trainer.py] => CNN top1 curve: [96.05, 91.73, 90.11, 88.54, 86.03, 85.31, 84.69, 83.71, 83.17, 82.54]
+2026-10-30 17:20:30,434 [trainer.py] => CNN top5 curve: [99.58, 98.67, 97.69, 96.64, 95.77, 95.51, 95.11, 94.53, 94.24, 93.98]
+2026-10-30 17:20:30,434 [trainer.py] => Average Accuracy (CNN): 87.188
+2026-10-30 17:20:30,531 [trainer.py] => Average Seed Accuracy (CNN): 87.188

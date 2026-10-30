@@ -1,0 +1,18 @@
+{
+  "prefix": "holevo_spread",
+  "ssca_mode": "legacy",
+  "rng_replicate": 0,
+  "stats_diagnostics": false,
+  "save_predictions": true,
+  "save_checkpoints": false,
+  "offline": true,
+  "holevo_mode": "spread",
+  "holevo_lambda": "auto",
+  "holevo_grad_ratio": 0.5,
+  "holevo_calib_steps": 20,
+  "holevo_queue_cap": 256,
+  "holevo_eps": 1e-08,
+  "holevo_mcr2_eps2": 0.5,
+  "holevo_oracle_diag": true,
+  "holevo_log_every": 25
+}
