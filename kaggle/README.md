@@ -37,6 +37,7 @@ Upload zip làm dataset Kaggle `qgrsa-base-<sha7>`, hoặc làm version mới c�
    ```
 
    Patch gồm mọi file khác commit base (đã sửa hoặc mới, trừ `.md`, notebook, kết quả). Lệnh in danh sách file để kiểm tra.
+   Notebook không đưa vào git (`.gitignore`, vì mỗi file nhúng cả patch, khoảng 0.4 MB): chỉ `wave.json` được commit, và notebook build lại bằng lệnh trên. Từ W04 áp dụng quy ước này; notebook của W01–W03 đã commit trước đó vẫn giữ nguyên.
 4. Trên Kaggle: import `<NAME>_kaggle.ipynb`, attach base + dữ liệu, rồi *Save & Run All*.
    - Chỉ đổi job: sửa `PLAN` ngay trong cell 2, không cần build lại.
    - Đổi code: build lại.
@@ -57,3 +58,6 @@ Run đã xong được bỏ qua khi chạy lại. Kết quả nằm ở `runs/SU
 | `w01_svf` | SVF giai đoạn A (`exps/svf/README.md`) | `c7bc4fd` |
 | `w02_holevo` | Holevo-CIL giai đoạn A, sàng lọc (`exps/holevo/README.md`) | `c7bc4fd` |
 | `w03_hp` | Holevo-POVM giai đoạn A, sàng lọc, chạy sau W02 (`exps/holevo_povm/README.md`) | `c7bc4fd` |
+| `w04_qksr_p0` | QKSR-v2 bước P0: đo nguyên nhân, chỉ đọc (`exps/qksr2/README.md`) | `c7bc4fd` |
+| `w05_qksr_p1` | QKSR-v2 bước P1: PQK so với RBF / bỏ CNOT trên cùng phép chiếu, 9 run (`exps/qksr2/README.md`) | `c7bc4fd` |
+| `w06_qksr_p2` | QKSR-v2 bước P2: phép chiếu LDA + bandwidth mỗi task, 9 run; chỉ chạy sau P0 | `c7bc4fd` |

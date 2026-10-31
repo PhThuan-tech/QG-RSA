@@ -52,6 +52,16 @@ exps/**/console/
 # Raw Kaggle downloads (results_<wave>.zip): extracted into results/<source>/, so the zip is a duplicate.
 exps/**/result/
 exps/**/*.zip
+# Machine dumps that the summary scripts regenerate from the logs (the .md tables stay in git).
+exps/**/summarize_*.json
+exps/qbound/results/frontier/frontier.json
+
+# Wave notebooks embed the whole code patch (~0.4 MB each); rebuild with
+# `python scripts/build_wave.py kaggle/waves/<wave>/wave.json` (wave.json stays in git).
+kaggle/waves/**/*.ipynb
+
+# Intermediate deep-research notes; the final report in reports/ stays in git.
+research_notes/
 
 # Duplicates waiting for manual deletion
 _duplicates_to_delete/

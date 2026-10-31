@@ -1,0 +1,49 @@
+{
+  "name": "W06_qksr_p2",
+  "title": "QKSR-v2 bước P2: phép chiếu LDA từ thống kê + bandwidth mỗi task, ImageNet-R seed 1993 (Kaggle RTX PRO 6000)",
+  "base": "c7bc4fd",
+  "description": [
+    "CHỈ CHẠY khi P0 (W04) kích hoạt luật W1 hoặc W2 và W05 đã xong. Spec: `exps/qksr2/README.md` mục P2.",
+    "",
+    "`p2_lda` (PQK + LDA + γ) và `p2_lda_rbf` (bản cổ điển), mỗi họ 3 replicate, so với `p1_qksr_cur` của W05; thêm `p1_rsiat_rep1/rep2` (RSIAT cùng môi trường, rep 0 là `p0_rsiat` của W04). 8 run, khoảng 4 giờ. `p2_gamma` (chỉ γ) để sau, chỉ chạy nếu `p2_lda` có tác dụng.",
+    "",
+    "`SUMMARY.txt` chỉ so được `p2_lda` − `p2_lda_rbf`; các so sánh với QKSR làm ở máy, sau khi gộp log W05."
+  ],
+  "inputs": [
+    "qgrsa-base-c7bc4fd",
+    "zaphat206/imagenet-r",
+    "ViT-B/16 224 in21k"
+  ],
+  "jobs": [
+    [
+      [
+        "imagenetr"
+      ],
+      [
+        1993
+      ],
+      [
+        "p2_lda_rep0",
+        "p2_lda_rbf_rep0",
+        "p2_lda_rep1",
+        "p2_lda_rbf_rep1",
+        "p2_lda_rep2",
+        "p2_lda_rbf_rep2",
+        "p1_rsiat_rep1",
+        "p1_rsiat_rep2"
+      ]
+    ]
+  ],
+  "max_parallel": 3,
+  "overrides": {
+    "save_checkpoints": false
+  },
+  "tests": [
+    "test_qksr_v2.py",
+    "test_qksr_probe.py",
+    "test_quantum_kernel.py"
+  ],
+  "summaries": [
+    "scripts/summarize_qksr_p1.py"
+  ]
+}

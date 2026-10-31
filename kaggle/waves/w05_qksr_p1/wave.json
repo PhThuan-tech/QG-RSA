@@ -1,0 +1,50 @@
+{
+  "name": "W05_qksr_p1",
+  "title": "QKSR-v2 bước P1: PQK so với bản cổ điển trên cùng phép chiếu, ImageNet-R seed 1993 (Kaggle RTX PRO 6000)",
+  "base": "c7bc4fd",
+  "description": [
+    "Ba họ giống hệt `qksr_cur`, chỉ khác `q_kernel_type`: `pqk` (QKSR), `rbf_proj` (RBF trên cùng góc θ) và `pqk_no_cnot` (bỏ entanglement); mỗi họ 3 replicate. Spec: `exps/qksr2/README.md` mục P1.",
+    "",
+    "9 run, 3 song song, khoảng 4 giờ. Có thể chạy song song với W04 nếu quota GPU cho phép.",
+    "",
+    "`SUMMARY.txt` so sánh ghép cặp theo replicate (`scripts/summarize_qksr_p1.py`)."
+  ],
+  "inputs": [
+    "qgrsa-base-c7bc4fd",
+    "zaphat206/imagenet-r",
+    "ViT-B/16 224 in21k"
+  ],
+  "jobs": [
+    [
+      [
+        "imagenetr"
+      ],
+      [
+        1993
+      ],
+      [
+        "p1_qksr_cur_rep0",
+        "p1_qksr_rbf_rep0",
+        "p1_qksr_nocnot_rep0",
+        "p1_qksr_cur_rep1",
+        "p1_qksr_rbf_rep1",
+        "p1_qksr_nocnot_rep1",
+        "p1_qksr_cur_rep2",
+        "p1_qksr_rbf_rep2",
+        "p1_qksr_nocnot_rep2"
+      ]
+    ]
+  ],
+  "max_parallel": 3,
+  "overrides": {
+    "save_checkpoints": false
+  },
+  "tests": [
+    "test_qksr_v2.py",
+    "test_qksr_probe.py",
+    "test_quantum_kernel.py"
+  ],
+  "summaries": [
+    "scripts/summarize_qksr_p1.py"
+  ]
+}

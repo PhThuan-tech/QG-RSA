@@ -40,10 +40,13 @@ class ClassicalProjector(nn.Module):
         super().__init__()
         self.norm = nn.LayerNorm(input_dim, elementwise_affine=False, dtype=dtype)
         self.linear = nn.Linear(input_dim, num_qubits, dtype=dtype)
+        # QKSR-v2 P2: a projector refitted from class statistics acts on raw features (the statistics
+        # are stored for raw features); plain attribute, so the state_dict is unchanged.
+        self.skip_norm = False
 
     def forward(self, features: Tensor) -> Tensor:
         features = features.to(dtype=self.linear.weight.dtype)
-        return math.pi * torch.tanh(self.linear(self.norm(features)))
+        return math.pi * torch.tanh(self.linear(features if self.skip_norm else self.norm(features)))
 
 
 class QuantumFeatureEncoder(nn.Module):
@@ -380,6 +383,60 @@ class QuantumKernelModule(nn.Module):
             self.gamma_param.zero_()
         self.gamma_initialized.fill_(True)
         return float(self.gamma0.item())
+
+    @torch.no_grad()
+    def refit_projector_lda(self, means: Tensor, within: Tensor, angle_std: float = 0.8,
+                            ridge: float = 1e-3) -> Dict[str, float]:
+        """QKSR-v2 P2: projector rows = top Fisher-LDA directions of the class statistics.
+
+        ``within`` = S_W, the mean class covariance; S_B = covariance of the class means; rows solve
+        S_B v = lambda (S_W + ridge * tr(S_W)/D * I) v. Each row is scaled so that the pre-tanh value has
+        standard deviation angle_std / pi over the class mixture (theta ~ pi * pre for small angles) and
+        centred on the mean of the class means. The LayerNorm is bypassed from then on.
+        """
+        means = means.double()
+        dim = means.shape[1]
+        n = self.num_qubits
+        if means.shape[0] < 2:
+            raise ValueError("LDA refit needs at least two classes.")
+        center = means.mean(0)
+        s_w = within.double().to(means.device)
+        dev = means - center
+        s_b = dev.T @ dev / means.shape[0]
+        eye = torch.eye(dim, dtype=torch.float64, device=means.device)
+        chol = torch.linalg.cholesky(s_w + ridge * torch.trace(s_w) / dim * eye)
+        inv = torch.linalg.solve_triangular(chol, eye, upper=False)
+        evals, evecs = torch.linalg.eigh(inv @ s_b @ inv.T)
+        top = evecs[:, -n:].flip(1)
+        rows = (inv.T @ top).T  # n x D
+        total = s_b + s_w
+        std = torch.sqrt(torch.einsum("kd,de,ke->k", rows, total, rows)).clamp_min(1e-30)
+        rows = rows * (float(angle_std) / math.pi / std)[:, None]
+        linear = self.projector.linear
+        linear.weight.copy_(rows.to(linear.weight))
+        linear.bias.copy_((-(rows @ center)).to(linear.bias))
+        self.projector.skip_norm = True
+        ratio = evals.flip(0)[:n].clamp_min(0)
+        return {"fisher_top": [float(v) for v in ratio], "fisher_share": float(ratio.sum() / evals.clamp_min(0).sum())}
+
+    @torch.no_grad()
+    def set_gamma_target(self, features_a: Tensor, features_b: Tensor, target: float) -> float:
+        """QKSR-v2 P2: gamma such that the median kernel between the two sets equals ``target``."""
+        if not 0 < float(target) < 1:
+            raise ValueError("q_gamma_target must be in (0, 1).")
+        dist = self.distance(self.encode(features_a), self.encode(features_b)).reshape(-1)
+        median = dist[torch.isfinite(dist)].median()
+        if not torch.isfinite(median) or median <= 1e-12:
+            raise ValueError("Degenerate distances for gamma target calibration.")
+        gamma = -math.log(float(target)) / float(median)
+        self.gamma0.fill_(gamma)
+        if self.gamma_mode == "free_learned":
+            x = self.gamma0.clamp_min(torch.finfo(self.gamma0.dtype).eps)
+            self.gamma_param.copy_(x + torch.log(-torch.expm1(-x)))
+        elif self.gamma_param is not None:
+            self.gamma_param.zero_()
+        self.gamma_initialized.fill_(True)
+        return gamma
 
     def set_inc_mode(self, mode: str) -> None:
         if mode not in {"frozen", "trainable"}:

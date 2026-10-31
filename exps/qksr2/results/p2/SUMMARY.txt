@@ -1,0 +1,29 @@
+===== SUMMARY W06_qksr_p2 | 2026-10-31 16:19 =====
+imagenetr_p2_lda_rep0_1993: Average Accuracy (CNN): 87.32000000000001
+imagenetr_p2_lda_rbf_rep0_1993: Average Accuracy (CNN): 87.34700000000001
+imagenetr_p2_lda_rep1_1993: Average Accuracy (CNN): 87.346
+imagenetr_p2_lda_rbf_rep1_1993: Average Accuracy (CNN): 87.402
+imagenetr_p2_lda_rep2_1993: Average Accuracy (CNN): 87.402
+imagenetr_p2_lda_rbf_rep2_1993: Average Accuracy (CNN): 87.43199999999999
+imagenetr_p1_rsiat_rep1_1993: Average Accuracy (CNN): 87.399
+imagenetr_p1_rsiat_rep2_1993: Average Accuracy (CNN): 87.487
+# QKSR-v2 P1/P2: so sánh ghép cặp (`scripts/summarize_qksr_p1.py`)
+
+Δ = A − B, ghép theo replicate; CI 95% t với n − 1 bậc tự do. P2 vượt đường đánh đổi khi Δ old > 0, Δ new > 0 và CI Δ AIA > 0 so với QKSR (spec P2.3).
+
+| Run | Replicate | AIA | Final | Forgetting |
+|---|---:|---:|---:|---:|
+| p1_rsiat | 1 | 87.399 | 82.59 | 5.29 |
+| p1_rsiat | 2 | 87.487 | 82.90 | 4.93 |
+| p2_lda | 0 | 87.320 | 82.69 | 4.95 |
+| p2_lda | 1 | 87.346 | 82.62 | 5.04 |
+| p2_lda | 2 | 87.402 | 82.77 | 4.66 |
+| p2_lda_rbf | 0 | 87.347 | 82.64 | 5.07 |
+| p2_lda_rbf | 1 | 87.402 | 82.64 | 5.01 |
+| p2_lda_rbf | 2 | 87.432 | 82.67 | 4.80 |
+
+| So sánh | n | Δ AIA | Δ final | Δ forgetting | Δ old | Δ new | Đọc |
+|---|---:|---|---|---|---|---|---|
+| P2 · PQK − RBF (cùng LDA + γ) | 3 | -0.038 [-0.077, +0.002] | +0.043 [-0.106, +0.193] | -0.078 [-0.296, +0.140] | +0.061 [-0.302, +0.425] | +0.024 [-0.297, +0.345] | TƯƠNG ĐƯƠNG (CI Δ AIA nằm trong ±0.1) |
+| Đọc kèm · P2 LDA + γ − RSIAT | 2 | -0.069 [-0.272, +0.134] | -0.050 [-1.066, +0.966] | -0.259 [-0.352, -0.167] | +0.386 [-1.622, +2.394] | -0.544 [-0.595, -0.493] | chưa đủ cặp |
+

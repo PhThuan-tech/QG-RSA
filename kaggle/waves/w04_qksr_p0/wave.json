@@ -1,0 +1,43 @@
+{
+  "name": "W04_qksr_p0",
+  "title": "QKSR-v2 bước P0: đo nguyên nhân (chỉ đọc), ImageNet-R seed 1993 (Kaggle RTX PRO 6000)",
+  "base": "c7bc4fd",
+  "description": [
+    "Hai run có bật probe chỉ đọc (`utils/qksr_probe.py`), không đổi huấn luyện: `p0_qksr_cur` (bản sao `qksr_cur` rep 0) và `p0_rsiat` (bản sao `noise_rep0`). Spec: `exps/qksr2/README.md`.",
+    "",
+    "Probe đo cosine gradient CosFace / KD / tách lớp trên adapter, độ chọn lọc của khoảng cách PQK so với các bản cổ điển, phép chiếu 768→8, độ bão hoà góc, CKA PQK–RBF và các cặp mà loss tách lớp dùng. Ước tính khoảng 2 giờ.",
+    "",
+    "`SUMMARY.txt` áp các luật đọc P0.3 (`scripts/summarize_qksr_probe.py`)."
+  ],
+  "inputs": [
+    "qgrsa-base-c7bc4fd",
+    "zaphat206/imagenet-r",
+    "ViT-B/16 224 in21k"
+  ],
+  "jobs": [
+    [
+      [
+        "imagenetr"
+      ],
+      [
+        1993
+      ],
+      [
+        "p0_qksr_cur",
+        "p0_rsiat"
+      ]
+    ]
+  ],
+  "max_parallel": 2,
+  "overrides": {
+    "save_checkpoints": false
+  },
+  "tests": [
+    "test_qksr_v2.py",
+    "test_qksr_probe.py",
+    "test_quantum_kernel.py"
+  ],
+  "summaries": [
+    "scripts/summarize_qksr_probe.py"
+  ]
+}

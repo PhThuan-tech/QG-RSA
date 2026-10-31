@@ -1,5 +1,6 @@
 import copy
 import logging
+import json
 import os
 import time
 import numpy as np
@@ -61,6 +62,10 @@ class Learner(BaseLearner):
         if holevo_cfg is not None and self.qbridge_config is not None:
             raise ValueError("holevo_mode / hp_mode cannot be combined with Q-BRIDGE.")
         self.holevo = HolevoRuntime(holevo_cfg, args["warmup_epoch"], self._device) if holevo_cfg else None
+        # QKSR P0 probe (reports/Khắc phục điểm yếu QKSR.md): read-only measurements; None leaves training unchanged.
+        from utils.qksr_probe import QKSRProbe, probe_settings
+        probe_cfg = probe_settings(args)
+        self.qksr_probe = QKSRProbe(probe_cfg, self._device) if probe_cfg else None
         self.tuned_epochs = None
         self.task_sizes = []
         self.rs_loss_func = RS_Loss(self.args["alpha"], self.args["rs_margin"])
@@ -345,6 +350,8 @@ class Learner(BaseLearner):
                     self.pin_memory, int(self.args["seed"]) + self._cur_task)
                 paired_old, paired_labels = self.extract_features(paired_loader, self._network, None)
 
+        if self._cur_task > 0:
+            self._qksr_v2_refit(train_embeddings_old, train_labels_old)
         if getattr(self, "holevo", None) is not None and self._cur_task > 0:
             # Queue initialised from the mandatory pass above: no extra data pass, RNG unchanged.
             self.holevo.start_task(self, train_embeddings_old, train_labels_old)
@@ -412,6 +419,8 @@ class Learner(BaseLearner):
             evaluate_stage(self, "post_ca")
             if self.qbridge_runtime is not None:
                 self.qbridge_runtime.cache = None
+        if getattr(self, "qksr_probe", None) is not None:
+            self.qksr_probe.end_task(self)
 
     def _old_statistics_oracle(self, data_manager, stats_cfg, estimates, kernel_report):
         """Compare old-class statistics with the oracle computed from old images.
@@ -507,6 +516,48 @@ class Learner(BaseLearner):
         ) or (
             self._cur_task > 0 and self.use_quantum_kernel_inc
         )
+
+    @torch.no_grad()
+    def _qksr_v2_refit(self, feats, labels):
+        """QKSR-v2 P2 (exps/qksr2/README.md): refit the PQK projector / bandwidth at the start of a task.
+
+        Uses only stored statistics of the old classes (after SSCA) and the mandatory pass over the new
+        task's images with the network of the previous task; deterministic, no RNG, off by default.
+        """
+        proj_mode = self.args.get("q_proj_refit", "none")
+        gamma_mode = self.args.get("q_gamma_refit", "none")
+        if proj_mode not in ("none", "lda") or gamma_mode not in ("none", "target"):
+            raise ValueError("q_proj_refit must be none|lda and q_gamma_refit none|target.")
+        if proj_mode == "none" and gamma_mode == "none":
+            return
+        if self.quantum_kernel is None or not self.use_quantum_kernel_inc:
+            raise ValueError("q_proj_refit / q_gamma_refit need the incremental QKSR kernel.")
+        known, total = self._known_classes, self._total_classes
+        dev = self._device
+        feats = torch.as_tensor(feats).to(dev, dtype=torch.float64)
+        labels = torch.as_tensor(labels).to(dev)
+        old_means = torch.as_tensor(np.asarray(self._class_means[:known]), dtype=torch.float64, device=dev)
+        info = {}
+        if proj_mode == "lda":
+            within = torch.zeros(feats.shape[1], feats.shape[1], dtype=torch.float64, device=dev)
+            for c in range(known):  # stored covariances, accumulated one class at a time
+                within += torch.as_tensor(self._class_covs[c]).to(dev, dtype=torch.float64)
+            new_means = []
+            for c in range(known, total):
+                rows = feats[labels == c]
+                mu = rows.mean(0)
+                new_means.append(mu)
+                within += (rows - mu).T @ (rows - mu) / max(rows.shape[0] - 1, 1)
+            within /= total
+            info["lda"] = self.quantum_kernel.refit_projector_lda(
+                torch.cat([old_means, torch.stack(new_means)]), within,
+                angle_std=float(self.args.get("q_angle_std", 0.8)), ridge=float(self.args.get("q_lda_ridge", 1e-3)))
+        if gamma_mode == "target":
+            dtype = self.quantum_kernel.gamma0.dtype
+            info["gamma"] = self.quantum_kernel.set_gamma_target(
+                old_means.to(dtype), feats[labels >= known][:2048].to(dtype),
+                float(self.args.get("q_gamma_target", 0.2)))
+        logging.info("QKSR refit task=%d %s", self._cur_task, json.dumps(info))
 
     def _quantum_trainable_this_task(self):
         if self.quantum_kernel is None or not self._quantum_used_this_task():
@@ -682,6 +733,8 @@ class Learner(BaseLearner):
             scheduler.step()
             if getattr(self, "holevo", None) is not None and self._cur_task > 0:
                 self.holevo.end_epoch(self._cur_task, epoch)
+            if getattr(self, "qksr_probe", None) is not None:
+                self.qksr_probe.end_epoch(self._cur_task, epoch)
             epoch_seconds = time.perf_counter() - epoch_start
 
             train_acc = np.around(tensor2numpy(correct) * 100 / total, decimals=2)
@@ -740,6 +793,11 @@ class Learner(BaseLearner):
             )
 
     def _inc_loss(self, features, features_old):
+        kd, sep = self._inc_loss_terms(features, features_old)
+        return kd + sep
+
+    def _inc_loss_terms(self, features, features_old):
+        """(beta * alignment, gamma * separation); their sum is the RSIAT / QKSR incremental loss."""
         features_old = self.old_ae(features_old)
         loss_align = nn.MSELoss()(features, features_old)
         protos = torch.from_numpy(self._class_means).float().to(self._device,non_blocking=True)
@@ -767,7 +825,7 @@ class Learner(BaseLearner):
             protos = F.normalize(protos, p=2, dim=1)
             similarity = torch.matmul(protos, features_old_norm.t())
             loss_orth = similarity.sum() / (similarity.shape[0]*similarity.shape[1])
-        return self.args["beta"] * loss_align + self.args["gamma"] * loss_orth
+        return self.args["beta"] * loss_align, self.args["gamma"] * loss_orth
         
     def _compute_rt_loss(self, inputs, targets, epoch=None, warmup_epoch=10):     
         loss_cos=AngularPenaltySMLoss(loss_type='cosface', eps=1e-7, s=self.args["scale"], m=self.args["margin"])
@@ -788,6 +846,8 @@ class Learner(BaseLearner):
                 margin_mode=self.args.get("rs_margin_q_mode", "fixed"),
                 margin_quantile=float(self.args.get("rs_margin_quantile", 0.9)),
             )
+            if getattr(self, "qksr_probe", None) is not None:
+                self.qksr_probe.on_step(self, {"c": loss_c, "base": loss_base})
             return logits, loss_c, loss_base
         
         features_old = self.old_network_module_ptr.extract_vector(inputs)
@@ -820,7 +880,10 @@ class Learner(BaseLearner):
                     module_norms[name] = sum(float(g.detach().square().sum()) for g in grads if g is not None) ** .5
                 bridge.last["total_loss_module_gradient_norms"] = module_norms
             return logits, loss_c, self.args["beta"] * loss_align + added
-        loss_inc = self._inc_loss(features, features_old)
+        loss_kd, loss_sep = self._inc_loss_terms(features, features_old)
+        loss_inc = loss_kd + loss_sep
+        if getattr(self, "qksr_probe", None) is not None:
+            self.qksr_probe.on_step(self, {"c": loss_c, "kd": loss_kd, "sep": loss_sep})
         if getattr(self, "holevo", None) is not None:
             extra = self.holevo.step_loss(self, features, targets, loss_c, epoch)
             if extra is not None:  # None at ramp weight 0 and in diag mode: update identical to RSIAT

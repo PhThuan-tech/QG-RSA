@@ -58,6 +58,8 @@ Tình trạng (✓ = đã có run A2 với đủ head SCF; mọi run đều ch�
 | SVF giai đoạn A: view plastic + view snapshot task 0 (chỉ suy luận) | `svf/README.md` | `svf/results/README.md` | DỪNG theo luật sàng lọc (W01, R 1993): SVF + SCF − SCF ridge = +0.11 < 0.3. SVF − RSIAT +0.41 final, ngang SCF. Snapshot giữ task 0 ở 87.6 nhưng lớp mới bị lấn: cùng đường đánh đổi với oracle |
 | Holevo-CIL giai đoạn A: adapter tối đa Holevo χ của mọi lớp (lớp cũ từ thống kê) | `holevo/README.md` | `holevo/results/README.md` | DỪNG (W02, R 1993): AIA/final trong dải nhiễu RSIAT, pair ratio không đổi. `vn` = RSIAT, `mcr2` (cổ điển) ≥ `vn`; chỉ `spread` giữ task 0–1 +1.8 nhưng mất ở task mới |
 | Holevo-POVM giai đoạn A: A + bộ giải mã Residual-POVM | `holevo_povm/README.md` | `holevo/results/README.md` | DỪNG (W03, R 1993): `hp_povm` +0.21 final (trong nhiễu), G trượt (decoder bị lách qua trạng thái thống kê), `hp_twin` sụp do lỗi hiệu chỉnh λ |
+| Q-BOUND: cận Helstrom/fidelity làm chẩn đoán nhầm lẫn giữa task + đường đánh đổi cũ–mới (hậu kiểm) | `qbound/README.md` | `qbound/results/README.md` (phần A); phần B: wave `W04_qbound` | A (hậu kiểm, 61 run): 11/11 can thiệp huấn luyện (QKSR, Holevo, POVM) chỉ đổi old lấy new, AIA đứng yên; chỉ SCF tăng cả hai nửa. B chưa chạy |
+| QKSR-v2: P0 đo W1–W7 (probe chỉ đọc), P1 PQK so với bản cổ điển, P2 phép chiếu LDA + bandwidth mỗi task | `qksr2/README.md` | `qksr2/results/README.md` | DỪNG. P0: phép chiếu 768→8 mất thông tin lớp, gradient tách lớp ⟂ CosFace. P1: PQK giữ task cũ tốt hơn RBF/bỏ CNOT nhưng AIA chỉ +0.04–0.07. P2: sửa phép chiếu làm AIA giảm 0.07. QKSR − RSIAT n=3: +0.05 [−0.18, +0.28] AIA, forgetting −0.54 |
 
 `archive/qksr/`: config QKSR cũ (CIFAR, CUB), không còn dùng.
 

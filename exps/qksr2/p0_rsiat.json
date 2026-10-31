@@ -1,0 +1,14 @@
+{
+  "prefix": "p0_rsiat",
+  "ssca_mode": "legacy",
+  "rng_replicate": 0,
+  "stats_diagnostics": false,
+  "save_predictions": true,
+  "save_checkpoints": false,
+  "offline": true,
+  "qksr_probe": true,
+  "qksr_probe_every": 10,
+  "qksr_probe_per_class": 20,
+  "qksr_probe_topk": 5,
+  "qksr_probe_seed": 20261031
+}

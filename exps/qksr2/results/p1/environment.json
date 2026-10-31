@@ -1,0 +1,140 @@
+{
+  "gpu": "NVIDIA RTX PRO 6000 Blackwell Server Edition",
+  "torch": "2.11.0+cu128",
+  "cuda": "12.8",
+  "timm": "1.0.29",
+  "plan": {
+    "name": "W05_qksr_p1",
+    "jobs": [
+      [
+        [
+          "imagenetr"
+        ],
+        [
+          1993
+        ],
+        [
+          "p1_qksr_cur_rep0",
+          "p1_qksr_rbf_rep0",
+          "p1_qksr_nocnot_rep0",
+          "p1_qksr_cur_rep1",
+          "p1_qksr_rbf_rep1",
+          "p1_qksr_nocnot_rep1",
+          "p1_qksr_cur_rep2",
+          "p1_qksr_rbf_rep2",
+          "p1_qksr_nocnot_rep2"
+        ]
+      ]
+    ],
+    "max_parallel": 3,
+    "overrides": {
+      "save_checkpoints": false
+    },
+    "tests": [
+      "test_qksr_v2.py",
+      "test_qksr_probe.py",
+      "test_quantum_kernel.py"
+    ],
+    "summaries": [
+      "scripts/summarize_qksr_p1.py"
+    ]
+  },
+  "jobs": [
+    [
+      "imagenetr",
+      "p1_qksr_cur_rep0",
+      1993
+    ],
+    [
+      "imagenetr",
+      "p1_qksr_rbf_rep0",
+      1993
+    ],
+    [
+      "imagenetr",
+      "p1_qksr_nocnot_rep0",
+      1993
+    ],
+    [
+      "imagenetr",
+      "p1_qksr_cur_rep1",
+      1993
+    ],
+    [
+      "imagenetr",
+      "p1_qksr_rbf_rep1",
+      1993
+    ],
+    [
+      "imagenetr",
+      "p1_qksr_nocnot_rep1",
+      1993
+    ],
+    [
+      "imagenetr",
+      "p1_qksr_cur_rep2",
+      1993
+    ],
+    [
+      "imagenetr",
+      "p1_qksr_rbf_rep2",
+      1993
+    ],
+    [
+      "imagenetr",
+      "p1_qksr_nocnot_rep2",
+      1993
+    ]
+  ],
+  "base": "c7bc4fd4ddcae36d3023e1aa9935fd97e9c797a0",
+  "patch_built": "2026-10-31 08:01",
+  "patch_files": [
+    ".gitignore",
+    "exps/holevo/holevo_mcr2.json",
+    "exps/holevo/holevo_spread.json",
+    "exps/holevo/holevo_vn.json",
+    "exps/holevo_povm/hp_diag.json",
+    "exps/holevo_povm/hp_full.json",
+    "exps/holevo_povm/hp_povm.json",
+    "exps/holevo_povm/hp_twin.json",
+    "exps/holevo_povm/hp_twin_povm.json",
+    "exps/qksr2/p0_qksr_cur.json",
+    "exps/qksr2/p0_rsiat.json",
+    "exps/qksr2/p1_qksr_cur_rep0.json",
+    "exps/qksr2/p1_qksr_cur_rep1.json",
+    "exps/qksr2/p1_qksr_cur_rep2.json",
+    "exps/qksr2/p1_qksr_nocnot_rep0.json",
+    "exps/qksr2/p1_qksr_nocnot_rep1.json",
+    "exps/qksr2/p1_qksr_nocnot_rep2.json",
+    "exps/qksr2/p1_qksr_rbf_rep0.json",
+    "exps/qksr2/p1_qksr_rbf_rep1.json",
+    "exps/qksr2/p1_qksr_rbf_rep2.json",
+    "exps/qksr2/p2_gamma_rep0.json",
+    "exps/qksr2/p2_gamma_rep1.json",
+    "exps/qksr2/p2_gamma_rep2.json",
+    "exps/qksr2/p2_lda_rbf_rep0.json",
+    "exps/qksr2/p2_lda_rbf_rep1.json",
+    "exps/qksr2/p2_lda_rbf_rep2.json",
+    "exps/qksr2/p2_lda_rep0.json",
+    "exps/qksr2/p2_lda_rep1.json",
+    "exps/qksr2/p2_lda_rep2.json",
+    "exps/svf/svf.json",
+    "models/RSIAT_adapter.py",
+    "scripts/build_experiments_notebook.py",
+    "scripts/build_wave.py",
+    "scripts/frontier.py",
+    "scripts/pack_base.py",
+    "scripts/summarize_holevo.py",
+    "scripts/summarize_qksr_p1.py",
+    "scripts/summarize_qksr_probe.py",
+    "scripts/summarize_svf.py",
+    "tests/test_holevo.py",
+    "tests/test_qksr_probe.py",
+    "tests/test_qksr_v2.py",
+    "tests/test_svf.py",
+    "utils/holevo.py",
+    "utils/qksr_probe.py",
+    "utils/qsd.py",
+    "utils/quantum_kernel.py"
+  ]
+}

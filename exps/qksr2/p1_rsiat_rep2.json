@@ -1,0 +1,9 @@
+{
+  "prefix": "p1_rsiat_rep2",
+  "ssca_mode": "legacy",
+  "rng_replicate": 2,
+  "stats_diagnostics": false,
+  "save_predictions": true,
+  "save_checkpoints": false,
+  "offline": true
+}
