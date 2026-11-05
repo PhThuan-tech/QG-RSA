@@ -169,6 +169,9 @@ class BaseLearner(object):
         metadata = {
             "format_version": 2,
             "optimizer": str(self.args.get("optimizer", "sgd")).lower(),
+            "classifier_optimizer": str(
+                self.args.get("classifier_optimizer", "main")
+            ).lower(),
             "rae_optimizer": str(
                 self.args.get("rae_optimizer", "main")
             ).lower(),
@@ -179,6 +182,8 @@ class BaseLearner(object):
             "rae_lifecycle": str(self.args.get("rae_lifecycle", "shared")).lower(),
             **{key: self.args.get(key) for key in keys if key in self.args},
         }
+        if metadata["classifier_optimizer"] == "sgd":
+            metadata["classifier_sgd_momentum"] = 0.9
         if metadata["rae_optimizer"] == "sgd":
             metadata.update(
                 rae_sgd_lr=float(self.args["ae_init_lr"]),
@@ -331,7 +336,8 @@ class BaseLearner(object):
                 "adamw_betas", "adamw_eps", "adamw_rae_lr",
                 "adamw_rae_weight_decay", "rae_optimizer",
                 "rae_sgd_lr", "rae_sgd_weight_decay",
-                "rae_sgd_momentum",
+                "rae_sgd_momentum", "classifier_optimizer",
+                "classifier_sgd_momentum",
             }
             missing_metadata = [
                 key for key in current_metadata
@@ -365,6 +371,29 @@ class BaseLearner(object):
                         saved_rae_optimizer, current_metadata["rae_optimizer"]
                     )
                 )
+        if (
+            "classifier_optimizer" in current_metadata
+            and "classifier_optimizer" not in saved_metadata
+        ):
+            saved_classifier_optimizer = saved_metadata.get(
+                "classifier_optimizer", "main"
+            )
+            if saved_classifier_optimizer != current_metadata["classifier_optimizer"]:
+                mismatches.append(
+                    "classifier_optimizer (checkpoint={!r}, current={!r})"
+                    .format(
+                        saved_classifier_optimizer,
+                        current_metadata["classifier_optimizer"],
+                    )
+                )
+        if (
+            current_metadata.get("classifier_optimizer") == "sgd"
+            and "classifier_sgd_momentum" not in saved_metadata
+            and "classifier_optimizer" in saved_metadata
+        ):
+            mismatches.append(
+                "classifier_sgd_momentum is missing from the checkpoint metadata"
+            )
         if "keeplora_target" in current_metadata:
             saved_target = str(
                 saved_metadata.get("keeplora_target", "attention")

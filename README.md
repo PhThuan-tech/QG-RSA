@@ -114,6 +114,23 @@ The separate RAE optimizer uses the same per-epoch cosine schedule as the main
 optimizer. Semantic-drift diagnostics are enabled for analysis only. These
 isolated configs use fresh prefixes and do not resume existing checkpoints.
 
+### KeepLoRA AdamW with SGD RAE and classifier
+
+To keep AdamW for the KeepLoRA backbone while using separate SGD momentum
+optimizers for the RAE and classifier, run:
+
+    python main.py --config ./exps/keeplora_adamw_sgd_rae_sgd_classifier.json
+    python main.py --config ./exps/keeplora_adamw_mlp_sgd_rae_sgd_classifier.json
+
+The classifier uses the RSIAT SGD recipe: momentum `0.9`, the learning rate
+and weight decay from its existing task parameter group, and a per-epoch
+cosine schedule. At task 0 its learning rate is `0.01`; on incremental tasks
+it uses `init_lr`. RAE SGD retains its existing `ae_init_lr`,
+`ae_weight_decay`, and `rae_sgd_momentum` settings. Configurations without
+`classifier_optimizer` continue to train the classifier with the main
+optimizer. The new configs have separate prefixes, start with `resume: false`,
+and preserve all other settings from their corresponding RAE-SGD configs.
+
 ### KeepLoRA replacement
 
 The KeepLoRA smoke configuration keeps the RSIAT learner, cosine classifier,

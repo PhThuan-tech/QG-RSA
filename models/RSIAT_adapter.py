@@ -840,10 +840,29 @@ class Learner(BaseLearner):
                 {'name': 'classifier', 'params': self._network.fc.parameters(),
                  'lr': 0.01, 'weight_decay': self.args['weight_decay']}
             ]
-            optimizer = self._build_main_optimizer(param_groups, incremental=False)
+            optimizer, classifier_optimizer = self._build_initial_optimizers(
+                param_groups
+            )
             scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=self.tuned_epochs, eta_min=self.min_lr)
+            classifier_scheduler = (
+                optim.lr_scheduler.CosineAnnealingLR(
+                    classifier_optimizer,
+                    T_max=self.tuned_epochs,
+                    eta_min=self.min_lr,
+                )
+                if classifier_optimizer is not None
+                else None
+            )
             log_count_parameter(param_groups)
-            self._init_train(train_loader, test_loader, optimizer, scheduler, self.args['warmup_epoch'])
+            self._init_train(
+                train_loader,
+                test_loader,
+                optimizer,
+                scheduler,
+                self.args['warmup_epoch'],
+                classifier_optimizer=classifier_optimizer,
+                classifier_scheduler=classifier_scheduler,
+            )
         else:
             self.tuned_epochs = self.args['inc_epochs']
             param_groups = []
@@ -856,15 +875,29 @@ class Learner(BaseLearner):
             param_groups.append(
                 {'name': 'rae', 'params': self.old_ae.parameters(),
                  'lr': self.args['ae_init_lr'], 'weight_decay': self.args['ae_weight_decay']})
-            optimizer, rae_optimizer = self._build_incremental_optimizers(
+            optimizers = self._build_incremental_optimizers(
                 param_groups
             )
+            if len(optimizers) == 3:
+                optimizer, rae_optimizer, classifier_optimizer = optimizers
+            else:
+                optimizer, rae_optimizer = optimizers
+                classifier_optimizer = None
             scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=self.tuned_epochs, eta_min=self.min_lr)
             rae_scheduler = (
                 optim.lr_scheduler.CosineAnnealingLR(
                     rae_optimizer, T_max=self.tuned_epochs, eta_min=self.min_lr
                 )
                 if rae_optimizer is not None
+                else None
+            )
+            classifier_scheduler = (
+                optim.lr_scheduler.CosineAnnealingLR(
+                    classifier_optimizer,
+                    T_max=self.tuned_epochs,
+                    eta_min=self.min_lr,
+                )
+                if classifier_optimizer is not None
                 else None
             )
             log_count_parameter(param_groups)
@@ -876,7 +909,89 @@ class Learner(BaseLearner):
                 self.args['warmup_epoch'],
                 rae_optimizer=rae_optimizer,
                 rae_scheduler=rae_scheduler,
+                classifier_optimizer=classifier_optimizer,
+                classifier_scheduler=classifier_scheduler,
             )
+
+    def _classifier_optimizer_mode(self):
+        mode = str(self.args.get("classifier_optimizer", "main")).lower()
+        if mode not in ("main", "sgd"):
+            raise ValueError(
+                "classifier_optimizer must be 'main' or 'sgd', got {!r}."
+                .format(mode)
+            )
+        return mode
+
+    @staticmethod
+    def _trainable_parameter_ids(param_groups):
+        return {
+            id(parameter)
+            for group in param_groups
+            for parameter in group["params"]
+            if parameter.requires_grad
+        }
+
+    @staticmethod
+    def _optimizer_parameter_ids(optimizer):
+        return {
+            id(parameter)
+            for group in optimizer.param_groups
+            for parameter in group["params"]
+            if parameter.requires_grad
+        }
+
+    def _assert_optimizer_ownership(self, named_optimizers, expected_ids):
+        owners = {}
+        for name, optimizer in named_optimizers:
+            if optimizer is None:
+                continue
+            parameter_ids = self._optimizer_parameter_ids(optimizer)
+            for parameter_id in parameter_ids:
+                if parameter_id in owners:
+                    raise RuntimeError(
+                        "Parameter is assigned to both {} and {} optimizers."
+                        .format(owners[parameter_id], name)
+                    )
+                owners[parameter_id] = name
+        actual_ids = set(owners)
+        if actual_ids != expected_ids:
+            raise RuntimeError(
+                "Optimizer parameter coverage mismatch: missing={}, unexpected={}"
+                .format(
+                    len(expected_ids - actual_ids),
+                    len(actual_ids - expected_ids),
+                )
+            )
+
+    def _build_initial_optimizers(self, param_groups):
+        if self._classifier_optimizer_mode() != "sgd":
+            return self._build_main_optimizer(
+                param_groups, incremental=False
+            ), None
+
+        groups = [dict(group, params=list(group["params"])) for group in param_groups]
+        classifier_groups = [
+            group for group in groups if group["name"] == "classifier"
+        ]
+        if len(classifier_groups) != 1:
+            raise RuntimeError(
+                "Separate classifier SGD requires exactly one classifier group."
+            )
+        classifier_group = classifier_groups[0]
+        main_groups = [group for group in groups if group is not classifier_group]
+        main_optimizer = self._build_main_optimizer(
+            main_groups,
+            incremental=False,
+            expected_parameter_ids=self._trainable_parameter_ids(main_groups),
+        )
+        classifier_optimizer = self._build_classifier_sgd_optimizer(
+            classifier_group
+        )
+        self._assert_optimizer_ownership(
+            (("main/backbone", main_optimizer), ("SGD/classifier", classifier_optimizer)),
+            self._trainable_parameter_ids(groups),
+        )
+        return main_optimizer, classifier_optimizer
 
     def _rae_optimizer_mode(self):
         mode = str(self.args.get("rae_optimizer", "main")).lower()
@@ -893,6 +1008,10 @@ class Learner(BaseLearner):
         return mode
 
     def _build_incremental_optimizers(self, param_groups):
+        if self._classifier_optimizer_mode() == "sgd":
+            return self._build_incremental_optimizers_with_sgd_classifier(
+                param_groups
+            )
         if self._rae_optimizer_mode() != "sgd":
             return self._build_main_optimizer(
                 param_groups, incremental=True
@@ -934,6 +1053,111 @@ class Learner(BaseLearner):
             )
         return main_optimizer, rae_optimizer
 
+    def _build_incremental_optimizers_with_sgd_classifier(self, param_groups):
+        groups = [dict(group, params=list(group["params"])) for group in param_groups]
+        classifier_groups = [
+            group for group in groups if group["name"] == "classifier"
+        ]
+        if len(classifier_groups) != 1:
+            raise RuntimeError(
+                "Separate classifier SGD requires exactly one classifier group."
+            )
+        classifier_group = classifier_groups[0]
+        classifier_optimizer = self._build_classifier_sgd_optimizer(
+            classifier_group
+        )
+        main_groups = [group for group in groups if group is not classifier_group]
+
+        if self._rae_optimizer_mode() == "sgd":
+            rae_groups = [group for group in main_groups if group["name"] == "rae"]
+            if len(rae_groups) != 1:
+                raise RuntimeError(
+                    "Separate RAE SGD requires exactly one RAE parameter group."
+                )
+            rae_group = rae_groups[0]
+            backbone_groups = [
+                group for group in main_groups if group is not rae_group
+            ]
+            main_optimizer = self._build_main_optimizer(
+                backbone_groups,
+                incremental=True,
+                include_rae=False,
+                expected_parameter_ids=self._trainable_parameter_ids(
+                    backbone_groups
+                ),
+            )
+            rae_optimizer = self._build_rae_sgd_optimizer(rae_group)
+        else:
+            main_optimizer = self._build_main_optimizer(
+                main_groups,
+                incremental=True,
+                expected_parameter_ids=self._trainable_parameter_ids(main_groups),
+            )
+            rae_optimizer = None
+
+        expected_ids = self._trainable_parameter_ids(groups)
+        self._assert_optimizer_ownership(
+            (
+                ("main/backbone", main_optimizer),
+                ("SGD/RAE", rae_optimizer),
+                ("SGD/classifier", classifier_optimizer),
+            ),
+            expected_ids,
+        )
+        return main_optimizer, rae_optimizer, classifier_optimizer
+
+    def _build_classifier_sgd_optimizer(self, group):
+        parameters = [
+            parameter for parameter in group["params"] if parameter.requires_grad
+        ]
+        expected_parameters = {
+            id(parameter)
+            for parameter in self._network.fc.parameters()
+            if parameter.requires_grad
+        }
+        if not parameters:
+            raise RuntimeError("Classifier SGD parameter group is empty.")
+        if {id(parameter) for parameter in parameters} != expected_parameters:
+            raise RuntimeError(
+                "Classifier SGD parameter group does not match the current "
+                "trainable classifier parameters."
+            )
+
+        lr = float(group["lr"])
+        weight_decay = float(group["weight_decay"])
+        if not math.isfinite(lr) or lr <= 0:
+            raise ValueError("Classifier SGD learning rate must be finite and > 0.")
+        if not math.isfinite(weight_decay) or weight_decay < 0:
+            raise ValueError(
+                "Classifier SGD weight decay must be finite and >= 0."
+            )
+        momentum = 0.9
+        optimizer = optim.SGD(
+            [
+                {
+                    "name": "classifier",
+                    "params": parameters,
+                    "lr": lr,
+                    "weight_decay": weight_decay,
+                }
+            ],
+            momentum=momentum,
+        )
+        logging.info(
+            "Classifier optimizer initialized task=%d optimizer=SGD "
+            "tensors=%d trainable_parameters=%d lr=%g weight_decay=%g "
+            "momentum=%g nesterov=%s scheduler=CosineAnnealingLR "
+            "scheduler_step=per_epoch",
+            self._cur_task,
+            len(parameters),
+            sum(parameter.numel() for parameter in parameters),
+            lr,
+            weight_decay,
+            momentum,
+            optimizer.defaults["nesterov"],
+        )
+        return optimizer
+
     def _build_rae_sgd_optimizer(self, group):
         parameters = [
             parameter
@@ -962,14 +1186,25 @@ class Learner(BaseLearner):
             weight_decay=weight_decay,
         )
         logging.info(
-            "RAE optimizer=SGD lr=%g momentum=%g weight_decay=%g",
+            "RAE optimizer initialized task=%d optimizer=SGD tensors=%d "
+            "trainable_parameters=%d lr=%g momentum=%g weight_decay=%g "
+            "scheduler=CosineAnnealingLR scheduler_step=per_epoch",
+            self._cur_task,
+            len(parameters),
+            sum(parameter.numel() for parameter in parameters),
             lr,
             momentum,
             weight_decay,
         )
         return optimizer
 
-    def _build_main_optimizer(self, param_groups, incremental, include_rae=True):
+    def _build_main_optimizer(
+        self,
+        param_groups,
+        incremental,
+        include_rae=True,
+        expected_parameter_ids=None,
+    ):
         for group in param_groups:
             group["params"] = list(group["params"])
         grouped_ids = [
@@ -1051,17 +1286,20 @@ class Learner(BaseLearner):
             if isinstance(self._network, nn.DataParallel)
             else self._network
         )
-        expected_parameters = {
-            id(parameter)
-            for parameter in network.parameters()
-            if parameter.requires_grad
-        }
-        if incremental and include_rae and self.old_ae is not None:
-            expected_parameters.update(
+        if expected_parameter_ids is None:
+            expected_parameters = {
                 id(parameter)
-                for parameter in self.old_ae.parameters()
+                for parameter in network.parameters()
                 if parameter.requires_grad
-            )
+            }
+            if incremental and include_rae and self.old_ae is not None:
+                expected_parameters.update(
+                    id(parameter)
+                    for parameter in self.old_ae.parameters()
+                    if parameter.requires_grad
+                )
+        else:
+            expected_parameters = set(expected_parameter_ids)
 
         grouped_ids = [
             id(parameter)
@@ -1122,6 +1360,8 @@ class Learner(BaseLearner):
         warmup_epoch,
         rae_optimizer=None,
         rae_scheduler=None,
+        classifier_optimizer=None,
+        classifier_scheduler=None,
     ):
         prog_bar = tqdm(range(self.tuned_epochs))
         eval_interval = self.args.get("eval_interval", 0)
@@ -1140,10 +1380,14 @@ class Learner(BaseLearner):
                 optimizer.zero_grad()
                 if rae_optimizer is not None:
                     rae_optimizer.zero_grad()
+                if classifier_optimizer is not None:
+                    classifier_optimizer.zero_grad()
                 loss.backward()
                 optimizer.step()
                 if rae_optimizer is not None:
                     rae_optimizer.step()
+                if classifier_optimizer is not None:
+                    classifier_optimizer.step()
                 losses += loss.item()
                 losses_c += loss_c.item()
                 losses_rt += loss_rt.item()
@@ -1153,6 +1397,8 @@ class Learner(BaseLearner):
             scheduler.step()
             if rae_scheduler is not None:
                 rae_scheduler.step()
+            if classifier_scheduler is not None:
+                classifier_scheduler.step()
 
             train_acc = np.around(tensor2numpy(correct) * 100 / total, decimals=2)
             if self._should_eval_epoch(epoch, self.tuned_epochs, eval_interval):
