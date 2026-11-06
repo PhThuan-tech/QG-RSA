@@ -883,6 +883,11 @@ class OptimizerConfigurationTests(unittest.TestCase):
                 encoding="utf-8"
             )
         )
+        baseline_diagnostics = json.loads(
+            (ROOT / "exps" / "adapter_cifar224_semantic_drift.json").read_text(
+                encoding="utf-8"
+            )
+        )
         experiment = json.loads(
             (ROOT / "exps" / "adapter_sgd_adamw_classifier.json").read_text(
                 encoding="utf-8"
@@ -902,8 +907,14 @@ class OptimizerConfigurationTests(unittest.TestCase):
                 "adamw_weight_decay",
                 "adamw_betas",
                 "adamw_eps",
+                "semantic_drift",
             },
         )
+        self.assertEqual(
+            experiment["semantic_drift"],
+            baseline_diagnostics["semantic_drift"],
+        )
+        self.assertTrue(experiment["semantic_drift"]["enabled"])
         self.assertEqual(experiment["optimizer"], "sgd")
         self.assertEqual(experiment["classifier_optimizer"], "adamw")
         self.assertFalse(experiment["resume"])
