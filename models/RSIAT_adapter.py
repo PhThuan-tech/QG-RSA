@@ -915,9 +915,9 @@ class Learner(BaseLearner):
 
     def _classifier_optimizer_mode(self):
         mode = str(self.args.get("classifier_optimizer", "main")).lower()
-        if mode not in ("main", "sgd"):
+        if mode not in ("main", "sgd", "adamw"):
             raise ValueError(
-                "classifier_optimizer must be 'main' or 'sgd', got {!r}."
+                "classifier_optimizer must be 'main', 'sgd', or 'adamw', got {!r}."
                 .format(mode)
             )
         return mode
@@ -964,7 +964,8 @@ class Learner(BaseLearner):
             )
 
     def _build_initial_optimizers(self, param_groups):
-        if self._classifier_optimizer_mode() != "sgd":
+        classifier_mode = self._classifier_optimizer_mode()
+        if classifier_mode == "main":
             return self._build_main_optimizer(
                 param_groups, incremental=False
             ), None
@@ -975,7 +976,7 @@ class Learner(BaseLearner):
         ]
         if len(classifier_groups) != 1:
             raise RuntimeError(
-                "Separate classifier SGD requires exactly one classifier group."
+                "A separate classifier optimizer requires exactly one classifier group."
             )
         classifier_group = classifier_groups[0]
         main_groups = [group for group in groups if group is not classifier_group]
@@ -984,11 +985,14 @@ class Learner(BaseLearner):
             incremental=False,
             expected_parameter_ids=self._trainable_parameter_ids(main_groups),
         )
-        classifier_optimizer = self._build_classifier_sgd_optimizer(
-            classifier_group
+        classifier_optimizer = self._build_separate_classifier_optimizer(
+            classifier_group, classifier_mode
         )
         self._assert_optimizer_ownership(
-            (("main/backbone", main_optimizer), ("SGD/classifier", classifier_optimizer)),
+            (
+                ("main/backbone", main_optimizer),
+                ("{}/classifier".format(classifier_mode.upper()), classifier_optimizer),
+            ),
             self._trainable_parameter_ids(groups),
         )
         return main_optimizer, classifier_optimizer
@@ -1008,8 +1012,9 @@ class Learner(BaseLearner):
         return mode
 
     def _build_incremental_optimizers(self, param_groups):
-        if self._classifier_optimizer_mode() == "sgd":
-            return self._build_incremental_optimizers_with_sgd_classifier(
+        classifier_mode = self._classifier_optimizer_mode()
+        if classifier_mode != "main":
+            return self._build_incremental_optimizers_with_separate_classifier(
                 param_groups
             )
         if self._rae_optimizer_mode() != "sgd":
@@ -1053,18 +1058,19 @@ class Learner(BaseLearner):
             )
         return main_optimizer, rae_optimizer
 
-    def _build_incremental_optimizers_with_sgd_classifier(self, param_groups):
+    def _build_incremental_optimizers_with_separate_classifier(self, param_groups):
         groups = [dict(group, params=list(group["params"])) for group in param_groups]
+        classifier_mode = self._classifier_optimizer_mode()
         classifier_groups = [
             group for group in groups if group["name"] == "classifier"
         ]
         if len(classifier_groups) != 1:
             raise RuntimeError(
-                "Separate classifier SGD requires exactly one classifier group."
+                "A separate classifier optimizer requires exactly one classifier group."
             )
         classifier_group = classifier_groups[0]
-        classifier_optimizer = self._build_classifier_sgd_optimizer(
-            classifier_group
+        classifier_optimizer = self._build_separate_classifier_optimizer(
+            classifier_group, classifier_mode
         )
         main_groups = [group for group in groups if group is not classifier_group]
 
@@ -1100,11 +1106,23 @@ class Learner(BaseLearner):
             (
                 ("main/backbone", main_optimizer),
                 ("SGD/RAE", rae_optimizer),
-                ("SGD/classifier", classifier_optimizer),
+                (
+                    "{}/classifier".format(classifier_mode.upper()),
+                    classifier_optimizer,
+                ),
             ),
             expected_ids,
         )
         return main_optimizer, rae_optimizer, classifier_optimizer
+
+    def _build_separate_classifier_optimizer(self, group, mode):
+        if mode == "sgd":
+            return self._build_classifier_sgd_optimizer(group)
+        if mode == "adamw":
+            return self._build_classifier_adamw_optimizer(group)
+        raise ValueError(
+            "A separate classifier optimizer requires mode 'sgd' or 'adamw'."
+        )
 
     def _build_classifier_sgd_optimizer(self, group):
         parameters = [
@@ -1155,6 +1173,70 @@ class Learner(BaseLearner):
             weight_decay,
             momentum,
             optimizer.defaults["nesterov"],
+        )
+        return optimizer
+
+    def _build_classifier_adamw_optimizer(self, group):
+        parameters = [
+            parameter for parameter in group["params"] if parameter.requires_grad
+        ]
+        expected_parameters = {
+            id(parameter)
+            for parameter in self._network.fc.parameters()
+            if parameter.requires_grad
+        }
+        if not parameters:
+            raise RuntimeError("Classifier AdamW parameter group is empty.")
+        if {id(parameter) for parameter in parameters} != expected_parameters:
+            raise RuntimeError(
+                "Classifier AdamW parameter group does not match the current "
+                "trainable classifier parameters."
+            )
+
+        lr = float(self.args.get("adamw_lr", 1e-3))
+        weight_decay = float(self.args.get("adamw_weight_decay", 0.01))
+        betas = tuple(
+            float(value)
+            for value in self.args.get("adamw_betas", (0.9, 0.999))
+        )
+        eps = float(self.args.get("adamw_eps", 1e-8))
+        if not math.isfinite(lr) or lr <= 0:
+            raise ValueError("Classifier AdamW learning rate must be finite and > 0.")
+        if not math.isfinite(weight_decay) or weight_decay < 0:
+            raise ValueError(
+                "Classifier AdamW weight decay must be finite and >= 0."
+            )
+        if not math.isfinite(eps) or eps <= 0 or len(betas) != 2:
+            raise ValueError(
+                "Classifier AdamW requires finite eps > 0 and exactly two betas."
+            )
+        if any(not math.isfinite(beta) or beta < 0 or beta >= 1 for beta in betas):
+            raise ValueError("Classifier AdamW beta values must be finite and in [0, 1).")
+
+        optimizer = optim.AdamW(
+            [
+                {
+                    "name": "classifier",
+                    "params": parameters,
+                    "lr": lr,
+                    "weight_decay": weight_decay,
+                }
+            ],
+            betas=betas,
+            eps=eps,
+        )
+        logging.info(
+            "Classifier optimizer initialized task=%d optimizer=AdamW "
+            "tensors=%d trainable_parameters=%d lr=%g weight_decay=%g "
+            "betas=%s eps=%g scheduler=CosineAnnealingLR "
+            "scheduler_step=per_epoch",
+            self._cur_task,
+            len(parameters),
+            sum(parameter.numel() for parameter in parameters),
+            lr,
+            weight_decay,
+            betas,
+            eps,
         )
         return optimizer
 

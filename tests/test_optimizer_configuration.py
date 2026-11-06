@@ -63,12 +63,18 @@ class OptimizerConfigurationTests(unittest.TestCase):
         learner._build_initial_optimizers = MethodType(
             Learner._build_initial_optimizers, learner
         )
-        learner._build_incremental_optimizers_with_sgd_classifier = MethodType(
-            Learner._build_incremental_optimizers_with_sgd_classifier,
+        learner._build_incremental_optimizers_with_separate_classifier = MethodType(
+            Learner._build_incremental_optimizers_with_separate_classifier,
             learner,
+        )
+        learner._build_separate_classifier_optimizer = MethodType(
+            Learner._build_separate_classifier_optimizer, learner
         )
         learner._build_classifier_sgd_optimizer = MethodType(
             Learner._build_classifier_sgd_optimizer, learner
+        )
+        learner._build_classifier_adamw_optimizer = MethodType(
+            Learner._build_classifier_adamw_optimizer, learner
         )
         learner._assert_optimizer_ownership = MethodType(
             Learner._assert_optimizer_ownership, learner
@@ -332,9 +338,67 @@ class OptimizerConfigurationTests(unittest.TestCase):
     def test_classifier_optimizer_defaults_to_main_and_rejects_invalid_values(self):
         learner, _ = self.make_learner("adamw")
         self.assertEqual(learner._classifier_optimizer_mode(), "main")
+        learner.args["classifier_optimizer"] = "adamw"
+        self.assertEqual(learner._classifier_optimizer_mode(), "adamw")
         learner.args["classifier_optimizer"] = "invalid"
         with self.assertRaisesRegex(ValueError, "classifier_optimizer"):
             learner._classifier_optimizer_mode()
+
+    def test_initial_classifier_adamw_is_separate_from_sgd_backbone(self):
+        learner, groups = self.make_learner("sgd")
+        learner.args["classifier_optimizer"] = "adamw"
+        main_optimizer, classifier_optimizer = (
+            learner._build_initial_optimizers(groups)
+        )
+
+        self.assertIsInstance(main_optimizer, torch.optim.SGD)
+        self.assertIsInstance(classifier_optimizer, torch.optim.AdamW)
+        self.assertEqual(classifier_optimizer.param_groups[0]["lr"], 1e-3)
+        self.assertEqual(
+            classifier_optimizer.param_groups[0]["weight_decay"], 0.01
+        )
+        self.assertEqual(
+            classifier_optimizer.defaults["betas"], (0.9, 0.999)
+        )
+        main_ids = learner._optimizer_parameter_ids(main_optimizer)
+        classifier_ids = learner._optimizer_parameter_ids(classifier_optimizer)
+        self.assertFalse(main_ids & classifier_ids)
+        self.assertEqual(
+            classifier_ids,
+            {id(parameter) for parameter in learner._network.fc.parameters()},
+        )
+
+    def test_incremental_classifier_adamw_is_separate_and_rae_stays_with_sgd(self):
+        learner, groups = self.make_learner("sgd", incremental=True)
+        learner.args["classifier_optimizer"] = "adamw"
+        main_optimizer, rae_optimizer, classifier_optimizer = (
+            learner._build_incremental_optimizers(groups)
+        )
+
+        self.assertIsInstance(main_optimizer, torch.optim.SGD)
+        self.assertIsNone(rae_optimizer)
+        self.assertIsInstance(classifier_optimizer, torch.optim.AdamW)
+        main_ids = learner._optimizer_parameter_ids(main_optimizer)
+        classifier_ids = learner._optimizer_parameter_ids(classifier_optimizer)
+        self.assertFalse(main_ids & classifier_ids)
+        self.assertIn(
+            id(learner.old_ae.weight),
+            main_ids,
+            "The RSIAT baseline keeps RAE in its main SGD optimizer.",
+        )
+        self.assertEqual(
+            main_ids | classifier_ids,
+            {
+                id(parameter)
+                for parameter in learner._network.parameters()
+                if parameter.requires_grad
+            }
+            | {
+                id(parameter)
+                for parameter in learner.old_ae.parameters()
+                if parameter.requires_grad
+            },
+        )
 
     def test_initial_classifier_sgd_is_separate_and_matches_rsiat_recipe(self):
         learner, groups = self.make_learner("adamw")
@@ -757,6 +821,30 @@ class OptimizerConfigurationTests(unittest.TestCase):
                 {"run_metadata": classifier_sgd_metadata},
             )
 
+        classifier_adamw_args = {
+            "optimizer": "sgd",
+            "classifier_optimizer": "adamw",
+            "adamw_lr": 1e-3,
+            "adamw_weight_decay": 0.01,
+            "adamw_betas": [0.9, 0.999],
+            "adamw_eps": 1e-8,
+        }
+        classifier_adamw_metadata = BaseLearner._checkpoint_run_metadata(
+            SimpleNamespace(args=classifier_adamw_args)
+        )
+        self.assertEqual(classifier_adamw_metadata["classifier_adamw_lr"], 1e-3)
+        classifier_adamw_run = SimpleNamespace(
+            args=classifier_adamw_args, class_order=None
+        )
+        classifier_adamw_run._checkpoint_run_metadata = MethodType(
+            BaseLearner._checkpoint_run_metadata, classifier_adamw_run
+        )
+        with self.assertRaisesRegex(ValueError, "classifier_optimizer"):
+            BaseLearner._validate_checkpoint(
+                classifier_adamw_run,
+                {"run_metadata": classifier_sgd_metadata},
+            )
+
     def test_new_classifier_configs_only_change_run_id_and_optimizer(self):
         cases = (
             (
@@ -788,6 +876,38 @@ class OptimizerConfigurationTests(unittest.TestCase):
                     differences, {"prefix", "classifier_optimizer"}
                 )
                 self.assertNotEqual(new_config["prefix"], old_config["prefix"])
+
+    def test_shared_adapter_adamw_classifier_config_preserves_baseline_recipe(self):
+        baseline = json.loads(
+            (ROOT / "exps" / "adapter_cifar224.json").read_text(
+                encoding="utf-8"
+            )
+        )
+        experiment = json.loads(
+            (ROOT / "exps" / "adapter_sgd_adamw_classifier.json").read_text(
+                encoding="utf-8"
+            )
+        )
+        differences = {
+            key
+            for key in set(baseline) | set(experiment)
+            if baseline.get(key) != experiment.get(key)
+        }
+        self.assertEqual(
+            differences,
+            {
+                "prefix",
+                "classifier_optimizer",
+                "adamw_lr",
+                "adamw_weight_decay",
+                "adamw_betas",
+                "adamw_eps",
+            },
+        )
+        self.assertEqual(experiment["optimizer"], "sgd")
+        self.assertEqual(experiment["classifier_optimizer"], "adamw")
+        self.assertFalse(experiment["resume"])
+        self.assertTrue(experiment["isolate_runs"])
 
     def test_four_configs_are_isolated_and_paired(self):
         names = (

@@ -131,6 +131,23 @@ it uses `init_lr`. RAE SGD retains its existing `ae_init_lr`,
 optimizer. The new configs have separate prefixes, start with `resume: false`,
 and preserve all other settings from their corresponding RAE-SGD configs.
 
+### RSIAT shared adapter with an AdamW classifier
+
+To keep the original shared adapter and RSIAT SGD recipe for the backbone and
+RAE while assigning the classifier its own AdamW optimizer, run:
+
+    python main.py --config ./exps/adapter_sgd_adamw_classifier.json
+
+This config is paired with `adapter_cifar224.json`: dataset, seed, training
+schedule, losses, SSCA, CA, and the shared-adapter backbone recipe are unchanged.
+Only the classifier uses a separate AdamW optimizer during main task training,
+with `lr=0.001`, `weight_decay=0.01`, `betas=(0.9, 0.999)`, and `eps=1e-8`.
+The backbone and RAE remain in the baseline SGD optimizer. CA is unchanged and
+continues to use its own SGD optimizer for the classifier. The AdamW classifier
+uses an independent per-epoch cosine scheduler during main task training.
+These settings test a mixed-optimizer recipe; differences from the all-SGD
+baseline reflect both the optimizer and its AdamW hyperparameters.
+
 ### KeepLoRA replacement
 
 The KeepLoRA smoke configuration keeps the RSIAT learner, cosine classifier,

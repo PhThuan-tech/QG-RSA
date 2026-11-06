@@ -184,6 +184,18 @@ class BaseLearner(object):
         }
         if metadata["classifier_optimizer"] == "sgd":
             metadata["classifier_sgd_momentum"] = 0.9
+        if metadata["classifier_optimizer"] == "adamw":
+            metadata.update(
+                classifier_adamw_lr=float(self.args.get("adamw_lr", 1e-3)),
+                classifier_adamw_weight_decay=float(
+                    self.args.get("adamw_weight_decay", 0.01)
+                ),
+                classifier_adamw_betas=tuple(
+                    float(value)
+                    for value in self.args.get("adamw_betas", (0.9, 0.999))
+                ),
+                classifier_adamw_eps=float(self.args.get("adamw_eps", 1e-8)),
+            )
         if metadata["rae_optimizer"] == "sgd":
             metadata.update(
                 rae_sgd_lr=float(self.args["ae_init_lr"]),
@@ -337,7 +349,9 @@ class BaseLearner(object):
                 "adamw_rae_weight_decay", "rae_optimizer",
                 "rae_sgd_lr", "rae_sgd_weight_decay",
                 "rae_sgd_momentum", "classifier_optimizer",
-                "classifier_sgd_momentum",
+                "classifier_sgd_momentum", "classifier_adamw_lr",
+                "classifier_adamw_weight_decay", "classifier_adamw_betas",
+                "classifier_adamw_eps",
             }
             missing_metadata = [
                 key for key in current_metadata
