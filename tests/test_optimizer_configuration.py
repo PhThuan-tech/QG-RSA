@@ -1005,6 +1005,45 @@ class OptimizerConfigurationTests(unittest.TestCase):
                 experiment["ae_weight_decay"], source["ae_weight_decay"]
             )
 
+    def test_keeplora_adamw_ssca_off_configs_only_disable_compensation(self):
+        pairs = (
+            ("keeplora_adamw.json", "keeplora_adamw_nossca.json"),
+            ("keeplora_adamw_mlp.json", "keeplora_adamw_mlp_nossca.json"),
+        )
+        for enabled_name, disabled_name in pairs:
+            with self.subTest(pair=(enabled_name, disabled_name)):
+                enabled = json.loads(
+                    (ROOT / "exps" / enabled_name).read_text(encoding="utf-8")
+                )
+                disabled = json.loads(
+                    (ROOT / "exps" / disabled_name).read_text(encoding="utf-8")
+                )
+                enabled_prefix = enabled.pop("prefix")
+                disabled_prefix = disabled.pop("prefix")
+                self.assertNotEqual(enabled_prefix, disabled_prefix)
+                self.assertTrue(enabled.pop("ssca"))
+                self.assertFalse(disabled.pop("ssca"))
+                self.assertEqual(enabled, disabled)
+                self.assertTrue(disabled["ca"])
+                self.assertEqual(disabled["optimizer"], "adamw")
+                self.assertFalse(disabled["resume"])
+                self.assertTrue(disabled["isolate_runs"])
+
+        self.assertEqual(
+            json.loads(
+                (ROOT / "exps" / "keeplora_adamw_nossca.json")
+                .read_text(encoding="utf-8")
+            )["keeplora_targets"],
+            ["q", "k", "v", "o"],
+        )
+        self.assertEqual(
+            json.loads(
+                (ROOT / "exps" / "keeplora_adamw_mlp_nossca.json")
+                .read_text(encoding="utf-8")
+            )["keeplora_target"],
+            "mlp",
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

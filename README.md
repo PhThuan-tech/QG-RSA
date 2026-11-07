@@ -93,6 +93,21 @@ The original MLP baseline (`exps/keeplora_adamw_mlp.json`) also enables the
 same diagnostics so its drift reports can be compared with the global- and
 age-decay MLP runs.
 
+### KeepLoRA AdamW without SSCA
+
+These matched ablations disable only the prototype compensation step while
+keeping the existing AdamW recipe, KeepLoRA placement, RSIAT losses, and CA:
+
+    python main.py --config ./exps/keeplora_adamw_nossca.json
+    python main.py --config ./exps/keeplora_adamw_mlp_nossca.json
+
+Compare them respectively with `keeplora_adamw.json` (Q/K/V/O) and
+`keeplora_adamw_mlp.json` (MLP). Each pair differs only in `ssca` and the run
+prefix. The MLP pair keeps the same semantic-drift diagnostics enabled; the
+Q/K/V/O pair retains its existing configuration without that observer.
+Disabling SSCA does not disable RAE alignment/orthogonal losses, KeepLoRA
+subspace updates, or classifier alignment (CA).
+
 The age-aware configuration instead scales each old prototype using
 `ssca_scale_mode: "age_decay"` and `ssca_age_gamma`. Its class-to-task mapping
 uses the actual `task_sizes` recorded by the data manager, including an uneven
