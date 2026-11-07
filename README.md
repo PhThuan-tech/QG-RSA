@@ -325,6 +325,42 @@ trainable-parameter audit. The observer uses `torch.no_grad()`, restores model
 mode and RNG state, and never calls backward or an optimizer step. The existing
 shuffled training loader used by displacement is intentionally unchanged.
 
+### SSCA displacement pairing experiment
+
+The SSCA pairing ablation compares a legacy-style stochastic/unpaired
+displacement control with a paired, deterministic measurement. Both modes use a
+separate probe loader and preserve the process RNG state, so probing does not
+change the training loader's shuffle order or augmentation stream.
+Configurations without `ssca_drift_probe_mode` keep the historical SSCA
+feature-extraction path.
+
+Run the matched configurations with the same seed:
+
+    python main.py --config ./exps/adapter_sgd_ssca_probe_stochastic.json
+    python main.py --config ./exps/adapter_sgd_ssca_probe_paired.json
+    python main.py --config ./exps/keeplora_adamw_mlp_sgd_rae_ssca_age_g090_probe_stochastic.json
+    python main.py --config ./exps/keeplora_adamw_mlp_sgd_rae_ssca_age_g090_probe_paired.json
+    python main.py --config ./exps/keeplora_adamw_mlp_ssca_age_g090_probe_adamw_stochastic.json
+    python main.py --config ./exps/keeplora_adamw_mlp_ssca_age_g090_probe_adamw_paired.json
+
+The stochastic control retains shuffled samples and train augmentation, while
+the paired variant uses the same training examples in a fixed order with the
+deterministic test transform. The latter logs pre/post sample-ID and label match
+rates and stops if pairing is broken. The SGD-RAE KeepLoRA pair uses MLP
+KeepLoRA + AdamW, SGD momentum `0.9` for the RAE, and age-aware SSCA decay with
+gamma `0.9`. The added AdamW-RAE pair matches
+`keeplora_adamw_mlp_ssca_age_g090.json`'s recipe, including AdamW RAE settings;
+within that pair, only the probe mode and output prefix differ.
+Semantic-drift diagnostics are enabled for all six runs; they remain
+observational and use separate outputs. No training, loss, optimizer, CA,
+displacement, or SSCA update formula is changed.
+
+The stochastic arm is a legacy-style control, not a bitwise replay of the old
+training-loader extraction: its isolated generator prevents the probe from
+changing training randomness. Comparing it with the paired arm tests the
+combined effect of shuffled ordering and stochastic train augmentation; it does
+not attribute an effect to either source separately.
+
 Optional plots A-G can be generated from a run directory:
 
     python tools/plot_semantic_drift.py semantic_drift/<prefix>/summary.csv

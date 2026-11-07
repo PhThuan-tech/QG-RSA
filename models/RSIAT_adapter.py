@@ -1,5 +1,6 @@
 import copy
 import logging
+import random
 import numpy as np
 import torch
 from torch import nn
@@ -53,6 +54,19 @@ def _validate_ssca_scale_config(args):
             "{} must be a finite number in [0, 1].".format(gamma_key)
         )
     return mode, gamma
+
+
+def _validate_ssca_drift_probe_mode(args):
+    mode = args.get("ssca_drift_probe_mode")
+    if mode is not None and mode not in (
+        "stochastic_unpaired",
+        "paired_deterministic",
+    ):
+        raise ValueError(
+            "ssca_drift_probe_mode must be 'stochastic_unpaired' or "
+            "'paired_deterministic', got {!r}.".format(mode)
+        )
+    return mode
 
 
 def _ssca_scale_for_task(args, task_index):
@@ -169,6 +183,7 @@ class Learner(BaseLearner):
         self.min_lr = args['min_lr'] if args['min_lr'] is not None else 1e-8
         self.args = args
         _validate_ssca_scale_config(self.args)
+        _validate_ssca_drift_probe_mode(self.args)
         self.semantic_drift = SemanticDriftObserver(self)
 
         self._old_most_sentive = []
@@ -662,22 +677,71 @@ class Learner(BaseLearner):
         logging.info("Merged KeepLoRA update and saved feature subspaces for task %d.", self._cur_task)
 
 
-    def extract_features(self, trainloader, model, args):
+    def extract_features(self, trainloader, model, args, return_indices=False):
         model = model.eval()
         embedding_list = []
         label_list = []
+        index_list = []
         with torch.no_grad():
             for i, batch in enumerate(trainloader):
-                (_, data, label) = batch
+                indices, data, label = batch
                 data = data.to(self._device, non_blocking=True)
                 label = label.to(self._device, non_blocking=True)
                 embedding = model.extract_vector(data)
                 embedding_list.append(embedding.cpu())
                 label_list.append(label.cpu())
+                if return_indices:
+                    index_list.append(torch.as_tensor(indices).cpu())
 
         embedding_list = torch.cat(embedding_list, dim=0)
         label_list = torch.cat(label_list, dim=0)
+        if return_indices:
+            return (
+                embedding_list,
+                label_list,
+                torch.cat(index_list, dim=0),
+            )
         return embedding_list, label_list
+
+    def _build_ssca_drift_probe_loader(self, data_manager):
+        mode = _validate_ssca_drift_probe_mode(self.args)
+        if mode is None:
+            return self.train_loader
+
+        dataset_mode = "test" if mode == "paired_deterministic" else "train"
+        dataset = data_manager.get_dataset(
+            np.arange(self._known_classes, self._total_classes),
+            source="train",
+            mode=dataset_mode,
+        )
+        generator = torch.Generator()
+        generator.manual_seed(int(self.args["seed"]) + self._cur_task)
+        return DataLoader(
+            dataset,
+            batch_size=self.batch_size,
+            shuffle=(mode == "stochastic_unpaired"),
+            num_workers=int(self.args.get("stats_num_workers", 2)),
+            pin_memory=self.pin_memory,
+            persistent_workers=False,
+            generator=generator,
+        )
+
+    def _extract_ssca_drift_probe_features(self, loader):
+        rng_state = self.semantic_drift._rng_snapshot()
+        try:
+            probe_seed = int(
+                torch.empty((), dtype=torch.int64)
+                .random_(generator=loader.generator)
+                .item()
+            )
+            random.seed(probe_seed)
+            np.random.seed(probe_seed % (2**32))
+            torch.manual_seed(probe_seed)
+            return self.extract_features(
+                loader, self._network, None, return_indices=True
+            )
+        finally:
+            self.semantic_drift._restore_rng(rng_state)
 
     def incremental_train(self, data_manager):
         self._cur_task += 1
@@ -708,6 +772,12 @@ class Learner(BaseLearner):
             pin_memory=self.pin_memory,
             persistent_workers=self.persistent_workers,
         )
+        probe_mode = _validate_ssca_drift_probe_mode(self.args)
+        ssca_drift_probe_loader = self.train_loader
+        if self._cur_task > 0 and probe_mode is not None:
+            ssca_drift_probe_loader = self._build_ssca_drift_probe_loader(
+                data_manager
+            )
         # KeepLoRA's framework uses a separate shuffled, drop-last loader for
         # its gradient-estimation and feature-subspace passes.  The primary
         # RSIAT training loader remains unchanged.
@@ -745,7 +815,18 @@ class Learner(BaseLearner):
 
         if self._cur_task >0:
             self._network.to(self._device)
-            train_embeddings_old, _ = self.extract_features(self.train_loader, self._network, None)
+            if probe_mode is None:
+                train_embeddings_old, _ = self.extract_features(
+                    self.train_loader, self._network, None
+                )
+            else:
+                (
+                    train_embeddings_old,
+                    old_probe_labels,
+                    old_probe_indices,
+                ) = self._extract_ssca_drift_probe_features(
+                    ssca_drift_probe_loader
+                )
 
         self._diagnose_rae_initialization(self.train_loader)
         self._train(self.train_loader, self.test_loader)
@@ -759,9 +840,38 @@ class Learner(BaseLearner):
             )
 
         if self._cur_task > 0:
-            train_embeddings_new, _ = self.extract_features(
-                self.train_loader, self._network, None
-            )
+            if probe_mode is None:
+                train_embeddings_new, _ = self.extract_features(
+                    self.train_loader, self._network, None
+                )
+            else:
+                (
+                    train_embeddings_new,
+                    new_probe_labels,
+                    new_probe_indices,
+                ) = self._extract_ssca_drift_probe_features(
+                    ssca_drift_probe_loader
+                )
+                id_match = old_probe_indices.eq(new_probe_indices)
+                label_match = old_probe_labels.eq(new_probe_labels)
+                if (
+                    probe_mode == "paired_deterministic"
+                    and (
+                        not torch.equal(old_probe_indices, new_probe_indices)
+                        or not torch.equal(old_probe_labels, new_probe_labels)
+                    )
+                ):
+                    raise RuntimeError(
+                        "Paired deterministic SSCA probe changed sample "
+                        "identity or label between pre- and post-training."
+                    )
+                logging.info(
+                    "SSCA drift probe mode=%s pre_post_sample_id_match=%.6f "
+                    "pre_post_label_match=%.6f",
+                    probe_mode,
+                    float(id_match.float().mean()),
+                    float(label_match.float().mean()),
+                )
             means_before_ssca = self._class_means.copy()
             old_class_mean = self._class_means[:self._known_classes]
             gap = self.displacement(
