@@ -1,0 +1,21 @@
+\begin{abstract}
+Quantum machine-learning components are often reported to improve classical
+pipelines by less than the pipelines' own run-to-run variation. We study
+whether quantum components help exemplar-free class-incremental learning with
+a pre-trained model, under a protocol that resolves a few tenths of a point:
+paired runs, all inference heads evaluated on one network, decision rules
+fixed in advance, and a classical twin with the same inputs for every quantum
+component. We test seven
+placements: a projected quantum kernel as a steering metric, a separation
+regulariser and a feature map; the Holevo quantity and a measurement-based
+loss as training objectives; and a pretty-good measurement over class density
+matrices, alone and fused with the classifier. Only one twin comparison has an
+interval above zero, at $+0.04$ points. A read-only probe shows that the separation
+kernel loses class information in its 8-qubit projection; repairing this lowers
+accuracy. We prove that circuits after the encoding and state shrinkage
+cannot change the measurement, and show across 61 stored runs that every
+training-time change trades new-task for old-task accuracy. A calibrated fusion
+of the classifier with a ridge score on the stored class statistics raises final
+accuracy on four benchmarks by $0.38$ to $0.67$ points; the quantum score does
+the same.
+\end{abstract}

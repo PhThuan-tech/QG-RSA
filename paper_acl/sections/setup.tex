@@ -1,0 +1,50 @@
+\section{Experimental Setup}
+\label{sec:setup}
+
+\paragraph{How large is the noise?}
+We ran the baseline four times on ImageNet-R with one seed; the base task was
+identical and only the SGD randomness of later tasks changed. The spread is
+$\bar A=87.35\pm0.14$ and $A_B=82.59\pm0.23$; on ImageNet-A the spread of
+$\bar A$ is $0.38$. A single run against a single run therefore cannot resolve
+effects below roughly half a point. With the authors' code and partitions, our
+runs reproduce all twelve numbers of the baseline's main table ($\bar A$ and
+$A_B$ on six benchmarks) to within $0.01$.
+
+\paragraph{Protocol.}
+Four rules govern every comparison.
+\textbf{(1) Pair everything:} effects are paired differences over seeds or
+replicates, with 95\% $t$-intervals.
+\textbf{(2) Same network for all heads:} a component that only changes
+inference is evaluated, after each task, on the same test features as the
+linear head. Each head draws randomness from a private generator and the
+global random state is restored afterwards; we check that the linear head
+reproduces the logged curve digit for digit. The standard deviation of a
+paired head difference falls from $0.2$ to $0.03$--$0.05$ points.
+Training-time components cannot use this rule and are compared with baseline
+runs of the same seed and replicate.
+\textbf{(3) Decide before looking:} each round had a written specification
+fixing components, hyper-parameters, the decision rule and the minimum effect
+before it ran; Table~\ref{tab:tests} (Appendix~\ref{app:tests}) lists every
+test, including the failed ones.
+\textbf{(4) A classical twin for every quantum component}
+(Figure~\ref{fig:pipeline}): an RBF kernel on the same angles or the same
+circuit without CNOTs for the PQK; MCR$^2$ for the Holevo quantity; a Gaussian
+classifier for the POVM loss; ridge regression on the same statistics for the
+PGM. Beating the baseline is not enough, since the baseline does not use the
+information that the component and its twin share.
+
+\paragraph{Read-only probe.}
+To diagnose the separation regulariser we added a probe that measures,
+without changing training, the cosine between the adapter gradients of the
+classification, alignment and separation losses every 10 steps, and, after
+each task on 20 training images per class, how well distances in each space
+separate classes (AUC of different-class versus same-class pairs). With the
+probe on, weights are bit-identical to a run without it.
+
+\paragraph{Implementation.}
+Training-time comparisons of QKSR use three replicates on ImageNet-R seed 1993
+in one computing environment; the Holevo and residual-POVM objectives were
+screened with one run each, against a pre-registered stopping rule. All runs
+used an NVIDIA RTX PRO 6000 Blackwell GPU (up to three runs in parallel),
+PyTorch 2.11 and timm 1.0.29.
+Hyper-parameters are in Appendix~\ref{app:hyper}.

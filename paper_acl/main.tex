@@ -1,0 +1,48 @@
+% ACL long paper (review mode). Official style: github.com/acl-org/acl-style-files (acl.sty, acl_natbib.bst
+% in this folder; acl_template_example.tex is the unmodified official example).
+% Every number comes from exps/*/results/ (see exps/README.md). Figures: python paper_acl/make_figures.py
+% (all six PDFs in figures/).
+% Camera-ready: replace [review] by [final] and fill the author block.
+\documentclass[11pt]{article}
+% Numbered citations [1] (acl.sty loads natbib without options; ACL's default is author-year).
+\PassOptionsToPackage{numbers,square,sort&compress}{natbib}
+\usepackage[review]{acl}
+\usepackage{times}
+\usepackage{latexsym}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{microtype}
+\usepackage{inconsolata}
+\usepackage{graphicx}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage{xcolor}
+
+\newcommand{\todo}[1]{\textcolor{red}{[TODO: #1]}}
+\newcommand{\Tr}{\mathrm{Tr}}
+\newtheorem{proposition}{Proposition}
+
+\title{Does Quantum Help Class-Incremental Learning?\\A Measurement-First Study}
+
+\author{Anonymous ACL submission}
+
+\begin{document}
+\maketitle
+\input{sections/abstract}
+\input{sections/introduction}
+\input{sections/related}
+\input{sections/task}
+\input{sections/method}
+\input{sections/setup}
+\input{sections/results}
+\input{sections/analysis}
+\input{sections/conclusion}
+\input{sections/limitations}
+
+\bibliography{references}
+
+\appendix
+\input{sections/appendix}
+
+\end{document}

@@ -1,0 +1,19 @@
+\section{Conclusion}
+\label{sec:conclusion}
+
+We asked whether quantum components help exemplar-free class-incremental
+learning, and answered with a protocol that resolves a few tenths of a point.
+Across seven placements, no quantum component credibly beats the classical
+method that receives the same inputs; the one interval above zero is
+$+0.04$ points. Three lessons generalise beyond this baseline. First, measure
+the noise before claiming a gain: an earlier $+0.36$ of ours vanished, and
+evaluating all inference heads on one network cuts the noise of a comparison
+to $0.03$--$0.05$ points. Second, test the classical twin: the PGM fusion beat
+the baseline but not ridge regression on the same statistics. Third, know which
+degrees of freedom are real: circuits after an amplitude encoding and state
+shrinkage cannot change the measurement, and repairing a regulariser's measured
+weaknesses does not move it past a trade-off that the shared adapter imposes.
+The state-discrimination view did produce a useful classical result: the class
+statistics kept by exemplar-free methods carry information the aligned
+classifier does not use, and a calibrated fusion recovers part of it without
+training or new memory.

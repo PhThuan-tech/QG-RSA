@@ -1,0 +1,42 @@
+\section{Related Work}
+\label{sec:related}
+
+\paragraph{Class-incremental learning with pre-trained models.}
+With a frozen ViT, strong CIL methods tune a light adapter or prompt and keep
+a classifier calibrated across tasks. Prompt-based methods select or compose
+prompts per input~\citep{l2p,dualprompt,codaprompt}; adapter-based methods
+expand task-specific subspaces~\citep{ease}, merge adapters~\citep{mos} or
+compensate semantic shift~\citep{ssiat}. SLCA re-trains the classifier on Gaussian
+samples of stored class statistics~\citep{zhang2023slca}; RanPAC uses random
+projections and a closed-form ridge head~\citep{mcdonnell2023ranpac}; APER
+combines frozen and adapted embeddings~\citep{zhou2024aper}. RSIAT, our
+baseline, adds a representation-steering loss and drift compensation of the
+stored means~\citep{rsiat}. \citet{smith2023closer} showed that, with a
+pre-trained model, simple regularisers can match more elaborate ones, which
+motivates simple classical baselines for every added component.
+
+\paragraph{Exemplar-free drift and separation.}
+Without exemplars, old classes survive only as statistics. ADC, LDC and EFC
+compensate or constrain the drift of these
+statistics~\citep{goswami2024adc,gomezvilla2024ldc,magistri2024efc}; AdaGauss
+adapts the covariances and counters task-recency
+bias~\citep{rypesc2024adagauss}. Closest to our separation regulariser,
+PRL penalises the similarity between new features and old prototypes over all
+pairs~\citep{shi2024prl}, and NAPA-VQ pushes apart neighbouring, confusable
+classes~\citep{malepathirana2023napavq}. Rate-reduction objectives, the
+classical counterpart of our Holevo objective, have also been applied to
+incremental learning~\citep{wu2021rate}.
+
+\paragraph{Quantum continual learning and benchmarking.}
+Quantum continual learning has mostly studied small variational classifiers on
+quantum or toy data, regularised as in classical
+CIL~\citep{jiang2022qcl}. QKD routes distillation between task adapters with a
+quantum gate on a pre-trained ViT~\citep{li2026qkd}. Projected kernels were
+introduced to avoid the exponential concentration of global
+fidelities~\citep{huang2021power,thanasilp2024concentration}; their bandwidth
+controls their inductive bias~\citep{shaydulin2022bandwidth,canatar2022bandwidth},
+and they can be trained by kernel--target alignment~\citep{hubregtsen2022qek}.
+\citet{bowles2024better} found that out-of-the-box classical baselines
+generally outperform the QML models they benchmarked. We follow their
+recommendation of classical twins and add the paired, pre-registered
+evaluation that small effects in CIL require.

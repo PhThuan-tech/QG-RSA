@@ -1,0 +1,44 @@
+\section*{Limitations}
+
+\begin{itemize}
+  \item \textbf{One baseline.} All components were inserted into RSIAT with a
+    single shared adapter. The trade-off of Section~\ref{sec:frontier} may not
+    hold for methods with one adapter per task, such as QKD~\citep{li2026qkd},
+    which we could not run because its released repository contains no code.
+  \item \textbf{Narrow evidence for the training-time components.} QKSR and
+    its repair were compared on ImageNet-R with one seed and three
+    replicates; the Holevo and residual-POVM objectives were screened with one
+    run each and stopped; the Gaussian twin of the POVM loss diverged because
+    of our calibration of $\lambda$, so that comparison is missing. The repair
+    was tested at one setting (8 qubits, angle spread $0.8$ rad, target kernel
+    $0.2$), without a sweep.
+  \item \textbf{Changing environment.} The computing environment changed
+    between rounds: QKSR's base task reached $96.33\%$ in one environment and
+    $96.05\%$ in the next. We therefore compare training-time components only
+    with runs from the same environment, which halves the usable runs for
+    some comparisons.
+  \item \textbf{Post-hoc trade-off analysis.} Figure~\ref{fig:frontier} was
+    drawn from runs we had already seen, mostly on one dataset and seed; it is
+    exploratory, and the pre-registered criterion separating inference-time
+    from training-time changes was not met.
+  \item \textbf{Small simulated circuits.} Our circuits have at most 11 qubits
+    and are simulated exactly. The negative results concern these placements
+    and encodings, not quantum models in general or hardware effects.
+  \item \textbf{Fusion transfer.} The fusion's gain in average accuracy did
+    not transfer to CUB-200, and its pre-registered transfer test to the
+    held-out datasets failed.
+  \item \textbf{No qualitative inspection.} Images are not stored with our
+    logs, so we report error statistics but no inspected examples.
+\end{itemize}
+
+\section*{Ethics Statement}
+
+This work uses four public image benchmarks (CIFAR-100, ImageNet-R,
+ImageNet-A, CUB-200) under their research licenses, and a publicly released
+pre-trained ViT-B/16. It involves no human subjects and no personal data.
+The study's main risk is the opposite of harm from deployment: overstated
+claims about quantum methods, which we address by reporting every
+pre-registered test, including the failed ones. All experiments ran on one GPU
+model; \todo{report total GPU hours from the run logs}.
+\todo{Declare the use of AI assistants in coding and writing, following the
+venue's policy.}

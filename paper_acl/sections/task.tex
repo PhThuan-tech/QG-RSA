@@ -1,0 +1,34 @@
+\section{Task and Data}
+\label{sec:task}
+
+\paragraph{Task.}
+Tasks $t=0,\dots,B-1$ bring disjoint label sets $\mathcal Y_t$. While learning
+task $t$, only its training data is available. Afterwards the model classifies
+test images of every class in $\mathcal C_t=\mathcal Y_0\cup\dots\cup\mathcal Y_t$,
+with $C_t=|\mathcal C_t|$; $\tau(c)$ is the task that introduced class $c$.
+
+\paragraph{Metrics.}
+Let $A_k$ be the accuracy on $\mathcal C_k$ after task $k$, and $a_{k,j}$ the
+accuracy on the classes of task $j$. We report the average incremental
+accuracy $\bar A$, the final accuracy $A_B$ and the forgetting $F$:
+\begin{align}
+  \bar A&=\frac1B\sum_{k=0}^{B-1}A_k,\qquad A_B=A_{B-1},\label{eq:acc}\\
+  F&=\frac1{B-1}\sum_{j<B-1}\Big(\max_{j\le k<B-1}a_{k,j}-a_{B-1,j}\Big).\label{eq:forget}
+\end{align}
+To read trade-offs, we also split the final per-task accuracy into an \emph{old} half
+(the first $B/2$ tasks) and a \emph{new} half.
+
+\paragraph{Data.}
+We use four benchmarks: CIFAR-100~\citep{krizhevsky2009cifar} (10 tasks of 10
+classes, 500 training images per class), ImageNet-R~\citep{hendrycks2021many}
+(10 tasks of 20 classes, about 120 per class), ImageNet-A~\citep{hendrycks2021nae}
+(10 tasks of 20 classes, about 30 per class) and CUB-200~\citep{wah2011cub}
+(20 tasks of 10 classes, about 30 per class). We use partitions we can
+redistribute: the standard CIFAR-100 split; a public fixed ImageNet-R split
+(23\,918 training and 6\,082 test images); an 80/20 per-class split of
+ImageNet-A with seed 67; and the official CUB-200 split (5\,994 / 5\,794).
+Absolute numbers therefore differ slightly from the published ones
+(Table~\ref{tab:main}). Every dataset is run with the seeds 1993, 2015 and 2026,
+which also fix the class order. All free choices were made on a \emph{tuning
+group} (ImageNet-R, seed 1993, three replicates) and then frozen; every other
+dataset and seed is held out.
