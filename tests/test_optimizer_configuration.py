@@ -2,6 +2,7 @@ import json
 import pathlib
 import unittest
 from types import MethodType, SimpleNamespace
+from unittest.mock import patch
 
 import torch
 from torch import nn
@@ -146,6 +147,107 @@ class OptimizerConfigurationTests(unittest.TestCase):
             id(learner.old_ae.weight),
             {id(p) for group in optimizer.param_groups for p in group["params"]},
         )
+
+    def test_m_only_adamw_uses_one_main_optimizer_with_module_specific_groups(self):
+        learner, groups = self.make_learner("sgd", incremental=True)
+        learner._uses_m_only = True
+        learner.args.update(
+            incremental_optimizer="adamw",
+            shared_adapter_m_only_adamw_keeplora_lr=2e-3,
+            shared_adapter_m_only_adamw_keeplora_weight_decay=0.02,
+            shared_adapter_m_only_adamw_classifier_lr=3e-3,
+            shared_adapter_m_only_adamw_classifier_weight_decay=0.03,
+            shared_adapter_m_only_adamw_rae_lr=4e-4,
+            shared_adapter_m_only_adamw_rae_weight_decay=0.004,
+        )
+
+        optimizer, rae_optimizer = learner._build_incremental_optimizers(groups)
+
+        self.assertIsInstance(optimizer, torch.optim.AdamW)
+        self.assertIsNone(rae_optimizer)
+        by_name = {group["name"]: group for group in optimizer.param_groups}
+        self.assertEqual(
+            [by_name[name]["lr"] for name in ("backbone", "classifier", "rae")],
+            [2e-3, 3e-3, 4e-4],
+        )
+        self.assertEqual(
+            [
+                by_name[name]["weight_decay"]
+                for name in ("backbone", "classifier", "rae")
+            ],
+            [0.02, 0.03, 0.004],
+        )
+
+    def test_m_only_sgd_uses_one_main_optimizer_and_configured_momentum(self):
+        learner, groups = self.make_learner("sgd", incremental=True)
+        learner._uses_m_only = True
+        learner.args.update(
+            incremental_optimizer="sgd",
+            shared_adapter_m_only_sgd_momentum=0.8,
+        )
+
+        optimizer, rae_optimizer = learner._build_incremental_optimizers(groups)
+
+        self.assertIsInstance(optimizer, torch.optim.SGD)
+        self.assertIsNone(rae_optimizer)
+        self.assertTrue(
+            all(group["momentum"] == 0.8 for group in optimizer.param_groups)
+        )
+
+    def test_m_only_optimizer_choice_does_not_change_task_zero_baseline(self):
+        learner, groups = self.make_learner("sgd", incremental=False)
+        learner._uses_m_only = True
+        learner.args["incremental_optimizer"] = "adamw"
+
+        optimizer = learner._build_main_optimizer(groups, incremental=False)
+
+        self.assertIsInstance(optimizer, torch.optim.SGD)
+        self.assertTrue(
+            all(group["momentum"] == 0.9 for group in optimizer.param_groups)
+        )
+
+    def test_m_only_ca_stage_keeps_baseline_sgd_for_both_incremental_options(self):
+        class ClassifierNetwork(nn.Module):
+            def __init__(self):
+                super().__init__()
+                self.fc = nn.Linear(4, 2)
+
+            def ca_forward(self, inputs):
+                return {"logits": self.fc(inputs)}
+
+        original_sgd = torch.optim.SGD
+        for incremental_optimizer in ("adamw", "sgd"):
+            learner = object.__new__(BaseLearner)
+            learner.args = {
+                "shared_adapter_update_mode": "keeplora_m_only",
+                "incremental_optimizer": incremental_optimizer,
+                "scale": 1.0,
+                "ca_eval_interval": 0,
+            }
+            learner._network = ClassifierNetwork()
+            learner._multiple_gpus = []
+            learner._device = torch.device("cpu")
+            learner._total_classes = 2
+            learner._cur_task = 1
+            learner.init_lr = 0.01
+            learner.weight_decay = 0.001
+
+            observed = []
+
+            def make_sgd(*args, **kwargs):
+                optimizer = original_sgd(*args, **kwargs)
+                observed.append(optimizer)
+                return optimizer
+
+            with patch("models.base.optim.SGD", side_effect=make_sgd):
+                BaseLearner._stage2_compact_classifier(
+                    learner, task_size=2, ca_epochs=0
+                )
+
+            self.assertEqual(len(observed), 1)
+            self.assertIsInstance(observed[0], original_sgd)
+            self.assertEqual(observed[0].param_groups[0]["momentum"], 0.9)
+            self.assertEqual(observed[0].param_groups[0]["lr"], 0.01)
 
     def test_sgd_initial_updates_match_the_original_optimizer_construction(self):
         torch.manual_seed(53)

@@ -4,6 +4,11 @@ import torch
 import torch.nn as nn
 
 
+def gradient_svd(gradient, rank):
+    sketch_rank = min(4 * rank, min(gradient.shape))
+    return torch.svd_lowrank(gradient, q=sketch_rank, niter=4)
+
+
 class KeepLoRA(nn.Module):
     """Task-local KeepLoRA update for a frozen linear weight."""
 
@@ -69,10 +74,7 @@ class KeepLoRA(nn.Module):
             return gradient_norm, projected_gradient_norm
         # Match KeepLoRA's gradient-initialization path: a low-rank SVD is
         # sufficient because only rank columns are retained for A/B.
-        sketch_rank = min(4 * self.rank, min(projected.shape))
-        u, singular_values, v = torch.svd_lowrank(
-            projected, q=sketch_rank, niter=4
-        )
+        u, singular_values, v = gradient_svd(projected, self.rank)
         width = min(self.rank, u.shape[1], v.shape[1])
         self.reset_parameters()
         self.lora_A[:, :width].copy_(u[:, :width].to(self.lora_A.dtype))

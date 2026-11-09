@@ -39,7 +39,7 @@ The training and evaluation instructions for each dataset are in the "./args.sh"
 
 ### Checkpoint and resume
 
-Each experiment configuration now saves a checkpoint after every completed incremental task. Checkpoints are isolated by seed and stored at:
+Each experiment configuration saves a checkpoint after every completed incremental task. Checkpoints are isolated by seed and stored at:
 
 ```
 ckpt/<prefix>/<dataset>/<init_cls>_<increment>/seed_<seed>/task_<N>.pkl
@@ -53,7 +53,80 @@ The default configurations keep only the most recent checkpoint to reduce disk u
 }
 ```
 
-Optionally set `"resume_path"` to a specific `task_N.pkl`, `"keep_last_checkpoint": false` to retain every task checkpoint, or `"max_tasks_per_run"` to stop cleanly after a fixed number of tasks. Resume requires the same dataset, seed, class order, initial/incremental class split, model, and backbone. Checkpoints are task-boundary snapshots; they do not resume an interrupted epoch. The supplied configurations retain full covariance (`"compact_diagonal_checkpoint": false`) for an exact task-boundary resume; enable the compact diagonal form only when Drive space matters, since it drops covariance cross-terms used by classifier alignment.
+Optionally set `"resume_path"` to a specific `task_N.pkl`, `"keep_last_checkpoint": false` to retain every task checkpoint, or `"max_tasks_per_run"` to stop cleanly after a fixed number of tasks. Resume requires the same dataset, seed, class order, initial/incremental class split, model, and backbone. Standard checkpoints are task-boundary snapshots. The supplied configurations retain full covariance (`"compact_diagonal_checkpoint": false`) for an exact task-boundary resume; enable the compact diagonal form only when Drive space matters, since it drops covariance cross-terms used by classifier alignment.
+
+### Shared Adapter + M-only KeepLoRA
+
+The opt-in `keeplora_m_only` mode is configured by
+`shared_adapter_update_mode`. Task 0 uses the original RSIAT training path;
+the AdamW and SGD incremental runs both load the same Task-0 checkpoint. From
+Task 1 onward, KeepLoRA factors are attached only to each Shared Adapter's
+down/up Linear weights. The original weights and A factors stay frozen while B
+is optimized. `incremental_optimizer` selects the optimizer family for every
+active trainable module in the incremental main-training stage from Task 1
+onward. CA remains the RSIAT baseline SGD stage for both options in this first
+experiment. Per-module learning rates and weight decay may differ; SGD momentum
+or AdamW betas/epsilon are shared by the selected family. Task 0 still uses
+the baseline `optimizer` setting. Thus, the AdamW/SGD comparison is not an
+adapter-only optimizer comparison.
+
+The M-only mode uses the original RSIAT RAE decoder initialization order.
+Existing modes retain their seeded initialization order.
+
+The supplied M-only configs set down/up rank caps to 32 and use fixed effective
+scaling 0.0625. Each module/task's realized rank may be lower than its cap,
+bounded by the remaining feature dimension and numerical rank of its projected
+initialization gradient. Initialization averages the RSIAT main-training loss
+gradient over a separate current-task loader and uses the same randomized
+low-rank SVD and factorized forward as KeepLoRA on attention/MLP. The SVD runs
+in the orthogonal complement of the stored feature basis. Basis collection
+uses all input tokens from current-task training examples with evaluation
+transforms. The feature threshold applies to the combined energy captured by
+existing and newly added directions. Both optimizer variants use the same caps
+and factorization rule. Realized ranks and numeric feature bases are logged and can
+differ after the model trajectories diverge. Task 1 starts from the same
+Task-0 model and the same M0 checksum. The initial Task-1 A/B factors are also
+hashed and logged in both runs. Subsequent tasks do not force the two runs to
+share identical basis tensors after their model trajectories diverge.
+
+Run the common Task-0 configuration once, then launch both incremental configs:
+although the mode is enabled for post-training M0 collection, Task 0 itself
+does not attach factors or change the RSIAT optimizer/training path. The
+completed Task-0 checkpoint contains the shared Adapter checksum and M0 basis
+checksum, which both optimizer branches validate and reuse.
+Regenerate the common checkpoint if its M0 was built with the earlier 64-token
+per-batch cap. Incremental runs with an explicit resume path require that
+checkpoint or an existing snapshot of their own run.
+
+```powershell
+python main.py --config .\exps\exp1_h64_shared_adapter_task0.json
+python main.py --config .\exps\exp1_h64_monly_keeplora_fulladamw_main.json
+python main.py --config .\exps\exp1_h64_monly_keeplora_fullsgd_main.json
+python main.py --config .\exps\exp1_h64_monly_keeplora_fulladamw_main_rank16.json
+python main.py --config .\exps\exp1_h64_monly_keeplora_fullsgd_main_rank16.json
+```
+
+Both rank-16 configs reuse the common Task-0 checkpoint and differ from their
+rank-32 counterparts only in the run prefix and down/up rank caps. All four
+incremental runs measure semantic drift on the same deterministic test probes.
+Task 0 contributes the first accuracy snapshot to the forgetting history.
+Each incremental task writes `task_XX.json` and updates one row in
+`semantic_drift/<prefix>/summary.csv`. Mean forgetting is the mean over old
+tasks of their best previous Top-1 minus their current Top-1, in percentage
+points. Reports include the number of old tasks with a recorded history.
+
+These two M-only configs enable `save_mid_task_checkpoints`. They save the
+model (including active A/B factors), frozen previous-task network, RAE,
+optimizer/scheduler states, and RNG states after each incremental epoch.
+Automatic resume prefers a newer mid-task checkpoint over an older completed
+task checkpoint and resumes at the next epoch. `resume_latest` allows the
+shared Task-0 checkpoint to be used on the first launch, then selects the
+latest checkpoint in that incremental run directory on later launches.
+Mid-task snapshots are removed after a task-boundary checkpoint is written.
+New M-only task-boundary snapshots also store the RNG state. It is restored
+before the next task starts, after rebuilding the model and classifier.
+Keep the two optimizer runs in their separate configured prefixes; do not
+share their incremental checkpoint directory.
 
 ### Efficient training
 

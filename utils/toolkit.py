@@ -94,7 +94,10 @@ class BaseAttention(nn.Module):
         return reconstructed_x + x
 
 class AutoencoderSigmoid(BaseAttention):
-    def __init__(self, input_dims=768, code_dims=384, zero_residual=False):
+    def __init__(
+        self, input_dims=768, code_dims=384, zero_residual=False, *,
+        baseline_init_order=False,
+    ):
         super(AutoencoderSigmoid, self).__init__()
         self.zero_residual = bool(zero_residual)
         self.encoder = nn.Sequential(
@@ -102,7 +105,12 @@ class AutoencoderSigmoid(BaseAttention):
             nn.GELU(),
             nn.Linear(64, code_dims),
             nn.GELU())
-        decoder_output = nn.Linear(64, input_dims)
+        if baseline_init_order:
+            decoder_input = nn.Linear(code_dims, 64)
+            decoder_output = nn.Linear(64, input_dims)
+        else:
+            decoder_output = nn.Linear(64, input_dims)
+            decoder_input = nn.Linear(code_dims, 64)
         if self.zero_residual:
             nn.init.zeros_(decoder_output.weight)
             nn.init.zeros_(decoder_output.bias)
@@ -110,7 +118,7 @@ class AutoencoderSigmoid(BaseAttention):
         else:
             decoder_activation = nn.Sigmoid()
         self.decoder = nn.Sequential(
-            nn.Linear(code_dims, 64),
+            decoder_input,
             nn.GELU(),
             decoder_output,
             decoder_activation)

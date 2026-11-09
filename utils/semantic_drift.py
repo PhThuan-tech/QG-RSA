@@ -609,7 +609,7 @@ class SemanticDriftObserver:
             ],
         }
 
-    def record_evaluation(self, evaluation):
+    def record_evaluation(self, evaluation, task_accuracy_history=None):
         if not self.enabled or self._task_result is None:
             return
         grouped = evaluation.get("grouped", {})
@@ -620,7 +620,33 @@ class SemanticDriftObserver:
             "new_class_accuracy": grouped.get("new"),
             "grouped": dict(grouped),
         }
+        if "per_task_top1" in evaluation:
+            scores = evaluation["per_task_top1"]
+            self._task_result["evaluation"]["per_task_top1"] = scores
+            self._task_result["evaluation"]["forgetting"] = self._forgetting(
+                scores, task_accuracy_history or {}
+            )
         self.write_task()
+
+    def _forgetting(self, current_scores, history):
+        current_task = self.learner._cur_task
+        per_task = {}
+        for learned_task, current_score in enumerate(current_scores[:current_task]):
+            previous_scores = [
+                scores[learned_task]
+                for task_id, scores in history.items()
+                if learned_task <= int(task_id) < current_task
+                and learned_task < len(scores)
+                and scores[learned_task] is not None
+            ]
+            if previous_scores and current_score is not None:
+                per_task[str(learned_task)] = max(previous_scores) - current_score
+        return {
+            "mean": sum(per_task.values()) / len(per_task) if per_task else None,
+            "num_measured_tasks": len(per_task),
+            "num_old_tasks": current_task,
+            "per_task": per_task,
+        }
 
     def write_task(self):
         if not self.enabled or self._task_result is None:
@@ -636,21 +662,36 @@ class SemanticDriftObserver:
         with path.open("w", encoding="utf-8") as stream:
             json.dump(result, stream, indent=2, sort_keys=True)
         summary_path = self.output_dir / "summary.csv"
+        old_drift = result["old_sample_drift"]
+        new_drift = result["new_task_shift"]
+        evaluation = result["evaluation"]
+        forgetting = evaluation.get("forgetting", {})
         row = {
             "task_id": result["task_id"],
-            "old_cosine_mean": result["old_sample_drift"]["cosine"].get("mean"),
-            "old_relative_l2_mean": result["old_sample_drift"]["relative_l2"].get("mean"),
-            "new_cosine_mean": result["new_task_shift"]["cosine"].get("mean"),
-            "new_relative_l2_mean": result["new_task_shift"]["relative_l2"].get("mean"),
+            "old_cosine_mean": old_drift.get("cosine", {}).get("mean"),
+            "old_relative_l2_mean": old_drift.get("relative_l2", {}).get("mean"),
+            "new_cosine_mean": new_drift.get("cosine", {}).get("mean"),
+            "new_relative_l2_mean": new_drift.get("relative_l2", {}).get("mean"),
             "old_new_cosine_ratio": result["old_new_drift_ratio"].get("cosine"),
             "old_new_relative_l2_ratio": result["old_new_drift_ratio"].get("relative_l2"),
             "ssca_correction_error": result["ssca_diagnostic"].get("correction_error", {}).get("mean"),
             "ssca_direction_agreement": result["ssca_diagnostic"].get("direction_agreement", {}).get("mean"),
+            "overall_accuracy": evaluation.get("overall_accuracy"),
+            "top5_accuracy": evaluation.get("top5_accuracy"),
+            "old_class_accuracy": evaluation.get("old_class_accuracy"),
+            "new_class_accuracy": evaluation.get("new_class_accuracy"),
+            "mean_forgetting": forgetting.get("mean"),
+            "forgetting_measured_tasks": forgetting.get("num_measured_tasks"),
         }
-        write_header = not summary_path.exists()
-        with summary_path.open("a", newline="", encoding="utf-8") as stream:
-            writer = csv.DictWriter(stream, fieldnames=list(row))
-            if write_header:
-                writer.writeheader()
-            writer.writerow(row)
+        rows = {}
+        if summary_path.exists():
+            with summary_path.open(newline="", encoding="utf-8") as stream:
+                rows = {int(item["task_id"]): item for item in csv.DictReader(stream)}
+        rows[row["task_id"]] = row
+        temporary_summary = summary_path.with_suffix(".csv.tmp")
+        with temporary_summary.open("w", newline="", encoding="utf-8") as stream:
+            writer = csv.DictWriter(stream, fieldnames=list(row), extrasaction="ignore")
+            writer.writeheader()
+            writer.writerows(rows[task_id] for task_id in sorted(rows))
+        temporary_summary.replace(summary_path)
         logging.info("Semantic drift diagnostics written to %s", path)

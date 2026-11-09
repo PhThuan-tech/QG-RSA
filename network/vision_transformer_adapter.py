@@ -103,6 +103,17 @@ class Adapter(nn.Module):
         self.down_proj = nn.Linear(self.n_embd, self.down_size)
         self.non_linear_func = nn.ReLU()
         self.up_proj = nn.Linear(self.down_size, self.n_embd)
+        self.shared_adapter_update_mode = getattr(
+            config, "shared_adapter_update_mode", "baseline"
+        )
+        if self.shared_adapter_update_mode == "keeplora_m_only":
+            self.keeplora_m_only_down = None
+            self.keeplora_m_only_up = None
+            self._m_only_feature_moments = None
+            self._m_only_feature_counts = None
+            self._m_only_output_norm_sum = 0.0
+            self._m_only_output_count = 0
+            self._m_only_feature_rows_per_batch = 0
 
         self.dropout = dropout
         if init_option == "bert":
@@ -114,18 +125,114 @@ class Adapter(nn.Module):
                 nn.init.zeros_(self.down_proj.bias)
                 nn.init.zeros_(self.up_proj.bias)
 
+    def attach_m_only_factors(self, down_factor, up_factor):
+        if self.shared_adapter_update_mode != "keeplora_m_only":
+            raise RuntimeError("M-only factors require the experimental adapter mode.")
+        self.keeplora_m_only_down = down_factor
+        self.keeplora_m_only_up = up_factor
+
+    def remove_m_only_factors(self):
+        if "keeplora_m_only_down" in self._modules:
+            del self._modules["keeplora_m_only_down"]
+        if "keeplora_m_only_up" in self._modules:
+            del self._modules["keeplora_m_only_up"]
+        self.keeplora_m_only_down = None
+        self.keeplora_m_only_up = None
+
+    def start_m_only_feature_collection(self, rows_per_batch):
+        if self.shared_adapter_update_mode != "keeplora_m_only":
+            raise RuntimeError("Feature collection requires the M-only adapter mode.")
+        self._m_only_feature_rows_per_batch = int(rows_per_batch)
+        self._m_only_feature_moments = {
+            "down": torch.zeros(
+                self.down_proj.in_features,
+                self.down_proj.in_features,
+                dtype=torch.float32,
+            ),
+            "up": torch.zeros(
+                self.up_proj.in_features,
+                self.up_proj.in_features,
+                dtype=torch.float32,
+            ),
+        }
+        self._m_only_feature_counts = {"down": 0, "up": 0}
+        self._m_only_output_norm_sum = 0.0
+        self._m_only_output_count = 0
+
+    def _accumulate_m_only_features(self, name, inputs):
+        if getattr(self, "_m_only_feature_moments", None) is None:
+            return
+        features = inputs.detach().reshape(-1, inputs.shape[-1])
+        limit = self._m_only_feature_rows_per_batch
+        if limit > 0 and features.shape[0] > limit:
+            indices = torch.linspace(
+                0,
+                features.shape[0] - 1,
+                steps=limit,
+                device=features.device,
+            ).long()
+            features = features.index_select(0, indices)
+        features = features.float()
+        moment = features.transpose(0, 1) @ features
+        self._m_only_feature_moments[name].add_(moment.cpu())
+        self._m_only_feature_counts[name] += features.shape[0]
+
+    def finish_m_only_feature_collection(self):
+        if self._m_only_feature_moments is None:
+            raise RuntimeError("M-only feature collection was not started.")
+        result = {}
+        for name, moment in self._m_only_feature_moments.items():
+            count = self._m_only_feature_counts[name]
+            if count == 0:
+                raise RuntimeError(
+                    "No feature rows were collected for Shared Adapter {}.".format(name)
+                )
+            result[name] = (moment / count).float()
+        result["output_norm"] = (
+            self._m_only_output_norm_sum
+            / max(self._m_only_output_count, 1)
+        )
+        result["down_rows"] = self._m_only_feature_counts["down"]
+        result["up_rows"] = self._m_only_feature_counts["up"]
+        self._m_only_feature_moments = None
+        self._m_only_feature_counts = None
+        self._m_only_output_norm_sum = 0.0
+        self._m_only_output_count = 0
+        return result
+
 
     def forward(self, x, add_residual=True, residual=None):
         residual = x if residual is None else residual
         B, N, C = x.shape
         if self.adapter_layernorm_option == 'in':
             x = self.adapter_layer_norm_before(x)
-        down = self.down_proj(x)
+        if self.shared_adapter_update_mode == "keeplora_m_only":
+            self._accumulate_m_only_features("down", x)
+            down = self.down_proj(x)
+            if self.keeplora_m_only_down is not None:
+                down = down + self.keeplora_m_only_down(x)
+        else:
+            down = self.down_proj(x)
         down = self.non_linear_func(down)
         down = nn.functional.dropout(down, p=self.dropout, training=self.training)
-        up = self.up_proj(down)
+        if self.shared_adapter_update_mode == "keeplora_m_only":
+            self._accumulate_m_only_features("up", down)
+            up = self.up_proj(down)
+            if self.keeplora_m_only_up is not None:
+                up = up + self.keeplora_m_only_up(down)
+        else:
+            up = self.up_proj(down)
 
         up = up * self.scale
+        if (
+            self.shared_adapter_update_mode == "keeplora_m_only"
+            and self._m_only_feature_moments is not None
+        ):
+            output_rows = up.detach().reshape(-1, up.shape[-1]).float()
+            self._m_only_output_norm_sum += float(
+                torch.linalg.vector_norm(output_rows, dim=1).sum().item()
+            )
+            self._m_only_output_count += output_rows.shape[0]
 
         if self.adapter_layernorm_option == 'out':
             up = self.adapter_layer_norm_before(up)

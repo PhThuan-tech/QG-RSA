@@ -70,7 +70,12 @@ class BaseLearner(object):
         network_params = [{'params': param_list, 'lr': self.init_lr,
                            'weight_decay': self.weight_decay}]
 
-        optimizer = optim.SGD(network_params, lr=self.init_lr, momentum=0.9, weight_decay=self.weight_decay)
+        optimizer = optim.SGD(
+            network_params,
+            lr=self.init_lr,
+            momentum=0.9,
+            weight_decay=self.weight_decay,
+        )
         scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer=optimizer, T_max=run_epochs)
         logging.info(
             "CA optimizer=SGD lr=%g weight_decay=%g momentum=0.9 "
@@ -180,8 +185,89 @@ class BaseLearner(object):
             ).lower(),
             "rae_zero_init": bool(self.args.get("rae_zero_init", False)),
             "rae_lifecycle": str(self.args.get("rae_lifecycle", "shared")).lower(),
+            "shared_adapter_update_mode": str(
+                self.args.get("shared_adapter_update_mode", "baseline")
+            ).lower(),
             **{key: self.args.get(key) for key in keys if key in self.args},
         }
+        if metadata["shared_adapter_update_mode"] == "keeplora_m_only":
+            incremental_optimizer = str(
+                self.args.get(
+                    "incremental_optimizer",
+                    self.args.get("shared_adapter_m_only_optimizer", "sgd"),
+                )
+            ).lower()
+            metadata.update(
+                incremental_optimizer=incremental_optimizer,
+                shared_adapter_m_only_optimizer=incremental_optimizer,
+                rank_down_max=int(self.args.get("rank_down_max", 32)),
+                rank_up_max=int(self.args.get("rank_up_max", 32)),
+                feature_threshold=float(self.args.get("feature_threshold", 0.99)),
+                scaling_mode=str(
+                    self.args.get("scaling_mode", "fixed_effective_scaling")
+                ).lower(),
+                target_scaling=float(self.args.get("target_scaling", 0.0625)),
+                lora_alpha=float(self.args.get("lora_alpha", 2.0)),
+                shared_adapter_m_only_bias_policy=str(
+                    self.args.get(
+                        "shared_adapter_m_only_bias_policy", "freeze_bias"
+                    )
+                ).lower(),
+                shared_adapter_m_only_empty_residual_policy=str(
+                    self.args.get(
+                        "shared_adapter_m_only_empty_residual_policy", "no_update"
+                    )
+                ).lower(),
+                shared_adapter_m_only_grad_batches=int(
+                    self.args.get("shared_adapter_m_only_grad_batches", 0)
+                ),
+                shared_adapter_m_only_feature_rows_per_batch=int(
+                    self.args.get(
+                        "shared_adapter_m_only_feature_rows_per_batch", 0
+                    )
+                ),
+                shared_adapter_m_only_sgd_momentum=float(
+                    self.args.get("shared_adapter_m_only_sgd_momentum", 0.9)
+                ),
+                shared_adapter_m_only_adamw_keeplora_lr=float(
+                    self.args.get(
+                        "shared_adapter_m_only_adamw_keeplora_lr",
+                        self.args.get("adamw_lr", 1e-3),
+                    )
+                ),
+                shared_adapter_m_only_adamw_keeplora_weight_decay=float(
+                    self.args.get(
+                        "shared_adapter_m_only_adamw_keeplora_weight_decay",
+                        self.args.get("adamw_weight_decay", 0.01),
+                    )
+                ),
+                shared_adapter_m_only_adamw_classifier_lr=float(
+                    self.args.get(
+                        "shared_adapter_m_only_adamw_classifier_lr",
+                        self.args.get("adamw_lr", 1e-3),
+                    )
+                ),
+                shared_adapter_m_only_adamw_classifier_weight_decay=float(
+                    self.args.get(
+                        "shared_adapter_m_only_adamw_classifier_weight_decay",
+                        self.args.get("adamw_weight_decay", 0.01),
+                    )
+                ),
+                shared_adapter_m_only_adamw_rae_lr=float(
+                    self.args.get(
+                        "shared_adapter_m_only_adamw_rae_lr",
+                        self.args.get("adamw_rae_lr", self.args["ae_init_lr"]),
+                    )
+                ),
+                shared_adapter_m_only_adamw_rae_weight_decay=float(
+                    self.args.get(
+                        "shared_adapter_m_only_adamw_rae_weight_decay",
+                        self.args.get(
+                            "adamw_rae_weight_decay", self.args["ae_weight_decay"]
+                        ),
+                    )
+                ),
+            )
         if metadata["classifier_optimizer"] == "sgd":
             metadata["classifier_sgd_momentum"] = 0.9
         if metadata["classifier_optimizer"] == "adamw":
@@ -254,14 +340,8 @@ class BaseLearner(object):
             )
         return metadata
 
-    def save_checkpoint(self, filepath):
-        """Persist the completed task state needed to start the next task.
-
-        Checkpoints intentionally live at task boundaries. Optimizers and learning
-        rate schedulers are recreated for each task, whereas class statistics,
-        dynamic classifier heads, the frozen teacher, and the autoencoder must be
-        restored exactly.
-        """
+    def save_checkpoint(self, filepath, mid_task_training_state=None):
+        """Persist task-boundary state or a complete incremental-training resume."""
         network = (
             self._network.module
             if isinstance(self._network, nn.DataParallel)
@@ -277,6 +357,21 @@ class BaseLearner(object):
                 for key, value in network.state_dict().items()
             },
         }
+        if mid_task_training_state is not None:
+            if self._old_network is None:
+                raise RuntimeError(
+                    "A mid-task checkpoint requires the frozen previous-task network."
+                )
+            old_network = (
+                self._old_network.module
+                if isinstance(self._old_network, nn.DataParallel)
+                else self._old_network
+            )
+            checkpoint["old_network_state_dict"] = {
+                key: value.detach().cpu()
+                for key, value in old_network.state_dict().items()
+            }
+            checkpoint["mid_task_training_state"] = mid_task_training_state
 
         if hasattr(self, "_class_means") and self._class_means is not None:
             checkpoint["class_means"] = torch.as_tensor(self._class_means).cpu()
@@ -307,6 +402,10 @@ class BaseLearner(object):
             checkpoint["cnn_curve"] = self.cnn_curve
         if hasattr(self, "nme_curve"):
             checkpoint["nme_curve"] = self.nme_curve
+        if hasattr(self, "_checkpoint_extra_state"):
+            checkpoint.update(
+                self._checkpoint_extra_state(mid_task=mid_task_training_state is not None)
+            )
 
         checkpoint_dir = os.path.dirname(filepath)
         if checkpoint_dir:
@@ -352,6 +451,26 @@ class BaseLearner(object):
                 "classifier_sgd_momentum", "classifier_adamw_lr",
                 "classifier_adamw_weight_decay", "classifier_adamw_betas",
                 "classifier_adamw_eps",
+                "shared_adapter_update_mode",
+                "incremental_optimizer",
+                "shared_adapter_m_only_optimizer",
+                "rank_down_max",
+                "rank_up_max",
+                "feature_threshold",
+                "scaling_mode",
+                "target_scaling",
+                "lora_alpha",
+                "shared_adapter_m_only_bias_policy",
+                "shared_adapter_m_only_empty_residual_policy",
+                "shared_adapter_m_only_grad_batches",
+                "shared_adapter_m_only_feature_rows_per_batch",
+                "shared_adapter_m_only_sgd_momentum",
+                "shared_adapter_m_only_adamw_keeplora_lr",
+                "shared_adapter_m_only_adamw_keeplora_weight_decay",
+                "shared_adapter_m_only_adamw_classifier_lr",
+                "shared_adapter_m_only_adamw_classifier_weight_decay",
+                "shared_adapter_m_only_adamw_rae_lr",
+                "shared_adapter_m_only_adamw_rae_weight_decay",
             }
             missing_metadata = [
                 key for key in current_metadata
@@ -363,12 +482,49 @@ class BaseLearner(object):
                 raise ValueError(
                     "Checkpoint is missing run metadata: {}".format(missing_metadata)
                 )
+        task_zero_m_only_compatibility = (
+            int(checkpoint.get("cur_task", -1)) == 0
+            and current_metadata.get("shared_adapter_update_mode")
+            == "keeplora_m_only"
+        )
+        task_zero_compatible_keys = {
+            "shared_adapter_update_mode",
+            "incremental_optimizer",
+            "shared_adapter_m_only_optimizer",
+            "rank_down_max",
+            "rank_up_max",
+            "feature_threshold",
+            "scaling_mode",
+            "target_scaling",
+            "lora_alpha",
+            "shared_adapter_m_only_bias_policy",
+            "shared_adapter_m_only_empty_residual_policy",
+            "shared_adapter_m_only_grad_batches",
+            "shared_adapter_m_only_feature_rows_per_batch",
+            "shared_adapter_m_only_sgd_momentum",
+            "shared_adapter_m_only_adamw_keeplora_lr",
+            "shared_adapter_m_only_adamw_keeplora_weight_decay",
+            "shared_adapter_m_only_adamw_classifier_lr",
+            "shared_adapter_m_only_adamw_classifier_weight_decay",
+            "shared_adapter_m_only_adamw_rae_lr",
+            "shared_adapter_m_only_adamw_rae_weight_decay",
+        }
+        if task_zero_m_only_compatibility and checkpoint.get(
+            "shared_adapter_m_only_state", {}
+        ).get("feature_bases"):
+            task_zero_compatible_keys.difference_update(
+                {"feature_threshold", "shared_adapter_m_only_feature_rows_per_batch"}
+            )
         mismatches = [
             "{} (checkpoint={!r}, current={!r})".format(
                 key, saved_metadata[key], current_metadata[key]
             )
             for key in current_metadata
             if key != "format_version"
+            and not (
+                task_zero_m_only_compatibility
+                and key in task_zero_compatible_keys
+            )
             and key in saved_metadata
             and saved_metadata[key] != current_metadata[key]
         ]
@@ -476,9 +632,18 @@ class BaseLearner(object):
             else self._network
         )
         self._rebuild_classifier(network, self.task_sizes)
+        if hasattr(self, "_prepare_checkpoint_model"):
+            self._prepare_checkpoint_model(checkpoint)
         missing_keys, unexpected_keys = network.load_state_dict(
             checkpoint["model_state_dict"], strict=False
         )
+        if checkpoint.get("mid_task_training_state") is not None and (
+            missing_keys or unexpected_keys
+        ):
+            raise ValueError(
+                "Mid-task checkpoint model state is incomplete: missing={}, "
+                "unexpected={}".format(missing_keys, unexpected_keys)
+            )
         if missing_keys:
             logging.warning("Missing keys while loading checkpoint: %s", missing_keys)
         if unexpected_keys:
@@ -506,6 +671,7 @@ class BaseLearner(object):
 
         if hasattr(self, "_after_load_checkpoint"):
             self._after_load_checkpoint(checkpoint)
+        self._mid_task_training_state = checkpoint.get("mid_task_training_state")
 
         logging.info(
             "Loaded checkpoint %s; completed task=%d, known_classes=%d, total_classes=%d",
@@ -526,6 +692,14 @@ class BaseLearner(object):
             (y_pred.T == np.tile(y_true, (self.topk, 1))).sum() * 100 / len(y_true),
             decimals=2,
         ))
+        if getattr(getattr(self, "semantic_drift", None), "enabled", False):
+            task_ids = np.searchsorted(np.cumsum(self.task_sizes), y_true, side="right")
+            correct = y_pred[:, 0] == y_true
+            scores = []
+            for task_id in range(len(self.task_sizes)):
+                mask = task_ids == task_id
+                scores.append(float(correct[mask].mean() * 100) if mask.any() else None)
+            ret["per_task_top1"] = scores
 
         return ret
 

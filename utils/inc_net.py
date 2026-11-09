@@ -23,6 +23,14 @@ def get_convnet(args, pretrained=False):
         if args["model_name"] == "adapter":
             from network import vision_transformer_adapter
             from easydict import EasyDict
+            shared_adapter_update_mode = str(
+                args.get("shared_adapter_update_mode", "baseline")
+            ).lower()
+            if shared_adapter_update_mode not in ("baseline", "keeplora_m_only"):
+                raise ValueError(
+                    "shared_adapter_update_mode must be 'baseline' or "
+                    "'keeplora_m_only'."
+                )
             tuning_config = EasyDict(
                 # AdaptFormer
                 ffn_adapt=True,
@@ -32,6 +40,7 @@ def get_convnet(args, pretrained=False):
                 ffn_adapter_scalar="0.1",
                 ffn_num=ffn_num,
                 d_model=768,
+                shared_adapter_update_mode=shared_adapter_update_mode,
                 # VPT related
                 vpt_on=False,
                 vpt_num=0,

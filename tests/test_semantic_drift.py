@@ -1,4 +1,6 @@
 import copy
+import csv
+import json
 import random
 import tempfile
 import unittest
@@ -187,17 +189,27 @@ class SemanticDriftTests(unittest.TestCase):
             np.zeros((2, 2), dtype=np.float32),
             np.zeros((2, 2), dtype=np.float32),
         )
+        observer.write_task()
         observer.record_evaluation(
             {
                 "top1": 50.0,
                 "top5": 75.0,
                 "grouped": {"old": 40.0, "new": 60.0},
-            }
+                "per_task_top1": [40.0, 60.0],
+            },
+            {0: [65.0], 1: [40.0, 60.0]},
         )
         memory = observer._task_result["prototype_memory_diagnostic"]
         self.assertIn("stored_covariance_vs_empirical_post_relative_frobenius", memory)
         self.assertIn("effective_ca_mean_vs_empirical_post", memory)
         self.assertEqual(observer._task_result["evaluation"]["old_class_accuracy"], 40.0)
+        report = json.loads((observer.output_dir / "task_01.json").read_text(encoding="utf-8"))
+        self.assertEqual(report["evaluation"]["forgetting"]["per_task"], {"0": 25.0})
+        with (observer.output_dir / "summary.csv").open(newline="", encoding="utf-8") as stream:
+            rows = list(csv.DictReader(stream))
+        self.assertEqual(len(rows), 1)
+        self.assertEqual(float(rows[0]["old_class_accuracy"]), 40.0)
+        self.assertEqual(float(rows[0]["mean_forgetting"]), 25.0)
 
     def test_metric_flags_gate_computation_and_serialization(self):
         learner = make_flagged_learner(
@@ -226,6 +238,7 @@ class SemanticDriftTests(unittest.TestCase):
         self.assertEqual(result["old_relational_drift"], {})
         self.assertEqual(result["old_new_separation"], {})
         self.assertEqual(result["ssca_diagnostic"], {})
+        observer.write_task()
 
     def test_default_distribution_path_does_not_store_full_covariance(self):
         observer = SemanticDriftObserver(make_learner())

@@ -1,4 +1,5 @@
 import copy
+import hashlib
 import logging
 import random
 import numpy as np
@@ -17,6 +18,7 @@ from utils.loss import AngularPenaltySMLoss
 from utils.toolkit import AutoencoderSigmoid
 from utils.semantic_drift import SemanticDriftObserver
 from KeepLora.keeplora_controller import KeepLoRAController
+from KeepLora.m_only_adapter import MOnlyKeepLoRA, update_feature_basis
 import math
 num_workers = 8
 
@@ -205,7 +207,28 @@ class Learner(BaseLearner):
         self.rae_task_id = None
         self._rae_last_state_snapshot = None
         self._uses_keeplora = "keeplora" in args["convnet_type"].lower()
+        self.shared_adapter_update_mode = str(
+            args.get("shared_adapter_update_mode", "baseline")
+        ).lower()
+        if self.shared_adapter_update_mode not in ("baseline", "keeplora_m_only"):
+            raise ValueError(
+                "shared_adapter_update_mode must be 'baseline' or "
+                "'keeplora_m_only'."
+            )
+        self._uses_m_only = self.shared_adapter_update_mode == "keeplora_m_only"
+        if self._uses_m_only and (
+            args.get("model_name") != "adapter"
+            or "_adapter" not in str(args["convnet_type"]).lower()
+            or self._uses_keeplora
+        ):
+            raise ValueError(
+                "keeplora_m_only requires the RSIAT Shared Adapter backbone."
+            )
+        self._m_only_bases = {}
+        self.m_only_init_loader = None
         self.keeplora_init_mode = str(args.get("keeplora_init_mode", "cosine")).lower()
+        if self._uses_m_only:
+            self._validate_m_only_config()
         convnet_trainable = sum(
             parameter.numel()
             for parameter in self._network.convnet.parameters()
@@ -312,12 +335,54 @@ class Learner(BaseLearner):
 
     def _after_load_checkpoint(self, checkpoint):
         """Restore learner-specific state after BaseLearner restores the network."""
-        if self._cur_task >= 1:
-            self.old_ae = AutoencoderSigmoid(
-                input_dims=768,
-                code_dims=self.args["ae_code_dims"],
-                zero_residual=self.rae_zero_init,
+        saved_adapter_hash = checkpoint.get("shared_adapter_weight_sha256")
+        if (
+            int(checkpoint.get("cur_task", -1)) == 0
+            and saved_adapter_hash is not None
+            and saved_adapter_hash != self._shared_adapter_weight_checksum()
+        ):
+            raise ValueError(
+                "Task-0 Shared Adapter checksum does not match the checkpoint."
             )
+        saved_adapter_state_hash = checkpoint.get(
+            "shared_adapter_state_sha256"
+        )
+        if (
+            int(checkpoint.get("cur_task", -1)) == 0
+            and saved_adapter_state_hash is not None
+            and saved_adapter_state_hash
+            != self._shared_adapter_state_checksum()
+        ):
+            raise ValueError(
+                "Task-0 full Shared Adapter state checksum does not match "
+                "the checkpoint."
+            )
+        m_only_state = checkpoint.get("shared_adapter_m_only_state")
+        self._task_boundary_rng_state = None
+        if m_only_state is not None:
+            if not self._uses_m_only:
+                raise ValueError(
+                    "Checkpoint contains Shared Adapter M-only state, but the "
+                    "current mode is not keeplora_m_only."
+                )
+            if int(m_only_state.get("version", 0)) != 1:
+                raise ValueError("Unsupported Shared Adapter M-only checkpoint state.")
+            self._m_only_bases = {
+                name: basis.detach().cpu().float()
+                for name, basis in m_only_state.get("feature_bases", {}).items()
+            }
+            saved_basis_hash = m_only_state.get("feature_basis_sha256")
+            if (
+                saved_basis_hash is not None
+                and saved_basis_hash != self._m_only_feature_basis_checksum()
+            ):
+                raise ValueError(
+                    "Shared Adapter feature-basis checksum does not match checkpoint."
+                )
+            if checkpoint.get("mid_task_training_state") is None:
+                self._task_boundary_rng_state = m_only_state.get("task_boundary_rng_state")
+        if self._cur_task >= 1:
+            self.old_ae = self._build_rae()
             if "old_ae_state_dict" not in checkpoint:
                 raise ValueError(
                     "Checkpoint is missing old_ae_state_dict required to resume task {}."
@@ -331,12 +396,240 @@ class Learner(BaseLearner):
             self.rae_task_id = checkpoint.get("rae_task_id", self._cur_task)
             self._rae_last_state_snapshot = self._rae_state_snapshot()
 
+        mid_task_state = checkpoint.get("mid_task_training_state")
+        if mid_task_state is not None:
+            if not self._uses_m_only:
+                raise ValueError(
+                    "Mid-task resume is supported only for keeplora_m_only."
+                )
+            if int(mid_task_state.get("task_id", -1)) != self._cur_task:
+                raise ValueError(
+                    "Mid-task checkpoint task_id does not match cur_task."
+                )
+            old_state = checkpoint.get("old_network_state_dict")
+            if old_state is None:
+                raise ValueError(
+                    "Mid-task checkpoint is missing old_network_state_dict."
+                )
+            old_network = self._old_network
+            for block in old_network.convnet.blocks:
+                adapter = getattr(block, "adaptmlp", None)
+                if adapter is not None:
+                    adapter.remove_m_only_factors()
+            old_state = {
+                key: value
+                for key, value in old_state.items()
+                if not key.startswith("fc.")
+            }
+            missing, unexpected = old_network.load_state_dict(
+                old_state, strict=False
+            )
+            unexpected = [key for key in unexpected if not key.startswith("fc.")]
+            missing = [key for key in missing if not key.startswith("fc.")]
+            if missing or unexpected:
+                raise ValueError(
+                    "Could not restore the frozen previous-task network: "
+                    "missing={}, unexpected={}".format(missing, unexpected)
+                )
+            self._old_network = old_network.freeze().to(self._device)
+
         self._network_module_ptr = self._network
         self.old_network_module_ptr = self._old_network
+
+    def _prepare_checkpoint_model(self, checkpoint):
+        mid_task_state = checkpoint.get("mid_task_training_state")
+        if mid_task_state is None:
+            return
+        if not self._uses_m_only:
+            raise ValueError(
+                "Mid-task resume is supported only for keeplora_m_only."
+            )
+        network = (
+            self._network.module
+            if isinstance(self._network, nn.DataParallel)
+            else self._network
+        )
+        module_metadata = checkpoint.get(
+            "shared_adapter_m_only_active_factors", []
+        )
+        metadata_by_target = {
+            (item["prefix"], item["kind"]): item
+            for item in module_metadata
+        }
+        for prefix, adapter, kind, linear in self._m_only_adapter_targets():
+            linear.weight.requires_grad_(False)
+            bias = linear.bias
+            if bias is not None:
+                bias.requires_grad_(
+                    self.args.get(
+                        "shared_adapter_m_only_bias_policy", "freeze_bias"
+                    ).lower() == "train_bias_unconstrained"
+                )
+            item = metadata_by_target.get((prefix, kind))
+            if item is None:
+                continue
+            factor = MOnlyKeepLoRA(
+                item["in_features"],
+                item["out_features"],
+                item["rank"],
+                item["scaling"],
+            ).to(device=linear.weight.device, dtype=linear.weight.dtype)
+            if (
+                factor.in_features != linear.in_features
+                or factor.out_features != linear.out_features
+            ):
+                raise ValueError(
+                    "Checkpoint M-only factor shape does not match {}."
+                    .format(self._m_only_weight_key(prefix, kind))
+                )
+            if kind == "down":
+                adapter.attach_m_only_factors(factor, adapter.keeplora_m_only_up)
+            else:
+                adapter.attach_m_only_factors(adapter.keeplora_m_only_down, factor)
+        expected_targets = {
+            (prefix, kind)
+            for prefix, _, kind, _ in self._m_only_adapter_targets()
+        }
+        unexpected_targets = set(metadata_by_target) - expected_targets
+        if unexpected_targets:
+            raise ValueError(
+                "Checkpoint contains unknown M-only factor targets: {}"
+                .format(sorted(unexpected_targets))
+            )
+
+    def _checkpoint_extra_state(self, *, mid_task=False):
+        if self.args.get("model_name") != "adapter":
+            return {}
+        state = {
+            "shared_adapter_weight_sha256": self._shared_adapter_weight_checksum(),
+            "shared_adapter_state_sha256": self._shared_adapter_state_checksum(),
+        }
+        if self._uses_m_only:
+            feature_bases = {
+                name: basis.detach().cpu()
+                for name, basis in self._m_only_bases.items()
+            }
+            state["shared_adapter_m_only_state"] = {
+                "version": 1,
+                "feature_bases": feature_bases,
+                "feature_basis_sha256": self._m_only_feature_basis_checksum(
+                    feature_bases
+                ),
+            }
+            if not mid_task:
+                state["shared_adapter_m_only_state"]["task_boundary_rng_state"] = (
+                    self._capture_training_rng_state()
+                )
+            active_factors = []
+            for prefix, adapter, kind, _ in self._m_only_adapter_targets():
+                factor = getattr(
+                    adapter, "keeplora_m_only_{}".format(kind), None
+                )
+                if factor is None:
+                    continue
+                active_factors.append(
+                    {
+                        "prefix": prefix,
+                        "kind": kind,
+                        "in_features": factor.in_features,
+                        "out_features": factor.out_features,
+                        "rank": factor.rank,
+                        "scaling": factor.scaling,
+                    }
+                )
+            state["shared_adapter_m_only_active_factors"] = active_factors
+        return state
+
+    def _shared_adapter_state_checksum(self):
+        network = (
+            self._network.module
+            if isinstance(self._network, nn.DataParallel)
+            else self._network
+        )
+        digest = hashlib.sha256()
+        for block_index, block in enumerate(network.convnet.blocks):
+            adapter = getattr(block, "adaptmlp", None)
+            if adapter is None:
+                continue
+            for name, tensor in sorted(adapter.state_dict().items()):
+                value = tensor.detach().cpu().contiguous()
+                digest.update(
+                    "{}.adaptmlp.{}:{}:{}:".format(
+                        block_index, name, tuple(value.shape), value.dtype
+                    ).encode("utf-8")
+                )
+                digest.update(value.numpy().tobytes())
+        return digest.hexdigest()
+
+    def _m_only_feature_basis_checksum(self, feature_bases=None):
+        if feature_bases is None:
+            feature_bases = self._m_only_bases
+        digest = hashlib.sha256()
+        for name in sorted(feature_bases):
+            tensor = feature_bases[name].detach().cpu().float().contiguous()
+            digest.update(
+                "{}:{}:".format(name, tuple(tensor.shape)).encode("utf-8")
+            )
+            digest.update(tensor.numpy().tobytes())
+        return digest.hexdigest()
+
+    def _m_only_initial_factors_checksum(self):
+        digest = hashlib.sha256()
+        for prefix, adapter, kind, _ in self._m_only_adapter_targets():
+            factor = getattr(adapter, "keeplora_m_only_{}".format(kind), None)
+            if factor is None:
+                continue
+            for name, tensor in (
+                ("A", factor.lora_A),
+                ("B", factor.lora_B),
+            ):
+                value = tensor.detach().cpu().contiguous()
+                digest.update(
+                    "{}.{}.{}:{}:{}:".format(
+                        prefix, kind, name, tuple(value.shape), factor.scaling
+                    ).encode("utf-8")
+                )
+                digest.update(value.numpy().tobytes())
+        return digest.hexdigest()
+
+    def _shared_adapter_weight_checksum(self):
+        network = (
+            self._network.module
+            if isinstance(self._network, nn.DataParallel)
+            else self._network
+        )
+        digest = hashlib.sha256()
+        for block_index, block in enumerate(network.convnet.blocks):
+            adapter = getattr(block, "adaptmlp", None)
+            if adapter is None:
+                continue
+            for name, linear in (
+                ("down_proj", adapter.down_proj),
+                ("up_proj", adapter.up_proj),
+            ):
+                for parameter_name, parameter in (
+                    ("weight", linear.weight),
+                    ("bias", linear.bias),
+                ):
+                    if parameter is None:
+                        continue
+                    tensor = parameter.detach().cpu().contiguous()
+                    digest.update(
+                        "{}.adaptmlp.{}.{}:{}:".format(
+                            block_index,
+                            name,
+                            parameter_name,
+                            tuple(tensor.shape),
+                        ).encode("utf-8")
+                    )
+                    digest.update(tensor.numpy().tobytes())
+        return digest.hexdigest()
 
     def after_task(self):
         if self._uses_keeplora:
             self._finalize_keeplora_task()
+        elif self._uses_m_only:
+            self._finalize_shared_adapter_m_only_task()
         if self.old_ae is not None:
             self._rae_last_state_snapshot = self._rae_state_snapshot()
         self._known_classes = self._total_classes
@@ -346,16 +639,536 @@ class Learner(BaseLearner):
         else:
             self.old_network_module_ptr = self._old_network
 
+    def _validate_m_only_config(self):
+        rank_down = int(self.args.get("rank_down_max", 32))
+        rank_up = int(self.args.get("rank_up_max", 32))
+        threshold = float(self.args.get("feature_threshold", 0.99))
+        scaling_mode = str(
+            self.args.get("scaling_mode", "fixed_effective_scaling")
+        ).lower()
+        target_scaling = float(self.args.get("target_scaling", 0.0625))
+        lora_alpha = float(self.args.get("lora_alpha", 2.0))
+        bias_policy = str(
+            self.args.get("shared_adapter_m_only_bias_policy", "freeze_bias")
+        ).lower()
+        optimizer = str(
+            self.args.get(
+                "incremental_optimizer",
+                self.args.get("shared_adapter_m_only_optimizer", "sgd"),
+            )
+        ).lower()
+        empty_policy = str(
+            self.args.get("shared_adapter_m_only_empty_residual_policy", "no_update")
+        ).lower()
+        if rank_down < 1 or rank_up < 1:
+            raise ValueError("rank_down_max and rank_up_max must be positive.")
+        if not 0 < threshold <= 1:
+            raise ValueError("feature_threshold must be in (0, 1].")
+        if scaling_mode not in ("fixed_effective_scaling", "alpha_over_rank"):
+            raise ValueError(
+                "scaling_mode must be 'fixed_effective_scaling' or 'alpha_over_rank'."
+            )
+        if target_scaling <= 0 or lora_alpha <= 0:
+            raise ValueError("target_scaling and lora_alpha must be positive.")
+        if bias_policy not in ("freeze_bias", "train_bias_unconstrained"):
+            raise ValueError(
+                "shared_adapter_m_only_bias_policy must be 'freeze_bias' or "
+                "'train_bias_unconstrained'."
+            )
+        if optimizer not in ("adamw", "sgd"):
+            raise ValueError(
+                "incremental_optimizer must be 'adamw' or 'sgd'."
+            )
+        momentum = float(
+            self.args.get("shared_adapter_m_only_sgd_momentum", 0.9)
+        )
+        if not math.isfinite(momentum) or not 0 <= momentum < 1:
+            raise ValueError(
+                "shared_adapter_m_only_sgd_momentum must be finite and in [0, 1)."
+            )
+        if empty_policy not in ("no_update", "error"):
+            raise ValueError(
+                "shared_adapter_m_only_empty_residual_policy must be "
+                "'no_update' or 'error'."
+            )
+        for key in ("shared_adapter_m_only_grad_batches",):
+            if int(self.args.get(key, 0)) < 0:
+                raise ValueError("{} must be non-negative.".format(key))
+        if int(self.args.get("shared_adapter_m_only_feature_rows_per_batch", 0)) < 0:
+            raise ValueError(
+                "shared_adapter_m_only_feature_rows_per_batch must be non-negative."
+            )
+        for module in ("keeplora", "classifier", "rae"):
+            lr = float(
+                self.args.get(
+                    "shared_adapter_m_only_adamw_{}_lr".format(module),
+                    self.args.get(
+                        "adamw_rae_lr" if module == "rae" else "adamw_lr",
+                        self.args.get(
+                            "ae_init_lr" if module == "rae" else "init_lr", 1e-3
+                        ),
+                    ),
+                )
+            )
+            weight_decay = float(
+                self.args.get(
+                    "shared_adapter_m_only_adamw_{}_weight_decay".format(module),
+                    self.args.get(
+                        "adamw_rae_weight_decay"
+                        if module == "rae"
+                        else "adamw_weight_decay",
+                        self.args.get(
+                            "ae_weight_decay"
+                            if module == "rae"
+                            else "weight_decay",
+                            0.0,
+                        ),
+                    ),
+                )
+            )
+            if not math.isfinite(lr) or lr <= 0:
+                raise ValueError(
+                    "M-only AdamW {} learning rate must be finite and > 0."
+                    .format(module)
+                )
+            if not math.isfinite(weight_decay) or weight_decay < 0:
+                raise ValueError(
+                    "M-only AdamW {} weight decay must be finite and >= 0."
+                    .format(module)
+                )
+
+    def _m_only_adapter_targets(self):
+        network, convnet = self._keeplora_convnet()
+        for block_index, block in enumerate(convnet.blocks):
+            adapter = getattr(block, "adaptmlp", None)
+            if adapter is None:
+                continue
+            yield (
+                "blocks.{}.adaptmlp".format(block_index),
+                adapter,
+                "down",
+                adapter.down_proj,
+            )
+            yield (
+                "blocks.{}.adaptmlp".format(block_index),
+                adapter,
+                "up",
+                adapter.up_proj,
+            )
+
+    def _m_only_data_loader(self, dataset, task_id, purpose, shuffle=False):
+        purpose_offsets = {"gradient": 104729, "features": 130363}
+        generator = torch.Generator()
+        generator.manual_seed(
+            int(self.args["seed"])
+            + 1000003 * int(task_id)
+            + purpose_offsets[purpose]
+        )
+        return DataLoader(
+            dataset,
+            batch_size=self.batch_size,
+            shuffle=shuffle,
+            drop_last=(purpose == "gradient"),
+            num_workers=self.num_workers,
+            pin_memory=self.pin_memory,
+            persistent_workers=False,
+            generator=generator,
+        )
+
+    @staticmethod
+    def _snapshot_random_state():
+        return (
+            random.getstate(),
+            np.random.get_state(),
+            torch.get_rng_state(),
+            torch.cuda.get_rng_state_all() if torch.cuda.is_available() else None,
+        )
+
+    @staticmethod
+    def _restore_random_state(state):
+        python_state, numpy_state, torch_state, cuda_state = state
+        random.setstate(python_state)
+        np.random.set_state(numpy_state)
+        torch.set_rng_state(torch_state)
+        if cuda_state is not None:
+            torch.cuda.set_rng_state_all(cuda_state)
+
+    def _collect_shared_adapter_m_only_basis(self, class_indices, task_id):
+        if self.data_manager is None:
+            raise RuntimeError("DataManager is unavailable for M-only basis collection.")
+        dataset = self.data_manager.get_dataset(
+            np.asarray(class_indices), source="train", mode="test"
+        )
+        loader = self._m_only_data_loader(
+            dataset, task_id, purpose="features", shuffle=False
+        )
+        network, _ = self._keeplora_convnet()
+        adapters = {}
+        for prefix, adapter, _, _ in self._m_only_adapter_targets():
+            adapters[prefix] = adapter
+        rows_per_batch = int(
+            self.args.get("shared_adapter_m_only_feature_rows_per_batch", 0)
+        )
+        for adapter in adapters.values():
+            adapter.start_m_only_feature_collection(rows_per_batch)
+
+        was_training = network.training
+        network.eval()
+        try:
+            with torch.no_grad():
+                for _, inputs, _ in loader:
+                    network.extract_vector(inputs.to(self._device, non_blocking=True))
+        finally:
+            if was_training:
+                network.train()
+
+        threshold = float(self.args.get("feature_threshold", 0.99))
+        for prefix, adapter in adapters.items():
+            moments = adapter.finish_m_only_feature_collection()
+            for name in ("down", "up"):
+                key = "{}.{}_proj".format(prefix, name)
+                previous = self._m_only_bases.get(
+                    key, torch.empty(moments[name].shape[0], 0)
+                )
+                basis, stats = update_feature_basis(
+                    moments[name], previous, threshold
+                )
+                self._m_only_bases[key] = basis.detach().cpu()
+                logging.info(
+                    "M-only feature basis task=%d module=%s input_dim=%d "
+                    "rank_M=%d previous_rank=%d new_directions=%d "
+                    "residual_dimension=%d captured_energy=%.8g "
+                    "residual_energy_ratio=%.8g orthogonality_error=%.8g "
+                    "cross_orthogonality_error=%.8g adapter_output_norm=%.8g "
+                    "rows_per_batch=%d",
+                    task_id,
+                    key,
+                    moments[name].shape[0],
+                    stats["rank"],
+                    stats["previous_rank"],
+                    stats["new_rank"],
+                    stats["residual_dimension"],
+                    stats["captured_energy"],
+                    stats["residual_energy_ratio"],
+                    stats["orthogonality_error"],
+                    stats["cross_orthogonality_error"],
+                    moments["output_norm"],
+                    rows_per_batch,
+                )
+                logging.info(
+                    "M-only feature sample count task=%d module=%s "
+                    "captured_rows=%d",
+                    task_id,
+                    key,
+                    moments["down_rows" if name == "down" else "up_rows"],
+                )
+
+    def _ensure_m_only_task_zero_basis(self):
+        expected_keys = {
+            self._m_only_weight_key(prefix, kind)
+            for prefix, _, kind, _ in self._m_only_adapter_targets()
+        }
+        missing_keys = expected_keys - set(self._m_only_bases)
+        if not missing_keys:
+            return
+        if self._m_only_bases or self._cur_task != 1:
+            raise RuntimeError(
+                "Previous-task M-only basis is incomplete; missing {}."
+                .format(sorted(missing_keys))
+            )
+        if self._known_classes <= 0:
+            raise RuntimeError("Cannot initialize M-only factors without Task-0 classes.")
+        self._collect_shared_adapter_m_only_basis(
+            np.arange(self._known_classes), task_id=0
+        )
+
+    def _initialize_shared_adapter_m_only_task(self):
+        if self._cur_task < 1:
+            raise RuntimeError("M-only KeepLoRA must not be initialized in Task 0.")
+        self._ensure_m_only_task_zero_basis()
+        targets = list(self._m_only_adapter_targets())
+        weights = [linear.weight for _, _, _, linear in targets]
+        original_requires_grad = [weight.requires_grad for weight in weights]
+        for weight in weights:
+            weight.requires_grad_(True)
+
+        gradients = {
+            self._m_only_weight_key(prefix, kind): torch.zeros_like(linear.weight)
+            for prefix, _, kind, linear in targets
+        }
+        max_batches = int(self.args.get("shared_adapter_m_only_grad_batches", 0))
+        seen_batches = 0
+        probe_inputs = None
+        invariance_reference = None
+        network, _ = self._keeplora_convnet()
+        was_training = network.training
+        random_state = self._snapshot_random_state()
+        try:
+            network.train()
+            for batch_index, (_, inputs, labels) in enumerate(self.m_only_init_loader):
+                if max_batches > 0 and batch_index >= max_batches:
+                    break
+                seen_batches += 1
+                inputs = inputs.to(self._device, non_blocking=True)
+                labels = labels.to(self._device, non_blocking=True)
+                if probe_inputs is None:
+                    probe_inputs = inputs.detach().clone()
+                    network.eval()
+                    with torch.no_grad():
+                        invariance_reference = network.extract_vector(probe_inputs)
+                    network.train()
+                _, loss_c, loss_incremental = self._compute_rt_loss(
+                    inputs,
+                    labels,
+                    epoch=0,
+                    warmup_epoch=self.args["warmup_epoch"],
+                )
+                gradients_for_batch = torch.autograd.grad(
+                    loss_c + loss_incremental,
+                    weights,
+                    allow_unused=True,
+                )
+                for (prefix, _, kind, _), gradient in zip(
+                    targets, gradients_for_batch
+                ):
+                    if gradient is not None:
+                        gradients[self._m_only_weight_key(prefix, kind)].add_(
+                            gradient.detach()
+                        )
+        finally:
+            self._restore_random_state(random_state)
+            network.train(was_training)
+            for weight, requires_grad in zip(weights, original_requires_grad):
+                weight.requires_grad_(requires_grad)
+        if seen_batches == 0:
+            raise RuntimeError("M-only KeepLoRA requires at least one gradient batch.")
+        for gradient in gradients.values():
+            gradient.div_(seen_batches)
+
+        rank_caps = {
+            "down": int(self.args.get("rank_down_max", 32)),
+            "up": int(self.args.get("rank_up_max", 32)),
+        }
+        factors = {}
+        for prefix, adapter, kind, linear in targets:
+            weight = linear.weight
+            key = self._m_only_weight_key(prefix, kind)
+            basis = self._m_only_bases.get(
+                key, torch.empty(weight.shape[1], 0)
+            ).to(device=weight.device, dtype=torch.float32)
+            factor, stats = MOnlyKeepLoRA.from_gradient(
+                gradients[key],
+                basis,
+                rank_caps[kind],
+                str(self.args.get("scaling_mode", "fixed_effective_scaling")).lower(),
+                float(self.args.get("target_scaling", 0.0625)),
+                float(self.args.get("lora_alpha", 2.0)),
+                str(
+                    self.args.get(
+                        "shared_adapter_m_only_empty_residual_policy", "no_update"
+                    )
+                ).lower(),
+            )
+            if factor is not None:
+                original_weight = weight.detach().clone()
+                factor = factor.to(device=weight.device, dtype=weight.dtype)
+                weight.data.sub_(
+                    factor.get_delta_weight().to(weight.device, weight.dtype)
+                )
+                reconstructed = weight.detach() + factor.get_delta_weight().to(
+                    weight.device, weight.dtype
+                )
+                forward_error = float((reconstructed - original_weight).abs().max().item())
+                if not torch.allclose(
+                    reconstructed, original_weight, rtol=1e-4, atol=1e-5
+                ):
+                    raise RuntimeError(
+                        "M-only factorization changed the effective weight for {}."
+                        .format(key)
+                    )
+            else:
+                forward_error = 0.0
+            weight.requires_grad_(False)
+            if linear.bias is not None:
+                linear.bias.requires_grad_(
+                    self.args.get(
+                        "shared_adapter_m_only_bias_policy", "freeze_bias"
+                    ).lower() == "train_bias_unconstrained"
+                )
+            factors.setdefault(prefix, {})[kind] = factor
+            logging.info(
+                "M-only init task=%d module=%s configured_rank=%d actual_rank=%d "
+                "B_parameters=%d residual_dimension=%d gradient_norm=%.8g "
+                "projected_gradient_norm=%.8g projected_gradient_ratio=%.8g "
+                "top_rank_energy_ratio=%.8g A_orthogonality_error=%.8g "
+                "A_orthonormality_error=%.8g effective_update_norm=%.8g "
+                "effective_scaling=%.8g effective_alpha=%.8g "
+                "weight_compensation_error=%.8g bias_policy=%s",
+                self._cur_task,
+                key,
+                rank_caps[kind],
+                stats["actual_rank"],
+                0 if factor is None else factor.lora_B.numel(),
+                stats["residual_dimension"],
+                stats["gradient_norm"],
+                stats["projected_gradient_norm"],
+                stats["projected_gradient_ratio"],
+                stats["top_rank_energy_ratio"],
+                stats["a_orthogonality_error"],
+                stats["a_orthonormality_error"],
+                stats["effective_update_norm"],
+                stats["scaling"],
+                stats["alpha"],
+                forward_error,
+                self.args.get("shared_adapter_m_only_bias_policy", "freeze_bias"),
+            )
+        for prefix, adapter in {
+            (prefix, adapter) for prefix, adapter, _, _ in targets
+        }:
+            adapter.attach_m_only_factors(
+                factors[prefix].get("down"), factors[prefix].get("up")
+            )
+
+        if invariance_reference is not None:
+            network.eval()
+            try:
+                with torch.no_grad():
+                    actual_features = network.extract_vector(probe_inputs)
+            finally:
+                network.train(was_training)
+            maximum_error = float(
+                (actual_features - invariance_reference).abs().max().item()
+            )
+            if not torch.allclose(
+                actual_features,
+                invariance_reference,
+                rtol=1e-4,
+                atol=1e-5,
+            ):
+                raise RuntimeError(
+                    "Attaching M-only factors changed the Shared Adapter forward "
+                    "(max error {:.8g}).".format(maximum_error)
+                )
+            logging.info(
+                "M-only factorization forward invariance task=%d max_abs_error=%.8g",
+                self._cur_task,
+                maximum_error,
+            )
+        logging.info(
+            "M-only initialization task=%d gradient_batches=%d feature_basis_sha256=%s "
+            "factor_AB_sha256=%s",
+            self._cur_task,
+            seen_batches,
+            self._m_only_feature_basis_checksum(),
+            self._m_only_initial_factors_checksum(),
+        )
+        self._log_m_only_parameter_budget("task_{}".format(self._cur_task))
+
+    @staticmethod
+    def _m_only_weight_key(prefix, kind):
+        return "{}.{}_proj".format(prefix, kind)
+
+    def _merge_shared_adapter_m_only_task(self):
+        merged_count = 0
+        for prefix, adapter, kind, linear in self._m_only_adapter_targets():
+            factor = getattr(adapter, "keeplora_m_only_{}".format(kind), None)
+            if factor is None:
+                continue
+            weight = linear.weight
+            logging.info(
+                "M-only effective update task=%d module=%s norm=%.8g scaling=%.8g",
+                self._cur_task,
+                self._m_only_weight_key(prefix, kind),
+                torch.linalg.vector_norm(factor.get_delta_weight()).item(),
+                factor.scaling,
+            )
+            before = weight.detach().clone() + factor.get_delta_weight().to(
+                weight.device, weight.dtype
+            )
+            factor.merge_into(weight)
+            error = float((weight.detach() - before).abs().max().item())
+            if not torch.allclose(weight.detach(), before, rtol=1e-4, atol=1e-5):
+                raise RuntimeError(
+                    "M-only merge changed the effective weight for {}."
+                    .format(self._m_only_weight_key(prefix, kind))
+                )
+            merged_count += 1
+            logging.info(
+                "M-only merge task=%d module=%s effective_weight_error=%.8g",
+                self._cur_task,
+                self._m_only_weight_key(prefix, kind),
+                error,
+            )
+        for _, adapter in {
+            (prefix, adapter)
+            for prefix, adapter, _, _ in self._m_only_adapter_targets()
+        }:
+            adapter.remove_m_only_factors()
+            adapter.down_proj.weight.requires_grad_(False)
+            adapter.up_proj.weight.requires_grad_(False)
+            if self.args.get(
+                "shared_adapter_m_only_bias_policy", "freeze_bias"
+            ).lower() == "freeze_bias":
+                if adapter.down_proj.bias is not None:
+                    adapter.down_proj.bias.requires_grad_(False)
+                if adapter.up_proj.bias is not None:
+                    adapter.up_proj.bias.requires_grad_(False)
+        logging.info(
+            "M-only task merge complete task=%d merged_linear_updates=%d",
+            self._cur_task,
+            merged_count,
+        )
+
+    def _finalize_shared_adapter_m_only_task(self):
+        current_classes = np.arange(self._known_classes, self._total_classes)
+        self._collect_shared_adapter_m_only_basis(
+            current_classes, task_id=self._cur_task
+        )
+
+    def _log_m_only_parameter_budget(self, stage):
+        network, convnet = self._keeplora_convnet()
+        dense_adapter_parameters = sum(
+            parameter.numel()
+            for block in convnet.blocks
+            for adapter in [getattr(block, "adaptmlp", None)]
+            if adapter is not None
+            for linear in (adapter.down_proj, adapter.up_proj)
+            for parameter in linear.parameters()
+        )
+        b_parameters = sum(
+            factor.lora_B.numel()
+            for _, adapter, kind, _ in self._m_only_adapter_targets()
+            for factor in [
+                getattr(adapter, "keeplora_m_only_{}".format(kind), None)
+            ]
+            if factor is not None
+        )
+        logging.info(
+            "M-only parameter budget stage=%s total_model_parameters=%d "
+            "dense_adapter_parameters=%d incremental_B_parameters=%d "
+            "inference_model_parameters=%d",
+            stage,
+            sum(parameter.numel() for parameter in network.parameters()),
+            dense_adapter_parameters,
+            b_parameters,
+            sum(parameter.numel() for parameter in network.parameters())
+            - b_parameters,
+        )
+
     def _keeplora_convnet(self):
         network = self._network.module if isinstance(self._network, nn.DataParallel) else self._network
         return network, network.convnet
 
-    def _create_rae(self, task_id):
-        self.old_ae = AutoencoderSigmoid(
+    def _build_rae(self):
+        return AutoencoderSigmoid(
             input_dims=768,
             code_dims=self.args["ae_code_dims"],
             zero_residual=self.rae_zero_init,
-        ).to(self._device)
+            baseline_init_order=getattr(self, "_uses_m_only", False),
+        )
+
+    def _create_rae(self, task_id):
+        self.old_ae = self._build_rae().to(self._device)
         self.rae_generation += 1
         self.rae_task_id = task_id
         self._rae_last_state_snapshot = None
@@ -744,15 +1557,37 @@ class Learner(BaseLearner):
             self.semantic_drift._restore_rng(rng_state)
 
     def incremental_train(self, data_manager):
-        self._cur_task += 1
-        
-        self._prepare_rae_for_task()
-            
+        mid_task_state = getattr(self, "_mid_task_training_state", None)
+        resuming_mid_task = mid_task_state is not None
+        if resuming_mid_task:
+            if not self._uses_m_only:
+                raise ValueError(
+                    "Mid-task resume is supported only for keeplora_m_only."
+                )
+            if int(mid_task_state.get("task_id", -1)) != self._cur_task:
+                raise ValueError(
+                    "Mid-task checkpoint task_id does not match the loaded model."
+                )
+        else:
+            boundary_rng_state = getattr(self, "_task_boundary_rng_state", None)
+            if boundary_rng_state is not None:
+                self._restore_training_rng_state(
+                    boundary_rng_state, restore_cuda=self._device.type == "cuda"
+                )
+                self._task_boundary_rng_state = None
+            self._cur_task += 1
+            self._prepare_rae_for_task()
+
         task_size = data_manager.get_task_size(self._cur_task)
-        self.task_sizes.append(task_size)
         self._total_classes = self._known_classes + task_size
-        # self._network.update_fc(data_manager.get_task_size(self._cur_task)*4)
-        self._network.update_fc(task_size)
+        if resuming_mid_task:
+            if len(self.task_sizes) != self._cur_task + 1:
+                raise ValueError(
+                    "Mid-task checkpoint has an invalid task_sizes state."
+                )
+        else:
+            self.task_sizes.append(task_size)
+            self._network.update_fc(task_size)
         self._log_trainable_parameter_budget("task_{}".format(self._cur_task))
         self._network_module_ptr = self._network
         logging.info("Learning on {}-{}".format(self._known_classes, self._total_classes))
@@ -770,7 +1605,10 @@ class Learner(BaseLearner):
             shuffle=True,
             num_workers=self.num_workers,
             pin_memory=self.pin_memory,
-            persistent_workers=self.persistent_workers,
+            persistent_workers=(
+                self.persistent_workers
+                and not (self._uses_m_only and self._cur_task > 0)
+            ),
         )
         probe_mode = _validate_ssca_drift_probe_mode(self.args)
         ssca_drift_probe_loader = self.train_loader
@@ -789,7 +1627,17 @@ class Learner(BaseLearner):
                 drop_last=True,
                 num_workers=self.num_workers,
                 pin_memory=self.pin_memory,
-                persistent_workers=self.persistent_workers,
+                persistent_workers=(
+                    self.persistent_workers
+                    and not (self._uses_m_only and self._cur_task > 0)
+                ),
+            )
+        if self._uses_m_only and self._cur_task > 0:
+            self.m_only_init_loader = self._m_only_data_loader(
+                train_dataset,
+                self._cur_task,
+                purpose="gradient",
+                shuffle=True,
             )
         test_dataset = data_manager.get_dataset(np.arange(0, self._total_classes), source="test", mode="test")
         self.test_loader = DataLoader(
@@ -798,14 +1646,17 @@ class Learner(BaseLearner):
             shuffle=False,
             num_workers=self.num_workers,
             pin_memory=self.pin_memory,
-            persistent_workers=self.persistent_workers,
+            persistent_workers=(
+                self.persistent_workers
+                and not (self._uses_m_only and self._cur_task > 0)
+            ),
         )
 
         if len(self._multiple_gpus) > 1:
             print('Multiple GPUs')
             self._network = nn.DataParallel(self._network, self._multiple_gpus)
 
-        if self.semantic_drift.enabled:
+        if self.semantic_drift.enabled and not (self._uses_m_only and self._cur_task > 0):
             self.semantic_drift.record_parameter_audit(self._network)
 
         if self._cur_task > 0 and self.semantic_drift.enabled:
@@ -815,10 +1666,29 @@ class Learner(BaseLearner):
 
         if self._cur_task >0:
             self._network.to(self._device)
-            if probe_mode is None:
+            if resuming_mid_task:
+                pre_task_state = mid_task_state.get("pre_task_state")
+                if pre_task_state is None or "features" not in pre_task_state:
+                    raise ValueError(
+                        "Mid-task checkpoint is missing pre-training features "
+                        "required for SSCA."
+                    )
+                train_embeddings_old = pre_task_state["features"]
+                if probe_mode is not None:
+                    if "labels" not in pre_task_state or "indices" not in pre_task_state:
+                        raise ValueError(
+                            "Mid-task checkpoint is missing SSCA probe labels or indices."
+                        )
+                    old_probe_labels = pre_task_state["labels"]
+                    old_probe_indices = pre_task_state["indices"]
+                self._mid_task_pre_task_state = pre_task_state
+            elif probe_mode is None:
                 train_embeddings_old, _ = self.extract_features(
                     self.train_loader, self._network, None
                 )
+                self._mid_task_pre_task_state = {
+                    "features": train_embeddings_old.detach().cpu()
+                }
             else:
                 (
                     train_embeddings_old,
@@ -827,6 +1697,11 @@ class Learner(BaseLearner):
                 ) = self._extract_ssca_drift_probe_features(
                     ssca_drift_probe_loader
                 )
+                self._mid_task_pre_task_state = {
+                    "features": train_embeddings_old.detach().cpu(),
+                    "labels": old_probe_labels.detach().cpu(),
+                    "indices": old_probe_indices.detach().cpu(),
+                }
 
         self._diagnose_rae_initialization(self.train_loader)
         self._train(self.train_loader, self.test_loader)
@@ -932,12 +1807,26 @@ class Learner(BaseLearner):
             self._stage2_compact_classifier(task_size, self.args['ca_epochs'])
             if len(self._multiple_gpus) > 1:
                 self._network = self._network.module
+        if self._uses_m_only and self._cur_task > 0:
+            self._merge_shared_adapter_m_only_task()
+        if resuming_mid_task:
+            self._mid_task_training_state = None
+        self._mid_task_pre_task_state = None
 
     def _train(self, train_loader, test_loader):
         self._network.to(self._device)
         self._rae_optimizer_mode()
         if self._uses_keeplora:
             self._initialize_keeplora_task(self.keeplora_accum_loader)
+        elif (
+            self._uses_m_only
+            and self._cur_task > 0
+            and getattr(self, "_mid_task_training_state", None) is None
+        ):
+            self._initialize_shared_adapter_m_only_task()
+        observer = getattr(self, "semantic_drift", None)
+        if getattr(self, "_uses_m_only", False) and self._cur_task > 0 and observer is not None:
+            observer.record_parameter_audit(self._network)
         if self._cur_task == 0:
             self.tuned_epochs = self.args["init_epochs"]
             param_groups = [
@@ -1024,6 +1913,8 @@ class Learner(BaseLearner):
             )
 
     def _classifier_optimizer_mode(self):
+        if getattr(self, "_uses_m_only", False) and self._cur_task > 0:
+            return "main"
         mode = str(self.args.get("classifier_optimizer", "main")).lower()
         if mode not in ("main", "sgd", "adamw"):
             raise ValueError(
@@ -1108,6 +1999,8 @@ class Learner(BaseLearner):
         return main_optimizer, classifier_optimizer
 
     def _rae_optimizer_mode(self):
+        if getattr(self, "_uses_m_only", False) and self._cur_task > 0:
+            return "main"
         mode = str(self.args.get("rae_optimizer", "main")).lower()
         if mode not in ("main", "sgd"):
             raise ValueError(
@@ -1408,9 +2301,37 @@ class Learner(BaseLearner):
             raise RuntimeError("Optimizer parameter groups contain duplicates.")
 
         optimizer_name = str(self.args.get("optimizer", "sgd")).lower()
+        if incremental and getattr(self, "_uses_m_only", False):
+            optimizer_name = str(
+                self.args.get(
+                    "incremental_optimizer",
+                    self.args.get("shared_adapter_m_only_optimizer", "sgd"),
+                )
+            ).lower()
+            param_groups = [
+                group
+                for group in param_groups
+                if group["params"]
+            ]
+            for group in param_groups:
+                group["params"] = [
+                    parameter
+                    for parameter in group["params"]
+                    if parameter.requires_grad
+                ]
+            param_groups = [group for group in param_groups if group["params"]]
+            if not param_groups:
+                raise RuntimeError(
+                    "M-only incremental training has no active trainable parameters."
+                )
         if optimizer_name == "sgd":
+            momentum = (
+                float(self.args.get("shared_adapter_m_only_sgd_momentum", 0.9))
+                if incremental and getattr(self, "_uses_m_only", False)
+                else 0.9
+            )
             if incremental:
-                optimizer = optim.SGD(param_groups, momentum=0.9)
+                optimizer = optim.SGD(param_groups, momentum=momentum)
             else:
                 optimizer = optim.SGD(
                     param_groups,
@@ -1443,12 +2364,51 @@ class Learner(BaseLearner):
                 ]
                 group["lr"] = lr
                 group["weight_decay"] = weight_decay
-                if incremental and group["name"] == "rae":
+                if incremental and getattr(self, "_uses_m_only", False):
+                    suffix = {
+                        "backbone": "keeplora",
+                        "classifier": "classifier",
+                        "rae": "rae",
+                    }.get(group["name"])
+                    if suffix is not None:
+                        group["lr"] = float(
+                            self.args.get(
+                                "shared_adapter_m_only_adamw_{}_lr".format(suffix),
+                                self.args.get(
+                                    "adamw_rae_lr" if suffix == "rae" else "adamw_lr",
+                                    self.args.get(
+                                        "ae_init_lr" if suffix == "rae" else "init_lr",
+                                        lr,
+                                    ),
+                                ),
+                            )
+                        )
+                        group["weight_decay"] = float(
+                            self.args.get(
+                                "shared_adapter_m_only_adamw_{}_weight_decay".format(
+                                    suffix
+                                ),
+                                self.args.get(
+                                    "adamw_rae_weight_decay"
+                                    if suffix == "rae"
+                                    else "adamw_weight_decay",
+                                    self.args.get(
+                                        "ae_weight_decay"
+                                        if suffix == "rae"
+                                        else "weight_decay",
+                                        weight_decay,
+                                    ),
+                                ),
+                            )
+                        )
+                elif incremental and group["name"] == "rae":
                     group["lr"] = float(self.args.get("adamw_rae_lr", lr))
                     group["weight_decay"] = float(
                         self.args.get("adamw_rae_weight_decay", weight_decay)
                     )
-                if not group["params"]:
+                if not group["params"] and not getattr(
+                    self, "_uses_m_only", False
+                ):
                     raise RuntimeError(
                         "Optimizer parameter group {!r} is empty."
                         .format(group["name"])
@@ -1555,7 +2515,49 @@ class Learner(BaseLearner):
         classifier_optimizer=None,
         classifier_scheduler=None,
     ):
-        prog_bar = tqdm(range(self.tuned_epochs))
+        mid_task_state = getattr(self, "_mid_task_training_state", None)
+        start_epoch = 0
+        if mid_task_state is not None:
+            if int(mid_task_state.get("task_id", -1)) != self._cur_task:
+                raise ValueError("Mid-task optimizer state belongs to another task.")
+            if int(mid_task_state.get("epoch", -1)) < 0:
+                raise ValueError("Mid-task checkpoint has an invalid epoch.")
+            optimizer.load_state_dict(mid_task_state["optimizer_state_dict"])
+            scheduler.load_state_dict(mid_task_state["scheduler_state_dict"])
+            for name, component in (
+                ("rae_optimizer", rae_optimizer),
+                ("rae_scheduler", rae_scheduler),
+                ("classifier_optimizer", classifier_optimizer),
+                ("classifier_scheduler", classifier_scheduler),
+            ):
+                saved_state = mid_task_state.get(name + "_state_dict")
+                if (component is None) != (saved_state is None):
+                    raise ValueError(
+                        "Mid-task checkpoint {} presence does not match this run."
+                        .format(name)
+                    )
+                if component is not None:
+                    component.load_state_dict(saved_state)
+            start_epoch = int(mid_task_state["epoch"]) + 1
+            if start_epoch > self.tuned_epochs:
+                raise ValueError(
+                    "Mid-task checkpoint epoch {} exceeds configured inc_epochs {}."
+                    .format(start_epoch - 1, self.tuned_epochs)
+                )
+            self._restore_training_rng_state(mid_task_state["rng_state"])
+            logging.info(
+                "Resuming task %d from epoch %d/%d",
+                self._cur_task,
+                start_epoch + 1,
+                self.tuned_epochs,
+            )
+        if start_epoch == self.tuned_epochs:
+            logging.info(
+                "Task %d already completed all configured training epochs.",
+                self._cur_task,
+            )
+            return
+        prog_bar = tqdm(range(start_epoch, self.tuned_epochs))
         eval_interval = self.args.get("eval_interval", 0)
         
         for _, epoch in enumerate(prog_bar):
@@ -1610,7 +2612,75 @@ class Learner(BaseLearner):
                 test_acc_msg,
             )
             prog_bar.set_description(info)
+            if (
+                getattr(self, "_uses_m_only", False)
+                and self._cur_task > 0
+                and self.args.get("save_mid_task_checkpoints", False)
+                and getattr(self, "_mid_task_checkpoint_path", None)
+            ):
+                training_state = {
+                    "task_id": self._cur_task,
+                    "epoch": epoch,
+                    "pre_task_state": getattr(
+                        self, "_mid_task_pre_task_state", None
+                    ),
+                    "optimizer_state_dict": optimizer.state_dict(),
+                    "scheduler_state_dict": scheduler.state_dict(),
+                    "rae_optimizer_state_dict": (
+                        None if rae_optimizer is None else rae_optimizer.state_dict()
+                    ),
+                    "rae_scheduler_state_dict": (
+                        None if rae_scheduler is None else rae_scheduler.state_dict()
+                    ),
+                    "classifier_optimizer_state_dict": (
+                        None
+                        if classifier_optimizer is None
+                        else classifier_optimizer.state_dict()
+                    ),
+                    "classifier_scheduler_state_dict": (
+                        None
+                        if classifier_scheduler is None
+                        else classifier_scheduler.state_dict()
+                    ),
+                    "rng_state": self._capture_training_rng_state(),
+                }
+                self.save_checkpoint(
+                    self._mid_task_checkpoint_path,
+                    mid_task_training_state=training_state,
+                )
         logging.info(info)
+
+    @staticmethod
+    def _capture_training_rng_state():
+        return {
+            "python": random.getstate(),
+            "numpy": np.random.get_state(),
+            "torch": torch.get_rng_state(),
+            "cuda": (
+                torch.cuda.get_rng_state_all()
+                if torch.cuda.is_available()
+                else None
+            ),
+        }
+
+    @staticmethod
+    def _restore_training_rng_state(state, *, restore_cuda=True):
+        required = {"python", "numpy", "torch", "cuda"}
+        missing = required - set(state)
+        if missing:
+            raise ValueError(
+                "Checkpoint is missing RNG state: {}."
+                .format(sorted(missing))
+            )
+        random.setstate(state["python"])
+        np.random.set_state(state["numpy"])
+        torch.set_rng_state(state["torch"])
+        if restore_cuda and state["cuda"] is not None:
+            if not torch.cuda.is_available():
+                raise RuntimeError(
+                    "Checkpoint contains CUDA RNG state but CUDA is unavailable."
+                )
+            torch.cuda.set_rng_state_all(state["cuda"])
 
     def _inc_loss(self, features, features_old):
         loss_align, loss_orth = self._inc_loss_components(features, features_old)

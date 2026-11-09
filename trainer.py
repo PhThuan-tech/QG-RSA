@@ -27,16 +27,20 @@ def RSIAT_train(args):
 
 
 def find_latest_checkpoint(checkpoint_dir):
-    """Return the highest-numbered completed task checkpoint, if one exists."""
+    """Return the newest completed-task or mid-task resume checkpoint."""
     checkpoint_files = glob.glob(os.path.join(checkpoint_dir, "task_*.pkl"))
     if not checkpoint_files:
         return None
 
-    def task_number(filepath):
-        match = re.search(r"task_(\d+)\.pkl$", os.path.basename(filepath))
-        return int(match.group(1)) if match else -1
+    def checkpoint_order(filepath):
+        match = re.search(
+            r"task_(\d+)(_mid)?\.pkl$", os.path.basename(filepath)
+        )
+        if match is None:
+            return (-1, -1)
+        return (int(match.group(1)), 0 if match.group(2) is None else -1)
 
-    return max(checkpoint_files, key=task_number)
+    return max(checkpoint_files, key=checkpoint_order)
 
 def _train(args):
 
@@ -92,12 +96,27 @@ def _train(args):
 
     start_task = 0
     if args.get("resume", False):
-        resume_path = args.get("resume_path") or find_latest_checkpoint(checkpoint_dir)
+        latest_checkpoint = find_latest_checkpoint(checkpoint_dir)
+        if args.get("resume_latest", False):
+            resume_path = latest_checkpoint or args.get("resume_path")
+        else:
+            resume_path = args.get("resume_path") or latest_checkpoint
         if resume_path and os.path.isfile(resume_path):
             completed_task = model.load_checkpoint(resume_path)
-            start_task = completed_task + 1
+            mid_task_state = getattr(model, "_mid_task_training_state", None)
+            start_task = (
+                completed_task
+                if mid_task_state is not None
+                else completed_task + 1
+            )
             logging.info("Resuming experiment from task %d", start_task)
         else:
+            if getattr(model, "_uses_m_only", False) and args.get("resume_path"):
+                raise FileNotFoundError(
+                    "M-only requires the shared Task-0 checkpoint: {}".format(
+                        args["resume_path"]
+                    )
+                )
             logging.info("Resume enabled but no checkpoint was found. Starting from task 0.")
 
     print()
@@ -117,6 +136,16 @@ def _train(args):
         logging.info("This run will process tasks [%d, %d).", start_task, end_task)
 
     for task in range(start_task, end_task):
+        if (
+            getattr(model, "_uses_m_only", False)
+            and task > 0
+            and args.get("save_mid_task_checkpoints", False)
+        ):
+            model._mid_task_checkpoint_path = os.path.join(
+                checkpoint_dir, "task_{}_mid.pkl".format(task)
+            )
+        else:
+            model._mid_task_checkpoint_path = None
         logging.info("All params: {}".format(count_parameters(model._network)))
         logging.info(
             "Trainable params: {}".format(count_parameters(model._network, True))
@@ -125,7 +154,11 @@ def _train(args):
         model.incremental_train(data_manager)
         cnn_accy = model.eval_task()
         if hasattr(model, "semantic_drift"):
-            model.semantic_drift.record_evaluation(cnn_accy)
+            if "per_task_top1" in cnn_accy:
+                cnn_curve.setdefault("per_task_top1", {})[task] = cnn_accy["per_task_top1"]
+            model.semantic_drift.record_evaluation(
+                cnn_accy, cnn_curve.get("per_task_top1")
+            )
         model.after_task()
      
         logging.info("CNN: {}".format(cnn_accy["grouped"]))
@@ -138,6 +171,15 @@ def _train(args):
         if args.get("save_checkpoints", True):
             checkpoint_path = os.path.join(checkpoint_dir, "task_{}.pkl".format(task))
             model.save_checkpoint(checkpoint_path)
+            mid_task_checkpoint = os.path.join(
+                checkpoint_dir, "task_{}_mid.pkl".format(task)
+            )
+            if os.path.isfile(mid_task_checkpoint):
+                os.remove(mid_task_checkpoint)
+                logging.info(
+                    "Removed completed mid-task checkpoint: %s",
+                    mid_task_checkpoint,
+                )
             if args.get("keep_last_checkpoint", True) and task > 0:
                 previous_checkpoint = os.path.join(
                     checkpoint_dir, "task_{}.pkl".format(task - 1)
