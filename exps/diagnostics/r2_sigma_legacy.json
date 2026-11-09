@@ -1,0 +1,7 @@
+{
+  "prefix": "r2_sigma_legacy",
+  "ssca_mode": "legacy",
+  "ssca_sigma": "auto_nn",
+  "stats_diagnostics": true,
+  "save_predictions": true
+}

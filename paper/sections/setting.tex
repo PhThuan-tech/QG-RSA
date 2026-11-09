@@ -1,0 +1,44 @@
+\section{Setting}
+\label{sec:setting}
+
+\paragraph{Task.}
+Tasks $t=0,\dots,B-1$ bring disjoint label sets $\mathcal Y_t$. While learning
+task $t$, only its own training data is available. Afterwards, the model
+must classify test images of every class in
+$\mathcal C_t=\mathcal Y_0\cup\dots\cup\mathcal Y_t$, with $C_t=|\mathcal C_t|$.
+We write $\tau(c)$ for the task that introduced class $c$.
+
+\paragraph{Baseline.}
+RSIAT~\cite{rsiat} adapts a frozen ViT-B/16~\cite{dosovitskiy2021vit} with one
+adapter shared by all tasks, and produces features
+$\mathbf z\in\mathbb R^{d}$ with $d=768$. For the purpose of this paper, three
+of its parts matter:
+\begin{itemize}
+  \item a \emph{memory} $\mathcal M_t=\{(\boldsymbol\mu_c,\Sigma_c)\}_{c\in\mathcal C_t}$
+    holding the feature mean and covariance of every class, which is the
+    only information kept about past classes;
+  \item a drift correction that moves the old means after each task;
+  \item a cosine classifier, re-trained after each task on Gaussian samples
+    drawn from $\mathcal M_t$ (classifier alignment~\cite{zhang2023slca}), with
+    logits $\ell_c(\mathbf z)=s\cos(\mathbf w_c,\mathbf z)$.
+\end{itemize}
+The baseline predicts with $\arg\max_c\ell_c(\mathbf z)$. We call this the
+\emph{linear head}.
+
+\paragraph{Metrics.}
+Let $A_k$ be the accuracy on $\mathcal C_k$ after task $k$, and $a_{k,j}$ the
+accuracy on the classes of task $j$. We report the average incremental
+accuracy $\bar A=\frac1B\sum_kA_k$ and the final accuracy $A_B=A_{B-1}$. We
+also report forgetting
+$F=\frac1{B-1}\sum_{j<B-1}\big(\max_{j\le k<B-1}a_{k,j}-a_{B-1,j}\big)$.
+
+\paragraph{Benchmarks.}
+\begin{itemize}
+  \item CIFAR-100~\cite{krizhevsky2009cifar}: 10 tasks of 10 classes, 500
+    training images per class.
+  \item ImageNet-R~\cite{hendrycks2021many}: 10 tasks of 20 classes, about 120
+    images per class.
+  \item ImageNet-A~\cite{hendrycks2021nae}: 10 tasks of 20 classes, about 30
+    images per class.
+  \item CUB-200~\cite{wah2011cub}: 20 tasks of 10 classes, about 30 images per class.
+\end{itemize}

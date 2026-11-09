@@ -1,0 +1,9 @@
+{
+  "prefix": "upper_joint",
+  "init_cls": 200,
+  "increment": 200,
+  "ssca_mode": "legacy",
+  "stats_diagnostics": false,
+  "save_predictions": true,
+  "save_checkpoints": false
+}

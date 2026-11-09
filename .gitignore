@@ -1,1 +1,85 @@
-*__pycache__
+# Python caches and test state
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Local environments and editor files
+.venv/
+venv/
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Notebook-generated state
+.ipynb_checkpoints/
+
+# Datasets and downloaded model assets
+datasets/
+data/datasets/
+*.pt
+*.pth
+*.pkl
+*.safetensors
+*.bin
+
+# Runtime outputs
+ckpt/
+logs/
+outputs/
+runs/
+artifacts/
+cache/
+
+# Rebuildable packages and generated reports
+dist/
+reports/generated/
+reports/qbridge_v1_1/
+
+# Temporary files
+*.tmp
+*.temp
+*.log.tmp
+
+# Experiment results (exps/<experiment>/results/...): keep per-run .log, configs,
+# summaries, READMEs and analysis scripts in git. Per-task stats (npz/json/scores)
+# and console dumps stay local: they are large and only needed for local analyses.
+!exps/**/logs/
+exps/**/*_stats/
+exps/**/console/
+# Raw Kaggle downloads (results_<wave>.zip): extracted into results/<source>/, so the zip is a duplicate.
+exps/**/result/
+exps/**/*.zip
+# Machine dumps that the summary scripts regenerate from the logs (the .md tables stay in git).
+exps/**/summarize_*.json
+exps/qbound/results/frontier/frontier.json
+
+# Wave notebooks embed the whole code patch (~0.4 MB each); rebuild with
+# `python scripts/build_wave.py kaggle/waves/<wave>/wave.json` (wave.json stays in git).
+kaggle/waves/**/*.ipynb
+
+# Intermediate deep-research notes; the final report in reports/ stays in git.
+research_notes/
+
+# Duplicates waiting for manual deletion
+_duplicates_to_delete/
+waves/w01_svf/results/
+# --- Chỉ giữ trên máy local, không đẩy lên GitHub (từ 09/11/2026) ---
+# Log thô của các thí nghiệm không dùng trực tiếp trong paper ICISN. Thành viên chỉ cần:
+# exps/scf, exps/qscf, exps/qsd/results/a2, exps/holevo_povm/results, exps/qbound và các README kết quả.
+# Config (.json) và spec (README.md) ở gốc mỗi thí nghiệm vẫn trong git (test và runner Kaggle cần).
+exps/archive/
+kaggle/waves/*/results/
+exps/diagnostics/results/
+exps/measurement/results/
+exps/qksr/results/
+exps/qrfca/results/
+exps/svf/results/
+exps/upper/results/
+exps/qsd/results/stage_a/
+exps/holevo/results/*
+!exps/holevo/results/README.md
+exps/qksr2/results/*
+!exps/qksr2/results/README.md

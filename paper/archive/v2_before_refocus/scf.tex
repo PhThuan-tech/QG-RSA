@@ -1,0 +1,259 @@
+\section{Statistics--Classifier Fusion}
+\label{sec:method}
+
+\subsection{Objective}
+At stage $t$, RSIAT holds the feature extractor $f_t$, the aligned
+classifier $\{\mathbf w_c\}$ and the memory $\mathcal M_t$. We look for an
+inference rule
+\begin{equation}
+  \hat y(\mathbf z)=\arg\max_{c\in\mathcal C_t}\;S_c(\mathbf z;\,\{\mathbf w_c\},\,\mathcal M_t)
+\end{equation}
+that satisfies three constraints:
+\begin{enumerate}
+  \item it uses only what RSIAT already stores, so it needs no exemplars and
+    no new memory;
+  \item it requires no training;
+  \item it leaves $f_t$, and therefore the representation, untouched.
+\end{enumerate}
+We build $S_c$ as the sum of the classifier logit $\ell_c$ and a
+\emph{generative score} $g_c$ derived from $\mathcal M_t$, put on a common scale.
+
+\subsection{Generative Score I: Ridge on Stored Statistics}
+Treat each class as the Gaussian $\mathcal N(\boldsymbol\mu_c,\Sigma_c)$ given by
+the memory, with uniform class priors. Regress one-hot targets $\mathbf e_c$
+on features with squared loss and ridge penalty:
+\begin{equation}
+  W^\star=\arg\min_{W\in\mathbb R^{d\times C_t}}\;
+  \sum_{c\in\mathcal C_t}\mathbb E_{\mathbf z\sim\mathcal N(\boldsymbol\mu_c,\Sigma_c)}
+  \big\|W^{\top}\mathbf z-\mathbf e_c\big\|_2^2+\lambda\|W\|_F^2 .
+  \label{eq:ridge-obj}
+\end{equation}
+Setting the gradient to zero, and using $\mathbb E[\mathbf z\mathbf z^{\top}]=\Sigma_c+\boldsymbol\mu_c\boldsymbol\mu_c^{\top}$
+and $\mathbb E[\mathbf z]=\boldsymbol\mu_c$ under class $c$, gives
+\begin{equation}
+  \Big(\underbrace{\textstyle\sum_{c}\big(\Sigma_c+\boldsymbol\mu_c\boldsymbol\mu_c^{\top}\big)}_{G}+\lambda I\Big)W^\star
+  =\underbrace{[\boldsymbol\mu_1,\dots,\boldsymbol\mu_{C_t}]}_{M},
+  \qquad
+  g^{\mathrm{R}}_c(\mathbf z)=\mathbf z^{\top}W^\star_{:,c},
+  \label{eq:ridge}
+\end{equation}
+with $\lambda=0.1\,\mathrm{tr}(G)/d$. The solution depends only on
+$\mathcal M_t$. Equation~\eqref{eq:ridge-obj} is the population (infinite-sample)
+version of training a linear head on the CA pseudo-features of
+Eq.~\eqref{eq:ca}, with three differences:
+\begin{itemize}
+  \item the loss is squared instead of cross-entropy;
+  \item there is no mean shrinkage $\gamma_{c,t}$;
+  \item the head is solved exactly instead of being fitted by a few epochs of
+    SGD on 256 samples per class.
+\end{itemize}
+The two heads therefore use the same information but extract it differently.
+Least-squares heads of this kind are known in pre-trained
+CIL~\cite{mcdonnell2023ranpac}; what we add is their use as a calibrated
+second score alongside the CA head.
+
+\subsection{Generative Score II: Pretty-Good Measurement on Class States}
+\paragraph{Encoding.}
+With $\mathbf m_0$ the mean feature of task~0 and $s_0^2$ the trace of its
+covariance, both fixed after task~0, define the lifted vector and its
+normalisation:
+\begin{equation}
+  \mathbf v(\mathbf z)=\begin{bmatrix}(\mathbf z-\mathbf m_0)/s_0\\ 1\end{bmatrix}\in\mathbb R^{D},
+  \qquad
+  \psi(\mathbf z)=\frac{\mathbf v(\mathbf z)}{\|\mathbf v(\mathbf z)\|},
+  \qquad D=d+1=769.
+  \label{eq:encoding}
+\end{equation}
+$\psi$ is a real amplitude vector. Padded with zeros to $2^{10}$ entries, it
+is a 10-qubit pure state; the padding changes no quantity below.
+
+\paragraph{Class states from moments.}
+We define the state of class $c$ through the second moment of $\mathbf v$:
+\begin{equation}
+  \rho_c=\frac{\mathbb E_c[\mathbf v\mathbf v^{\top}]}{\mathbb E_c\|\mathbf v\|^2},
+  \qquad
+  \mathbb E_c[\mathbf v\mathbf v^{\top}]=
+  \begin{bmatrix}\tilde\Sigma_c+\tilde{\boldsymbol\mu}_c\tilde{\boldsymbol\mu}_c^{\top} & \tilde{\boldsymbol\mu}_c\\
+  \tilde{\boldsymbol\mu}_c^{\top} & 1\end{bmatrix},
+  \label{eq:state}
+\end{equation}
+with $\tilde{\boldsymbol\mu}_c=(\boldsymbol\mu_c-\mathbf m_0)/s_0$ and
+$\tilde\Sigma_c=\Sigma_c/s_0^2$. The block form follows from
+$\mathbb E_c[(\mathbf z-\mathbf m_0)(\mathbf z-\mathbf m_0)^{\top}]=\Sigma_c+(\boldsymbol\mu_c-\mathbf m_0)(\boldsymbol\mu_c-\mathbf m_0)^{\top}$.
+Like the ridge source, $\rho_c$ is computed from $\mathcal M_t$ alone. It
+follows the SSCA updates of $\boldsymbol\mu_c$ and needs no stored features.
+
+\paragraph{Measurement.}
+With uniform priors, the pretty-good measurement~\cite{hausladen1994pgm} uses
+the operators
+\begin{equation}
+  E_c=\frac1{C_t}\,\bar\rho_\delta^{-1/2}\rho_c\,\bar\rho_\delta^{-1/2},\qquad
+  \bar\rho_\delta=\frac1{C_t}\sum_{c}\rho_c+\delta I .
+  \label{eq:pgm-ops}
+\end{equation}
+By the Born rule, the probability of outcome $c$ for the state $\psi(\mathbf z)$ is
+$\Tr(E_c\psi\psi^{\top})=\psi^{\top}E_c\psi$. Normalising over classes gives
+the score
+\begin{equation}
+  p(c\mid\mathbf z)=\frac{\psi^{\top}E_c\psi}{\sum_{c'}\psi^{\top}E_{c'}\psi},
+  \qquad g^{\mathrm{Q}}_c(\mathbf z)=\log p(c\mid\mathbf z),
+  \label{eq:pgm}
+\end{equation}
+with $\delta=0.1/2^{10}$.
+
+\paragraph{Hierarchical variant.}
+The class states of task $T$ define a task operator
+$E_T=\sum_{c\in\mathcal Y_T}E_c$. The task posterior is
+$p(T\mid\mathbf z)=\sum_{c\in\mathcal Y_T}p(c\mid\mathbf z)$. Within the task, a
+second PGM is whitened by $\rho_T=\frac1{|\mathcal Y_T|}\sum_{c\in\mathcal Y_T}\rho_c$
+and gives $p(c\mid\mathbf z,T)$. The final score is
+$g^{\mathrm{H}}_c=\log p(\tau(c)\mid\mathbf z)+\log p(c\mid\mathbf z,\tau(c))$.
+
+\subsection{Calibrated Fusion}
+The fused score is
+\begin{equation}
+  S_c(\mathbf z)=\ell_c(\mathbf z)+w\,\kappa\,g_c(\mathbf z),\qquad
+  \kappa=\frac{\frac1{n}\sum_{i}\mathrm{sd}_c\,\ell_c(\mathbf x_i)}{\frac1{n}\sum_{i}\mathrm{sd}_c\,g_c(\mathbf x_i)},
+  \label{eq:fusion}
+\end{equation}
+where $\mathrm{sd}_c$ is the standard deviation across the classes in
+$\mathcal C_t$ and $\mathbf x_i$ runs over the training images of the current
+task. $\kappa$ uses no labels: it rescales $g$ so that, on average, it spreads
+across classes as much as the logits do. The weight $w$ is then a relative
+weight with the same meaning for every source. It is chosen once from
+$\Omega=\{0.25,0.5,1,2,4\}$ on the tuning group, by mean $\bar A$, and frozen.
+
+For the PGM source, the softmax of $S_c$ is a weighted geometric pooling of
+the two posteriors:
+\begin{equation}
+  \mathrm{softmax}_c\,S_c(\mathbf z)\;\propto\;p_{\mathrm{lin}}(c\mid\mathbf z)\;p(c\mid\mathbf z)^{w\kappa}.
+\end{equation}
+For integer $k$, $p(c\mid\mathbf z)^{k}$ is also the Born probability of the
+product measurement $E_c^{\otimes k}$ on $k$ copies of the state:
+$\Tr\big(E_c^{\otimes k}(\psi\psi^{\top})^{\otimes k}\big)=\Tr(E_c\psi\psi^{\top})^k$.
+The weight therefore has a direct reading as a number of state copies.
+
+\paragraph{When can fusion help?}
+Fusion improves on the linear head only if the two heads err on different
+images and $g$ is right on part of the linear head's errors. Nothing
+guarantees this. Both heads are built from the same memory, and $g$ alone is
+less accurate than the linear head on every dataset we tested. Whether the
+two heads complement each other is therefore an empirical property of each
+dataset, and Section~\ref{sec:analysis} measures it.
+
+\subsection{Properties}
+\label{sec:properties}
+
+\begin{proposition}[valid states]\label{prop:state}
+$\rho_c$ in Eq.~\eqref{eq:state} is symmetric, positive semi-definite and has
+unit trace. It is the mixture $\rho_c=\mathbb E_c\big[\pi(\mathbf z)\,\psi(\mathbf z)\psi(\mathbf z)^{\top}\big]$
+of the encoded pure states, with weights
+$\pi(\mathbf z)=\|\mathbf v(\mathbf z)\|^2/\mathbb E_c\|\mathbf v\|^2$.
+\end{proposition}
+\begin{proof}
+$\mathbf v\mathbf v^{\top}=\|\mathbf v\|^2\psi\psi^{\top}$, so
+$\mathbb E_c[\mathbf v\mathbf v^{\top}]=\mathbb E_c[\|\mathbf v\|^2\psi\psi^{\top}]$. This
+is an expectation of positive semi-definite matrices, hence positive
+semi-definite. Its trace is $\mathbb E_c\|\mathbf v\|^2$, so $\rho_c$ has unit
+trace. The weights $\pi$ are non-negative and have expectation one.
+\end{proof}
+
+\begin{proposition}[completeness]\label{prop:povm}
+$\sum_c E_c=\bar\rho_\delta^{-1/2}\bar\rho\,\bar\rho_\delta^{-1/2}$, where
+$\bar\rho=\frac1{C_t}\sum_c\rho_c$. As $\delta\to0$, this tends to the projector
+onto the support of $\bar\rho$. Hence $\{E_c\}$ is a measurement on that
+support, and $\sum_c\psi^{\top}E_c\psi\le1$ for every unit vector $\psi$.
+\end{proposition}
+\begin{proof}
+Sum Eq.~\eqref{eq:pgm-ops} over $c$. In the eigenbasis of $\bar\rho$, with
+eigenvalues $\lambda_k$, the sum is diagonal with entries
+$\lambda_k/(\lambda_k+\delta)$. These lie in $[0,1)$, and tend to
+$\mathbb 1[\lambda_k>0]$ as $\delta\to0$.
+\end{proof}
+
+\begin{proposition}[unitary invariance]\label{prop:unitary}
+Let $U$ be any orthogonal (or unitary) $D\times D$ matrix, applied after the
+encoding: $\psi\mapsto U\psi$ and $\rho_c\mapsto U\rho_cU^{\dagger}$. Then
+$p(c\mid\mathbf z)$ in Eq.~\eqref{eq:pgm} is unchanged for every $c$ and $\mathbf z$.
+\end{proposition}
+\begin{proof}
+$\bar\rho_\delta\mapsto U\bar\rho_\delta U^{\dagger}$, and matrix functions commute
+with unitary conjugation, so $\bar\rho_\delta^{-1/2}\mapsto U\bar\rho_\delta^{-1/2}U^{\dagger}$
+and $E_c\mapsto UE_cU^{\dagger}$. Then
+$(U\psi)^{\dagger}UE_cU^{\dagger}(U\psi)=\psi^{\dagger}E_c\psi$.
+\end{proof}
+\noindent A parameterised quantum circuit placed after the amplitude encoding is a
+unitary $U$. Proposition~\ref{prop:unitary} shows that it cannot change the
+PGM; only the encoding itself can.
+
+\begin{proposition}[shrinkage is inert]\label{prop:shrink}
+Replacing every $\rho_c$ by $(1-\varepsilon)\rho_c+\varepsilon\bar\rho$, with
+$\varepsilon\in[0,1)$, does not change $\arg\max_c p(c\mid\mathbf z)$.
+\end{proposition}
+\begin{proof}
+The average state $\bar\rho$, and hence $\bar\rho_\delta$, is unchanged. Each score
+becomes $(1-\varepsilon)\,\psi^{\top}E_c\psi+\varepsilon\,\psi^{\top}\bar E\psi$
+with $\bar E=\frac1{C_t}\bar\rho_\delta^{-1/2}\bar\rho\,\bar\rho_\delta^{-1/2}$. This
+is the same increasing affine map applied to every class, so the order of
+the classes is unchanged.
+\end{proof}
+\noindent With uniform priors, therefore, $\delta$ is the only effective
+regulariser of the PGM.
+
+\begin{proposition}[scale invariance of the fusion]\label{prop:scale}
+For any $a>0$ and any class-independent $b(\mathbf z)$, replacing
+$g_c(\mathbf z)$ by $a\,g_c(\mathbf z)+b(\mathbf z)$ leaves $\hat y(\mathbf z)$ in
+Eq.~\eqref{eq:fusion} unchanged.
+\end{proposition}
+\begin{proof}
+The spread across classes ignores $b$ and scales with $a$, so
+$\kappa\mapsto\kappa/a$ and $\kappa g_c\mapsto\kappa g_c+\kappa b/a$. The added term
+does not depend on $c$ and does not change the $\arg\max$.
+\end{proof}
+\noindent The normalising constant of Eq.~\eqref{eq:pgm}, and the arbitrary scale of
+the ridge outputs, therefore do not matter. This is what makes one weight
+$w$ comparable across sources and datasets.
+
+\paragraph{Relation between the two sources.}
+For pure states, the square-root measurement coincides with the
+least-squares measurement~\cite{eldar2001srm}. On second moments, the PGM is
+therefore the quantum counterpart of the least-squares classifier of
+Eq.~\eqref{eq:ridge}. The PGM score is quadratic in the lifted feature
+$\mathbf v$, while the ridge score is linear in $\mathbf z$. We expect the two to
+behave alike, and Section~\ref{sec:experiments} tests this.
+
+\subsection{Algorithm and Cost}
+
+\begin{algorithm}[t]
+\caption{Statistics--classifier fusion at stage $t$ (inference only)}
+\label{alg:scf}
+\begin{algorithmic}[1]
+\Require logits $\ell_c$ (Eq.~\ref{eq:logits}); memory $\mathcal M_t$ after SSCA;
+  current-task images $\{\mathbf x_i\}$; frozen weight $w$; source $\in\{\mathrm R,\mathrm Q\}$
+\If{source $=\mathrm R$}
+  \State $G\gets\sum_c(\Sigma_c+\boldsymbol\mu_c\boldsymbol\mu_c^{\top})$; solve $(G+\lambda I)W^\star=M$ \Comment{Eq.~\ref{eq:ridge}}
+  \State $g_c(\mathbf z)\gets\mathbf z^{\top}W^\star_{:,c}$
+\Else
+  \State build $\rho_c$ from $(\boldsymbol\mu_c,\Sigma_c)$ \Comment{Eq.~\ref{eq:state}}
+  \State eigendecompose $\bar\rho$; form $\bar\rho_\delta^{-1/2}$ and $E_c$ \Comment{Eq.~\ref{eq:pgm-ops}}
+  \State $g_c(\mathbf z)\gets\log p(c\mid\mathbf z)$ \Comment{Eq.~\ref{eq:pgm}}
+\EndIf
+\State $\kappa\gets$ ratio of mean class-spreads of $\ell$ and $g$ on $\{\mathbf x_i\}$ \Comment{Eq.~\ref{eq:fusion}}
+\State \Return $\hat y(\mathbf z)=\arg\max_c\,\ell_c(\mathbf z)+w\,\kappa\,g_c(\mathbf z)$
+\end{algorithmic}
+\end{algorithm}
+
+Algorithm~\ref{alg:scf} summarises the procedure. Its cost is as follows.
+\begin{itemize}
+  \item \emph{Ridge source:} forming $G$ costs $O(C_td^2)$ and the solve
+    $O(d^3+d^2C_t)$, once per task. Scoring a test image costs $O(dC_t)$, the
+    same as the linear head.
+  \item \emph{PGM source:} forming the states costs $O(C_tD^2)$, the
+    eigendecomposition $O(D^3)$ once per task, and scoring $O(C_tD^2)$ per
+    image.
+  \item \emph{Memory:} neither source stores anything beyond $\mathcal M_t$;
+    the states are recomputed from it.
+\end{itemize}
+On ImageNet-R at the last task ($C_t=200$, 6\,082 test images), the whole PGM
+pass takes about $1.4$ TFLOP, under one second on a GPU. The ridge source is
+cheaper still.

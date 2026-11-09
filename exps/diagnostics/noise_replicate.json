@@ -1,0 +1,7 @@
+{
+  "prefix": "diag_legacy_rep1",
+  "ssca_mode": "legacy",
+  "stats_diagnostics": true,
+  "save_predictions": true,
+  "rng_replicate": 1
+}

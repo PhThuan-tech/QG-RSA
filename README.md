@@ -1,69 +1,101 @@
+# QG-RSA: RSIAT with quantum components and statistics–classifier fusion
 
-# Representation-Steered Incremental Adapter-Tuning for Class-Incremental Learning with Pre-Trained Models
+This repository extends RSIAT (classical ViT-adapter, representation steering,
+SSCA and classifier alignment) and evaluates several quantum components under
+a measurement protocol of paired replicates, in-run multi-head evaluation and
+pre-registered rules.
 
-  
+| Path | Content |
+|---|---|
+| `exps/` | Every experiment: specification, overlays, results and analysis. Start with [`exps/README.md`](exps/README.md), which also fixes the seed convention (1993, 2015, 2026). |
+| `paper/` | LNCS manuscript; `paper/make_figures.py` regenerates the figures from `exps/`. |
+| `QGRSA_EXPERIMENTS.ipynb` | Offline Kaggle notebook for all current rounds (built by `scripts/build_experiments_notebook.py`). |
+| `utils/qsd.py`, `scripts/summarize_qsd*.py` | QSD-CIL heads and statistics–classifier fusion (current direction). |
+| `utils/ca_heads.py`, `utils/quantum_kernel.py`, `utils/qbridge*.py` | Earlier quantum directions (QRF-CA, QKSR, Q-BRIDGE), kept for reproducibility. |
 
-This repository serves as the official implementation corresponding to the paper titled "Representation-Steered Incremental Adapter-Tuning for Class-Incremental Learning with Pre-Trained Models". 
-![Overall pipeline of RSIAT. ](images/framework.png)
+Current result: a training-free fusion of the CA classifier with a generative
+score from the stored class statistics beats RSIAT on every held-out run
+(`exps/qsd/results/a2/README.md`). The quantum version of that score (a
+pretty-good measurement) does not beat its classical ridge counterpart.
 
 ## Installation
-### Requirements
-Ubuntu 20.04 LTS
 
-Python 3.10
+The original environment used Ubuntu 20.04, Python 3.10, and CUDA 11.8. Install
+the packages in `requirements.txt`. For an offline notebook runtime, prepare the
+wheels listed in `requirements-colab.txt`.
 
-CUDA 11.8
+Expected local datasets include `cifar-100-python`, `imagenet-a`, `imagenet-r`,
+`cub`, `omnibenchmark`, and `vtab`. Dataset paths may also be supplied through
+the `data_root` config key.
 
-Detailed package information and corresponding versions are available in the requirements.txt file.
+## Experiment configurations
 
-### Data preparation
+Configuration roles and commands are documented in [`exps/README.md`](exps/README.md).
 
-The overall directory structure should be:
+```text
+exps/
+├── rsiat/                 # directly runnable classical baselines (6 datasets)
+├── smoke/                 # short pipeline checks
+├── <experiment>/          # diagnostics, measurement, upper, qksr, qrfca, qsd:
+│   ├── README*.md         #   pre-registered specification
+│   ├── <variant>.json     #   overlays used by QGRSA_EXPERIMENTS.ipynb
+│   └── results/           #   logs, summaries, analysis
+├── qbridge/               # earlier Q-BRIDGE configs (inactive)
+└── archive/               # legacy single runs and old configs
 ```
-RSIAT/
-├──data/
-├──datasets/
-│   ├──cifar-100-python/
-│   ├──cub/
-│   ├──imagenet-a/
-│   ├──imagenet-r/
-│   ├──omnibenchmark/
-│   ├──vtab/
-│   ......
-├──.......
+
+Run a baseline directly:
+
+```bash
+python main.py --config exps/rsiat/cifar224.json
+python main.py --config exps/rsiat/imageneta.json
 ```
 
-## Training and evaluation
+### Earlier direction: Q-BRIDGE (inactive)
 
-The training and evaluation instructions for each dataset are in the "./args.sh" file. Each dataset can be calculated separately, and the results are stored in the "./logs" folder.
+Train a local Q-BRIDGE task-0 base:
 
-### Checkpoint and resume
-
-Each experiment configuration now saves a checkpoint after every completed incremental task. Checkpoints are isolated by seed and stored at:
-
+```bash
+python main.py \
+  --config exps/qbridge/sources/cifar224.json \
+  --overlay exps/qbridge/stages/train_base.json
 ```
+
+R0-R10 require the exact base checkpoint and, for R6/R7/R8, fitted base-only
+artifacts. Generate complete runtime configs with
+`scripts/generate_qbridge_configs.py`; do not run the overlay JSON files alone.
+See [`docs/QBRIDGE_RUNBOOK.md`](docs/QBRIDGE_RUNBOOK.md) for the staged workflow.
+
+For Kaggle with Internet disabled, use `QBRIDGE_Kaggle.ipynb`. The notebook
+accepts a repository ZIP, dataset input, and pretrained ViT tensor.
+
+## Checkpoint and resume
+
+Classical RSIAT saves task-boundary checkpoints under:
+
+```text
 ckpt/<prefix>/<dataset>/<init_cls>_<increment>/seed_<seed>/task_<N>.pkl
 ```
 
-The default configurations keep only the most recent checkpoint to reduce disk use. To resume a stopped run, set the following in the same JSON configuration and run the original command again:
+Set `"resume": true` to continue from the latest completed task, or provide a
+specific `resume_path`. This restores the network and class statistics but does
+not restore optimizer, scheduler, DataLoader, or full RNG state. Q-BRIDGE
+branches intentionally restart from their paired task-0 base and do not support
+incremental resume.
 
-```json
-{
-  "resume": true
-}
+## Validation
+
+```bash
+python -B -m unittest discover -s tests -q
+python scripts/build_experiments_notebook.py QGRSA_EXPERIMENTS.ipynb
+python scripts/package_qbridge_kaggle_repo.py   # dist/QG-RSA_QBRIDGE_Kaggle.zip for Kaggle
 ```
 
-Optionally set `"resume_path"` to a specific `task_N.pkl`, `"keep_last_checkpoint": false` to retain every task checkpoint, or `"max_tasks_per_run"` to stop cleanly after a fixed number of tasks. Resume requires the same dataset, seed, class order, initial/incremental class split, model, and backbone. Checkpoints are task-boundary snapshots; they do not resume an interrupted epoch. The supplied configurations retain full covariance (`"compact_diagonal_checkpoint": false`) for an exact task-boundary resume; enable the compact diagonal form only when Drive space matters, since it drops covariance cross-terms used by classifier alignment.
-
-### Efficient training
-
-`eval_interval: 0` and `ca_eval_interval: 0` evaluate only the final epoch of each training stage. This avoids repeated full validation passes without changing gradients, optimizer steps, or the cosine scheduler. Set either value to a positive number when intermediate validation curves are needed. `num_workers`, `stats_num_workers`, `pin_memory`, and `persistent_workers` configure data loading; the provided values are suitable starting points for a GPU runtime.
-
-For a Google Colab smoke test that verifies data loading, training, checkpoint creation, and resume at task 1, use [RSIAT_Colab.ipynb](RSIAT_Colab.ipynb).
+Unit tests establish source behavior only. Accuracy and contribution claims
+require completed paired dataset runs with the same base checkpoint, data
+protocol, class order, seeds, and training budget.
 
 ## Citation
-
-If you find this useful in your research, please consider citing:
 
 ```text
 @inproceedings{zhao2026representation,
@@ -75,8 +107,4 @@ If you find this useful in your research, please consider citing:
 }
 ```
 
-## Acknowledgement
-
-This repo is based on [PILOT](https://github.com/LAMDA-CL/LAMDA-PILOT) and [SSIAT](https://github.com/HAIV-Lab/SSIAT).
-
-Thanks for their wonderful work!!!
+The upstream RSIAT implementation is based on PILOT and SSIAT.

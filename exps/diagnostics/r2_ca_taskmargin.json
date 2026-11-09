@@ -1,0 +1,7 @@
+{
+  "prefix": "r2_ca_taskmargin",
+  "ssca_mode": "legacy",
+  "ca_task_margin": 0.1,
+  "stats_diagnostics": true,
+  "save_predictions": true
+}

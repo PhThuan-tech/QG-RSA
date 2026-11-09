@@ -1,0 +1,44 @@
+{
+  "name": "W03_hp",
+  "title": "Holevo-POVM giai đoạn A (sàng lọc A+B), ImageNet-R seed 1993 (Kaggle RTX PRO 6000)",
+  "base": "c7bc4fd",
+  "description": [
+    "Hướng A+B: thêm bộ giải mã Residual-POVM (lớp cũ: PGM có điều chuẩn δ từ thống kê; lớp mới: phép đo trong phần dư mềm R = δ(ρ̄_old + δI)⁻¹, đầy đủ theo cấu trúc). Spec: `exps/holevo_povm/README.md` (chạy SAU W02, xem mục 3.3 của spec).",
+    "",
+    "4 run trên ImageNet-R seed 1993, 3 song song: `hp_full` (A+B, chính), `hp_diag` (bắt buộc: huấn luyện = RSIAT, cùng head PGM δ và log I_orc làm baseline), `hp_twin` (classical: MCR² + softmax Gaussian), `hp_povm` (chỉ B). Ước tính 5–6 giờ.",
+    "",
+    "Nếu W02 kích hoạt luật G thì sửa PLAN: bỏ `hp_full`, thay bằng `hp_twin_povm` (spec B, mục 3.3). `SUMMARY.txt` tính R/G/M/O/P/D."
+  ],
+  "inputs": [
+    "qgrsa-base-c7bc4fd",
+    "zaphat206/imagenet-r",
+    "ViT-B/16 224 in21k"
+  ],
+  "jobs": [
+    [
+      [
+        "imagenetr"
+      ],
+      [
+        1993
+      ],
+      [
+        "hp_full",
+        "hp_diag",
+        "hp_twin",
+        "hp_povm"
+      ]
+    ]
+  ],
+  "max_parallel": 3,
+  "overrides": {
+    "save_checkpoints": false
+  },
+  "tests": [
+    "test_holevo.py",
+    "test_qsd.py"
+  ],
+  "summaries": [
+    "scripts/summarize_holevo.py"
+  ]
+}

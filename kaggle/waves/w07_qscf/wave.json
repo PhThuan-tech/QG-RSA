@@ -1,0 +1,36 @@
+{
+  "name": "W07_qscf",
+  "title": "Lượng tử lúc train × SCF: RSIAT/QKSR × linear/SCF, ImageNet-R seed 1993 (Kaggle RTX PRO 6000)",
+  "base": "c7bc4fd",
+  "description": [
+    "Thiết kế 2×2. Spec: `exps/qscf/README.md`.",
+    "",
+    "`qscf_rsiat_rep0-2` (RSIAT gốc) và `qscf_qksr_rep0-2` (PQK steering ở base + QKSR ở incremental), cả 6 run bật head SCF (ridge, PGM). Cùng một wave để hai nhánh chung môi trường. 6 run, 3 song song, khoảng 3–4 giờ.",
+    "",
+    "`SUMMARY.txt` in bảng 2×2, các so sánh ghép cặp và kết luận của kiểm định chốt trước (`scripts/summarize_qscf.py`)."
+  ],
+  "inputs": [
+    "qgrsa-base-c7bc4fd",
+    "zaphat206/imagenet-r",
+    "ViT-B/16 224 in21k"
+  ],
+  "jobs": [
+    [
+      ["imagenetr"],
+      [1993],
+      ["qscf_rsiat_rep0", "qscf_qksr_rep0", "qscf_rsiat_rep1", "qscf_qksr_rep1", "qscf_rsiat_rep2", "qscf_qksr_rep2"]
+    ]
+  ],
+  "max_parallel": 3,
+  "overrides": {
+    "save_checkpoints": false
+  },
+  "tests": [
+    "test_qsd.py",
+    "test_scf.py",
+    "test_quantum_kernel.py"
+  ],
+  "summaries": [
+    "scripts/summarize_qscf.py"
+  ]
+}

@@ -1,0 +1,6 @@
+{
+  "prefix": "diag_legacy",
+  "ssca_mode": "legacy",
+  "stats_diagnostics": true,
+  "save_predictions": true
+}

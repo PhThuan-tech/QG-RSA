@@ -1,0 +1,19 @@
+{
+  "prefix": "svf",
+  "ssca_mode": "legacy",
+  "rng_replicate": 0,
+  "stats_diagnostics": false,
+  "save_predictions": true,
+  "save_checkpoints": false,
+  "qsd_heads": [
+    "linear",
+    "ridge_stats",
+    "snap_ridge"
+  ],
+  "qsd_ridge": 0.1,
+  "qsd_seed": 20261022,
+  "qsd_batch": 128,
+  "qsd_fuse": true,
+  "qsd_save_scores": true,
+  "offline": true
+}

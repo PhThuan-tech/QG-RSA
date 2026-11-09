@@ -1,0 +1,140 @@
+\section{Method}
+\label{sec:method}
+
+All circuits have at most 11 qubits and are simulated exactly as state
+vectors. We therefore do not ask whether there is a quantum advantage, but
+whether a quantum inductive bias helps CIL compared with its classical twin.
+
+\subsection{Baseline}
+\label{sec:baseline}
+RSIAT~\citep{rsiat} adapts a frozen ViT-B/16~\citep{dosovitskiy2021vit} with
+one adapter shared by all tasks and produces features $\mathbf z\in\mathbb R^{d}$,
+$d=768$. Three parts matter here: a \emph{memory}
+$\mathcal M_t=\{(\boldsymbol\mu_c,\Sigma_c)\}_{c\in\mathcal C_t}$, the only
+information kept about past classes; a drift correction of the old means
+after each task; and a cosine classifier re-trained after each task on
+Gaussian samples from $\mathcal M_t$~\citep{zhang2023slca}, with logits
+$\ell_c(\mathbf z)=s\cos(\mathbf w_c,\mathbf z)$. Its prediction
+$\arg\max_c\ell_c$ is the \emph{linear head}. In incremental tasks the adapter
+is trained with a CosFace loss on the new classes and an alignment loss
+$\beta\,\|\mathbf z-\mathrm{AE}(\mathbf z^{\mathrm{old}})\|^2$ to the previous
+network through an autoencoder.
+
+\subsection{A Projected Quantum Kernel}
+\label{sec:pqk}
+A feature is mapped to $q=8$ angles
+$\boldsymbol\theta(\mathbf z)=\pi\tanh(W\,\mathrm{LN}(\mathbf z)+\mathbf b)$,
+loaded with $R_y$ rotations and followed by $L=2$ layers of trainable $R_y$
+rotations and a ring of CNOTs. Following~\citet{huang2021power}, two states are
+compared through their one-qubit reduced density matrices $\rho_j$:
+\begin{equation}
+  k(\mathbf z,\mathbf z')=\exp\Big(-\gamma\sum_{j=1}^{q}\big\|\rho_j(\mathbf z)-\rho_j(\mathbf z')\big\|_F^2\Big),
+  \label{eq:pqk}
+\end{equation}
+with $\gamma$ calibrated from the median distance. The kernel enters at three
+places (Figure~\ref{fig:pipeline}): (1)~as the similarity of the base task's
+steering loss, trained with the adapter and then frozen; (2)~as a
+\emph{separation regulariser} (QKSR) in incremental tasks, penalising the mean
+kernel between stored old-class means (mapped through the autoencoder) and
+current features; (3)~as a feature map for ridge heads fitted on the
+classifier-alignment pseudo-features.
+
+\paragraph{QKSR-v2.}
+To test whether the regulariser fails for fixable reasons, a repaired variant
+refits the kernel at the start of each task from stored statistics only: the
+projection rows become the top Fisher-LDA directions of all class means and
+covariances, scaled so that angles have a standard deviation of $0.8$ rad, and
+$\gamma$ is set so that the median kernel between old means and new features
+is $0.2$ (Appendix~\ref{app:hyper}).
+
+\subsection{Training with Density-Matrix Objectives}
+\label{sec:holevo}
+Two further placements change the representation directly. Class states
+$\rho_c$ are built from the memory (Eq.~\ref{eq:state} below) for old classes
+and from a feature queue for new classes. The \emph{Holevo objective} adds
+$-\lambda\chi$ to the adapter loss, with
+\begin{equation}
+  \chi=S(\bar\rho)-\frac1{C_t}\sum_{c\in\mathcal C_t}S(\rho_c),\qquad
+  \bar\rho=\frac1{C_t}\sum_{c\in\mathcal C_t}\rho_c,
+  \label{eq:holevo}
+\end{equation}
+and $S(\rho)=-\Tr\rho\log\rho$ the von Neumann entropy; its classical twin replaces $S$ by the coding rate of MCR$^2$~\citep{wu2021rate}.
+The \emph{residual-POVM loss} measures new features with a POVM whose new-class
+elements are restricted to the subspace left free by the old-class states;
+its twin is a Gaussian log-likelihood classifier. $\lambda$ is calibrated once
+so that the auxiliary gradient is half the classification gradient.
+
+\subsection{CIL as State Discrimination}
+\label{sec:qsd}
+Let $\mathbf m_0$ and $s_0^2$ be the mean and covariance trace of task-0
+features. A feature is lifted and normalised,
+\begin{equation}
+  \mathbf v(\mathbf z)=\begin{bmatrix}(\mathbf z-\mathbf m_0)/s_0\\1\end{bmatrix}\in\mathbb R^{D},\qquad
+  \psi=\frac{\mathbf v}{\|\mathbf v\|},
+  \label{eq:lift}
+\end{equation}
+with $D=769$, so that $\psi$ is the amplitude vector of a 10-qubit pure state.
+A class becomes the second-moment state
+\begin{equation}
+  \begin{aligned}
+  \rho_c&=\frac{\mathbb E_c[\mathbf v\mathbf v^{\top}]}{\mathbb E_c\|\mathbf v\|^2},\\
+  \mathbb E_c[\mathbf v\mathbf v^{\top}]&=
+  \begin{bmatrix}\tilde\Sigma_c+\tilde{\boldsymbol\mu}_c\tilde{\boldsymbol\mu}_c^{\top} & \tilde{\boldsymbol\mu}_c\\
+  \tilde{\boldsymbol\mu}_c^{\top}&1\end{bmatrix},
+  \end{aligned}
+  \label{eq:state}
+\end{equation}
+computed from $\mathcal M_t$ alone ($\tilde{\boldsymbol\mu}_c$, $\tilde\Sigma_c$:
+standardised moments). It needs no stored features and follows the drift
+correction. The PGM~\citep{hausladen1994pgm} uses
+\begin{equation}
+  \begin{aligned}
+  E_c&=\frac1{C_t}\,\bar\rho_\delta^{-1/2}\rho_c\,\bar\rho_\delta^{-1/2},\qquad
+  \bar\rho_\delta=\bar\rho+\delta I,\\
+  p(c\mid\mathbf z)&=\frac{\psi^{\top}E_c\psi}{\sum_{c'}\psi^{\top}E_{c'}\psi},
+  \end{aligned}
+  \label{eq:pgm}
+\end{equation}
+the Born probability of outcome $c$. A hierarchical variant first measures
+the task with $E_T=\sum_{c\in\mathcal Y_T}E_c$, then the class inside it.
+
+\paragraph{What the measurement can and cannot do.}
+\begin{proposition}\label{prop:unitary}
+For any unitary $U$ applied after the encoding, $p(c\mid\mathbf z)$ is unchanged.
+\end{proposition}
+\begin{proposition}\label{prop:shrink}
+Replacing every $\rho_c$ by $(1-\varepsilon)\rho_c+\varepsilon\bar\rho$,
+$\varepsilon\in[0,1)$, leaves $\arg\max_cp(c\mid\mathbf z)$ unchanged.
+\end{proposition}
+\noindent Proofs are in Appendix~\ref{app:proofs}. A variational circuit after
+the amplitude encoding is a unitary, so training one cannot change the
+classifier, and the usual state shrinkage does nothing. The PGM also coincides
+with the least-squares measurement~\citep{eldar2001srm}. Only the encoding
+remains as a quantum degree of freedom.
+
+\subsection{Score Fusion and its Classical Twin}
+\label{sec:fusion}
+The classical twin of the PGM regresses one-hot targets on the class Gaussians
+$\mathcal N(\boldsymbol\mu_c,\Sigma_c)$ with a ridge penalty, in the spirit
+of~\citet{mcdonnell2023ranpac}. It has the closed form
+\begin{equation}
+  \begin{aligned}
+  \Big(\sum_{c}(\Sigma_c+\boldsymbol\mu_c\boldsymbol\mu_c^{\top})+\lambda I\Big)W
+  &=[\boldsymbol\mu_1,\dots,\boldsymbol\mu_{C_t}],\\
+  g^{\mathrm R}_c(\mathbf z)&=\mathbf z^{\top}W_{:,c}.
+  \end{aligned}
+  \label{eq:ridge}
+\end{equation}
+A generative score $g$ (the PGM log-probability or $g^{\mathrm R}$) is fused
+with the linear head:
+\begin{equation}
+  \begin{aligned}
+  \hat y&=\arg\max_c\;\ell_c(\mathbf z)+w\,\kappa\,g_c(\mathbf z),\\
+  \kappa&=\overline{\mathrm{sd}_c\,\ell_c}\,\big/\,\overline{\mathrm{sd}_c\,g_c},
+  \end{aligned}
+  \label{eq:fusion}
+\end{equation}
+where $\mathrm{sd}_c$ is the spread across classes, averaged over the current
+task's training images; $\kappa$ needs no labels and makes $w$ invariant to
+affine rescaling of $g$. We call this \emph{statistics-calibrated fusion}
+(SCF). Neither score stores anything beyond $\mathcal M_t$.

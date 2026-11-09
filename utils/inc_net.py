@@ -6,6 +6,51 @@ from network.classifier import  CosineLinear, SimpleContinualLinear
 import timm
 
 
+def _load_local_adapter_backbone(model, checkpoint_path):
+    """Load an uploaded timm ViT-B/16 tensor without network access."""
+    try:
+        checkpoint = torch.load(checkpoint_path, map_location="cpu", weights_only=True)
+    except TypeError:
+        checkpoint = torch.load(checkpoint_path, map_location="cpu")
+    for key in ("state_dict", "model", "model_state_dict"):
+        if isinstance(checkpoint, dict) and key in checkpoint and isinstance(checkpoint[key], dict):
+            checkpoint = checkpoint[key]
+            break
+    if not isinstance(checkpoint, dict):
+        raise ValueError("pretrained_path must contain a tensor state_dict")
+    state = {key.removeprefix("module.").removeprefix("model."): value
+             for key, value in checkpoint.items() if torch.is_tensor(value)}
+    for key in list(state):
+        if key.startswith(("head.", "head_dist.", "pre_logits.", "classifier.", "pooler.")):
+            state.pop(key)
+        elif "qkv.weight" in key:
+            value = state.pop(key)
+            for name, part in zip(("q_proj", "k_proj", "v_proj"), value.chunk(3, dim=0)):
+                state[key.replace("qkv.weight", name + ".weight")] = part
+        elif "qkv.bias" in key:
+            value = state.pop(key)
+            for name, part in zip(("q_proj", "k_proj", "v_proj"), value.chunk(3, dim=0)):
+                state[key.replace("qkv.bias", name + ".bias")] = part
+        elif "mlp.fc" in key:
+            state[key.replace("mlp.", "")] = state.pop(key)
+    required = ("patch_embed.proj.weight", "cls_token", "pos_embed", "norm.weight",
+                "blocks.0.attn.q_proj.weight", "blocks.11.fc2.weight")
+    missing_required = [key for key in required if key not in state]
+    if missing_required:
+        raise ValueError("Uploaded tensor is not a compatible timm ViT-B/16 state_dict; missing "
+                         + str(missing_required))
+    result = model.load_state_dict(state, strict=False)
+    unexpected = list(result.unexpected_keys)
+    backbone_missing = [key for key in result.missing_keys if "adaptmlp" not in key]
+    if unexpected or backbone_missing:
+        raise ValueError("Incompatible local ViT tensor: missing={} unexpected={}".format(
+            backbone_missing[:20], unexpected[:20]))
+    for name, parameter in model.named_parameters():
+        parameter.requires_grad_(name in result.missing_keys)
+    model.out_dim = 768
+    return model.eval()
+
+
 def get_convnet(args, pretrained=False):
     name = args["convnet_type"].lower()
     # SimpleCIL or SimpleCIL w/ Finetune
@@ -22,8 +67,8 @@ def get_convnet(args, pretrained=False):
         ffn_num = args["ffn_num"]
         if args["model_name"] == "adapter":
             from network import vision_transformer_adapter
-            from easydict import EasyDict
-            tuning_config = EasyDict(
+            from types import SimpleNamespace
+            tuning_config = SimpleNamespace(
                 # AdaptFormer
                 ffn_adapt=True,
                 ffn_option="parallel",
@@ -36,6 +81,24 @@ def get_convnet(args, pretrained=False):
                 vpt_on=False,
                 vpt_num=0,
             )
+            local_pretrained = args.get("pretrained_path")
+            if local_pretrained and not args.get("_qbridge_restore_only", False):
+                model = vision_transformer_adapter.VisionTransformer(
+                    patch_size=16, embed_dim=768, depth=12, num_heads=12,
+                    mlp_ratio=4, qkv_bias=True, norm_layer=lambda dim: nn.LayerNorm(dim, eps=1e-6),
+                    num_classes=0, global_pool=False, drop_path_rate=0.0, tuning_config=tuning_config)
+                return _load_local_adapter_backbone(model, local_pretrained)
+            if args.get("_qbridge_restore_only", False):
+                # The complete local base checkpoint is loaded strictly immediately
+                # afterwards. Do not instantiate timm pretrained/download weights.
+                model = vision_transformer_adapter.VisionTransformer(
+                    patch_size=16, embed_dim=768, depth=12, num_heads=12,
+                    mlp_ratio=4, qkv_bias=True, norm_layer=lambda dim: nn.LayerNorm(dim, eps=1e-6),
+                    num_classes=0, global_pool=False, drop_path_rate=0.0, tuning_config=tuning_config)
+                for parameter_name, parameter in model.named_parameters():
+                    parameter.requires_grad_("adaptmlp" in parameter_name)
+                model.out_dim = 768
+                return model.eval()
             if name == "pretrained_vit_b16_224_adapter":
                 model = vision_transformer_adapter.vit_base_patch16_224_adapter(num_classes=0,
                                                                                 global_pool=False, drop_path_rate=0.0,

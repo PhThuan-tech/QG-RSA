@@ -1,0 +1,68 @@
+% Springer LNCS. Get llncs.cls / splncs04.bst from the Overleaf template
+% "Springer Lecture Notes in Computer Science" and put them next to this file.
+% Every number in this paper comes from exps/*/results/ (see exps/README.md);
+% figures are regenerated with `python paper/make_figures.py`.
+\documentclass[runningheads]{llncs}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amssymb}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage{adjustbox}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage[table]{xcolor}
+\usepackage{hyperref}
+
+\newcommand{\Tr}{\mathrm{Tr}}
+
+\begin{document}
+
+\title{Statistics--Classifier Fusion for Exemplar-Free
+Class-Incremental Learning,\\ and a Controlled Test of Quantum Components}  % TODO: final title
+\titlerunning{Statistics--Classifier Fusion for Exemplar-Free CIL}
+\author{First Author\inst{1} \and Second Author\inst{1}}  % TODO
+\authorrunning{F. Author et al.}
+\institute{TODO Institution}
+
+\maketitle
+
+\begin{abstract}
+Exemplar-free class-incremental learners built on a pre-trained ViT, such as
+RSIAT, store one mean and one covariance per class and use them only to
+re-align a cosine classifier with sampled pseudo-features. We ask whether
+the same statistics can also be used directly at inference time.
+\emph{Statistics--classifier fusion} (SCF) adds a generative score computed
+from the stored statistics to the classifier logits. It uses a label-free
+scale and one weight fixed on a single tuning benchmark, needs no training
+and stores nothing new. On four benchmarks with three seeds each, SCF raises
+final accuracy on all four datasets ($+0.38$ to $+0.67$ points). It raises
+average incremental accuracy on ImageNet-R ($+0.32$), ImageNet-A ($+0.85$)
+and CIFAR-100 ($+0.20$), all with 95\% intervals above zero, but not on
+CUB-200 ($+0.02$). The pre-registered transfer test to the two new datasets
+therefore fails. The work started as an attempt to improve RSIAT with
+quantum components. Under the same protocol, none of five quantum
+placements beat its matched classical counterpart, including a
+pretty-good quantum measurement used as the generative score ($-0.04$
+against ridge over 12 runs). All results come from a protocol with paired
+seeds, all inference heads evaluated on the same network with bit-identity
+checks, and decision rules written before each run. Our reproduction of
+RSIAT matches all twelve published accuracies of its main table to within
+$0.01$.
+\keywords{Class-incremental learning \and Exemplar-free \and Pre-trained models
+\and Quantum machine learning \and Reproducibility}
+\end{abstract}
+
+\input{sections/intro}
+\input{sections/background}
+\input{sections/protocol}
+\input{sections/method}
+\input{sections/scf}
+\input{sections/experiments}
+\input{sections/quantum}
+\input{sections/conclusion}
+
+\bibliographystyle{splncs04}
+\bibliography{references}
+
+\end{document}

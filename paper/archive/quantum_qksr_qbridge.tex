@@ -1,0 +1,166 @@
+% Quantum-kernel components of QG-RSA (QKSR base + Q-BRIDGE incremental).
+% Every quantity below corresponds to code in utils/quantum_kernel.py,
+% utils/qbridge.py, utils/qbridge_calibration.py and models/RSIAT_adapter.py.
+
+\section{Projected Quantum Kernels for Representation Steering}
+\label{sec:quantum}
+
+RSIAT~\cite{rsiat} learns a shared adapter on a frozen ViT-B/16 and shapes
+its feature space with a cosine-similarity steering loss on the base task.
+We ask whether a \emph{projected quantum kernel} (PQK)~\cite{huang2021power}
+can replace this similarity with a non-linear, trainable metric, and
+whether the same metric can tell, during incremental tasks, which old
+classes a new sample is most likely to be confused with. The quantum
+module is used only at training time; inference keeps the classical
+ViT--adapter--cosine-classifier path unchanged.
+
+\subsection{Projected Local Quantum Kernel}
+\label{sec:pqk}
+
+\subsubsection{Classical projection.}
+A feature $\mathbf{z}\in\mathbb{R}^{768}$ is mapped to $q$ rotation angles
+\begin{equation}
+  \boldsymbol{\theta}(\mathbf{z}) = \pi \tanh\!\big(W\,\mathrm{LN}(\mathbf{z}) + \mathbf{b}\big)
+  \in (-\pi,\pi)^{q},
+  \label{eq:proj}
+\end{equation}
+where $\mathrm{LN}$ is a layer normalisation without affine parameters and
+$W\in\mathbb{R}^{q\times 768}$. We use $q=8$ qubits.
+
+\subsubsection{Circuit.}
+The angles are loaded by single-qubit $R_y$ rotations and followed by $L=2$
+variational layers, each consisting of trainable $R_y(\phi_{l,j})$ rotations
+and a ring of CNOT gates $\mathrm{CNOT}_{j\to (j+1)\bmod q}$:
+\begin{equation}
+  |\psi(\mathbf{z})\rangle =
+  \prod_{l=1}^{L}\Big[U_{\mathrm{ent}}\bigotimes_{j=1}^{q} R_y(\phi_{l,j})\Big]
+  \bigotimes_{j=1}^{q} R_y\big(\theta_j(\mathbf{z})\big)\,|0\rangle^{\otimes q}.
+  \label{eq:circuit}
+\end{equation}
+Since $R_y$ and CNOT are real, the $2^{q}=256$ amplitudes are real. The
+circuit is simulated exactly and in batch as a differentiable statevector
+in PyTorch, so no sampling noise is involved.
+
+\subsubsection{Local reduced density matrices and kernel.}
+Following~\cite{huang2021power}, we compare states through their one-qubit
+reduced density matrices
+$\rho_j(\mathbf{z}) = \mathrm{Tr}_{\bar{j}}\,|\psi(\mathbf{z})\rangle\langle\psi(\mathbf{z})|$
+rather than through the global fidelity. The global fidelity is known to
+concentrate as the number of qubits grows~\cite{thanasilp2024concentration}.
+The distance and kernel are
+\begin{equation}
+  D(\mathbf{z},\mathbf{z}') = \sum_{j=1}^{q}
+  \big\|\rho_j(\mathbf{z})-\rho_j(\mathbf{z}')\big\|_F^{2},
+  \qquad
+  k(\mathbf{z},\mathbf{z}') = \exp\!\big(-\gamma\,D(\mathbf{z},\mathbf{z}')\big).
+  \label{eq:pqk}
+\end{equation}
+The bandwidth is bounded around a data-driven scale,
+$\gamma = \gamma_0\,10^{\tanh(a)}$ with a trainable scalar $a$, where
+$\gamma_0 = 1/\mathrm{median}\,D$ is computed once on 512 base-task training
+features (off-diagonal pairs). Hence $\gamma$ stays within
+$[\gamma_0/10,\,10\,\gamma_0]$, which prevents the kernel from collapsing to
+the identity or to a constant matrix.
+
+\subsection{QKSR: Quantum Kernel Steering on the Base Task}
+\label{sec:qksr}
+
+On the base task $t=0$, the PQK replaces the cosine similarity inside the
+RSIAT steering loss. For a batch with labels $y$, let
+$\mathcal{P}=\{(i,i'):y_i=y_{i'},\,i\neq i'\}$ and
+$\mathcal{N}=\{(i,i'):y_i\neq y_{i'}\}$. Then
+\begin{equation}
+  \mathcal{L}^{Q}_{\mathrm{RS}} =
+  \frac{1}{|\mathcal{P}|}\sum_{(i,i')\in\mathcal{P}}\big[1-k_{ii'}\big]_+
+  + \alpha\,\frac{1}{|\mathcal{N}|}\sum_{(i,i')\in\mathcal{N}}\big[k_{ii'}-m_q\big]_+ ,
+  \label{eq:qksr}
+\end{equation}
+where $k_{ii'}=k(\mathbf{z}_i,\mathbf{z}_{i'})$, $m_q=0.5$ and $\alpha=1$.
+The base objective is
+$\mathcal{L}_{\mathrm{cls}} + \lambda_{\mathrm{RS}}\min(1,e/E_w)\,\mathcal{L}^{Q}_{\mathrm{RS}}$
+with a linear warm-up over $E_w$ epochs. The projector is trained with the
+adapter learning rate, and the circuit parameters and $a$ with a ten times
+smaller rate. After the base task, the PQK is frozen.
+
+\subsection{Q-BRIDGE: Risk-Weighted Cross-Task Margins}
+\label{sec:qbridge}
+
+During incremental tasks $t>0$, RSIAT keeps the classification loss on the
+new classes, the feature alignment
+$\mathcal{L}_{\mathrm{align}}=\|\mathbf{z}-g(\mathbf{z}^{-})\|_2^2$ between
+the current feature and the projected feature of the previous model
+(mean-squared error, with $g$ the residual projector of RSIAT), and a
+separation term between old prototypes and new samples. Q-BRIDGE replaces
+the separation term with two margin losses and uses the frozen base PQK
+only to \emph{weight} them.
+
+\subsubsection{Cross-task margin.}
+Let $s_{ic}$ be the cosine score of sample $i$ for class $c$, computed with
+the old classifier rows detached so that the added losses cannot move old
+decision boundaries directly. For each new-class sample $i$ and old class
+$c$, the margin violation is
+$v_{ic}=[\,m_x + s_{ic} - s_{iy_i}\,]_+$, and the loss is
+\begin{equation}
+  \mathcal{L}_{\mathrm{cross}} = \frac{1}{B\,C_{\mathrm{old}}}
+  \sum_{i,c}\big(1 + g\,r_{ic}\big)\,v_{ic}^{2},
+  \qquad
+  r_{ic} = \sigma\!\big(\mathrm{softplus}(u)\,k(\mathbf{z}^{-}_i,\boldsymbol{\mu}_c)+b\big).
+  \label{eq:cross}
+\end{equation}
+Here $\mathbf{z}^{-}_i$ is the previous model's feature, $\boldsymbol{\mu}_c$ is
+the stored mean of old class $c$, and $g=0.5$. The risk $r_{ic}$ is
+detached. Its monotone calibrator $(u,b)$ is fitted once by unweighted
+binary cross-entropy on base-task training data only: prototypes, fitting
+and validation pairs come from a stratified 60/20/20 split. The target is
+whether the base classifier violates a margin of $0.1$ for that
+(sample, class) pair. Because the calibrator is monotone, it preserves the
+ranking of raw PQK similarities and only rescales them into a probability
+of confusion. The calibrator is never refitted on incremental data.
+
+\subsubsection{Old-anchor guard.}
+To keep old classes from being absorbed by new ones, the projected old
+prototypes $\mathbf{a}_c = g(\boldsymbol{\mu}_c)$ must score their own class
+above every new class by a margin $m_{\mathrm{old}}$:
+\begin{equation}
+  \mathcal{L}_{\mathrm{guard}} = \frac{1}{C_{\mathrm{old}}}\sum_{c}
+  \Big[\,m_{\mathrm{old}} + \max_{n\in\mathcal{C}_{\mathrm{new}}} s(\mathbf{a}_c,n)
+  - s(\mathbf{a}_c,c)\,\Big]_+^{2}.
+  \label{eq:guard}
+\end{equation}
+Both the anchors and the old classifier rows are detached, so this loss
+only moves the new-class rows away from old prototypes.
+The incremental objective is
+$\mathcal{L}_{\mathrm{cls}} + \beta\,\mathcal{L}_{\mathrm{align}}
++ \lambda_x\mathcal{L}_{\mathrm{cross}} + \lambda_g\mathcal{L}_{\mathrm{guard}}$
+with $m_x=m_{\mathrm{old}}=0.1$ and $\lambda_x=\lambda_g=0.1$. The drift
+compensation of old statistics (SSCA) and the Gaussian classifier
+alignment of RSIAT are kept unchanged.
+
+\subsection{Controls for Attributing the Effect}
+\label{sec:controls}
+
+A gain from Eq.~\eqref{eq:cross} could come from the margins themselves,
+from any similarity-based weighting, or specifically from the quantum
+circuit. We therefore pre-register controls that differ from the full model
+(R6, calibrated PQK) in one factor each:
+\begin{itemize}
+  \item \textbf{No separation:} CosFace over all seen classes with alignment only (R1).
+  \item \textbf{Margins only:} uniform weights ($g=0$), without guard (R2) and with guard (R3).
+  \item \textbf{Classical selectors:} cosine similarity (R4); an RBF kernel on the same
+        learned projection $\boldsymbol{\theta}(\mathbf{z})$, without the circuit (R7);
+        and a small MLP metric on $\boldsymbol{\theta}(\mathbf{z})$ (R8).
+  \item \textbf{Uncalibrated PQK:} raw PQK risk (R5).
+  \item \textbf{Information controls:} PQK risks shuffled among active pairs (R9) or replaced
+        by their mean (R10). These keep the weight distribution but remove the
+        pairing between risk and violation.
+\end{itemize}
+A quantum-specific contribution is claimed only if R6 outperforms R4, R7 and R8,
+and R5 outperforms R9 and R10.
+
+\subsubsection{Scope.}
+The circuit has $q=8$ qubits and is simulated exactly, so it is classically
+tractable by construction. We do not claim a quantum advantage. The
+question studied here is whether a PQK, used as an inductive bias for a
+learned metric, improves exemplar-free class-incremental learning relative
+to matched classical metrics under the measurement protocol of
+Section~\ref{sec:protocol}.

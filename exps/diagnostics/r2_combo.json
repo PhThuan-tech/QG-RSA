@@ -1,0 +1,9 @@
+{
+  "prefix": "r2_combo",
+  "ssca_mode": "paired",
+  "ssca_sigma": "auto_nn",
+  "ca_logit_norm": 0.1,
+  "ca_task_margin": 0.1,
+  "stats_diagnostics": true,
+  "save_predictions": true
+}

@@ -1,0 +1,7 @@
+{
+  "prefix": "r2_ca_lognorm",
+  "ssca_mode": "legacy",
+  "ca_logit_norm": 0.1,
+  "stats_diagnostics": true,
+  "save_predictions": true
+}

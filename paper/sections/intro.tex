@@ -1,0 +1,74 @@
+\section{Introduction}
+\label{sec:intro}
+
+Quantum machine learning (QML) offers models with no obvious classical
+analogue: kernels defined by quantum feature maps~\cite{huang2021power}, and
+classifiers defined by measurements on quantum states~\cite{hausladen1994pgm}.
+A common way to test them is to insert one into a strong classical pipeline
+and report the change in accuracy. In continual learning, these changes are
+often a few tenths of a point. The run-to-run variation of the pipeline is
+about as large, and the classical alternative to the quantum component is
+rarely tested.
+
+We ask whether quantum components help \emph{exemplar-free
+class-incremental learning} (CIL). In this setting a model learns new
+classes task after task, may not store images of past tasks, and must
+classify all classes seen so far. The setting suits quantum models for two
+reasons:
+\begin{itemize}
+  \item the model must keep compact summaries of past classes, and a density
+    matrix is such a summary;
+  \item the main difficulty, confusion between classes learned at different
+    times, is a state-discrimination problem.
+\end{itemize}
+We start from RSIAT~\cite{rsiat}, a strong pre-trained baseline that already
+stores one mean and one covariance per class.
+
+\paragraph{Measurement first.}
+Before testing any quantum component, we measured how much the baseline
+varies and designed a protocol able to detect changes of $0.2$ points
+(Section~\ref{sec:protocol}). It has four parts:
+\begin{itemize}
+  \item paired seeds and replicates;
+  \item all inference heads evaluated on the same trained network, with
+    digit-level checks that evaluation does not perturb training;
+  \item decision rules written before each run, with any tuning done on a
+    fixed tuning group and frozen;
+  \item a \emph{classical twin} for every quantum component: a classical
+    method that receives the same inputs.
+\end{itemize}
+The first of these checks already overturned an earlier result of ours:
+a $+0.36$ gain of a quantum-kernel variant over a single baseline run
+shrank to $+0.06$ ($[-0.07,+0.18]$) under the protocol.
+
+\paragraph{What we test.}
+We test five placements of a quantum component (Section~\ref{sec:quantum}).
+A projected quantum kernel (PQK) serves as:
+\begin{itemize}
+  \item the similarity in the base-task steering loss,
+  \item an old/new separation metric during incremental tasks,
+  \item the feature map of the classifier-alignment head.
+\end{itemize}
+We then cast CIL as \emph{quantum state discrimination}. Each class becomes
+a density matrix built from its stored statistics, and a pretty-good
+measurement (PGM) assigns the test state to a class. The PGM is used alone
+and as a score fused with the baseline classifier.
+
+\paragraph{Findings.}
+\begin{itemize}
+  \item No quantum placement outperforms its classical twin
+    (Table~\ref{tab:quantum}). The PQK is clearly harmful as a feature map,
+    and entanglement makes it worse. The PGM is statistically
+    indistinguishable from ridge regression on the same statistics.
+  \item These outcomes have explanations. For the kernel, we measure
+    concentration of the local reduced states. For the measurement, we prove
+    two results (Section~\ref{sec:theory}): any circuit placed after the
+    encoding leaves it unchanged, and so does shrinking the class states
+    towards their average. Together with the equivalence between the PGM
+    and least-squares discrimination~\cite{eldar2001srm}, this leaves only
+    the encoding as a quantum degree of freedom. The one richer encoding
+    we tried made accuracy worse.
+  \item A positive result that is not quantum. Fusing the classifier with a
+    calibrated generative score raises final accuracy on four benchmarks.
+    The score can be the PGM or its ridge twin; the two perform equally.
+\end{itemize}

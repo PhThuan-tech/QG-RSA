@@ -1,0 +1,25 @@
+{
+  "prefix": "qsd",
+  "ssca_mode": "legacy",
+  "rng_replicate": 0,
+  "stats_diagnostics": false,
+  "save_predictions": true,
+  "save_checkpoints": false,
+  "qsd_heads": [
+    "linear",
+    "linear_rerun",
+    "linear_noscale",
+    "ridge_stats",
+    "pgm_stale",
+    "pgm_channel",
+    "pgm_channel_hier",
+    "pgm_fuse",
+    "pgm_nonlinear"
+  ],
+  "qsd_delta": 0.1,
+  "qsd_channel_ridge": 0.1,
+  "qsd_ridge": 0.1,
+  "qsd_nl_dim": 32,
+  "qsd_seed": 20261022,
+  "qsd_batch": 128
+}

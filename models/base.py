@@ -80,6 +80,17 @@ class BaseLearner(object):
 
         self._network.eval()
 
+        # Cross-task cosine margin: each synthetic sample must beat every class of
+        # another task by ``ca_task_margin`` (raw cosine units, before scale).
+        # Targets inter-task confusion; same-task competitors keep plain CE.
+        task_margin = float(self.args.get("ca_task_margin", 0.0))
+        if task_margin > 0:
+            class_task = torch.repeat_interleave(
+                torch.arange(len(self.task_sizes)), torch.as_tensor(self.task_sizes))
+            if len(class_task) != crct_num:
+                raise ValueError("task_sizes do not cover the classifier rows.")
+            other_task = (class_task[:, None] != class_task[None, :]).float().to(self._device)
+
         eval_interval = self.args.get("ca_eval_interval", 0)
         for epoch in range(run_epochs):
             losses = 0.
@@ -113,7 +124,11 @@ class BaseLearner(object):
 
                 # -stage two only use classifiers
                 outputs = self._network.ca_forward(inp)
-                logits = self.args['scale'] * outputs['logits']
+                if task_margin > 0:
+                    cosine = outputs['logits'][:, :crct_num] + task_margin * other_task[tgt]
+                    logits = self.args['scale'] * cosine
+                else:
+                    logits = self.args['scale'] * outputs['logits']
 
                 if self.logit_norm is not None:
                     per_task_norm = []
@@ -152,9 +167,21 @@ class BaseLearner(object):
 
     def _checkpoint_run_metadata(self):
         """Return the fields that must not change when resuming a run."""
-        keys = ("dataset", "seed", "init_cls", "increment", "model_name", "convnet_type")
+        keys = (
+            "dataset", "seed", "class_order_seed", "train_seed", "partition_seed",
+            "algorithm", "init_cls", "increment", "model_name", "convnet_type",
+            "use_quantum_kernel_base", "use_quantum_kernel_inc", "q_kernel_type",
+            "q_kernel_order", "q_num_qubits", "q_num_layers", "q_reupload",
+            "q_gamma_mode", "q_inc_train_mode", "inc_loss_mode", "q_inc_pair",
+            "ssca_mode", "ssca_sigma", "ca_stats_source", "rng_replicate",
+            "ca_logit_norm", "ca_task_margin",
+            "class_order_sha256", "partition_manifest_sha256",
+            "dataset_manifest_sha256", "pretrained_sha256",
+            "base_checkpoint_sha256",
+            "_class_order_sha256",
+        )
         return {
-            "format_version": 1,
+            "format_version": 2,
             **{key: self.args.get(key) for key in keys if key in self.args},
         }
 
@@ -205,11 +232,27 @@ class BaseLearner(object):
                 key: value.detach().cpu()
                 for key, value in self.old_ae.state_dict().items()
             }
+        if hasattr(self, "quantum_kernel") and self.quantum_kernel is not None:
+            checkpoint["quantum_kernel_state_dict"] = {
+                key: value.detach().cpu()
+                for key, value in self.quantum_kernel.state_dict().items()
+            }
+            checkpoint["quantum_kernel_inc_mode"] = getattr(
+                self.quantum_kernel, "_inc_mode", "trainable"
+            )
         if hasattr(self, "cnn_curve"):
             checkpoint["cnn_curve"] = self.cnn_curve
         if hasattr(self, "nme_curve"):
             checkpoint["nme_curve"] = self.nme_curve
-
+        if hasattr(self, "task_accuracy_matrix"):
+            checkpoint["task_accuracy_matrix"] = self.task_accuracy_matrix
+        if self.args.get("qbridge_experiment", False):
+            checkpoint["qbridge_provenance"] = {
+                "base_checkpoint_hash": self.args["_qbridge_base_hash"],
+                "config": self.args.get("qbridge"),
+                "means_encoder_id": getattr(self, "_qb_means_id", None),
+                "snapshot_encoder_id": getattr(self, "_qb_snapshot_id", None),
+                "checkpoint_policy": "final_task_only", "incremental_resume_supported": False}
         checkpoint_dir = os.path.dirname(filepath)
         if checkpoint_dir:
             os.makedirs(checkpoint_dir, exist_ok=True)
@@ -284,8 +327,9 @@ class BaseLearner(object):
             else self._network
         )
         self._rebuild_classifier(network, self.task_sizes)
+        strict_restore = bool(self.args.get("_qbridge_restore_only", False))
         missing_keys, unexpected_keys = network.load_state_dict(
-            checkpoint["model_state_dict"], strict=False
+            checkpoint["model_state_dict"], strict=strict_restore
         )
         if missing_keys:
             logging.warning("Missing keys while loading checkpoint: %s", missing_keys)
@@ -305,6 +349,8 @@ class BaseLearner(object):
             self.cnn_curve = checkpoint["cnn_curve"]
         if "nme_curve" in checkpoint:
             self.nme_curve = checkpoint["nme_curve"]
+        if "task_accuracy_matrix" in checkpoint:
+            self.task_accuracy_matrix = checkpoint["task_accuracy_matrix"]
         if "class_order" in checkpoint:
             self.class_order = list(checkpoint["class_order"])
 
@@ -326,19 +372,45 @@ class BaseLearner(object):
 
     def _evaluate(self, y_pred, y_true):
         ret = {}
-        grouped = accuracy(y_pred.T[0], y_true, self._known_classes)
+        grouped = accuracy(
+            y_pred.T[0], y_true, self._known_classes,
+            increment=self.args.get("increment", 10),
+            task_sizes=getattr(self, "task_sizes", None),
+        )
         grouped = {k: float(v) for k, v in grouped.items()}
         ret["grouped"] = grouped
         ret["top1"] = grouped["total"]
+        effective_topk = int(y_pred.shape[1])
         ret["top{}".format(self.topk)] = float(np.around(
-            (y_pred.T == np.tile(y_true, (self.topk, 1))).sum() * 100 / len(y_true),
+            (y_pred.T == np.tile(y_true, (effective_topk, 1))).sum() * 100 / len(y_true),
             decimals=2,
         ))
+        ret["topk_effective"] = effective_topk
+
+        top1_predictions = y_pred.T[0]
+        task_accuracies = []
+        lower = 0
+        for task_size in getattr(self, "task_sizes", []):
+            upper = lower + task_size
+            indices = np.where(np.logical_and(y_true >= lower, y_true < upper))[0]
+            task_accuracy = (
+                float("nan")
+                if len(indices) == 0
+                else float(np.around(
+                    (top1_predictions[indices] == y_true[indices]).mean() * 100,
+                    decimals=2,
+                ))
+            )
+            task_accuracies.append(task_accuracy)
+            lower = upper
+        ret["task_accuracies"] = task_accuracies
 
         return ret
 
     def eval_task(self):
         y_pred, y_true = self._eval_cnn(self.test_loader)
+        # Kept for optional per-image paired tests (trainer save_predictions).
+        self._last_eval = (y_pred[:, 0], y_true)
         cnn_accy = self._evaluate(y_pred, y_true)
         return cnn_accy
 
@@ -374,8 +446,11 @@ class BaseLearner(object):
             inputs = inputs.to(self._device)
             with torch.no_grad():
                 outputs = self._network(inputs)["logits"]
+            effective_topk = min(int(self.topk), int(outputs.shape[1]))
+            if effective_topk < 1:
+                raise ValueError("Classifier produced no score columns.")
             predicts = torch.topk(
-                outputs, k=self.topk, dim=1, largest=True, sorted=True
+                outputs, k=effective_topk, dim=1, largest=True, sorted=True
             )[
                 1
             ]  # [bs, topk]

@@ -1,0 +1,16 @@
+{
+  "name": "W01_svf",
+  "title": "SVF giai đoạn A, ImageNet-R seed 1993 (Kaggle RTX PRO 6000)",
+  "base": "c7bc4fd",
+  "description": [
+    "SVF: fusion view plastic (RSIAT) + view snapshot task 0 đóng băng, chỉ suy luận; train giống hệt RSIAT. Spec: `exps/svf/README.md`.",
+    "",
+    "1 run: ImageNet-R seed 1993 (run tuning). Ước tính khoảng 1 giờ. Run này chỉ chọn trọng số fusion và cho biết có dư địa hay không; Rule S cần các run held-out nên `SUMMARY.txt` sẽ ghi \"chưa đủ run (0/5)\"."
+  ],
+  "inputs": ["qgrsa-base-c7bc4fd", "zaphat206/imagenet-r", "ViT-B/16 224 in21k"],
+  "jobs": [[["imagenetr"], [1993], ["svf"]]],
+  "max_parallel": 1,
+  "overrides": {"save_checkpoints": false},
+  "tests": ["test_qsd.py", "test_svf.py"],
+  "summaries": ["scripts/summarize_svf.py"]
+}

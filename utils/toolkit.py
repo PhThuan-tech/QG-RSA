@@ -35,20 +35,41 @@ def makedirs(path):
         os.makedirs(path)
 
 
-def accuracy(y_pred, y_true, nb_old, increment=10):
+def accuracy(y_pred, y_true, nb_old, increment=10, task_sizes=None):
     assert len(y_pred) == len(y_true), "Data length error."
+    if len(y_true) == 0:
+        raise ValueError("Cannot compute accuracy for an empty target array.")
     all_acc = {}
     all_acc["total"] = np.around(
         (y_pred == y_true).sum() * 100 / len(y_true), decimals=2
     )
 
-    # Grouped accuracy
-    for class_id in range(0, np.max(y_true), increment):
+    # Grouped accuracy.  ``task_sizes`` is authoritative because the final task
+    # need not equal the nominal increment (and fixtures may use uneven tasks).
+    if task_sizes is None:
+        max_class = int(np.max(y_true))
+        boundaries = [
+            (class_id, min(class_id + int(increment), max_class + 1))
+            for class_id in range(0, max_class + 1, int(increment))
+        ]
+    else:
+        boundaries = []
+        lower = 0
+        for size in task_sizes:
+            size = int(size)
+            if size <= 0:
+                raise ValueError("task_sizes must contain positive integers.")
+            boundaries.append((lower, lower + size))
+            lower += size
+
+    for class_id, upper in boundaries:
         idxes = np.where(
-            np.logical_and(y_true >= class_id, y_true < class_id + increment)
+            np.logical_and(y_true >= class_id, y_true < upper)
         )[0]
+        if len(idxes) == 0:
+            continue
         label = "{}-{}".format(
-            str(class_id).rjust(2, "0"), str(class_id + increment - 1).rjust(2, "0")
+            str(class_id).rjust(2, "0"), str(upper - 1).rjust(2, "0")
         )
         all_acc[label] = np.around(
             (y_pred[idxes] == y_true[idxes]).sum() * 100 / len(idxes), decimals=2
@@ -66,8 +87,12 @@ def accuracy(y_pred, y_true, nb_old, increment=10):
 
     # New accuracy
     idxes = np.where(y_true >= nb_old)[0]
-    all_acc["new"] = np.around(
-        (y_pred[idxes] == y_true[idxes]).sum() * 100 / len(idxes), decimals=2
+    all_acc["new"] = (
+        0
+        if len(idxes) == 0
+        else np.around(
+            (y_pred[idxes] == y_true[idxes]).sum() * 100 / len(idxes), decimals=2
+        )
     )
 
     return all_acc

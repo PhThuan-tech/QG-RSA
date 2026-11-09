@@ -1,0 +1,47 @@
+# Holevo-CIL (A) và Holevo-POVM (A+B)
+
+Baseline sàng lọc (4 run `noise`, ImageNet-R 1993): final 82.588, pair ratio 1.3806 ± 0.0305 (δ_M = 0.100), trung bình 3 task cuối 84.732, task 0 96.05.
+
+## Từng run
+
+| Dataset | Seed | Run | AIA | Final | Forgetting ↓ | Task 0 | Task 1 | 3 task cuối | Pair ratio | PGM | Ridge | λ |
+|---|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---|
+| ImageNet-R | 1993 | hp_diag | 87.25 | 82.42 | 5.39 | 79.8 | 79.6 | 84.85 | 1.440 | 79.71 | 80.06 |  |
+| ImageNet-R | 1993 | hp_full | 87.31 | 82.70 | 4.56 | 82.6 | 80.5 | 84.10 | 1.416 | 79.58 | 79.94 | enc 361, dec 0.516 |
+| ImageNet-R | 1993 | hp_povm | 87.30 | 82.80 | 4.39 | 83.2 | 81.0 | 84.00 | 1.386 | 79.81 | 79.81 | dec 1.03 |
+| ImageNet-R | 1993 | hp_twin | 10.45 | 0.46 | 12.74 | 0.0 | 0.0 | 1.30 | 0.821 | 0.97 | 0.77 | enc 4.3, dec 1e+03 |
+
+## A (Holevo-CIL)
+
+### Sàng lọc (ImageNet-R 1993, so với baseline `noise`)
+
+- Chưa có run sàng lọc.
+
+### Held-out (n = 5: ImageNet-R 2015, 2026; ImageNet-A 1993, 2015, 2026)
+
+- H: Δ final holevo_vn − RSIAT (≥ 0.5, CI > 0):   (n=0) → **chưa đủ run (0/5)**
+- Q: Δ final holevo_vn − holevo_mcr2 (CI > 0):   (n=0) → **chưa đủ run (0/5)**
+
+## A+B (Holevo-POVM)
+
+### Sàng lọc (ImageNet-R 1993, so với baseline `noise`)
+
+- `hp_full` **(chính)**: R ĐẠT; G TRƯỢT (median Δχ_oracle 0.0100, Δχ_stale 0.0037, I_orc − diag 0.0972); M TRƯỢT (pair ratio 1.416 ≤ 1.281); O TRƯỢT (Δ final 0.11); P ĐẠT (3 task cuối 84.10 ≥ 83.73); D TRƯỢT (Δ PGM -0.13)
+  - khoảng cách vết (trạng thái ‖v‖² so với thật), task cuối: trung bình 0.020, max 0.029
+- `hp_povm`: R ĐẠT; G TRƯỢT (median Δχ_oracle 0.0126, Δχ_stale 0.0039, I_orc − diag 0.1193); M TRƯỢT (pair ratio 1.386 ≤ 1.281); O TRƯỢT (Δ final 0.21); P ĐẠT (3 task cuối 84.00 ≥ 83.73); D TRƯỢT (Δ PGM 0.10)
+  - khoảng cách vết (trạng thái ‖v‖² so với thật), task cuối: trung bình 0.015, max 0.028
+- `hp_twin`: R ĐẠT; G TRƯỢT (median Δχ_oracle 0.0000, Δχ_stale 0.0000, I_orc − diag -0.1205); M ĐẠT (pair ratio 0.821 ≤ 1.281); O TRƯỢT (Δ final -82.13); P TRƯỢT (3 task cuối 1.30 ≥ 83.73); D TRƯỢT (Δ PGM -78.74)
+  - khoảng cách vết (trạng thái ‖v‖² so với thật), task cuối: trung bình 0.000, max 0.000
+- `hp_diag`: R ĐẠT; G ĐẠT (median Δχ_oracle 0.0009, Δχ_stale 0.0023); M TRƯỢT (pair ratio 1.440 ≤ 1.281); O TRƯỢT (Δ final -0.17); P ĐẠT (3 task cuối 84.85 ≥ 83.73)
+  - khoảng cách vết (trạng thái ‖v‖² so với thật), task cuối: trung bình 0.015, max 0.018
+- **Kết luận sàng lọc của `hp_full`: DỪNG hoặc xem luật trượt ở trên**
+- Tham khảo (không phải luật): hp_full − hp_twin final = 82.24
+
+### Held-out (n = 5: ImageNet-R 2015, 2026; ImageNet-A 1993, 2015, 2026)
+
+- H: Δ final hp_full − RSIAT (≥ 0.5, CI > 0):   (n=0) → **chưa đủ run (0/5)**
+- Q: Δ final hp_full − hp_twin (CI > 0):   (n=0) → **chưa đủ run (0/5)**
+- Q_dec: PGM − ridge trên biểu diễn hp_full (CI > 0):   (n=0) → **chưa đủ run (0/5)**
+
+**Kiểm tra hồi quy (task 0 phải = 96.05):** hp_diag ImageNet-R 1993: task 0 96.05; hp_full ImageNet-R 1993: task 0 96.05; hp_povm ImageNet-R 1993: task 0 96.05; hp_twin ImageNet-R 1993: task 0 96.05
+

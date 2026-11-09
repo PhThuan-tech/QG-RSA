@@ -1,0 +1,91 @@
+\section{Problem Formulation and Baseline}
+\label{sec:background}
+
+\subsection{Exemplar-Free Class-Incremental Learning}
+Data arrive as a sequence of tasks $\mathcal D_0,\dots,\mathcal D_{B-1}$ with
+$\mathcal D_t=\{(\mathbf x_i,y_i)\}_{i=1}^{n_t}$ and label sets $\mathcal Y_t$. The
+label sets are disjoint: $\mathcal Y_t\cap\mathcal Y_{t'}=\varnothing$ for
+$t\ne t'$. Let $\mathcal C_t=\mathcal Y_0\cup\dots\cup\mathcal Y_t$ be the classes
+seen up to task $t$, with $C_t=|\mathcal C_t|$, and let $\tau(c)$ be the task
+that introduced class $c$. While training task $t$, only $\mathcal D_t$ is
+available: no image of an earlier task is stored. After task $t$, the model
+must classify any test image of a class in $\mathcal C_t$.
+
+\subsection{RSIAT}
+We follow RSIAT~\cite{rsiat} exactly. A ViT-B/16 pre-trained on
+ImageNet-21k~\cite{dosovitskiy2021vit} is frozen. A single bottleneck adapter
+$A$ is shared by all tasks. The feature of image $\mathbf x$ after task $t$ is
+$\mathbf z=f_t(\mathbf x)=\phi(\mathbf x;A_t)\in\mathbb R^{d}$ with $d=768$. A
+cosine classifier with weights $\mathbf w_c$ and scale $s$ gives the logits
+\begin{equation}
+  \ell_c(\mathbf z)=s\cos(\mathbf w_c,\mathbf z)=s\,\frac{\mathbf w_c^{\top}\mathbf z}{\|\mathbf w_c\|\,\|\mathbf z\|}.
+  \label{eq:logits}
+\end{equation}
+
+\paragraph{Base task.}
+The adapter and classifier are trained with a CosFace loss
+$\mathcal L_{\cos}$ (margin $m$) and a representation-steering loss on
+in-batch cosine similarities $S_{ij}$:
+\begin{equation}
+  \mathcal L_{\mathrm{RS}}=\frac1{|\mathcal P|}\sum_{(i,j)\in\mathcal P}(1-S_{ij})
+  +\alpha\,\frac1{|\mathcal N|}\sum_{(i,j)\in\mathcal N}(1+S_{ij}),\qquad
+  \mathcal L^{(0)}=\mathcal L_{\cos}+\lambda_{\mathrm{RS}}\min\!\Big(1,\frac{e}{E_w}\Big)\mathcal L_{\mathrm{RS}}.
+  \label{eq:rs}
+\end{equation}
+Here $\mathcal P$ and $\mathcal N$ are the same-class and different-class
+pairs, $e$ is the epoch and $E_w$ the warm-up length.
+
+\paragraph{Incremental tasks.}
+A residual projector $P_t(\mathbf u)=\mathrm{AE}_t(\mathbf u)+\mathbf u$ maps
+features of the previous model into the current space. With old prototypes
+$\boldsymbol\mu_c$ and a batch $\mathcal B$, the loss is
+\begin{equation}
+  \mathcal L^{(t)}=\mathcal L_{\cos}
+  +\beta\,\frac1{|\mathcal B|}\sum_{\mathbf x\in\mathcal B}\big\|f_t(\mathbf x)-P_t(f_{t-1}(\mathbf x))\big\|_2^2
+  +\gamma\,\frac1{C_{t-1}|\mathcal B|}\sum_{c\in\mathcal C_{t-1}}\sum_{\mathbf x\in\mathcal B}
+  \big|\cos\!\big(P_t(\boldsymbol\mu_c),P_t(f_{t-1}(\mathbf x))\big)\big|.
+  \label{eq:inc}
+\end{equation}
+
+\paragraph{Stored statistics.}
+After task $t$, each new class $c\in\mathcal Y_t$ stores
+\begin{equation}
+  \boldsymbol\mu_c=\frac1{n_c}\sum_{y_i=c}\mathbf z_i,\qquad
+  \Sigma_c=\frac1{n_c-1}\sum_{y_i=c}(\mathbf z_i-\boldsymbol\mu_c)(\mathbf z_i-\boldsymbol\mu_c)^{\top}+\epsilon I,
+  \label{eq:stats}
+\end{equation}
+with $\epsilon=10^{-3}$. This memory, $\mathcal M_t=\{(\boldsymbol\mu_c,\Sigma_c)\}_{c\in\mathcal C_t}$,
+is the only information kept about old classes.
+
+\paragraph{Drift compensation (SSCA).}
+The old means are moved by the feature drift observed on the new data:
+\begin{equation}
+  \boldsymbol\mu_c\leftarrow\boldsymbol\mu_c+
+  \frac{\sum_i\omega_{ic}\,\big(f_t(\mathbf x_i)-f_{t-1}(\mathbf x_i)\big)}{\sum_i\omega_{ic}},\qquad
+  \omega_{ic}=\exp\!\Big(-\frac{\|f_{t-1}(\mathbf x_i)-\boldsymbol\mu_c\|^2}{2\sigma^2}\Big),
+  \label{eq:ssca}
+\end{equation}
+where the sums run over $\mathbf x_i\in\mathcal D_t$. The covariances are not
+updated.
+
+\paragraph{Classifier alignment (CA).}
+The classifier is re-trained for a few epochs with cross-entropy on Gaussian
+pseudo-features,
+\begin{equation}
+  \tilde{\mathbf z}\sim\mathcal N\big(\gamma_{c,t}\,\boldsymbol\mu_c,\;\Sigma_c\big),\qquad
+  \gamma_{c,t}=0.9+0.1\,\frac{\tau(c)+1}{t+1},
+  \label{eq:ca}
+\end{equation}
+256 per class and epoch. RSIAT then predicts with the \emph{linear head}
+$\hat y(\mathbf z)=\arg\max_{c\in\mathcal C_t}\ell_c(\mathbf z)$.
+
+\subsection{Metrics}
+Let $a_{k,j}$ be the accuracy on the classes of task $j$ after training task
+$k$ ($j\le k$), and $A_k$ the accuracy on all of $\mathcal C_k$. We report
+\begin{equation}
+  \bar A=\frac1B\sum_{k=0}^{B-1}A_k,\qquad A_B=A_{B-1},\qquad
+  F=\frac1{B-1}\sum_{j=0}^{B-2}\Big(\max_{j\le k<B-1}a_{k,j}-a_{B-1,j}\Big),
+  \label{eq:metrics}
+\end{equation}
+namely the average incremental accuracy, the final accuracy and the
+forgetting.

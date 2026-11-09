@@ -1,0 +1,1126 @@
+2026-10-30 13:53:24,755 [trainer.py] => config: /kaggle/working/runs/configs/imagenetr_hp_diag_1993.json
+2026-10-30 13:53:24,755 [trainer.py] => overlay: []
+2026-10-30 13:53:24,755 [trainer.py] => prefix: hp_diag
+2026-10-30 13:53:24,755 [trainer.py] => dataset: imagenetr
+2026-10-30 13:53:24,755 [trainer.py] => save_checkpoints: False
+2026-10-30 13:53:24,755 [trainer.py] => resume: False
+2026-10-30 13:53:24,755 [trainer.py] => isolate_runs: True
+2026-10-30 13:53:24,755 [trainer.py] => keep_last_checkpoint: True
+2026-10-30 13:53:24,755 [trainer.py] => compact_diagonal_checkpoint: False
+2026-10-30 13:53:24,755 [trainer.py] => eval_interval: 0
+2026-10-30 13:53:24,755 [trainer.py] => ca_eval_interval: 0
+2026-10-30 13:53:24,755 [trainer.py] => num_workers: 4
+2026-10-30 13:53:24,755 [trainer.py] => stats_num_workers: 2
+2026-10-30 13:53:24,755 [trainer.py] => pin_memory: True
+2026-10-30 13:53:24,755 [trainer.py] => persistent_workers: True
+2026-10-30 13:53:24,755 [trainer.py] => shuffle: True
+2026-10-30 13:53:24,755 [trainer.py] => ssca: True
+2026-10-30 13:53:24,755 [trainer.py] => ca: True
+2026-10-30 13:53:24,755 [trainer.py] => init_cls: 20
+2026-10-30 13:53:24,755 [trainer.py] => increment: 20
+2026-10-30 13:53:24,755 [trainer.py] => model_name: adapter
+2026-10-30 13:53:24,755 [trainer.py] => convnet_type: pretrained_vit_b16_224_in21k_adapter
+2026-10-30 13:53:24,755 [trainer.py] => device: [device(type='cuda', index=0)]
+2026-10-30 13:53:24,755 [trainer.py] => seed: 1993
+2026-10-30 13:53:24,755 [trainer.py] => init_epochs: 30
+2026-10-30 13:53:24,755 [trainer.py] => warmup_epoch: 4
+2026-10-30 13:53:24,755 [trainer.py] => inc_epochs: 30
+2026-10-30 13:53:24,755 [trainer.py] => ca_epochs: 10
+2026-10-30 13:53:24,755 [trainer.py] => init_lr: 0.006734973446816302
+2026-10-30 13:53:24,755 [trainer.py] => batch_size: 48
+2026-10-30 13:53:24,755 [trainer.py] => weight_decay: 1.0711992196950609e-06
+2026-10-30 13:53:24,755 [trainer.py] => min_lr: 0
+2026-10-30 13:53:24,755 [trainer.py] => ffn_num: 64
+2026-10-30 13:53:24,755 [trainer.py] => optimizer: sgd
+2026-10-30 13:53:24,755 [trainer.py] => scale: 50.0
+2026-10-30 13:53:24,755 [trainer.py] => margin: 0.2
+2026-10-30 13:53:24,755 [trainer.py] => alpha: 1.5
+2026-10-30 13:53:24,755 [trainer.py] => rs_margin: 0.4
+2026-10-30 13:53:24,755 [trainer.py] => lambda_rs: 0.5
+2026-10-30 13:53:24,755 [trainer.py] => beta: 3.0
+2026-10-30 13:53:24,755 [trainer.py] => gamma: 1.5
+2026-10-30 13:53:24,755 [trainer.py] => ae_code_dims: 384
+2026-10-30 13:53:24,755 [trainer.py] => ae_init_lr: 0.00016714136601737281
+2026-10-30 13:53:24,755 [trainer.py] => ae_weight_decay: 0.004098198825078632
+2026-10-30 13:53:24,755 [trainer.py] => algorithm: rsiat
+2026-10-30 13:53:24,755 [trainer.py] => use_quantum_kernel_base: False
+2026-10-30 13:53:24,755 [trainer.py] => use_quantum_kernel_inc: False
+2026-10-30 13:53:24,755 [trainer.py] => ssca_mode: legacy
+2026-10-30 13:53:24,755 [trainer.py] => rng_replicate: 0
+2026-10-30 13:53:24,755 [trainer.py] => stats_diagnostics: False
+2026-10-30 13:53:24,755 [trainer.py] => save_predictions: True
+2026-10-30 13:53:24,755 [trainer.py] => offline: True
+2026-10-30 13:53:24,755 [trainer.py] => hp_mode: diag
+2026-10-30 13:53:24,755 [trainer.py] => holevo_lambda: auto
+2026-10-30 13:53:24,755 [trainer.py] => holevo_grad_ratio: 0.5
+2026-10-30 13:53:24,755 [trainer.py] => holevo_calib_steps: 20
+2026-10-30 13:53:24,755 [trainer.py] => holevo_queue_cap: 256
+2026-10-30 13:53:24,755 [trainer.py] => holevo_eps: 1e-08
+2026-10-30 13:53:24,755 [trainer.py] => holevo_mcr2_eps2: 0.5
+2026-10-30 13:53:24,755 [trainer.py] => holevo_oracle_diag: True
+2026-10-30 13:53:24,755 [trainer.py] => holevo_log_every: 25
+2026-10-30 13:53:24,756 [trainer.py] => hp_tau: 1.0
+2026-10-30 13:53:24,756 [trainer.py] => hp_eps_omega: 1e-06
+2026-10-30 13:53:24,756 [trainer.py] => hp_grad_ratio: 0.5
+2026-10-30 13:53:24,756 [trainer.py] => qsd_heads: ['linear', 'ridge_stats', 'pgm_stats']
+2026-10-30 13:53:24,756 [trainer.py] => qsd_delta: 1.3316
+2026-10-30 13:53:24,756 [trainer.py] => qsd_ridge: 0.1
+2026-10-30 13:53:24,756 [trainer.py] => qsd_seed: 20261022
+2026-10-30 13:53:24,756 [trainer.py] => qsd_batch: 128
+2026-10-30 13:53:24,756 [trainer.py] => qsd_fuse: True
+2026-10-30 13:53:24,756 [trainer.py] => qsd_save_scores: False
+2026-10-30 13:53:24,756 [trainer.py] => data_root: /kaggle/input/datasets/zaphat206/imagenet-r/imagenet-r
+2026-10-30 13:53:24,756 [trainer.py] => pretrained_path: /kaggle/working/vit_b16_224.pt
+2026-10-30 13:53:24,756 [trainer.py] => output_root: /kaggle/working/runs
+2026-10-30 13:53:24,756 [trainer.py] => class_order_seed: 1993
+2026-10-30 13:53:24,756 [trainer.py] => train_seed: 1993
+2026-10-30 13:53:24,756 [trainer.py] => partition_seed: 1993
+2026-10-30 13:53:24,756 [trainer.py] => _run_log_prefix: /kaggle/working/runs/logs/adapter/imagenetr/0/20/hp_diag_1993_pretrained_vit_b16_224_in21k_adapter
+2026-10-30 13:53:35,349 [data_manager.py] => [168, 136, 51, 9, 183, 101, 171, 99, 42, 159, 191, 70, 16, 188, 27, 10, 175, 26, 68, 187, 98, 6, 85, 35, 112, 43, 100, 0, 103, 181, 88, 59, 4, 2, 116, 174, 94, 80, 106, 1, 147, 17, 141, 131, 72, 23, 173, 54, 197, 118, 87, 32, 79, 104, 91, 19, 135, 107, 178, 36, 11, 199, 142, 8, 122, 3, 28, 57, 153, 172, 190, 56, 49, 44, 97, 62, 151, 169, 194, 55, 192, 12, 189, 78, 66, 180, 15, 137, 109, 134, 92, 119, 126, 52, 170, 40, 148, 65, 144, 64, 138, 45, 77, 89, 154, 90, 71, 193, 74, 30, 113, 143, 96, 84, 67, 50, 186, 156, 69, 21, 18, 111, 108, 58, 125, 157, 150, 110, 182, 129, 166, 83, 81, 60, 13, 165, 14, 176, 63, 117, 5, 22, 145, 121, 38, 41, 82, 127, 114, 20, 31, 53, 37, 163, 196, 130, 152, 162, 86, 76, 24, 34, 184, 149, 33, 128, 198, 155, 146, 167, 139, 120, 140, 102, 47, 25, 158, 123, 46, 164, 61, 7, 115, 75, 133, 160, 105, 132, 179, 124, 48, 73, 93, 39, 95, 195, 29, 177, 185, 161]
+2026-10-30 13:53:36,417 [trainer.py] => All params: 86988288
+2026-10-30 13:53:36,417 [trainer.py] => Trainable params: 1189632
+2026-10-30 13:53:36,418 [RSIAT_adapter.py] => Learning on 0-20
+2026-10-30 13:53:36,832 [toolkit.py] => All params: 86259456
+2026-10-30 13:53:36,832 [toolkit.py] => Trainable params: 1204992
+2026-10-30 14:03:15,194 [RSIAT_adapter.py] => Task 0, Epoch 30/30 => Loss 2.094, Loss_c 1.812, Losses_rt 0.282, Train_accy 93.07, Test_accy 96.05, Time 20.40s
+2026-10-30 14:03:15,194 [RSIAT_adapter.py] => Task 0 peak GPU memory: 4417.41 MiB
+2026-10-30 14:03:28,887 [holevo.py] => HOLEVO encoder classes=20 D=769 scale=43.769274
+2026-10-30 14:03:39,987 [qsd.py] => QSD task=0 head=linear top1=96.05 old=None new=96.05 task_pred=100.00 pair_ratio=None
+2026-10-30 14:03:39,987 [qsd.py] => QSD tasks head=linear: [96.05]
+2026-10-30 14:03:39,987 [qsd.py] => QSD mech head=linear: {"task_prediction": 100.0, "pair_ratio": null}
+2026-10-30 14:03:39,987 [qsd.py] => QSD curve head=linear: [96.05]
+2026-10-30 14:03:39,987 [qsd.py] => QSD task=0 head=ridge_stats top1=95.20 old=None new=95.2 task_pred=100.00 pair_ratio=None
+2026-10-30 14:03:39,987 [qsd.py] => QSD tasks head=ridge_stats: [95.2]
+2026-10-30 14:03:39,987 [qsd.py] => QSD mech head=ridge_stats: {"task_prediction": 100.0, "pair_ratio": null}
+2026-10-30 14:03:39,987 [qsd.py] => QSD curve head=ridge_stats: [95.2]
+2026-10-30 14:03:39,987 [qsd.py] => QSD task=0 head=pgm_stats top1=96.05 old=None new=96.05 task_pred=100.00 pair_ratio=None
+2026-10-30 14:03:39,987 [qsd.py] => QSD tasks head=pgm_stats: [96.05]
+2026-10-30 14:03:39,987 [qsd.py] => QSD mech head=pgm_stats: {"task_prediction": 100.0, "pair_ratio": null}
+2026-10-30 14:03:39,987 [qsd.py] => QSD curve head=pgm_stats: [96.05]
+2026-10-30 14:03:39,987 [qsd.py] => QSD task=0 head=fuse_ridge_stats_b0p25 top1=96.33 old=None new=96.33 task_pred=100.00 pair_ratio=None
+2026-10-30 14:03:39,987 [qsd.py] => QSD tasks head=fuse_ridge_stats_b0p25: [96.33]
+2026-10-30 14:03:39,987 [qsd.py] => QSD mech head=fuse_ridge_stats_b0p25: {"task_prediction": 100.0, "pair_ratio": null}
+2026-10-30 14:03:39,987 [qsd.py] => QSD curve head=fuse_ridge_stats_b0p25: [96.33]
+2026-10-30 14:03:39,987 [qsd.py] => QSD task=0 head=fuse_ridge_stats_b0p5 top1=96.33 old=None new=96.33 task_pred=100.00 pair_ratio=None
+2026-10-30 14:03:39,987 [qsd.py] => QSD tasks head=fuse_ridge_stats_b0p5: [96.33]
+2026-10-30 14:03:39,987 [qsd.py] => QSD mech head=fuse_ridge_stats_b0p5: {"task_prediction": 100.0, "pair_ratio": null}
+2026-10-30 14:03:39,987 [qsd.py] => QSD curve head=fuse_ridge_stats_b0p5: [96.33]
+2026-10-30 14:03:39,987 [qsd.py] => QSD task=0 head=fuse_ridge_stats_b1 top1=96.19 old=None new=96.19 task_pred=100.00 pair_ratio=None
+2026-10-30 14:03:39,987 [qsd.py] => QSD tasks head=fuse_ridge_stats_b1: [96.19]
+2026-10-30 14:03:39,987 [qsd.py] => QSD mech head=fuse_ridge_stats_b1: {"task_prediction": 100.0, "pair_ratio": null}
+2026-10-30 14:03:39,987 [qsd.py] => QSD curve head=fuse_ridge_stats_b1: [96.19]
+2026-10-30 14:03:39,987 [qsd.py] => QSD task=0 head=fuse_ridge_stats_b2 top1=95.90 old=None new=95.9 task_pred=100.00 pair_ratio=None
+2026-10-30 14:03:39,987 [qsd.py] => QSD tasks head=fuse_ridge_stats_b2: [95.9]
+2026-10-30 14:03:39,987 [qsd.py] => QSD mech head=fuse_ridge_stats_b2: {"task_prediction": 100.0, "pair_ratio": null}
+2026-10-30 14:03:39,987 [qsd.py] => QSD curve head=fuse_ridge_stats_b2: [95.9]
+2026-10-30 14:03:39,987 [qsd.py] => QSD task=0 head=fuse_ridge_stats_b4 top1=95.62 old=None new=95.62 task_pred=100.00 pair_ratio=None
+2026-10-30 14:03:39,987 [qsd.py] => QSD tasks head=fuse_ridge_stats_b4: [95.62]
+2026-10-30 14:03:39,987 [qsd.py] => QSD mech head=fuse_ridge_stats_b4: {"task_prediction": 100.0, "pair_ratio": null}
+2026-10-30 14:03:39,987 [qsd.py] => QSD curve head=fuse_ridge_stats_b4: [95.62]
+2026-10-30 14:03:39,987 [qsd.py] => QSD task=0 head=fuse_pgm_stats_b0p25 top1=96.05 old=None new=96.05 task_pred=100.00 pair_ratio=None
+2026-10-30 14:03:39,988 [qsd.py] => QSD tasks head=fuse_pgm_stats_b0p25: [96.05]
+2026-10-30 14:03:39,988 [qsd.py] => QSD mech head=fuse_pgm_stats_b0p25: {"task_prediction": 100.0, "pair_ratio": null}
+2026-10-30 14:03:39,988 [qsd.py] => QSD curve head=fuse_pgm_stats_b0p25: [96.05]
+2026-10-30 14:03:39,988 [qsd.py] => QSD task=0 head=fuse_pgm_stats_b0p5 top1=96.05 old=None new=96.05 task_pred=100.00 pair_ratio=None
+2026-10-30 14:03:39,988 [qsd.py] => QSD tasks head=fuse_pgm_stats_b0p5: [96.05]
+2026-10-30 14:03:39,988 [qsd.py] => QSD mech head=fuse_pgm_stats_b0p5: {"task_prediction": 100.0, "pair_ratio": null}
+2026-10-30 14:03:39,988 [qsd.py] => QSD curve head=fuse_pgm_stats_b0p5: [96.05]
+2026-10-30 14:03:39,988 [qsd.py] => QSD task=0 head=fuse_pgm_stats_b1 top1=96.19 old=None new=96.19 task_pred=100.00 pair_ratio=None
+2026-10-30 14:03:39,988 [qsd.py] => QSD tasks head=fuse_pgm_stats_b1: [96.19]
+2026-10-30 14:03:39,988 [qsd.py] => QSD mech head=fuse_pgm_stats_b1: {"task_prediction": 100.0, "pair_ratio": null}
+2026-10-30 14:03:39,988 [qsd.py] => QSD curve head=fuse_pgm_stats_b1: [96.19]
+2026-10-30 14:03:39,988 [qsd.py] => QSD task=0 head=fuse_pgm_stats_b2 top1=96.19 old=None new=96.19 task_pred=100.00 pair_ratio=None
+2026-10-30 14:03:39,988 [qsd.py] => QSD tasks head=fuse_pgm_stats_b2: [96.19]
+2026-10-30 14:03:39,988 [qsd.py] => QSD mech head=fuse_pgm_stats_b2: {"task_prediction": 100.0, "pair_ratio": null}
+2026-10-30 14:03:39,988 [qsd.py] => QSD curve head=fuse_pgm_stats_b2: [96.19]
+2026-10-30 14:03:39,988 [qsd.py] => QSD task=0 head=fuse_pgm_stats_b4 top1=96.19 old=None new=96.19 task_pred=100.00 pair_ratio=None
+2026-10-30 14:03:39,988 [qsd.py] => QSD tasks head=fuse_pgm_stats_b4: [96.19]
+2026-10-30 14:03:39,988 [qsd.py] => QSD mech head=fuse_pgm_stats_b4: {"task_prediction": 100.0, "pair_ratio": null}
+2026-10-30 14:03:39,988 [qsd.py] => QSD curve head=fuse_pgm_stats_b4: [96.19]
+2026-10-30 14:03:39,988 [qsd.py] => QSD task=0 diag={"ridge_sensitivity": {"0.01": 95.06, "0.1": 95.2, "1.0": 95.34}, "fuse_scale": {"ridge_stats": 27.33090838881211, "pgm_stats": 7.5076781788470885}} seconds=9.2
+2026-10-30 14:03:40,002 [trainer.py] => CNN: {'total': 96.05, '00-19': 96.05, 'old': 0.0, 'new': 96.05}
+2026-10-30 14:03:40,002 [trainer.py] => CNN top1 curve: [96.05]
+2026-10-30 14:03:40,002 [trainer.py] => CNN top5 curve: [99.58]
+2026-10-30 14:03:40,002 [trainer.py] => Average Accuracy (CNN): 96.05
+2026-10-30 14:03:40,002 [trainer.py] => All params: 87003648
+2026-10-30 14:03:40,003 [trainer.py] => Trainable params: 1204992
+2026-10-30 14:03:40,004 [RSIAT_adapter.py] => Learning on 20-40
+2026-10-30 14:03:48,641 [holevo.py] => HOLEVO start task=1 old=20 new=20 {"queue": {"20": 196, "21": 142, "22": 77, "23": 64, "24": 105, "25": 42, "26": 128, "27": 184, "28": 107, "29": 168, "30": 121, "31": 137, "32": 177, "33": 152, "34": 62, "35": 138, "36": 115, "37": 216, "38": 51, "39": 165}, "residual_share": 0.9310793237971392, "eta": null}
+2026-10-30 14:04:05,587 [holevo.py] => HOLEVO oracle task=1 phase=start {"oracle": {"vn": 0.4012547987791, "mcr2": 26.019096137737137, "spread": 0.914143529512332}, "stale": {"vn": 0.3821448844238874, "mcr2": 25.82273256444262, "spread": 0.9126048553727809}, "I_orc": 0.17212474922798, "p_old_on_new": 0.6969261067922133}
+2026-10-30 14:04:05,589 [toolkit.py] => All params: 87167744
+2026-10-30 14:04:05,589 [toolkit.py] => Trainable params: 1369088
+2026-10-30 14:04:36,973 [holevo.py] => HOLEVO epoch task=1 epoch=1 {"objective": 0.3853714496361611, "p_y": 0.14957539700699843, "p_old": 0.7007541659745065, "p_null": 3.0510379161495263e-07, "completeness_error": 7.47550169914272e-15, "loss_enc": -0.3853714496361611, "loss_dec": 1.9699572053334373, "weight": 0.0}
+2026-10-30 14:05:05,112 [holevo.py] => HOLEVO epoch task=1 epoch=2 {"objective": 0.39112231764118216, "p_y": 0.14282002857658854, "p_old": 0.7030208986929769, "p_null": 3.402930450408928e-07, "completeness_error": 7.271960811294775e-15, "loss_enc": -0.39112231764118216, "loss_dec": 2.033981086568234, "weight": 0.25}
+2026-10-30 14:05:34,108 [holevo.py] => HOLEVO epoch task=1 epoch=3 {"objective": 0.39195596233977803, "p_y": 0.15395652674974702, "p_old": 0.6958951120925836, "p_null": 3.2033942464707324e-07, "completeness_error": 6.938893903907228e-15, "loss_enc": -0.39195596233977803, "loss_dec": 1.9501573466239368, "weight": 0.5}
+2026-10-30 14:06:03,913 [holevo.py] => HOLEVO epoch task=1 epoch=4 {"objective": 0.3914558033130438, "p_y": 0.1592185081148659, "p_old": 0.7007901558776718, "p_null": 3.078169766304772e-07, "completeness_error": 8.770761894538737e-15, "loss_enc": -0.3914558033130438, "loss_dec": 1.9215730956345352, "weight": 0.75}
+2026-10-30 14:06:33,845 [holevo.py] => HOLEVO epoch task=1 epoch=5 {"objective": 0.392309350269828, "p_y": 0.1594339078021602, "p_old": 0.6891571654193321, "p_null": 3.2678024081051454e-07, "completeness_error": 8.271161533457416e-15, "loss_enc": -0.392309350269828, "loss_dec": 1.9048860186590468, "weight": 1.0}
+2026-10-30 14:07:03,723 [holevo.py] => HOLEVO epoch task=1 epoch=6 {"objective": 0.3923600515110426, "p_y": 0.16139282839163893, "p_old": 0.6935789057705688, "p_null": 3.1583327390239465e-07, "completeness_error": 8.493206138382448e-15, "loss_enc": -0.3923600515110426, "loss_dec": 1.9178071112630328, "weight": 1.0}
+2026-10-30 14:07:33,998 [holevo.py] => HOLEVO epoch task=1 epoch=7 {"objective": 0.3921313654527338, "p_y": 0.1559377358520342, "p_old": 0.697100025232993, "p_null": 3.146530528044988e-07, "completeness_error": 7.179442225909346e-15, "loss_enc": -0.3921313654527338, "loss_dec": 1.937682619809266, "weight": 1.0}
+2026-10-30 14:08:04,081 [holevo.py] => HOLEVO epoch task=1 epoch=8 {"objective": 0.3921385174742894, "p_y": 0.15618702225124886, "p_old": 0.6917829500820389, "p_null": 3.3384310632345655e-07, "completeness_error": 7.882583474838611e-15, "loss_enc": -0.3921385174742894, "loss_dec": 1.9317121997936906, "weight": 1.0}
+2026-10-30 14:08:34,138 [holevo.py] => HOLEVO epoch task=1 epoch=9 {"objective": 0.3940103174206118, "p_y": 0.16086852834141693, "p_old": 0.690756236850588, "p_null": 3.228149287197608e-07, "completeness_error": 6.328271240363392e-15, "loss_enc": -0.3940103174206118, "loss_dec": 1.8986325135959308, "weight": 1.0}
+2026-10-30 14:09:04,051 [holevo.py] => HOLEVO epoch task=1 epoch=10 {"objective": 0.39258755256664957, "p_y": 0.15477360728015366, "p_old": 0.6960609460089392, "p_null": 3.2777804386919735e-07, "completeness_error": 9.048317650695026e-15, "loss_enc": -0.39258755256664957, "loss_dec": 1.9480689466899181, "weight": 1.0}
+2026-10-30 14:09:34,133 [holevo.py] => HOLEVO epoch task=1 epoch=11 {"objective": 0.39177879766657286, "p_y": 0.15091405033081962, "p_old": 0.7000722448563761, "p_null": 3.250141244867058e-07, "completeness_error": 9.159339953157541e-15, "loss_enc": -0.39177879766657286, "loss_dec": 1.9792582384041564, "weight": 1.0}
+2026-10-30 14:10:03,786 [holevo.py] => HOLEVO epoch task=1 epoch=12 {"objective": 0.39253248123398776, "p_y": 0.15041709421469546, "p_old": 0.7020450620624963, "p_null": 3.1274520869446746e-07, "completeness_error": 8.215650382226158e-15, "loss_enc": -0.39253248123398776, "loss_dec": 1.9722886183625312, "weight": 1.0}
+2026-10-30 14:10:34,169 [holevo.py] => HOLEVO epoch task=1 epoch=13 {"objective": 0.3922588438233586, "p_y": 0.14991685877113342, "p_old": 0.7068832844147884, "p_null": 3.117909843347429e-07, "completeness_error": 9.39988827515966e-15, "loss_enc": -0.3922588438233586, "loss_dec": 1.9772926091485041, "weight": 1.0}
+2026-10-30 14:11:03,882 [holevo.py] => HOLEVO epoch task=1 epoch=14 {"objective": 0.39233797955262906, "p_y": 0.16136250919878548, "p_old": 0.6971502078148919, "p_null": 3.111229461716488e-07, "completeness_error": 9.71445146547012e-15, "loss_enc": -0.39233797955262906, "loss_dec": 1.8899387671979249, "weight": 1.0}
+2026-10-30 14:11:33,960 [holevo.py] => HOLEVO epoch task=1 epoch=15 {"objective": 0.39341174331395146, "p_y": 0.16063766462220597, "p_old": 0.695721538688248, "p_null": 3.1964924538641526e-07, "completeness_error": 8.215650382226158e-15, "loss_enc": -0.39341174331395146, "loss_dec": 1.8849764317354487, "weight": 1.0}
+2026-10-30 14:12:03,860 [holevo.py] => HOLEVO epoch task=1 epoch=16 {"objective": 0.39360679013726085, "p_y": 0.1578790137186646, "p_old": 0.6955761216456829, "p_null": 3.2404955555603803e-07, "completeness_error": 7.993605777301127e-15, "loss_enc": -0.39360679013726085, "loss_dec": 1.9206103359511697, "weight": 1.0}
+2026-10-30 14:12:33,871 [holevo.py] => HOLEVO epoch task=1 epoch=17 {"objective": 0.3928701461421402, "p_y": 0.14201987975852604, "p_old": 0.7096166458576998, "p_null": 3.1764335454530506e-07, "completeness_error": 1.1102230246251565e-14, "loss_enc": -0.3928701461421402, "loss_dec": 2.0514457657460294, "weight": 1.0}
+2026-10-30 14:13:03,641 [holevo.py] => HOLEVO epoch task=1 epoch=18 {"objective": 0.3953202108214273, "p_y": 0.15313039834093206, "p_old": 0.6981459607950348, "p_null": 3.220291328412991e-07, "completeness_error": 8.43769498715119e-15, "loss_enc": -0.3953202108214273, "loss_dec": 1.964571055826425, "weight": 1.0}
+2026-10-30 14:13:33,883 [holevo.py] => HOLEVO epoch task=1 epoch=19 {"objective": 0.3910165717878521, "p_y": 0.15895515109005817, "p_old": 0.6941306189907462, "p_null": 3.1513546921181613e-07, "completeness_error": 5.773159728050814e-15, "loss_enc": -0.3910165717878521, "loss_dec": 1.9220397003880103, "weight": 1.0}
+2026-10-30 14:14:03,630 [holevo.py] => HOLEVO epoch task=1 epoch=20 {"objective": 0.3922472487015538, "p_y": 0.14993055813226902, "p_old": 0.7021664843265014, "p_null": 3.241459987358228e-07, "completeness_error": 4.884981308350689e-15, "loss_enc": -0.3922472487015538, "loss_dec": 1.9676127638450156, "weight": 1.0}
+2026-10-30 14:14:33,309 [holevo.py] => HOLEVO epoch task=1 epoch=21 {"objective": 0.3941405878692701, "p_y": 0.1493145629103607, "p_old": 0.706203787895944, "p_null": 3.182108056762456e-07, "completeness_error": 1.0436096431476471e-14, "loss_enc": -0.3941405878692701, "loss_dec": 1.9766596277506, "weight": 1.0}
+2026-10-30 14:15:03,202 [holevo.py] => HOLEVO epoch task=1 epoch=22 {"objective": 0.3929370390207559, "p_y": 0.15646144014393704, "p_old": 0.699034256674725, "p_null": 3.2353593391568006e-07, "completeness_error": 7.494005416219807e-15, "loss_enc": -0.3929370390207559, "loss_dec": 1.9223304193162503, "weight": 1.0}
+2026-10-30 14:15:33,073 [holevo.py] => HOLEVO epoch task=1 epoch=23 {"objective": 0.3950692503283481, "p_y": 0.16233610540513513, "p_old": 0.6964838630971109, "p_null": 3.1348505030633537e-07, "completeness_error": 8.049116928532385e-15, "loss_enc": -0.3950692503283481, "loss_dec": 1.8704989211929477, "weight": 1.0}
+2026-10-30 14:16:02,942 [holevo.py] => HOLEVO epoch task=1 epoch=24 {"objective": 0.39347139518522906, "p_y": 0.15923998380414028, "p_old": 0.699069806104142, "p_null": 3.0948296855197866e-07, "completeness_error": 8.215650382226158e-15, "loss_enc": -0.39347139518522906, "loss_dec": 1.9234246392182772, "weight": 1.0}
+2026-10-30 14:16:32,693 [holevo.py] => HOLEVO epoch task=1 epoch=25 {"objective": 0.3920894879427261, "p_y": 0.15212469058938025, "p_old": 0.704200210434846, "p_null": 3.1349942214204146e-07, "completeness_error": 8.326672684688674e-15, "loss_enc": -0.3920894879427261, "loss_dec": 1.9732193096769117, "weight": 1.0}
+2026-10-30 14:17:03,254 [holevo.py] => HOLEVO epoch task=1 epoch=26 {"objective": 0.3913323684414267, "p_y": 0.15037444256532803, "p_old": 0.7056531366675334, "p_null": 3.0723068202082406e-07, "completeness_error": 8.289665250534503e-15, "loss_enc": -0.3913323684414267, "loss_dec": 1.9953400579064027, "weight": 1.0}
+2026-10-30 14:17:33,026 [holevo.py] => HOLEVO epoch task=1 epoch=27 {"objective": 0.3932004732967201, "p_y": 0.14760006182290444, "p_old": 0.7030160886043679, "p_null": 3.2720236111649335e-07, "completeness_error": 7.16093850883226e-15, "loss_enc": -0.3932004732967201, "loss_dec": 1.9832732494173548, "weight": 1.0}
+2026-10-30 14:18:02,807 [holevo.py] => HOLEVO epoch task=1 epoch=28 {"objective": 0.3947359850070986, "p_y": 0.15220348527918542, "p_old": 0.7014239330864309, "p_null": 3.225727069993245e-07, "completeness_error": 8.104628079763643e-15, "loss_enc": -0.3947359850070986, "loss_dec": 1.9516661532716677, "weight": 1.0}
+2026-10-30 14:18:32,568 [holevo.py] => HOLEVO epoch task=1 epoch=29 {"objective": 0.3928671915974439, "p_y": 0.15215223605466177, "p_old": 0.7095644101742128, "p_null": 3.054652926703631e-07, "completeness_error": 1.0325074129013956e-14, "loss_enc": -0.3928671915974439, "loss_dec": 1.9873047733664198, "weight": 1.0}
+2026-10-30 14:19:02,555 [holevo.py] => HOLEVO epoch task=1 epoch=30 {"objective": 0.3944815246987553, "p_y": 0.1546554971956567, "p_old": 0.700424939714664, "p_null": 3.129537624017616e-07, "completeness_error": 7.327471962526033e-15, "loss_enc": -0.3944815246987553, "loss_dec": 1.9547295317860178, "weight": 1.0}
+2026-10-30 14:19:05,941 [RSIAT_adapter.py] => Task 1, Epoch 30/30 => Loss 3.778, Loss_c 2.498, Losses_rt 1.280, Train_accy 83.82, Test_accy 91.66, Time 29.99s
+2026-10-30 14:19:05,942 [RSIAT_adapter.py] => Task 1 peak GPU memory: 4913.59 MiB
+2026-10-30 14:19:21,134 [holevo.py] => HOLEVO oracle task=1 phase=end {"oracle": {"vn": 0.40799513638843665, "mcr2": 26.076948392969797, "spread": 0.9139234998868287}, "stale": {"vn": 0.39049592885877615, "mcr2": 25.927907661682255, "spread": 0.9132697815388571}, "I_orc": 0.17746517980159593, "p_old_on_new": 0.6902704506148654, "trace_distance": {"mean": 0.018107441309085884, "max": 0.02905241170697888}}
+2026-10-30 14:19:21,135 [holevo.py] => HOLEVO end task=1 lambdas={"enc": null, "dec": null}
+2026-10-30 14:19:41,248 [base.py] => CA Task 1 => Loss 0.043, Test_accy skipped
+2026-10-30 14:19:41,975 [base.py] => CA Task 1 => Loss 0.033, Test_accy skipped
+2026-10-30 14:19:42,747 [base.py] => CA Task 1 => Loss 0.031, Test_accy skipped
+2026-10-30 14:19:43,407 [base.py] => CA Task 1 => Loss 0.025, Test_accy skipped
+2026-10-30 14:19:44,124 [base.py] => CA Task 1 => Loss 0.027, Test_accy skipped
+2026-10-30 14:19:44,910 [base.py] => CA Task 1 => Loss 0.027, Test_accy skipped
+2026-10-30 14:19:45,725 [base.py] => CA Task 1 => Loss 0.024, Test_accy skipped
+2026-10-30 14:19:46,387 [base.py] => CA Task 1 => Loss 0.026, Test_accy skipped
+2026-10-30 14:19:47,085 [base.py] => CA Task 1 => Loss 0.026, Test_accy skipped
+2026-10-30 14:19:51,151 [base.py] => CA Task 1 => Loss 0.029, Test_accy 91.370
+2026-10-30 14:20:10,711 [qsd.py] => QSD task=1 head=linear top1=91.37 old=94.35 new=88.1 task_pred=94.39 pair_ratio=1.7609756097560973
+2026-10-30 14:20:10,712 [qsd.py] => QSD tasks head=linear: [94.35, 88.1]
+2026-10-30 14:20:10,712 [qsd.py] => QSD mech head=linear: {"task_prediction": 94.39, "pair_ratio": 1.7609756097560973}
+2026-10-30 14:20:10,712 [qsd.py] => QSD curve head=linear: [96.05, 91.37]
+2026-10-30 14:20:10,712 [qsd.py] => QSD task=1 head=ridge_stats top1=91.66 old=93.5 new=89.64 task_pred=95.35 pair_ratio=1.197
+2026-10-30 14:20:10,712 [qsd.py] => QSD tasks head=ridge_stats: [93.5, 89.64]
+2026-10-30 14:20:10,712 [qsd.py] => QSD mech head=ridge_stats: {"task_prediction": 95.35, "pair_ratio": 1.197}
+2026-10-30 14:20:10,712 [qsd.py] => QSD curve head=ridge_stats: [95.2, 91.66]
+2026-10-30 14:20:10,712 [qsd.py] => QSD task=1 head=pgm_stats top1=90.48 old=94.21 new=86.4 task_pred=94.32 pair_ratio=1.4067307692307693
+2026-10-30 14:20:10,712 [qsd.py] => QSD tasks head=pgm_stats: [94.21, 86.4]
+2026-10-30 14:20:10,712 [qsd.py] => QSD mech head=pgm_stats: {"task_prediction": 94.32, "pair_ratio": 1.4067307692307693}
+2026-10-30 14:20:10,712 [qsd.py] => QSD curve head=pgm_stats: [96.05, 90.48]
+2026-10-30 14:20:10,712 [qsd.py] => QSD task=1 head=fuse_ridge_stats_b0p25 top1=91.29 old=93.93 new=88.41 task_pred=94.61 pair_ratio=1.541111111111111
+2026-10-30 14:20:10,712 [qsd.py] => QSD tasks head=fuse_ridge_stats_b0p25: [93.93, 88.41]
+2026-10-30 14:20:10,712 [qsd.py] => QSD mech head=fuse_ridge_stats_b0p25: {"task_prediction": 94.61, "pair_ratio": 1.541111111111111}
+2026-10-30 14:20:10,712 [qsd.py] => QSD curve head=fuse_ridge_stats_b0p25: [96.33, 91.29]
+2026-10-30 14:20:10,712 [qsd.py] => QSD task=1 head=fuse_ridge_stats_b0p5 top1=91.96 old=94.35 new=89.34 task_pred=95.06 pair_ratio=1.5154761904761906
+2026-10-30 14:20:10,712 [qsd.py] => QSD tasks head=fuse_ridge_stats_b0p5: [94.35, 89.34]
+2026-10-30 14:20:10,712 [qsd.py] => QSD mech head=fuse_ridge_stats_b0p5: {"task_prediction": 95.06, "pair_ratio": 1.5154761904761906}
+2026-10-30 14:20:10,712 [qsd.py] => QSD curve head=fuse_ridge_stats_b0p5: [96.33, 91.96]
+2026-10-30 14:20:10,712 [qsd.py] => QSD task=1 head=fuse_ridge_stats_b1 top1=91.96 old=94.07 new=89.64 task_pred=95.28 pair_ratio=1.351111111111111
+2026-10-30 14:20:10,712 [qsd.py] => QSD tasks head=fuse_ridge_stats_b1: [94.07, 89.64]
+2026-10-30 14:20:10,712 [qsd.py] => QSD mech head=fuse_ridge_stats_b1: {"task_prediction": 95.28, "pair_ratio": 1.351111111111111}
+2026-10-30 14:20:10,712 [qsd.py] => QSD curve head=fuse_ridge_stats_b1: [96.19, 91.96]
+2026-10-30 14:20:10,712 [qsd.py] => QSD task=1 head=fuse_ridge_stats_b2 top1=91.81 old=93.93 new=89.49 task_pred=95.50 pair_ratio=1.159
+2026-10-30 14:20:10,712 [qsd.py] => QSD tasks head=fuse_ridge_stats_b2: [93.93, 89.49]
+2026-10-30 14:20:10,712 [qsd.py] => QSD mech head=fuse_ridge_stats_b2: {"task_prediction": 95.5, "pair_ratio": 1.159}
+2026-10-30 14:20:10,712 [qsd.py] => QSD curve head=fuse_ridge_stats_b2: [95.9, 91.81]
+2026-10-30 14:20:10,712 [qsd.py] => QSD task=1 head=fuse_ridge_stats_b4 top1=91.81 old=93.93 new=89.49 task_pred=95.50 pair_ratio=1.159
+2026-10-30 14:20:10,712 [qsd.py] => QSD tasks head=fuse_ridge_stats_b4: [93.93, 89.49]
+2026-10-30 14:20:10,712 [qsd.py] => QSD mech head=fuse_ridge_stats_b4: {"task_prediction": 95.5, "pair_ratio": 1.159}
+2026-10-30 14:20:10,712 [qsd.py] => QSD curve head=fuse_ridge_stats_b4: [95.62, 91.81]
+2026-10-30 14:20:10,712 [qsd.py] => QSD task=1 head=fuse_pgm_stats_b0p25 top1=91.22 old=94.35 new=87.79 task_pred=94.39 pair_ratio=1.6790697674418602
+2026-10-30 14:20:10,712 [qsd.py] => QSD tasks head=fuse_pgm_stats_b0p25: [94.35, 87.79]
+2026-10-30 14:20:10,712 [qsd.py] => QSD mech head=fuse_pgm_stats_b0p25: {"task_prediction": 94.39, "pair_ratio": 1.6790697674418602}
+2026-10-30 14:20:10,712 [qsd.py] => QSD curve head=fuse_pgm_stats_b0p25: [96.05, 91.22]
+2026-10-30 14:20:10,712 [qsd.py] => QSD task=1 head=fuse_pgm_stats_b0p5 top1=91.37 old=94.77 new=87.64 task_pred=94.61 pair_ratio=1.576136363636364
+2026-10-30 14:20:10,712 [qsd.py] => QSD tasks head=fuse_pgm_stats_b0p5: [94.77, 87.64]
+2026-10-30 14:20:10,712 [qsd.py] => QSD mech head=fuse_pgm_stats_b0p5: {"task_prediction": 94.61, "pair_ratio": 1.576136363636364}
+2026-10-30 14:20:10,712 [qsd.py] => QSD curve head=fuse_pgm_stats_b0p5: [96.05, 91.37]
+2026-10-30 14:20:10,712 [qsd.py] => QSD task=1 head=fuse_pgm_stats_b1 top1=91.44 old=94.63 new=87.94 task_pred=94.98 pair_ratio=1.3458333333333334
+2026-10-30 14:20:10,712 [qsd.py] => QSD tasks head=fuse_pgm_stats_b1: [94.63, 87.94]
+2026-10-30 14:20:10,712 [qsd.py] => QSD mech head=fuse_pgm_stats_b1: {"task_prediction": 94.98, "pair_ratio": 1.3458333333333334}
+2026-10-30 14:20:10,712 [qsd.py] => QSD curve head=fuse_pgm_stats_b1: [96.19, 91.44]
+2026-10-30 14:20:10,712 [qsd.py] => QSD task=1 head=fuse_pgm_stats_b2 top1=91.44 old=94.49 new=88.1 task_pred=94.91 pair_ratio=1.3946808510638298
+2026-10-30 14:20:10,712 [qsd.py] => QSD tasks head=fuse_pgm_stats_b2: [94.49, 88.1]
+2026-10-30 14:20:10,712 [qsd.py] => QSD mech head=fuse_pgm_stats_b2: {"task_prediction": 94.91, "pair_ratio": 1.3946808510638298}
+2026-10-30 14:20:10,713 [qsd.py] => QSD curve head=fuse_pgm_stats_b2: [96.19, 91.44]
+2026-10-30 14:20:10,713 [qsd.py] => QSD task=1 head=fuse_pgm_stats_b4 top1=91.14 old=94.63 new=87.33 task_pred=94.61 pair_ratio=1.475531914893617
+2026-10-30 14:20:10,713 [qsd.py] => QSD tasks head=fuse_pgm_stats_b4: [94.63, 87.33]
+2026-10-30 14:20:10,713 [qsd.py] => QSD mech head=fuse_pgm_stats_b4: {"task_prediction": 94.61, "pair_ratio": 1.475531914893617}
+2026-10-30 14:20:10,713 [qsd.py] => QSD curve head=fuse_pgm_stats_b4: [96.19, 91.14]
+2026-10-30 14:20:10,713 [qsd.py] => QSD task=1 diag={"ridge_sensitivity": {"0.01": 91.44, "0.1": 91.66, "1.0": 90.85}, "fuse_scale": {"ridge_stats": 33.19258183861872, "pgm_stats": 6.775301828370632}} seconds=16.2
+2026-10-30 14:20:10,727 [trainer.py] => CNN: {'total': 91.37, '00-19': 94.35, '20-39': 88.1, 'old': 94.35, 'new': 88.1}
+2026-10-30 14:20:10,728 [trainer.py] => Continual metrics after task 1: BWT=-1.7000, forgetting=1.7000, task_acc=[94.35, 88.1]
+2026-10-30 14:20:10,728 [trainer.py] => CNN top1 curve: [96.05, 91.37]
+2026-10-30 14:20:10,728 [trainer.py] => CNN top5 curve: [99.58, 98.67]
+2026-10-30 14:20:10,728 [trainer.py] => Average Accuracy (CNN): 93.71000000000001
+2026-10-30 14:20:10,728 [trainer.py] => All params: 87019008
+2026-10-30 14:20:10,728 [trainer.py] => Trainable params: 1220352
+2026-10-30 14:20:10,729 [RSIAT_adapter.py] => Learning on 40-60
+2026-10-30 14:20:20,712 [holevo.py] => HOLEVO start task=2 old=40 new=20 {"queue": {"40": 62, "41": 114, "42": 136, "43": 83, "44": 122, "45": 148, "46": 128, "47": 63, "48": 136, "49": 128, "50": 180, "51": 65, "52": 138, "53": 181, "54": 78, "55": 128, "56": 120, "57": 106, "58": 72, "59": 165}, "residual_share": 0.9154746423927178, "eta": null}
+2026-10-30 14:20:40,906 [holevo.py] => HOLEVO oracle task=2 phase=start {"oracle": {"vn": 0.3642149195491586, "mcr2": 25.534157175003187, "spread": 0.8409078962087487}, "stale": {"vn": 0.35442994798285565, "mcr2": 25.35973467854339, "spread": 0.839316206527762}, "I_orc": 0.19767574207011288, "p_old_on_new": 0.7216850522098334}
+2026-10-30 14:20:40,908 [toolkit.py] => All params: 87183104
+2026-10-30 14:20:40,908 [toolkit.py] => Trainable params: 1384448
+2026-10-30 14:21:08,684 [holevo.py] => HOLEVO epoch task=2 epoch=1 {"objective": 0.3572986416236413, "p_y": 0.13926244592925446, "p_old": 0.7286241841122214, "p_null": 2.7175095685824804e-07, "completeness_error": 9.992007221626409e-15, "loss_enc": -0.3572986416236413, "loss_dec": 2.0478907141001867, "weight": 0.0}
+2026-10-30 14:21:36,365 [holevo.py] => HOLEVO epoch task=2 epoch=2 {"objective": 0.3608106148254848, "p_y": 0.13864211665461107, "p_old": 0.7182080775655352, "p_null": 2.9099101130471857e-07, "completeness_error": 8.215650382226158e-15, "loss_enc": -0.3608106148254848, "loss_dec": 2.049215292381203, "weight": 0.25}
+2026-10-30 14:22:04,228 [holevo.py] => HOLEVO epoch task=2 epoch=3 {"objective": 0.3616619633242505, "p_y": 0.13576070772346877, "p_old": 0.7230390424194719, "p_null": 2.950371371851955e-07, "completeness_error": 5.2735593669694936e-15, "loss_enc": -0.3616619633242505, "loss_dec": 2.055978252586469, "weight": 0.5}
+2026-10-30 14:22:32,097 [holevo.py] => HOLEVO epoch task=2 epoch=4 {"objective": 0.36248045219466485, "p_y": 0.14524101512875442, "p_old": 0.7194953402449523, "p_null": 2.8721725260691243e-07, "completeness_error": 5.329070518200751e-15, "loss_enc": -0.36248045219466485, "loss_dec": 1.9926545139878633, "weight": 0.75}
+2026-10-30 14:23:00,063 [holevo.py] => HOLEVO epoch task=2 epoch=5 {"objective": 0.36334400050078924, "p_y": 0.13894802540455786, "p_old": 0.7273205676866951, "p_null": 2.878029013015968e-07, "completeness_error": 8.104628079763643e-15, "loss_enc": -0.36334400050078924, "loss_dec": 2.046333606822727, "weight": 1.0}
+2026-10-30 14:23:28,053 [holevo.py] => HOLEVO epoch task=2 epoch=6 {"objective": 0.36294239547227036, "p_y": 0.1475317782684612, "p_old": 0.7222551254644316, "p_null": 2.759922196462865e-07, "completeness_error": 8.604228440844963e-15, "loss_enc": -0.36294239547227036, "loss_dec": 1.9876365247836214, "weight": 1.0}
+2026-10-30 14:23:55,745 [holevo.py] => HOLEVO epoch task=2 epoch=7 {"objective": 0.36364629012420424, "p_y": 0.1503404799395454, "p_old": 0.7182106514625121, "p_null": 2.7686078772895317e-07, "completeness_error": 7.327471962526033e-15, "loss_enc": -0.36364629012420424, "loss_dec": 1.9607377678989462, "weight": 1.0}
+2026-10-30 14:24:23,629 [holevo.py] => HOLEVO epoch task=2 epoch=8 {"objective": 0.36315136852357544, "p_y": 0.1385369247116163, "p_old": 0.7296408179935666, "p_null": 2.808826183252057e-07, "completeness_error": 6.38378239159465e-15, "loss_enc": -0.36315136852357544, "loss_dec": 2.0427528143769202, "weight": 1.0}
+2026-10-30 14:24:51,550 [holevo.py] => HOLEVO epoch task=2 epoch=9 {"objective": 0.36354720054647316, "p_y": 0.1436942751736461, "p_old": 0.7191225671747927, "p_null": 2.9526511975996156e-07, "completeness_error": 8.770761894538737e-15, "loss_enc": -0.36354720054647316, "loss_dec": 2.0273299883344036, "weight": 1.0}
+2026-10-30 14:25:19,366 [holevo.py] => HOLEVO epoch task=2 epoch=10 {"objective": 0.3630210108415782, "p_y": 0.13980616860210254, "p_old": 0.7273201408943994, "p_null": 2.8597179771332617e-07, "completeness_error": 8.326672684688674e-15, "loss_enc": -0.3630210108415782, "loss_dec": 2.040897227281373, "weight": 1.0}
+2026-10-30 14:25:47,224 [holevo.py] => HOLEVO epoch task=2 epoch=11 {"objective": 0.3646175771801398, "p_y": 0.13817770090456688, "p_old": 0.7190971122829881, "p_null": 3.0613055213689926e-07, "completeness_error": 6.439293542825908e-15, "loss_enc": -0.3646175771801398, "loss_dec": 2.054435598013759, "weight": 1.0}
+2026-10-30 14:26:15,002 [holevo.py] => HOLEVO epoch task=2 epoch=12 {"objective": 0.3644267453311708, "p_y": 0.14421158186696548, "p_old": 0.7250049913413289, "p_null": 2.815934061845978e-07, "completeness_error": 5.717648576819556e-15, "loss_enc": -0.3644267453311708, "loss_dec": 1.999758507804044, "weight": 1.0}
+2026-10-30 14:26:42,795 [holevo.py] => HOLEVO epoch task=2 epoch=13 {"objective": 0.36398646025442183, "p_y": 0.1451739940397586, "p_old": 0.724404349077784, "p_null": 2.809239696124111e-07, "completeness_error": 8.049116928532385e-15, "loss_enc": -0.36398646025442183, "loss_dec": 2.005165360893149, "weight": 1.0}
+2026-10-30 14:27:10,474 [holevo.py] => HOLEVO epoch task=2 epoch=14 {"objective": 0.3640228519249462, "p_y": 0.14439678230327277, "p_old": 0.7219198634962112, "p_null": 2.8545943408971315e-07, "completeness_error": 9.603429163007604e-15, "loss_enc": -0.3640228519249462, "loss_dec": 2.0186064318366737, "weight": 1.0}
+2026-10-30 14:27:38,130 [holevo.py] => HOLEVO epoch task=2 epoch=15 {"objective": 0.36446979703502824, "p_y": 0.13433344030496247, "p_old": 0.7385879719707196, "p_null": 2.701768585083653e-07, "completeness_error": 7.327471962526033e-15, "loss_enc": -0.36446979703502824, "loss_dec": 2.1127757920679517, "weight": 1.0}
+2026-10-30 14:28:06,022 [holevo.py] => HOLEVO epoch task=2 epoch=16 {"objective": 0.363398178167688, "p_y": 0.1409292969320446, "p_old": 0.7284502520207452, "p_null": 2.8307856118656625e-07, "completeness_error": 7.827072323607354e-15, "loss_enc": -0.363398178167688, "loss_dec": 2.0336796908514634, "weight": 1.0}
+2026-10-30 14:28:33,775 [holevo.py] => HOLEVO epoch task=2 epoch=17 {"objective": 0.36392575171203956, "p_y": 0.14746613102445108, "p_old": 0.7230201239145702, "p_null": 2.763394958592561e-07, "completeness_error": 1.1046719095020308e-14, "loss_enc": -0.36392575171203956, "loss_dec": 1.9814075908189084, "weight": 1.0}
+2026-10-30 14:29:01,386 [holevo.py] => HOLEVO epoch task=2 epoch=18 {"objective": 0.3645974716560288, "p_y": 0.13954155731645063, "p_old": 0.726605811485504, "p_null": 2.896359668223605e-07, "completeness_error": 6.050715484207103e-15, "loss_enc": -0.3645974716560288, "loss_dec": 2.040186496985758, "weight": 1.0}
+2026-10-30 14:29:29,290 [holevo.py] => HOLEVO epoch task=2 epoch=19 {"objective": 0.3642446559156681, "p_y": 0.1409919604130137, "p_old": 0.7224941893843291, "p_null": 2.9542471944773246e-07, "completeness_error": 5.218048215738236e-15, "loss_enc": -0.3642446559156681, "loss_dec": 2.0482786032825633, "weight": 1.0}
+2026-10-30 14:29:57,230 [holevo.py] => HOLEVO epoch task=2 epoch=20 {"objective": 0.363867802110195, "p_y": 0.1526891704934613, "p_old": 0.7193365569384287, "p_null": 2.7381481835373366e-07, "completeness_error": 7.327471962526033e-15, "loss_enc": -0.363867802110195, "loss_dec": 1.969246463572988, "weight": 1.0}
+2026-10-30 14:30:25,378 [holevo.py] => HOLEVO epoch task=2 epoch=21 {"objective": 0.36484747687167246, "p_y": 0.15250761983076483, "p_old": 0.7212730313911623, "p_null": 2.7783684923931705e-07, "completeness_error": 1.1213252548714081e-14, "loss_enc": -0.36484747687167246, "loss_dec": 1.937002764005887, "weight": 1.0}
+2026-10-30 14:30:53,315 [holevo.py] => HOLEVO epoch task=2 epoch=22 {"objective": 0.364814828517309, "p_y": 0.15494865526684576, "p_old": 0.715533483205862, "p_null": 2.928521326460391e-07, "completeness_error": 7.549516567451064e-15, "loss_enc": -0.364814828517309, "loss_dec": 1.9318925854568718, "weight": 1.0}
+2026-10-30 14:31:21,979 [holevo.py] => HOLEVO epoch task=2 epoch=23 {"objective": 0.36353596927038506, "p_y": 0.1460212867531202, "p_old": 0.7264937703313733, "p_null": 2.6872799012176486e-07, "completeness_error": 6.050715484207103e-15, "loss_enc": -0.36353596927038506, "loss_dec": 2.0012919388043953, "weight": 1.0}
+2026-10-30 14:31:52,833 [holevo.py] => HOLEVO epoch task=2 epoch=24 {"objective": 0.3639360699588176, "p_y": 0.14734246639177906, "p_old": 0.7224170371989759, "p_null": 2.8088445035795565e-07, "completeness_error": 7.993605777301127e-15, "loss_enc": -0.3639360699588176, "loss_dec": 1.9799421336072731, "weight": 1.0}
+2026-10-30 14:32:21,495 [holevo.py] => HOLEVO epoch task=2 epoch=25 {"objective": 0.3644940308930055, "p_y": 0.1449081544424697, "p_old": 0.7239320794717363, "p_null": 2.851638097301974e-07, "completeness_error": 6.5503158452884236e-15, "loss_enc": -0.3644940308930055, "loss_dec": 2.0010643352895765, "weight": 1.0}
+2026-10-30 14:32:56,282 [holevo.py] => HOLEVO epoch task=2 epoch=26 {"objective": 0.3642959682676735, "p_y": 0.14576240176823674, "p_old": 0.7257497225917846, "p_null": 2.8498027051560846e-07, "completeness_error": 6.772360450213455e-15, "loss_enc": -0.3642959682676735, "loss_dec": 1.999037278652716, "weight": 1.0}
+2026-10-30 14:33:24,247 [holevo.py] => HOLEVO epoch task=2 epoch=27 {"objective": 0.3639543305036602, "p_y": 0.14981143422030588, "p_old": 0.7227570599521886, "p_null": 2.7744776830401065e-07, "completeness_error": 8.604228440844963e-15, "loss_enc": -0.3639543305036602, "loss_dec": 1.9599698426484085, "weight": 1.0}
+2026-10-30 14:33:51,978 [holevo.py] => HOLEVO epoch task=2 epoch=28 {"objective": 0.3636399613488195, "p_y": 0.14879432265511355, "p_old": 0.7247485435666298, "p_null": 2.740201417487485e-07, "completeness_error": 5.828670879282072e-15, "loss_enc": -0.3636399613488195, "loss_dec": 1.9736553311477936, "weight": 1.0}
+2026-10-30 14:34:19,836 [holevo.py] => HOLEVO epoch task=2 epoch=29 {"objective": 0.3644679904396432, "p_y": 0.15097256352173682, "p_old": 0.7189814431627402, "p_null": 2.8285223234614967e-07, "completeness_error": 9.325873406851315e-15, "loss_enc": -0.3644679904396432, "loss_dec": 1.9529484308100606, "weight": 1.0}
+2026-10-30 14:34:47,431 [holevo.py] => HOLEVO epoch task=2 epoch=30 {"objective": 0.3642883260105122, "p_y": 0.14545373237185147, "p_old": 0.7268159798749809, "p_null": 2.802176515993687e-07, "completeness_error": 9.825473767932635e-15, "loss_enc": -0.3642883260105122, "loss_dec": 1.9993367294247284, "weight": 1.0}
+2026-10-30 14:34:52,633 [RSIAT_adapter.py] => Task 2, Epoch 30/30 => Loss 3.820, Loss_c 2.522, Losses_rt 1.297, Train_accy 81.68, Test_accy 89.34, Time 27.60s
+2026-10-30 14:34:52,634 [RSIAT_adapter.py] => Task 2 peak GPU memory: 4922.91 MiB
+2026-10-30 14:35:13,637 [holevo.py] => HOLEVO oracle task=2 phase=end {"oracle": {"vn": 0.3691868950378932, "mcr2": 25.545699501714303, "spread": 0.8391482522593205}, "stale": {"vn": 0.3629272544565707, "mcr2": 25.47651022923696, "spread": 0.8388914894372947}, "I_orc": 0.20081135885695914, "p_old_on_new": 0.716119396324172, "trace_distance": {"mean": 0.019579713246662477, "max": 0.024425390222891745}}
+2026-10-30 14:35:13,637 [holevo.py] => HOLEVO end task=2 lambdas={"enc": null, "dec": null}
+2026-10-30 14:35:33,306 [base.py] => CA Task 2 => Loss 0.054, Test_accy skipped
+2026-10-30 14:35:34,323 [base.py] => CA Task 2 => Loss 0.049, Test_accy skipped
+2026-10-30 14:35:35,479 [base.py] => CA Task 2 => Loss 0.043, Test_accy skipped
+2026-10-30 14:35:36,509 [base.py] => CA Task 2 => Loss 0.041, Test_accy skipped
+2026-10-30 14:35:37,612 [base.py] => CA Task 2 => Loss 0.037, Test_accy skipped
+2026-10-30 14:35:38,673 [base.py] => CA Task 2 => Loss 0.039, Test_accy skipped
+2026-10-30 14:35:39,741 [base.py] => CA Task 2 => Loss 0.036, Test_accy skipped
+2026-10-30 14:35:40,595 [base.py] => CA Task 2 => Loss 0.034, Test_accy skipped
+2026-10-30 14:35:41,684 [base.py] => CA Task 2 => Loss 0.038, Test_accy skipped
+2026-10-30 14:35:47,261 [base.py] => CA Task 2 => Loss 0.035, Test_accy 90.010
+2026-10-30 14:36:08,511 [qsd.py] => QSD task=2 head=linear top1=90.01 old=90.41 new=89.09 task_pred=92.52 pair_ratio=1.4153061224489796
+2026-10-30 14:36:08,511 [qsd.py] => QSD tasks head=linear: [93.22, 87.33, 89.09]
+2026-10-30 14:36:08,511 [qsd.py] => QSD mech head=linear: {"task_prediction": 92.52, "pair_ratio": 1.4153061224489796}
+2026-10-30 14:36:08,511 [qsd.py] => QSD curve head=linear: [96.05, 91.37, 90.01]
+2026-10-30 14:36:08,511 [qsd.py] => QSD task=2 head=ridge_stats top1=89.90 old=89.89 new=89.93 task_pred=93.08 pair_ratio=1.034274193548387
+2026-10-30 14:36:08,511 [qsd.py] => QSD tasks head=ridge_stats: [92.8, 86.71, 89.93]
+2026-10-30 14:36:08,511 [qsd.py] => QSD mech head=ridge_stats: {"task_prediction": 93.08, "pair_ratio": 1.034274193548387}
+2026-10-30 14:36:08,511 [qsd.py] => QSD curve head=ridge_stats: [95.2, 91.66, 89.9]
+2026-10-30 14:36:08,511 [qsd.py] => QSD task=2 head=pgm_stats top1=88.62 old=89.37 new=86.91 task_pred=91.90 pair_ratio=1.17265625
+2026-10-30 14:36:08,512 [qsd.py] => QSD tasks head=pgm_stats: [93.79, 84.54, 86.91]
+2026-10-30 14:36:08,512 [qsd.py] => QSD mech head=pgm_stats: {"task_prediction": 91.9, "pair_ratio": 1.17265625}
+2026-10-30 14:36:08,512 [qsd.py] => QSD curve head=pgm_stats: [96.05, 90.48, 88.62]
+2026-10-30 14:36:08,512 [qsd.py] => QSD task=2 head=fuse_ridge_stats_b0p25 top1=90.47 old=90.85 new=89.6 task_pred=93.13 pair_ratio=1.2240384615384616
+2026-10-30 14:36:08,512 [qsd.py] => QSD tasks head=fuse_ridge_stats_b0p25: [93.5, 87.94, 89.6]
+2026-10-30 14:36:08,512 [qsd.py] => QSD mech head=fuse_ridge_stats_b0p25: {"task_prediction": 93.13, "pair_ratio": 1.2240384615384616}
+2026-10-30 14:36:08,512 [qsd.py] => QSD curve head=fuse_ridge_stats_b0p25: [96.33, 91.29, 90.47]
+2026-10-30 14:36:08,512 [qsd.py] => QSD task=2 head=fuse_ridge_stats_b0p5 top1=90.36 old=90.77 new=89.43 task_pred=93.08 pair_ratio=1.2099056603773584
+2026-10-30 14:36:08,512 [qsd.py] => QSD tasks head=fuse_ridge_stats_b0p5: [93.79, 87.48, 89.43]
+2026-10-30 14:36:08,512 [qsd.py] => QSD mech head=fuse_ridge_stats_b0p5: {"task_prediction": 93.08, "pair_ratio": 1.2099056603773584}
+2026-10-30 14:36:08,512 [qsd.py] => QSD curve head=fuse_ridge_stats_b0p5: [96.33, 91.96, 90.36]
+2026-10-30 14:36:08,512 [qsd.py] => QSD task=2 head=fuse_ridge_stats_b1 top1=90.11 old=90.18 new=89.93 task_pred=92.98 pair_ratio=1.1620535714285716
+2026-10-30 14:36:08,512 [qsd.py] => QSD tasks head=fuse_ridge_stats_b1: [93.5, 86.55, 89.93]
+2026-10-30 14:36:08,512 [qsd.py] => QSD mech head=fuse_ridge_stats_b1: {"task_prediction": 92.98, "pair_ratio": 1.1620535714285716}
+2026-10-30 14:36:08,512 [qsd.py] => QSD curve head=fuse_ridge_stats_b1: [96.19, 91.96, 90.11]
+2026-10-30 14:36:08,512 [qsd.py] => QSD task=2 head=fuse_ridge_stats_b2 top1=90.16 old=90.18 new=90.1 task_pred=93.18 pair_ratio=1.0707627118644067
+2026-10-30 14:36:08,512 [qsd.py] => QSD tasks head=fuse_ridge_stats_b2: [93.36, 86.71, 90.1]
+2026-10-30 14:36:08,512 [qsd.py] => QSD mech head=fuse_ridge_stats_b2: {"task_prediction": 93.18, "pair_ratio": 1.0707627118644067}
+2026-10-30 14:36:08,512 [qsd.py] => QSD curve head=fuse_ridge_stats_b2: [95.9, 91.81, 90.16]
+2026-10-30 14:36:08,512 [qsd.py] => QSD task=2 head=fuse_ridge_stats_b4 top1=90.01 old=89.96 new=90.1 task_pred=93.13 pair_ratio=1.0434426229508198
+2026-10-30 14:36:08,512 [qsd.py] => QSD tasks head=fuse_ridge_stats_b4: [92.94, 86.71, 90.1]
+2026-10-30 14:36:08,512 [qsd.py] => QSD mech head=fuse_ridge_stats_b4: {"task_prediction": 93.13, "pair_ratio": 1.0434426229508198}
+2026-10-30 14:36:08,512 [qsd.py] => QSD curve head=fuse_ridge_stats_b4: [95.62, 91.81, 90.01]
+2026-10-30 14:36:08,512 [qsd.py] => QSD task=2 head=fuse_pgm_stats_b0p25 top1=90.06 old=90.55 new=88.93 task_pred=92.93 pair_ratio=1.1705357142857142
+2026-10-30 14:36:08,512 [qsd.py] => QSD tasks head=fuse_pgm_stats_b0p25: [93.64, 87.17, 88.93]
+2026-10-30 14:36:08,512 [qsd.py] => QSD mech head=fuse_pgm_stats_b0p25: {"task_prediction": 92.93, "pair_ratio": 1.1705357142857142}
+2026-10-30 14:36:08,512 [qsd.py] => QSD curve head=fuse_pgm_stats_b0p25: [96.05, 91.22, 90.06]
+2026-10-30 14:36:08,512 [qsd.py] => QSD task=2 head=fuse_pgm_stats_b0p5 top1=90.06 old=90.55 new=88.93 task_pred=92.98 pair_ratio=1.1416666666666668
+2026-10-30 14:36:08,512 [qsd.py] => QSD tasks head=fuse_pgm_stats_b0p5: [93.79, 87.02, 88.93]
+2026-10-30 14:36:08,512 [qsd.py] => QSD mech head=fuse_pgm_stats_b0p5: {"task_prediction": 92.98, "pair_ratio": 1.1416666666666668}
+2026-10-30 14:36:08,512 [qsd.py] => QSD curve head=fuse_pgm_stats_b0p5: [96.05, 91.37, 90.06]
+2026-10-30 14:36:08,512 [qsd.py] => QSD task=2 head=fuse_pgm_stats_b1 top1=90.06 old=90.55 new=88.93 task_pred=92.88 pair_ratio=1.2004545454545452
+2026-10-30 14:36:08,512 [qsd.py] => QSD tasks head=fuse_pgm_stats_b1: [93.79, 87.02, 88.93]
+2026-10-30 14:36:08,512 [qsd.py] => QSD mech head=fuse_pgm_stats_b1: {"task_prediction": 92.88, "pair_ratio": 1.2004545454545452}
+2026-10-30 14:36:08,512 [qsd.py] => QSD curve head=fuse_pgm_stats_b1: [96.19, 91.44, 90.06]
+2026-10-30 14:36:08,512 [qsd.py] => QSD task=2 head=fuse_pgm_stats_b2 top1=90.31 old=90.7 new=89.43 task_pred=93.08 pair_ratio=1.1875
+2026-10-30 14:36:08,512 [qsd.py] => QSD tasks head=fuse_pgm_stats_b2: [94.35, 86.71, 89.43]
+2026-10-30 14:36:08,512 [qsd.py] => QSD mech head=fuse_pgm_stats_b2: {"task_prediction": 93.08, "pair_ratio": 1.1875}
+2026-10-30 14:36:08,512 [qsd.py] => QSD curve head=fuse_pgm_stats_b2: [96.19, 91.44, 90.31]
+2026-10-30 14:36:08,512 [qsd.py] => QSD task=2 head=fuse_pgm_stats_b4 top1=89.85 old=90.26 new=88.93 task_pred=92.52 pair_ratio=1.3336538461538463
+2026-10-30 14:36:08,512 [qsd.py] => QSD tasks head=fuse_pgm_stats_b4: [94.21, 85.94, 88.93]
+2026-10-30 14:36:08,512 [qsd.py] => QSD mech head=fuse_pgm_stats_b4: {"task_prediction": 92.52, "pair_ratio": 1.3336538461538463}
+2026-10-30 14:36:08,512 [qsd.py] => QSD curve head=fuse_pgm_stats_b4: [96.19, 91.14, 89.85]
+2026-10-30 14:36:08,512 [qsd.py] => QSD task=2 diag={"ridge_sensitivity": {"0.01": 89.65, "0.1": 89.9, "1.0": 89.08}, "fuse_scale": {"ridge_stats": 39.177893191235164, "pgm_stats": 6.400421929833222}} seconds=16.5
+2026-10-30 14:36:08,528 [trainer.py] => CNN: {'total': 90.01, '00-19': 93.22, '20-39': 87.33, '40-59': 89.09, 'old': 90.41, 'new': 89.09}
+2026-10-30 14:36:08,529 [trainer.py] => Continual metrics after task 2: BWT=-1.8000, forgetting=1.8000, task_acc=[93.22, 87.33, 89.09]
+2026-10-30 14:36:08,529 [trainer.py] => CNN top1 curve: [96.05, 91.37, 90.01]
+2026-10-30 14:36:08,529 [trainer.py] => CNN top5 curve: [99.58, 98.67, 97.74]
+2026-10-30 14:36:08,529 [trainer.py] => Average Accuracy (CNN): 92.47666666666667
+2026-10-30 14:36:08,529 [trainer.py] => All params: 87034368
+2026-10-30 14:36:08,529 [trainer.py] => Trainable params: 1235712
+2026-10-30 14:36:08,530 [RSIAT_adapter.py] => Learning on 60-80
+2026-10-30 14:36:22,415 [holevo.py] => HOLEVO start task=3 old=60 new=20 {"queue": {"60": 132, "61": 151, "62": 58, "63": 188, "64": 102, "65": 82, "66": 210, "67": 104, "68": 98, "69": 77, "70": 160, "71": 86, "72": 83, "73": 44, "74": 134, "75": 172, "76": 77, "77": 198, "78": 53, "79": 76}, "residual_share": 0.8998699609882965, "eta": null}
+2026-10-30 14:36:48,191 [holevo.py] => HOLEVO oracle task=3 phase=start {"oracle": {"vn": 0.3454351871688266, "mcr2": 24.93366276029296, "spread": 0.7914932842457474}, "stale": {"vn": 0.34090666716110074, "mcr2": 24.873845156924475, "spread": 0.7914205998112062}, "I_orc": 0.21039784077586926, "p_old_on_new": 0.7339180862585757}
+2026-10-30 14:36:48,193 [toolkit.py] => All params: 87198464
+2026-10-30 14:36:48,193 [toolkit.py] => Trainable params: 1399808
+2026-10-30 14:37:14,792 [holevo.py] => HOLEVO epoch task=3 epoch=1 {"objective": 0.3416517423540903, "p_y": 0.13722927945491087, "p_old": 0.7362027225073194, "p_null": 2.6582279779132234e-07, "completeness_error": 8.770761894538737e-15, "loss_enc": -0.3416517423540903, "loss_dec": 2.0487649383890947, "weight": 0.0}
+2026-10-30 14:37:41,910 [holevo.py] => HOLEVO epoch task=3 epoch=2 {"objective": 0.34410493801529873, "p_y": 0.14079693654251837, "p_old": 0.7369200548474855, "p_null": 2.678553601146491e-07, "completeness_error": 9.43689570931383e-15, "loss_enc": -0.34410493801529873, "loss_dec": 2.051748322134964, "weight": 0.25}
+2026-10-30 14:38:08,675 [holevo.py] => HOLEVO epoch task=3 epoch=3 {"objective": 0.34487464612491386, "p_y": 0.13093731067450493, "p_old": 0.7481066647932484, "p_null": 2.724291245963717e-07, "completeness_error": 7.66053886991358e-15, "loss_enc": -0.34487464612491386, "loss_dec": 2.1183629867423965, "weight": 0.5}
+2026-10-30 14:38:35,362 [holevo.py] => HOLEVO epoch task=3 epoch=4 {"objective": 0.3447631078719873, "p_y": 0.13878980070441493, "p_old": 0.7341679344948837, "p_null": 2.8756617335193956e-07, "completeness_error": 6.6058269965196814e-15, "loss_enc": -0.3447631078719873, "loss_dec": 2.0387006213850736, "weight": 0.75}
+2026-10-30 14:39:02,326 [holevo.py] => HOLEVO epoch task=3 epoch=5 {"objective": 0.3444944900847069, "p_y": 0.1357166276828133, "p_old": 0.736471709766573, "p_null": 2.8068742918635757e-07, "completeness_error": 9.270362255620057e-15, "loss_enc": -0.3444944900847069, "loss_dec": 2.0735205036634525, "weight": 1.0}
+2026-10-30 14:39:29,514 [holevo.py] => HOLEVO epoch task=3 epoch=6 {"objective": 0.3448671560884927, "p_y": 0.13862848682125306, "p_old": 0.7333767397531686, "p_null": 2.84667254425714e-07, "completeness_error": 1.1102230246251565e-14, "loss_enc": -0.3448671560884927, "loss_dec": 2.0366777750147125, "weight": 1.0}
+2026-10-30 14:39:54,929 [holevo.py] => HOLEVO epoch task=3 epoch=7 {"objective": 0.34443497152141195, "p_y": 0.1328763039310046, "p_old": 0.7339732621955898, "p_null": 2.929220342199497e-07, "completeness_error": 6.8833827526759706e-15, "loss_enc": -0.34443497152141195, "loss_dec": 2.076856328739641, "weight": 1.0}
+2026-10-30 14:40:18,457 [holevo.py] => HOLEVO epoch task=3 epoch=8 {"objective": 0.3449205606718975, "p_y": 0.13257836819737662, "p_old": 0.7389646370039833, "p_null": 2.9160655115642966e-07, "completeness_error": 7.216449660063518e-15, "loss_enc": -0.3449205606718975, "loss_dec": 2.099634751812289, "weight": 1.0}
+2026-10-30 14:40:44,919 [holevo.py] => HOLEVO epoch task=3 epoch=9 {"objective": 0.3444467084358538, "p_y": 0.13456116367653276, "p_old": 0.7401929786883176, "p_null": 2.7017315812533145e-07, "completeness_error": 6.217248937900877e-15, "loss_enc": -0.3444467084358538, "loss_dec": 2.0776062125987322, "weight": 1.0}
+2026-10-30 14:41:09,163 [holevo.py] => HOLEVO epoch task=3 epoch=10 {"objective": 0.34591719797494846, "p_y": 0.12933025961626415, "p_old": 0.7392191962098023, "p_null": 2.948429775229901e-07, "completeness_error": 7.438494264988549e-15, "loss_enc": -0.34591719797494846, "loss_dec": 2.1259541650271805, "weight": 1.0}
+2026-10-30 14:41:35,167 [holevo.py] => HOLEVO epoch task=3 epoch=11 {"objective": 0.34520158244402355, "p_y": 0.13476660676741917, "p_old": 0.7382037234997509, "p_null": 2.757880653028763e-07, "completeness_error": 7.93809462606987e-15, "loss_enc": -0.34520158244402355, "loss_dec": 2.084925370655794, "weight": 1.0}
+2026-10-30 14:42:01,045 [holevo.py] => HOLEVO epoch task=3 epoch=12 {"objective": 0.3461381001808285, "p_y": 0.14665525372794402, "p_old": 0.7303998591977996, "p_null": 2.7626632987292886e-07, "completeness_error": 8.326672684688674e-15, "loss_enc": -0.3461381001808285, "loss_dec": 1.9669855974320916, "weight": 1.0}
+2026-10-30 14:42:27,702 [holevo.py] => HOLEVO epoch task=3 epoch=13 {"objective": 0.34604247269883504, "p_y": 0.1405870806472902, "p_old": 0.737218423477737, "p_null": 2.7896398392335035e-07, "completeness_error": 8.548717289613705e-15, "loss_enc": -0.34604247269883504, "loss_dec": 2.0437517077572718, "weight": 1.0}
+2026-10-30 14:42:54,417 [holevo.py] => HOLEVO epoch task=3 epoch=14 {"objective": 0.346201352911158, "p_y": 0.142184269228824, "p_old": 0.7290011934260332, "p_null": 2.8166886265765396e-07, "completeness_error": 7.771561172376096e-15, "loss_enc": -0.346201352911158, "loss_dec": 2.0010617450645674, "weight": 1.0}
+2026-10-30 14:43:21,351 [holevo.py] => HOLEVO epoch task=3 epoch=15 {"objective": 0.34613285043388187, "p_y": 0.13540205088691426, "p_old": 0.7312500272664539, "p_null": 2.896051916645831e-07, "completeness_error": 6.994405055138486e-15, "loss_enc": -0.34613285043388187, "loss_dec": 2.0660772062423485, "weight": 1.0}
+2026-10-30 14:43:48,466 [holevo.py] => HOLEVO epoch task=3 epoch=16 {"objective": 0.3455487004773854, "p_y": 0.14191787914348147, "p_old": 0.7379831021462465, "p_null": 2.716332597841901e-07, "completeness_error": 8.1601392309949e-15, "loss_enc": -0.3455487004773854, "loss_dec": 2.0396948469890352, "weight": 1.0}
+2026-10-30 14:44:14,880 [holevo.py] => HOLEVO epoch task=3 epoch=17 {"objective": 0.34522861627178536, "p_y": 0.13919764005973395, "p_old": 0.7360453222893845, "p_null": 2.7769890136637197e-07, "completeness_error": 9.43689570931383e-15, "loss_enc": -0.34522861627178536, "loss_dec": 2.032375309006265, "weight": 1.0}
+2026-10-30 14:44:41,864 [holevo.py] => HOLEVO epoch task=3 epoch=18 {"objective": 0.3457502495326322, "p_y": 0.13569784342532207, "p_old": 0.7375264626640154, "p_null": 2.868364477846583e-07, "completeness_error": 9.769962616701378e-15, "loss_enc": -0.3457502495326322, "loss_dec": 2.0516111923991636, "weight": 1.0}
+2026-10-30 14:45:08,657 [holevo.py] => HOLEVO epoch task=3 epoch=19 {"objective": 0.3453484024352717, "p_y": 0.13854034066936702, "p_old": 0.7342737886893007, "p_null": 2.7859009514472763e-07, "completeness_error": 9.103828801926284e-15, "loss_enc": -0.3453484024352717, "loss_dec": 2.064790512214794, "weight": 1.0}
+2026-10-30 14:45:35,491 [holevo.py] => HOLEVO epoch task=3 epoch=20 {"objective": 0.3459448904580863, "p_y": 0.14502872959734464, "p_old": 0.7332747613080453, "p_null": 2.6932200768385603e-07, "completeness_error": 9.603429163007604e-15, "loss_enc": -0.3459448904580863, "loss_dec": 1.9852493015027253, "weight": 1.0}
+2026-10-30 14:46:02,004 [holevo.py] => HOLEVO epoch task=3 epoch=21 {"objective": 0.34598596380299595, "p_y": 0.13389574848306707, "p_old": 0.7391521418337377, "p_null": 2.8230879814805456e-07, "completeness_error": 6.827871601444713e-15, "loss_enc": -0.34598596380299595, "loss_dec": 2.0987788230440865, "weight": 1.0}
+2026-10-30 14:46:28,724 [holevo.py] => HOLEVO epoch task=3 epoch=22 {"objective": 0.34547703323200585, "p_y": 0.13323230643004264, "p_old": 0.7396981834237748, "p_null": 2.738373808799141e-07, "completeness_error": 7.993605777301127e-15, "loss_enc": -0.34547703323200585, "loss_dec": 2.091532212278807, "weight": 1.0}
+2026-10-30 14:46:55,019 [holevo.py] => HOLEVO epoch task=3 epoch=23 {"objective": 0.34658432433279934, "p_y": 0.1375726013198773, "p_old": 0.7358803660181639, "p_null": 2.995208461907759e-07, "completeness_error": 9.103828801926284e-15, "loss_enc": -0.34658432433279934, "loss_dec": 2.042803553771198, "weight": 1.0}
+2026-10-30 14:47:21,622 [holevo.py] => HOLEVO epoch task=3 epoch=24 {"objective": 0.34616130789709676, "p_y": 0.14769818695630033, "p_old": 0.7291651373468299, "p_null": 2.752191304572021e-07, "completeness_error": 8.826273045769994e-15, "loss_enc": -0.34616130789709676, "loss_dec": 1.9736677153445787, "weight": 1.0}
+2026-10-30 14:47:48,521 [holevo.py] => HOLEVO epoch task=3 epoch=25 {"objective": 0.34572742287970987, "p_y": 0.1386574481105453, "p_old": 0.738878663612545, "p_null": 2.7616273076428165e-07, "completeness_error": 8.104628079763643e-15, "loss_enc": -0.34572742287970987, "loss_dec": 2.0341197544639913, "weight": 1.0}
+2026-10-30 14:48:15,306 [holevo.py] => HOLEVO epoch task=3 epoch=26 {"objective": 0.34538804019903074, "p_y": 0.14077098508733693, "p_old": 0.7365135593555483, "p_null": 2.7806246804611226e-07, "completeness_error": 1.1157741397482823e-14, "loss_enc": -0.34538804019903074, "loss_dec": 2.0279344170369242, "weight": 1.0}
+2026-10-30 14:48:41,907 [holevo.py] => HOLEVO epoch task=3 epoch=27 {"objective": 0.3460304873852159, "p_y": 0.13578364141908766, "p_old": 0.739480191986878, "p_null": 2.70862387274305e-07, "completeness_error": 9.2148511043888e-15, "loss_enc": -0.3460304873852159, "loss_dec": 2.080358422879749, "weight": 1.0}
+2026-10-30 14:49:08,873 [holevo.py] => HOLEVO epoch task=3 epoch=28 {"objective": 0.34590953520955836, "p_y": 0.13344285662047087, "p_old": 0.7419172437744915, "p_null": 2.81300754153024e-07, "completeness_error": 9.825473767932635e-15, "loss_enc": -0.34590953520955836, "loss_dec": 2.0685900581779597, "weight": 1.0}
+2026-10-30 14:49:35,540 [holevo.py] => HOLEVO epoch task=3 epoch=29 {"objective": 0.34582485352306325, "p_y": 0.1419776322379771, "p_old": 0.7326396050374056, "p_null": 2.7230746100207103e-07, "completeness_error": 6.2727600891321345e-15, "loss_enc": -0.34582485352306325, "loss_dec": 2.0204063167984145, "weight": 1.0}
+2026-10-30 14:50:02,168 [holevo.py] => HOLEVO epoch task=3 epoch=30 {"objective": 0.3457327181578145, "p_y": 0.1410259247487438, "p_old": 0.7337775178752686, "p_null": 2.786818186381265e-07, "completeness_error": 8.548717289613705e-15, "loss_enc": -0.3457327181578145, "loss_dec": 2.0505718256650676, "weight": 1.0}
+2026-10-30 14:50:08,598 [RSIAT_adapter.py] => Task 3, Epoch 30/30 => Loss 3.612, Loss_c 2.367, Losses_rt 1.245, Train_accy 80.48, Test_accy 88.74, Time 26.63s
+2026-10-30 14:50:08,598 [RSIAT_adapter.py] => Task 3 peak GPU memory: 4942.26 MiB
+2026-10-30 14:50:35,113 [holevo.py] => HOLEVO oracle task=3 phase=end {"oracle": {"vn": 0.34741497956007533, "mcr2": 24.99935315055044, "spread": 0.7918543614541643}, "stale": {"vn": 0.34518157737270877, "mcr2": 24.96930406731014, "spread": 0.7915519347455929}, "I_orc": 0.2136235037720353, "p_old_on_new": 0.7286121543549152, "trace_distance": {"mean": 0.01753802682942474, "max": 0.023730159827411997}}
+2026-10-30 14:50:35,113 [holevo.py] => HOLEVO end task=3 lambdas={"enc": null, "dec": null}
+2026-10-30 14:50:55,002 [base.py] => CA Task 3 => Loss 0.069, Test_accy skipped
+2026-10-30 14:50:56,532 [base.py] => CA Task 3 => Loss 0.057, Test_accy skipped
+2026-10-30 14:50:57,956 [base.py] => CA Task 3 => Loss 0.055, Test_accy skipped
+2026-10-30 14:50:59,366 [base.py] => CA Task 3 => Loss 0.051, Test_accy skipped
+2026-10-30 14:51:00,735 [base.py] => CA Task 3 => Loss 0.051, Test_accy skipped
+2026-10-30 14:51:02,163 [base.py] => CA Task 3 => Loss 0.053, Test_accy skipped
+2026-10-30 14:51:03,511 [base.py] => CA Task 3 => Loss 0.046, Test_accy skipped
+2026-10-30 14:51:05,033 [base.py] => CA Task 3 => Loss 0.050, Test_accy skipped
+2026-10-30 14:51:06,508 [base.py] => CA Task 3 => Loss 0.047, Test_accy skipped
+2026-10-30 14:51:13,806 [base.py] => CA Task 3 => Loss 0.044, Test_accy 88.540
+2026-10-30 14:51:37,812 [qsd.py] => QSD task=3 head=linear top1=88.54 old=89.03 new=86.87 task_pred=90.79 pair_ratio=1.2944444444444445
+2026-10-30 14:51:37,812 [qsd.py] => QSD tasks head=linear: [91.38, 86.86, 88.59, 86.87]
+2026-10-30 14:51:37,812 [qsd.py] => QSD mech head=linear: {"task_prediction": 90.79, "pair_ratio": 1.2944444444444445}
+2026-10-30 14:51:37,812 [qsd.py] => QSD curve head=linear: [96.05, 91.37, 90.01, 88.54]
+2026-10-30 14:51:37,812 [qsd.py] => QSD task=3 head=ridge_stats top1=88.02 old=88.01 new=88.08 task_pred=90.99 pair_ratio=0.9626666666666666
+2026-10-30 14:51:37,812 [qsd.py] => QSD tasks head=ridge_stats: [90.4, 86.24, 87.08, 88.08]
+2026-10-30 14:51:37,812 [qsd.py] => QSD mech head=ridge_stats: {"task_prediction": 90.99, "pair_ratio": 0.9626666666666666}
+2026-10-30 14:51:37,812 [qsd.py] => QSD curve head=ridge_stats: [95.2, 91.66, 89.9, 88.02]
+2026-10-30 14:51:37,812 [qsd.py] => QSD task=3 head=pgm_stats top1=87.83 old=88.01 new=87.22 task_pred=90.71 pair_ratio=1.019406392694064
+2026-10-30 14:51:37,812 [qsd.py] => QSD tasks head=pgm_stats: [92.23, 85.01, 86.24, 87.22]
+2026-10-30 14:51:37,812 [qsd.py] => QSD mech head=pgm_stats: {"task_prediction": 90.71, "pair_ratio": 1.019406392694064}
+2026-10-30 14:51:37,812 [qsd.py] => QSD curve head=pgm_stats: [96.05, 90.48, 88.62, 87.83]
+2026-10-30 14:51:37,812 [qsd.py] => QSD task=3 head=fuse_ridge_stats_b0p25 top1=89.21 old=89.49 new=88.26 task_pred=91.50 pair_ratio=1.1738505747126435
+2026-10-30 14:51:37,812 [qsd.py] => QSD tasks head=fuse_ridge_stats_b0p25: [92.23, 87.33, 88.59, 88.26]
+2026-10-30 14:51:37,812 [qsd.py] => QSD mech head=fuse_ridge_stats_b0p25: {"task_prediction": 91.5, "pair_ratio": 1.1738505747126435}
+2026-10-30 14:51:37,812 [qsd.py] => QSD curve head=fuse_ridge_stats_b0p25: [96.33, 91.29, 90.47, 89.21]
+2026-10-30 14:51:37,812 [qsd.py] => QSD task=3 head=fuse_ridge_stats_b0p5 top1=89.25 old=89.49 new=88.43 task_pred=91.62 pair_ratio=1.118888888888889
+2026-10-30 14:51:37,812 [qsd.py] => QSD tasks head=fuse_ridge_stats_b0p5: [92.23, 87.17, 88.76, 88.43]
+2026-10-30 14:51:37,812 [qsd.py] => QSD mech head=fuse_ridge_stats_b0p5: {"task_prediction": 91.62, "pair_ratio": 1.118888888888889}
+2026-10-30 14:51:37,812 [qsd.py] => QSD curve head=fuse_ridge_stats_b0p5: [96.33, 91.96, 90.36, 89.25]
+2026-10-30 14:51:37,812 [qsd.py] => QSD task=3 head=fuse_ridge_stats_b1 top1=89.05 old=89.24 new=88.43 task_pred=91.46 pair_ratio=1.1213114754098361
+2026-10-30 14:51:37,812 [qsd.py] => QSD tasks head=fuse_ridge_stats_b1: [91.81, 87.17, 88.42, 88.43]
+2026-10-30 14:51:37,812 [qsd.py] => QSD mech head=fuse_ridge_stats_b1: {"task_prediction": 91.46, "pair_ratio": 1.1213114754098361}
+2026-10-30 14:51:37,812 [qsd.py] => QSD curve head=fuse_ridge_stats_b1: [96.19, 91.96, 90.11, 89.05]
+2026-10-30 14:51:37,812 [qsd.py] => QSD task=3 head=fuse_ridge_stats_b2 top1=88.85 old=88.98 new=88.43 task_pred=91.34 pair_ratio=1.1007936507936509
+2026-10-30 14:51:37,812 [qsd.py] => QSD tasks head=fuse_ridge_stats_b2: [91.53, 86.86, 88.26, 88.43]
+2026-10-30 14:51:37,812 [qsd.py] => QSD mech head=fuse_ridge_stats_b2: {"task_prediction": 91.34, "pair_ratio": 1.1007936507936509}
+2026-10-30 14:51:37,812 [qsd.py] => QSD curve head=fuse_ridge_stats_b2: [95.9, 91.81, 90.16, 88.85]
+2026-10-30 14:51:37,812 [qsd.py] => QSD task=3 head=fuse_ridge_stats_b4 top1=88.62 old=88.62 new=88.6 task_pred=91.30 pair_ratio=1.0245098039215685
+2026-10-30 14:51:37,812 [qsd.py] => QSD tasks head=fuse_ridge_stats_b4: [90.96, 86.55, 88.09, 88.6]
+2026-10-30 14:51:37,812 [qsd.py] => QSD mech head=fuse_ridge_stats_b4: {"task_prediction": 91.3, "pair_ratio": 1.0245098039215685}
+2026-10-30 14:51:37,812 [qsd.py] => QSD curve head=fuse_ridge_stats_b4: [95.62, 91.81, 90.01, 88.62]
+2026-10-30 14:51:37,812 [qsd.py] => QSD task=3 head=fuse_pgm_stats_b0p25 top1=89.05 old=89.49 new=87.56 task_pred=91.34 pair_ratio=1.1956896551724139
+2026-10-30 14:51:37,813 [qsd.py] => QSD tasks head=fuse_pgm_stats_b0p25: [92.51, 87.02, 88.59, 87.56]
+2026-10-30 14:51:37,813 [qsd.py] => QSD mech head=fuse_pgm_stats_b0p25: {"task_prediction": 91.34, "pair_ratio": 1.1956896551724139}
+2026-10-30 14:51:37,813 [qsd.py] => QSD curve head=fuse_pgm_stats_b0p25: [96.05, 91.22, 90.06, 89.05]
+2026-10-30 14:51:37,813 [qsd.py] => QSD task=3 head=fuse_pgm_stats_b0p5 top1=89.21 old=89.75 new=87.39 task_pred=91.54 pair_ratio=1.148587570621469
+2026-10-30 14:51:37,813 [qsd.py] => QSD tasks head=fuse_pgm_stats_b0p5: [92.94, 87.48, 88.42, 87.39]
+2026-10-30 14:51:37,813 [qsd.py] => QSD mech head=fuse_pgm_stats_b0p5: {"task_prediction": 91.54, "pair_ratio": 1.148587570621469}
+2026-10-30 14:51:37,813 [qsd.py] => QSD curve head=fuse_pgm_stats_b0p5: [96.05, 91.37, 90.06, 89.21]
+2026-10-30 14:51:37,813 [qsd.py] => QSD task=3 head=fuse_pgm_stats_b1 top1=88.97 old=89.39 new=87.56 task_pred=91.34 pair_ratio=1.1558333333333335
+2026-10-30 14:51:37,813 [qsd.py] => QSD tasks head=fuse_pgm_stats_b1: [92.37, 87.33, 88.09, 87.56]
+2026-10-30 14:51:37,813 [qsd.py] => QSD mech head=fuse_pgm_stats_b1: {"task_prediction": 91.34, "pair_ratio": 1.1558333333333335}
+2026-10-30 14:51:37,813 [qsd.py] => QSD curve head=fuse_pgm_stats_b1: [96.19, 91.44, 90.06, 88.97]
+2026-10-30 14:51:37,813 [qsd.py] => QSD task=3 head=fuse_pgm_stats_b2 top1=89.05 old=89.44 new=87.74 task_pred=91.46 pair_ratio=1.1213114754098361
+2026-10-30 14:51:37,813 [qsd.py] => QSD tasks head=fuse_pgm_stats_b2: [92.37, 87.79, 87.75, 87.74]
+2026-10-30 14:51:37,813 [qsd.py] => QSD mech head=fuse_pgm_stats_b2: {"task_prediction": 91.46, "pair_ratio": 1.1213114754098361}
+2026-10-30 14:51:37,813 [qsd.py] => QSD curve head=fuse_pgm_stats_b2: [96.19, 91.44, 90.31, 89.05]
+2026-10-30 14:51:37,813 [qsd.py] => QSD task=3 head=fuse_pgm_stats_b4 top1=88.66 old=88.93 new=87.74 task_pred=91.15 pair_ratio=1.125925925925926
+2026-10-30 14:51:37,813 [qsd.py] => QSD tasks head=fuse_pgm_stats_b4: [92.37, 86.86, 87.08, 87.74]
+2026-10-30 14:51:37,813 [qsd.py] => QSD mech head=fuse_pgm_stats_b4: {"task_prediction": 91.15, "pair_ratio": 1.125925925925926}
+2026-10-30 14:51:37,813 [qsd.py] => QSD curve head=fuse_pgm_stats_b4: [96.19, 91.14, 89.85, 88.66]
+2026-10-30 14:51:37,813 [qsd.py] => QSD task=3 diag={"ridge_sensitivity": {"0.01": 88.02, "0.1": 88.02, "1.0": 88.06}, "fuse_scale": {"ridge_stats": 46.02454689411183, "pgm_stats": 6.0161659563537295}} seconds=18.1
+2026-10-30 14:51:37,829 [trainer.py] => CNN: {'total': 88.54, '00-19': 91.38, '20-39': 86.86, '40-59': 88.59, '60-79': 86.87, 'old': 89.03, 'new': 86.87}
+2026-10-30 14:51:37,829 [trainer.py] => Continual metrics after task 3: BWT=-2.1367, forgetting=2.1367, task_acc=[91.38, 86.86, 88.59, 86.87]
+2026-10-30 14:51:37,829 [trainer.py] => CNN top1 curve: [96.05, 91.37, 90.01, 88.54]
+2026-10-30 14:51:37,829 [trainer.py] => CNN top5 curve: [99.58, 98.67, 97.74, 96.64]
+2026-10-30 14:51:37,830 [trainer.py] => Average Accuracy (CNN): 91.4925
+2026-10-30 14:51:37,830 [trainer.py] => All params: 87049728
+2026-10-30 14:51:37,830 [trainer.py] => Trainable params: 1251072
+2026-10-30 14:51:37,831 [RSIAT_adapter.py] => Learning on 80-100
+2026-10-30 14:51:52,858 [holevo.py] => HOLEVO start task=4 old=80 new=20 {"queue": {"80": 93, "81": 160, "82": 140, "83": 184, "84": 50, "85": 228, "86": 84, "87": 116, "88": 89, "89": 232, "90": 51, "91": 94, "92": 133, "93": 59, "94": 88, "95": 63, "96": 63, "97": 44, "98": 78, "99": 72}, "residual_share": 0.8907672301690507, "eta": null}
+2026-10-30 14:52:24,505 [holevo.py] => HOLEVO oracle task=4 phase=start {"oracle": {"vn": 0.33065527085753815, "mcr2": 24.4583626118569, "spread": 0.7564305300333634}, "stale": {"vn": 0.3291496809483312, "mcr2": 24.47275413129514, "spread": 0.7564978944033341}, "I_orc": 0.2178583214301832, "p_old_on_new": 0.7361678000127474}
+2026-10-30 14:52:24,507 [toolkit.py] => All params: 87213824
+2026-10-30 14:52:24,507 [toolkit.py] => Trainable params: 1415168
+2026-10-30 14:52:49,370 [holevo.py] => HOLEVO epoch task=4 epoch=1 {"objective": 0.3310729004847215, "p_y": 0.14129197180762298, "p_old": 0.7365910276625403, "p_null": 2.73653020490696e-07, "completeness_error": 6.716849298982197e-15, "loss_enc": -0.3310729004847215, "loss_dec": 2.02206743144556, "weight": 0.0}
+2026-10-30 14:53:13,978 [holevo.py] => HOLEVO epoch task=4 epoch=2 {"objective": 0.33261886568252086, "p_y": 0.13316868041083224, "p_old": 0.7377301110629633, "p_null": 3.009661410827099e-07, "completeness_error": 6.661338147750939e-15, "loss_enc": -0.33261886568252086, "loss_dec": 2.0681505162239393, "weight": 0.25}
+2026-10-30 14:53:38,896 [holevo.py] => HOLEVO epoch task=4 epoch=3 {"objective": 0.3322914522363004, "p_y": 0.13355964368163195, "p_old": 0.7425259077730498, "p_null": 2.7984121787974045e-07, "completeness_error": 1.1213252548714081e-14, "loss_enc": -0.3322914522363004, "loss_dec": 2.099132573186283, "weight": 0.5}
+2026-10-30 14:54:04,011 [holevo.py] => HOLEVO epoch task=4 epoch=4 {"objective": 0.33206385950723427, "p_y": 0.13735864177688664, "p_old": 0.7421040820423541, "p_null": 2.658889279738625e-07, "completeness_error": 8.049116928532385e-15, "loss_enc": -0.33206385950723427, "loss_dec": 2.05167418989981, "weight": 0.75}
+2026-10-30 14:54:28,882 [holevo.py] => HOLEVO epoch task=4 epoch=5 {"objective": 0.3329009009123795, "p_y": 0.13703814978035023, "p_old": 0.7327684735862061, "p_null": 2.985742406108189e-07, "completeness_error": 7.494005416219807e-15, "loss_enc": -0.3329009009123795, "loss_dec": 2.054145530175737, "weight": 1.0}
+2026-10-30 14:54:53,896 [holevo.py] => HOLEVO epoch task=4 epoch=6 {"objective": 0.3330580772544284, "p_y": 0.13674195201512396, "p_old": 0.7356523684520633, "p_null": 2.9599587874948983e-07, "completeness_error": 6.2727600891321345e-15, "loss_enc": -0.3330580772544284, "loss_dec": 2.062630045663234, "weight": 1.0}
+2026-10-30 14:55:18,553 [holevo.py] => HOLEVO epoch task=4 epoch=7 {"objective": 0.33325019377749854, "p_y": 0.1268764272291737, "p_old": 0.7487305231286188, "p_null": 2.957712407053119e-07, "completeness_error": 6.8833827526759706e-15, "loss_enc": -0.33325019377749854, "loss_dec": 2.117488731705947, "weight": 1.0}
+2026-10-30 14:55:43,696 [holevo.py] => HOLEVO epoch task=4 epoch=8 {"objective": 0.33257236783305083, "p_y": 0.14774615822395384, "p_old": 0.7413533436645071, "p_null": 2.564856809835576e-07, "completeness_error": 8.770761894538737e-15, "loss_enc": -0.33257236783305083, "loss_dec": 1.9726887559386077, "weight": 1.0}
+2026-10-30 14:56:08,584 [holevo.py] => HOLEVO epoch task=4 epoch=9 {"objective": 0.3330953463782353, "p_y": 0.1385427553189727, "p_old": 0.7369515244145634, "p_null": 2.867792696969655e-07, "completeness_error": 6.661338147750939e-15, "loss_enc": -0.3330953463782353, "loss_dec": 2.0393321184170485, "weight": 1.0}
+2026-10-30 14:56:33,661 [holevo.py] => HOLEVO epoch task=4 epoch=10 {"objective": 0.3332888199401288, "p_y": 0.13002378146117197, "p_old": 0.7432809884365992, "p_null": 2.9665763485561964e-07, "completeness_error": 6.994405055138486e-15, "loss_enc": -0.3332888199401288, "loss_dec": 2.119856766514739, "weight": 1.0}
+2026-10-30 14:56:58,569 [holevo.py] => HOLEVO epoch task=4 epoch=11 {"objective": 0.33292811393255406, "p_y": 0.13984840143989083, "p_old": 0.7413664907890744, "p_null": 2.733375638984938e-07, "completeness_error": 6.994405055138486e-15, "loss_enc": -0.33292811393255406, "loss_dec": 2.020732356513407, "weight": 1.0}
+2026-10-30 14:57:23,180 [holevo.py] => HOLEVO epoch task=4 epoch=12 {"objective": 0.3342407566757804, "p_y": 0.135971715430372, "p_old": 0.7361115673107977, "p_null": 3.124625927861424e-07, "completeness_error": 8.43769498715119e-15, "loss_enc": -0.3342407566757804, "loss_dec": 2.0683821035670227, "weight": 1.0}
+2026-10-30 14:57:48,242 [holevo.py] => HOLEVO epoch task=4 epoch=13 {"objective": 0.33337663961749964, "p_y": 0.1403345373190188, "p_old": 0.738795858629272, "p_null": 2.757854043998356e-07, "completeness_error": 6.217248937900877e-15, "loss_enc": -0.33337663961749964, "loss_dec": 2.030847006861211, "weight": 1.0}
+2026-10-30 14:58:13,326 [holevo.py] => HOLEVO epoch task=4 epoch=14 {"objective": 0.3332328965081135, "p_y": 0.1507179025232341, "p_old": 0.7381176285414391, "p_null": 2.6475199454497726e-07, "completeness_error": 8.1601392309949e-15, "loss_enc": -0.3332328965081135, "loss_dec": 1.9485478343647613, "weight": 1.0}
+2026-10-30 14:58:38,313 [holevo.py] => HOLEVO epoch task=4 epoch=15 {"objective": 0.33333348533453133, "p_y": 0.15169614066450987, "p_old": 0.7333855390263047, "p_null": 2.681722344619748e-07, "completeness_error": 9.43689570931383e-15, "loss_enc": -0.33333348533453133, "loss_dec": 1.9453636813947142, "weight": 1.0}
+2026-10-30 14:59:03,279 [holevo.py] => HOLEVO epoch task=4 epoch=16 {"objective": 0.3336356532093988, "p_y": 0.13680483125799425, "p_old": 0.7378879560991162, "p_null": 2.8653168016162825e-07, "completeness_error": 8.992806499463768e-15, "loss_enc": -0.3336356532093988, "loss_dec": 2.0654026612837364, "weight": 1.0}
+2026-10-30 14:59:27,715 [holevo.py] => HOLEVO epoch task=4 epoch=17 {"objective": 0.33361139809093243, "p_y": 0.14559285354647736, "p_old": 0.7368894302042742, "p_null": 2.715775048707475e-07, "completeness_error": 9.43689570931383e-15, "loss_enc": -0.33361139809093243, "loss_dec": 1.9957365606308057, "weight": 1.0}
+2026-10-30 14:59:58,216 [holevo.py] => HOLEVO epoch task=4 epoch=18 {"objective": 0.3340003888663458, "p_y": 0.14402992831932654, "p_old": 0.7369823219480928, "p_null": 2.7793020757531405e-07, "completeness_error": 1.1102230246251565e-14, "loss_enc": -0.3340003888663458, "loss_dec": 1.9946118509088575, "weight": 1.0}
+2026-10-30 15:00:20,143 [holevo.py] => HOLEVO epoch task=4 epoch=19 {"objective": 0.3336072949611725, "p_y": 0.1408097141968452, "p_old": 0.739888639580593, "p_null": 2.794421595660685e-07, "completeness_error": 7.327471962526033e-15, "loss_enc": -0.3336072949611725, "loss_dec": 2.0394775271795584, "weight": 1.0}
+2026-10-30 15:00:48,959 [holevo.py] => HOLEVO epoch task=4 epoch=20 {"objective": 0.3334667599362971, "p_y": 0.13127213716816838, "p_old": 0.7483382477115723, "p_null": 2.807497391047117e-07, "completeness_error": 9.880984919163893e-15, "loss_enc": -0.3334667599362971, "loss_dec": 2.0968777462151946, "weight": 1.0}
+2026-10-30 15:01:19,882 [holevo.py] => HOLEVO epoch task=4 epoch=21 {"objective": 0.3336063469272178, "p_y": 0.1480146439351812, "p_old": 0.7349567760334383, "p_null": 2.8361436206706757e-07, "completeness_error": 7.771561172376096e-15, "loss_enc": -0.3336063469272178, "loss_dec": 1.994011172448559, "weight": 1.0}
+2026-10-30 15:01:45,904 [holevo.py] => HOLEVO epoch task=4 epoch=22 {"objective": 0.3343966140972547, "p_y": 0.12573531294949963, "p_old": 0.7474504130913303, "p_null": 3.002815444707521e-07, "completeness_error": 5.995204332975845e-15, "loss_enc": -0.3343966140972547, "loss_dec": 2.1339248260965373, "weight": 1.0}
+2026-10-30 15:02:10,603 [holevo.py] => HOLEVO epoch task=4 epoch=23 {"objective": 0.3332245374585501, "p_y": 0.1378042219360864, "p_old": 0.7393833716534419, "p_null": 2.862682211095989e-07, "completeness_error": 6.38378239159465e-15, "loss_enc": -0.3332245374585501, "loss_dec": 2.0596607285408206, "weight": 1.0}
+2026-10-30 15:02:35,501 [holevo.py] => HOLEVO epoch task=4 epoch=24 {"objective": 0.33333402555773406, "p_y": 0.14106227631949028, "p_old": 0.7357968557320691, "p_null": 2.883683864834652e-07, "completeness_error": 1.021405182655144e-14, "loss_enc": -0.33333402555773406, "loss_dec": 2.0260982154436302, "weight": 1.0}
+2026-10-30 15:03:00,325 [holevo.py] => HOLEVO epoch task=4 epoch=25 {"objective": 0.33412289015266006, "p_y": 0.14316888198204306, "p_old": 0.7405557002762629, "p_null": 2.7099326275062667e-07, "completeness_error": 5.329070518200751e-15, "loss_enc": -0.33412289015266006, "loss_dec": 2.023412417254672, "weight": 1.0}
+2026-10-30 15:03:25,181 [holevo.py] => HOLEVO epoch task=4 epoch=26 {"objective": 0.33332651635838495, "p_y": 0.1397551349433261, "p_old": 0.7392452147975943, "p_null": 2.849514937894783e-07, "completeness_error": 1.0158540675320182e-14, "loss_enc": -0.33332651635838495, "loss_dec": 2.03390613713423, "weight": 1.0}
+2026-10-30 15:03:49,621 [holevo.py] => HOLEVO epoch task=4 epoch=27 {"objective": 0.33384495738106806, "p_y": 0.12075865633074231, "p_old": 0.7531629205485475, "p_null": 3.015379189623385e-07, "completeness_error": 5.329070518200751e-15, "loss_enc": -0.33384495738106806, "loss_dec": 2.1973334321697955, "weight": 1.0}
+2026-10-30 15:04:14,761 [holevo.py] => HOLEVO epoch task=4 epoch=28 {"objective": 0.3330926399197136, "p_y": 0.14117925903999828, "p_old": 0.7365264248135786, "p_null": 2.840650969340213e-07, "completeness_error": 6.106226635438361e-15, "loss_enc": -0.3330926399197136, "loss_dec": 2.0256278281865288, "weight": 1.0}
+2026-10-30 15:04:39,530 [holevo.py] => HOLEVO epoch task=4 epoch=29 {"objective": 0.3336956708997943, "p_y": 0.14667895779119208, "p_old": 0.7376041419303709, "p_null": 2.6875123230099564e-07, "completeness_error": 7.438494264988549e-15, "loss_enc": -0.3336956708997943, "loss_dec": 1.9900662075769808, "weight": 1.0}
+2026-10-30 15:05:04,370 [holevo.py] => HOLEVO epoch task=4 epoch=30 {"objective": 0.33336317980687, "p_y": 0.13699387471464422, "p_old": 0.73885556197414, "p_null": 2.9036510593219645e-07, "completeness_error": 7.605027718682322e-15, "loss_enc": -0.33336317980687, "loss_dec": 2.065539090596957, "weight": 1.0}
+2026-10-30 15:05:12,272 [RSIAT_adapter.py] => Task 4, Epoch 30/30 => Loss 3.818, Loss_c 2.582, Losses_rt 1.236, Train_accy 78.64, Test_accy 86.00, Time 24.84s
+2026-10-30 15:05:12,272 [RSIAT_adapter.py] => Task 4 peak GPU memory: 4949.46 MiB
+2026-10-30 15:05:45,179 [holevo.py] => HOLEVO oracle task=4 phase=end {"oracle": {"vn": 0.33204832182700367, "mcr2": 24.432534211339078, "spread": 0.7549403401647509}, "stale": {"vn": 0.3323330309832581, "mcr2": 24.542711781103524, "spread": 0.7565008995381413}, "I_orc": 0.21958347697927436, "p_old_on_new": 0.7314930667616014, "trace_distance": {"mean": 0.018638442859772723, "max": 0.024192151958910633}}
+2026-10-30 15:05:45,179 [holevo.py] => HOLEVO end task=4 lambdas={"enc": null, "dec": null}
+2026-10-30 15:06:05,232 [base.py] => CA Task 4 => Loss 0.072, Test_accy skipped
+2026-10-30 15:06:07,119 [base.py] => CA Task 4 => Loss 0.061, Test_accy skipped
+2026-10-30 15:06:08,862 [base.py] => CA Task 4 => Loss 0.060, Test_accy skipped
+2026-10-30 15:06:10,692 [base.py] => CA Task 4 => Loss 0.058, Test_accy skipped
+2026-10-30 15:06:12,497 [base.py] => CA Task 4 => Loss 0.054, Test_accy skipped
+2026-10-30 15:06:14,131 [base.py] => CA Task 4 => Loss 0.054, Test_accy skipped
+2026-10-30 15:06:15,907 [base.py] => CA Task 4 => Loss 0.055, Test_accy skipped
+2026-10-30 15:06:17,729 [base.py] => CA Task 4 => Loss 0.052, Test_accy skipped
+2026-10-30 15:06:19,604 [base.py] => CA Task 4 => Loss 0.050, Test_accy skipped
+2026-10-30 15:06:28,600 [base.py] => CA Task 4 => Loss 0.049, Test_accy 86.320
+2026-10-30 15:06:54,337 [qsd.py] => QSD task=4 head=linear top1=86.32 old=86.92 new=83.55 task_pred=88.54 pair_ratio=1.2294117647058824
+2026-10-30 15:06:54,337 [qsd.py] => QSD tasks head=linear: [89.27, 85.94, 85.74, 86.36, 83.55]
+2026-10-30 15:06:54,337 [qsd.py] => QSD mech head=linear: {"task_prediction": 88.54, "pair_ratio": 1.2294117647058824}
+2026-10-30 15:06:54,337 [qsd.py] => QSD curve head=linear: [96.05, 91.37, 90.01, 88.54, 86.32]
+2026-10-30 15:06:54,337 [qsd.py] => QSD task=4 head=ridge_stats top1=85.93 old=86.28 new=84.29 task_pred=88.73 pair_ratio=0.9555232558139534
+2026-10-30 15:06:54,337 [qsd.py] => QSD tasks head=ridge_stats: [88.14, 84.54, 84.4, 87.91, 84.29]
+2026-10-30 15:06:54,337 [qsd.py] => QSD mech head=ridge_stats: {"task_prediction": 88.73, "pair_ratio": 0.9555232558139534}
+2026-10-30 15:06:54,337 [qsd.py] => QSD curve head=ridge_stats: [95.2, 91.66, 89.9, 88.02, 85.93]
+2026-10-30 15:06:54,337 [qsd.py] => QSD task=4 head=pgm_stats top1=85.84 old=86.48 new=82.81 task_pred=88.44 pair_ratio=1.0539062499999998
+2026-10-30 15:06:54,337 [qsd.py] => QSD tasks head=pgm_stats: [91.1, 84.23, 83.22, 86.7, 82.81]
+2026-10-30 15:06:54,337 [qsd.py] => QSD mech head=pgm_stats: {"task_prediction": 88.44, "pair_ratio": 1.0539062499999998}
+2026-10-30 15:06:54,337 [qsd.py] => QSD curve head=pgm_stats: [96.05, 90.48, 88.62, 87.83, 85.84]
+2026-10-30 15:06:54,337 [qsd.py] => QSD task=4 head=fuse_ridge_stats_b0p25 top1=87.04 old=87.63 new=84.29 task_pred=89.32 pair_ratio=1.1128571428571428
+2026-10-30 15:06:54,337 [qsd.py] => QSD tasks head=fuse_ridge_stats_b0p25: [90.25, 85.94, 86.07, 87.91, 84.29]
+2026-10-30 15:06:54,337 [qsd.py] => QSD mech head=fuse_ridge_stats_b0p25: {"task_prediction": 89.32, "pair_ratio": 1.1128571428571428}
+2026-10-30 15:06:54,337 [qsd.py] => QSD curve head=fuse_ridge_stats_b0p25: [96.33, 91.29, 90.47, 89.21, 87.04]
+2026-10-30 15:06:54,337 [qsd.py] => QSD task=4 head=fuse_ridge_stats_b0p5 top1=86.97 old=87.47 new=84.66 task_pred=89.22 pair_ratio=1.1393115942028986
+2026-10-30 15:06:54,337 [qsd.py] => QSD tasks head=fuse_ridge_stats_b0p5: [89.69, 85.94, 86.07, 87.91, 84.66]
+2026-10-30 15:06:54,337 [qsd.py] => QSD mech head=fuse_ridge_stats_b0p5: {"task_prediction": 89.22, "pair_ratio": 1.1393115942028986}
+2026-10-30 15:06:54,337 [qsd.py] => QSD curve head=fuse_ridge_stats_b0p5: [96.33, 91.96, 90.36, 89.25, 86.97]
+2026-10-30 15:06:54,337 [qsd.py] => QSD task=4 head=fuse_ridge_stats_b1 top1=86.97 old=87.47 new=84.66 task_pred=89.25 pair_ratio=1.1196428571428572
+2026-10-30 15:06:54,337 [qsd.py] => QSD tasks head=fuse_ridge_stats_b1: [89.27, 85.94, 86.07, 88.43, 84.66]
+2026-10-30 15:06:54,337 [qsd.py] => QSD mech head=fuse_ridge_stats_b1: {"task_prediction": 89.25, "pair_ratio": 1.1196428571428572}
+2026-10-30 15:06:54,337 [qsd.py] => QSD curve head=fuse_ridge_stats_b1: [96.19, 91.96, 90.11, 89.05, 86.97]
+2026-10-30 15:06:54,337 [qsd.py] => QSD task=4 head=fuse_ridge_stats_b2 top1=86.78 old=87.35 new=84.1 task_pred=89.16 pair_ratio=1.083390410958904
+2026-10-30 15:06:54,337 [qsd.py] => QSD tasks head=fuse_ridge_stats_b2: [89.12, 85.47, 85.91, 88.77, 84.1]
+2026-10-30 15:06:54,337 [qsd.py] => QSD mech head=fuse_ridge_stats_b2: {"task_prediction": 89.16, "pair_ratio": 1.083390410958904}
+2026-10-30 15:06:54,337 [qsd.py] => QSD curve head=fuse_ridge_stats_b2: [95.9, 91.81, 90.16, 88.85, 86.78]
+2026-10-30 15:06:54,337 [qsd.py] => QSD task=4 head=fuse_ridge_stats_b4 top1=86.36 old=86.8 new=84.29 task_pred=88.93 pair_ratio=1.0221518987341773
+2026-10-30 15:06:54,338 [qsd.py] => QSD tasks head=fuse_ridge_stats_b4: [88.7, 85.01, 84.73, 88.6, 84.29]
+2026-10-30 15:06:54,338 [qsd.py] => QSD mech head=fuse_ridge_stats_b4: {"task_prediction": 88.93, "pair_ratio": 1.0221518987341773}
+2026-10-30 15:06:54,338 [qsd.py] => QSD curve head=fuse_ridge_stats_b4: [95.62, 91.81, 90.01, 88.62, 86.36]
+2026-10-30 15:06:54,338 [qsd.py] => QSD task=4 head=fuse_pgm_stats_b0p25 top1=86.84 old=87.39 new=84.29 task_pred=89.09 pair_ratio=1.1530797101449277
+2026-10-30 15:06:54,338 [qsd.py] => QSD tasks head=fuse_pgm_stats_b0p25: [90.4, 85.94, 85.74, 87.05, 84.29]
+2026-10-30 15:06:54,338 [qsd.py] => QSD mech head=fuse_pgm_stats_b0p25: {"task_prediction": 89.09, "pair_ratio": 1.1530797101449277}
+2026-10-30 15:06:54,338 [qsd.py] => QSD curve head=fuse_pgm_stats_b0p25: [96.05, 91.22, 90.06, 89.05, 86.84]
+2026-10-30 15:06:54,338 [qsd.py] => QSD task=4 head=fuse_pgm_stats_b0p5 top1=86.97 old=87.55 new=84.29 task_pred=89.25 pair_ratio=1.1196428571428572
+2026-10-30 15:06:54,338 [qsd.py] => QSD tasks head=fuse_pgm_stats_b0p5: [90.96, 86.09, 85.4, 87.22, 84.29]
+2026-10-30 15:06:54,338 [qsd.py] => QSD mech head=fuse_pgm_stats_b0p5: {"task_prediction": 89.25, "pair_ratio": 1.1196428571428572}
+2026-10-30 15:06:54,338 [qsd.py] => QSD curve head=fuse_pgm_stats_b0p5: [96.05, 91.37, 90.06, 89.21, 86.97]
+2026-10-30 15:06:54,338 [qsd.py] => QSD task=4 head=fuse_pgm_stats_b1 top1=86.97 old=87.51 new=84.47 task_pred=89.38 pair_ratio=1.0462837837837837
+2026-10-30 15:06:54,338 [qsd.py] => QSD tasks head=fuse_pgm_stats_b1: [91.24, 85.94, 84.9, 87.39, 84.47]
+2026-10-30 15:06:54,338 [qsd.py] => QSD mech head=fuse_pgm_stats_b1: {"task_prediction": 89.38, "pair_ratio": 1.0462837837837837}
+2026-10-30 15:06:54,338 [qsd.py] => QSD curve head=fuse_pgm_stats_b1: [96.19, 91.44, 90.06, 88.97, 86.97]
+2026-10-30 15:06:54,338 [qsd.py] => QSD task=4 head=fuse_pgm_stats_b2 top1=86.94 old=87.55 new=84.1 task_pred=89.22 pair_ratio=1.1230357142857141
+2026-10-30 15:06:54,338 [qsd.py] => QSD tasks head=fuse_pgm_stats_b2: [91.1, 85.78, 85.4, 87.39, 84.1]
+2026-10-30 15:06:54,338 [qsd.py] => QSD mech head=fuse_pgm_stats_b2: {"task_prediction": 89.22, "pair_ratio": 1.1230357142857141}
+2026-10-30 15:06:54,338 [qsd.py] => QSD curve head=fuse_pgm_stats_b2: [96.19, 91.44, 90.31, 89.05, 86.94]
+2026-10-30 15:06:54,338 [qsd.py] => QSD task=4 head=fuse_pgm_stats_b4 top1=86.75 old=87.39 new=83.73 task_pred=89.16 pair_ratio=1.06875
+2026-10-30 15:06:54,338 [qsd.py] => QSD tasks head=fuse_pgm_stats_b4: [91.38, 85.63, 84.73, 87.22, 83.73]
+2026-10-30 15:06:54,338 [qsd.py] => QSD mech head=fuse_pgm_stats_b4: {"task_prediction": 89.16, "pair_ratio": 1.06875}
+2026-10-30 15:06:54,338 [qsd.py] => QSD curve head=fuse_pgm_stats_b4: [96.19, 91.14, 89.85, 88.66, 86.75]
+2026-10-30 15:06:54,338 [qsd.py] => QSD task=4 diag={"ridge_sensitivity": {"0.01": 85.93, "0.1": 85.93, "1.0": 86.36}, "fuse_scale": {"ridge_stats": 52.26713188587171, "pgm_stats": 5.95070219079158}} seconds=18.5
+2026-10-30 15:06:54,356 [trainer.py] => CNN: {'total': 86.32, '00-19': 89.27, '20-39': 85.94, '40-59': 85.74, '60-79': 86.36, '80-99': 83.55, 'old': 86.92, 'new': 83.55}
+2026-10-30 15:06:54,356 [trainer.py] => Continual metrics after task 4: BWT=-3.2000, forgetting=3.2000, task_acc=[89.27, 85.94, 85.74, 86.36, 83.55]
+2026-10-30 15:06:54,356 [trainer.py] => CNN top1 curve: [96.05, 91.37, 90.01, 88.54, 86.32]
+2026-10-30 15:06:54,356 [trainer.py] => CNN top5 curve: [99.58, 98.67, 97.74, 96.64, 95.83]
+2026-10-30 15:06:54,356 [trainer.py] => Average Accuracy (CNN): 90.458
+2026-10-30 15:06:54,356 [trainer.py] => All params: 87065088
+2026-10-30 15:06:54,357 [trainer.py] => Trainable params: 1266432
+2026-10-30 15:06:54,357 [RSIAT_adapter.py] => Learning on 100-120
+2026-10-30 15:07:13,611 [holevo.py] => HOLEVO start task=5 old=100 new=20 {"queue": {"100": 135, "101": 93, "102": 131, "103": 132, "104": 109, "105": 63, "106": 159, "107": 118, "108": 102, "109": 117, "110": 78, "111": 106, "112": 216, "113": 132, "114": 48, "115": 59, "116": 256, "117": 163, "118": 72, "119": 256}, "residual_share": 0.8881664499349805, "eta": null}
+2026-10-30 15:07:52,344 [holevo.py] => HOLEVO oracle task=5 phase=start {"oracle": {"vn": 0.3191617569934627, "mcr2": 23.722101242314906, "spread": 0.7274715071538819}, "stale": {"vn": 0.3203098694225729, "mcr2": 23.839910451987773, "spread": 0.7283667295984538}, "I_orc": 0.22286354986630041, "p_old_on_new": 0.7417788228367012}
+2026-10-30 15:07:52,346 [toolkit.py] => All params: 87229184
+2026-10-30 15:07:52,346 [toolkit.py] => Trainable params: 1430528
+2026-10-30 15:08:23,529 [holevo.py] => HOLEVO epoch task=5 epoch=1 {"objective": 0.32138506398669253, "p_y": 0.1208642553981264, "p_old": 0.7514627289690541, "p_null": 2.7271746037961875e-07, "completeness_error": 7.882583474838611e-15, "loss_enc": -0.32138506398669253, "loss_dec": 2.1991686134421817, "weight": 0.0}
+2026-10-30 15:08:54,452 [holevo.py] => HOLEVO epoch task=5 epoch=2 {"objective": 0.32184649198149146, "p_y": 0.13104931259408625, "p_old": 0.7436845101480501, "p_null": 2.6568750923050303e-07, "completeness_error": 6.38378239159465e-15, "loss_enc": -0.32184649198149146, "loss_dec": 2.1083351491080533, "weight": 0.25}
+2026-10-30 15:09:25,714 [holevo.py] => HOLEVO epoch task=5 epoch=3 {"objective": 0.32200830743450704, "p_y": 0.12457029438916974, "p_old": 0.7487158442338973, "p_null": 2.672203106033331e-07, "completeness_error": 6.920390186830143e-15, "loss_enc": -0.32200830743450704, "loss_dec": 2.1445845410990083, "weight": 0.5}
+2026-10-30 15:09:56,786 [holevo.py] => HOLEVO epoch task=5 epoch=4 {"objective": 0.3220893396036338, "p_y": 0.12586736652896022, "p_old": 0.7491264450623093, "p_null": 2.722476442153997e-07, "completeness_error": 1.2545520178264269e-14, "loss_enc": -0.3220893396036338, "loss_dec": 2.165290636642851, "weight": 0.75}
+2026-10-30 15:10:27,718 [holevo.py] => HOLEVO epoch task=5 epoch=5 {"objective": 0.32291051677961413, "p_y": 0.12526108216027698, "p_old": 0.7444939152339499, "p_null": 2.857616756013111e-07, "completeness_error": 5.384581669432009e-15, "loss_enc": -0.32291051677961413, "loss_dec": 2.1645625025864073, "weight": 1.0}
+2026-10-30 15:10:58,814 [holevo.py] => HOLEVO epoch task=5 epoch=6 {"objective": 0.32258600300209017, "p_y": 0.12722535974468802, "p_old": 0.743126077348004, "p_null": 2.7818630005498674e-07, "completeness_error": 8.326672684688674e-15, "loss_enc": -0.32258600300209017, "loss_dec": 2.1206720385544426, "weight": 1.0}
+2026-10-30 15:11:30,463 [holevo.py] => HOLEVO epoch task=5 epoch=7 {"objective": 0.3222326097476407, "p_y": 0.13364975687300515, "p_old": 0.7435375604932766, "p_null": 2.6893895604599997e-07, "completeness_error": 6.8463753185217984e-15, "loss_enc": -0.3222326097476407, "loss_dec": 2.083362509950817, "weight": 1.0}
+2026-10-30 15:12:01,521 [holevo.py] => HOLEVO epoch task=5 epoch=8 {"objective": 0.32301248962255596, "p_y": 0.13088497889136808, "p_old": 0.741537384539303, "p_null": 2.881606117971964e-07, "completeness_error": 6.6058269965196814e-15, "loss_enc": -0.32301248962255596, "loss_dec": 2.086650298261427, "weight": 1.0}
+2026-10-30 15:12:32,447 [holevo.py] => HOLEVO epoch task=5 epoch=9 {"objective": 0.32300639110039453, "p_y": 0.12910797927329232, "p_old": 0.7478403201630949, "p_null": 2.742033243050335e-07, "completeness_error": 1.199040866595169e-14, "loss_enc": -0.32300639110039453, "loss_dec": 2.1192990593380046, "weight": 1.0}
+2026-10-30 15:13:03,326 [holevo.py] => HOLEVO epoch task=5 epoch=10 {"objective": 0.32259653501242547, "p_y": 0.13873974105716075, "p_old": 0.7414735649175791, "p_null": 2.601369741129155e-07, "completeness_error": 7.216449660063518e-15, "loss_enc": -0.32259653501242547, "loss_dec": 2.0381911473770313, "weight": 1.0}
+2026-10-30 15:13:34,864 [holevo.py] => HOLEVO epoch task=5 epoch=11 {"objective": 0.3226145526167798, "p_y": 0.12677641999174202, "p_old": 0.7476443167172637, "p_null": 2.696454823235232e-07, "completeness_error": 5.736152293896642e-15, "loss_enc": -0.3226145526167798, "loss_dec": 2.1257601580199017, "weight": 1.0}
+2026-10-30 15:14:10,465 [holevo.py] => HOLEVO epoch task=5 epoch=12 {"objective": 0.32301129530682493, "p_y": 0.13497515510762878, "p_old": 0.7437445587635847, "p_null": 2.7091446306175556e-07, "completeness_error": 6.8833827526759706e-15, "loss_enc": -0.32301129530682493, "loss_dec": 2.052635953791105, "weight": 1.0}
+2026-10-30 15:14:33,936 [holevo.py] => HOLEVO epoch task=5 epoch=13 {"objective": 0.32341600947926663, "p_y": 0.1344382088520106, "p_old": 0.7412924738501996, "p_null": 2.809101653459713e-07, "completeness_error": 6.938893903907228e-15, "loss_enc": -0.32341600947926663, "loss_dec": 2.078456170976114, "weight": 1.0}
+2026-10-30 15:15:09,599 [holevo.py] => HOLEVO epoch task=5 epoch=14 {"objective": 0.3228657908520075, "p_y": 0.13135427949061965, "p_old": 0.7414256676806226, "p_null": 2.8345931121709223e-07, "completeness_error": 9.492406860545088e-15, "loss_enc": -0.3228657908520075, "loss_dec": 2.0928658132981806, "weight": 1.0}
+2026-10-30 15:15:43,890 [holevo.py] => HOLEVO epoch task=5 epoch=15 {"objective": 0.3229524033678961, "p_y": 0.1242638039543899, "p_old": 0.7549045103572679, "p_null": 2.5788506204535493e-07, "completeness_error": 6.716849298982197e-15, "loss_enc": -0.3229524033678961, "loss_dec": 2.1654276197279176, "weight": 1.0}
+2026-10-30 15:16:13,745 [holevo.py] => HOLEVO epoch task=5 epoch=16 {"objective": 0.322601528099366, "p_y": 0.13497682877001776, "p_old": 0.7443300087394703, "p_null": 2.611797968214691e-07, "completeness_error": 7.438494264988549e-15, "loss_enc": -0.322601528099366, "loss_dec": 2.0909690037099633, "weight": 1.0}
+2026-10-30 15:16:44,932 [holevo.py] => HOLEVO epoch task=5 epoch=17 {"objective": 0.3232602346351757, "p_y": 0.13052156971973378, "p_old": 0.748057398362061, "p_null": 2.6922519869666235e-07, "completeness_error": 1.1046719095020308e-14, "loss_enc": -0.3232602346351757, "loss_dec": 2.099880802611399, "weight": 1.0}
+2026-10-30 15:17:16,071 [holevo.py] => HOLEVO epoch task=5 epoch=18 {"objective": 0.32314989653817916, "p_y": 0.1279118714798056, "p_old": 0.7466284243508104, "p_null": 2.8254027859820113e-07, "completeness_error": 7.549516567451064e-15, "loss_enc": -0.32314989653817916, "loss_dec": 2.1290158709878257, "weight": 1.0}
+2026-10-30 15:17:47,224 [holevo.py] => HOLEVO epoch task=5 epoch=19 {"objective": 0.3230018776430391, "p_y": 0.13447391219814248, "p_old": 0.7417433530995001, "p_null": 2.725006534484551e-07, "completeness_error": 9.547918011776346e-15, "loss_enc": -0.3230018776430391, "loss_dec": 2.0870189033191746, "weight": 1.0}
+2026-10-30 15:18:18,802 [holevo.py] => HOLEVO epoch task=5 epoch=20 {"objective": 0.32300017669695724, "p_y": 0.12435656710681962, "p_old": 0.7536078299254287, "p_null": 2.60891019487244e-07, "completeness_error": 8.474702421305361e-15, "loss_enc": -0.32300017669695724, "loss_dec": 2.1515368574111706, "weight": 1.0}
+2026-10-30 15:18:49,923 [holevo.py] => HOLEVO epoch task=5 epoch=21 {"objective": 0.32332658705495676, "p_y": 0.13240508552699884, "p_old": 0.7431990198576566, "p_null": 2.739720390888664e-07, "completeness_error": 9.825473767932635e-15, "loss_enc": -0.32332658705495676, "loss_dec": 2.0975614360324766, "weight": 1.0}
+2026-10-30 15:19:20,831 [holevo.py] => HOLEVO epoch task=5 epoch=22 {"objective": 0.3236339295731625, "p_y": 0.12789969873237791, "p_old": 0.7523582408290047, "p_null": 2.6599592228878535e-07, "completeness_error": 8.770761894538737e-15, "loss_enc": -0.3236339295731625, "loss_dec": 2.113061121005937, "weight": 1.0}
+2026-10-30 15:19:51,913 [holevo.py] => HOLEVO epoch task=5 epoch=23 {"objective": 0.3229369668454385, "p_y": 0.1310752376662202, "p_old": 0.7426001444871095, "p_null": 2.791207363773995e-07, "completeness_error": 7.66053886991358e-15, "loss_enc": -0.3229369668454385, "loss_dec": 2.1001008465031914, "weight": 1.0}
+2026-10-30 15:20:22,916 [holevo.py] => HOLEVO epoch task=5 epoch=24 {"objective": 0.3228413603273962, "p_y": 0.1298909540320068, "p_old": 0.7428652553814761, "p_null": 2.760321948464275e-07, "completeness_error": 1.0695148470555674e-14, "loss_enc": -0.3228413603273962, "loss_dec": 2.097251336777352, "weight": 1.0}
+2026-10-30 15:20:54,163 [holevo.py] => HOLEVO epoch task=5 epoch=25 {"objective": 0.3230210341015738, "p_y": 0.13291338278107012, "p_old": 0.7442994245814752, "p_null": 2.6915964216845774e-07, "completeness_error": 8.1601392309949e-15, "loss_enc": -0.3230210341015738, "loss_dec": 2.093793951490925, "weight": 1.0}
+2026-10-30 15:21:25,042 [holevo.py] => HOLEVO epoch task=5 epoch=26 {"objective": 0.32293211528654653, "p_y": 0.13004308416436702, "p_old": 0.7496703656152, "p_null": 2.682697447047157e-07, "completeness_error": 9.769962616701378e-15, "loss_enc": -0.32293211528654653, "loss_dec": 2.1198232829224333, "weight": 1.0}
+2026-10-30 15:21:55,863 [holevo.py] => HOLEVO epoch task=5 epoch=27 {"objective": 0.3231382518175734, "p_y": 0.13304324567342235, "p_old": 0.7428598380690395, "p_null": 2.708077674042216e-07, "completeness_error": 8.659739592076221e-15, "loss_enc": -0.3231382518175734, "loss_dec": 2.0893918485498975, "weight": 1.0}
+2026-10-30 15:22:27,370 [holevo.py] => HOLEVO epoch task=5 epoch=28 {"objective": 0.3228562841790624, "p_y": 0.1303811961167524, "p_old": 0.7443955293492701, "p_null": 2.739279589773929e-07, "completeness_error": 8.141635513917814e-15, "loss_enc": -0.3228562841790624, "loss_dec": 2.0962790447622064, "weight": 1.0}
+2026-10-30 15:22:58,255 [holevo.py] => HOLEVO epoch task=5 epoch=29 {"objective": 0.32316095575236337, "p_y": 0.1337853932562268, "p_old": 0.7387801297353013, "p_null": 2.802750019807595e-07, "completeness_error": 8.326672684688674e-15, "loss_enc": -0.32316095575236337, "loss_dec": 2.0610237122273682, "weight": 1.0}
+2026-10-30 15:23:29,270 [holevo.py] => HOLEVO epoch task=5 epoch=30 {"objective": 0.3233604519482148, "p_y": 0.12777981736690178, "p_old": 0.7426075834805601, "p_null": 2.8752612664563764e-07, "completeness_error": 1.0103029524088925e-14, "loss_enc": -0.3233604519482148, "loss_dec": 2.1381777816559437, "weight": 1.0}
+2026-10-30 15:23:38,484 [RSIAT_adapter.py] => Task 5, Epoch 30/30 => Loss 3.417, Loss_c 2.218, Losses_rt 1.199, Train_accy 81.57, Test_accy 85.12, Time 31.02s
+2026-10-30 15:23:38,485 [RSIAT_adapter.py] => Task 5 peak GPU memory: 4969.86 MiB
+2026-10-30 15:24:16,970 [holevo.py] => HOLEVO oracle task=5 phase=end {"oracle": {"vn": 0.31935775571356334, "mcr2": 23.659504921473328, "spread": 0.7252622165025017}, "stale": {"vn": 0.32258519380223477, "mcr2": 23.907306547436896, "spread": 0.7282210757071291}, "I_orc": 0.2239264692399675, "p_old_on_new": 0.7387175164710327, "trace_distance": {"mean": 0.017391535146033997, "max": 0.026658351095540135}}
+2026-10-30 15:24:16,971 [holevo.py] => HOLEVO end task=5 lambdas={"enc": null, "dec": null}
+2026-10-30 15:24:39,466 [base.py] => CA Task 5 => Loss 0.072, Test_accy skipped
+2026-10-30 15:24:41,617 [base.py] => CA Task 5 => Loss 0.064, Test_accy skipped
+2026-10-30 15:24:43,816 [base.py] => CA Task 5 => Loss 0.066, Test_accy skipped
+2026-10-30 15:24:45,967 [base.py] => CA Task 5 => Loss 0.061, Test_accy skipped
+2026-10-30 15:24:48,117 [base.py] => CA Task 5 => Loss 0.056, Test_accy skipped
+2026-10-30 15:24:50,298 [base.py] => CA Task 5 => Loss 0.055, Test_accy skipped
+2026-10-30 15:24:52,474 [base.py] => CA Task 5 => Loss 0.058, Test_accy skipped
+2026-10-30 15:24:54,594 [base.py] => CA Task 5 => Loss 0.057, Test_accy skipped
+2026-10-30 15:24:56,733 [base.py] => CA Task 5 => Loss 0.059, Test_accy skipped
+2026-10-30 15:25:07,482 [base.py] => CA Task 5 => Loss 0.059, Test_accy 85.440
+2026-10-30 15:25:38,473 [qsd.py] => QSD task=5 head=linear top1=85.44 old=85.41 new=85.57 task_pred=87.36 pair_ratio=1.2481944444444446
+2026-10-30 15:25:38,473 [qsd.py] => QSD tasks head=linear: [88.14, 84.08, 85.91, 84.97, 83.36, 85.57]
+2026-10-30 15:25:38,473 [qsd.py] => QSD mech head=linear: {"task_prediction": 87.36, "pair_ratio": 1.2481944444444446}
+2026-10-30 15:25:38,473 [qsd.py] => QSD curve head=linear: [96.05, 91.37, 90.01, 88.54, 86.32, 85.44]
+2026-10-30 15:25:38,473 [qsd.py] => QSD task=5 head=ridge_stats top1=84.21 old=84.24 new=84.08 task_pred=86.78 pair_ratio=0.9796874999999999
+2026-10-30 15:25:38,473 [qsd.py] => QSD tasks head=ridge_stats: [86.02, 83.0, 82.55, 86.01, 83.36, 84.08]
+2026-10-30 15:25:38,473 [qsd.py] => QSD mech head=ridge_stats: {"task_prediction": 86.78, "pair_ratio": 0.9796874999999999}
+2026-10-30 15:25:38,473 [qsd.py] => QSD curve head=ridge_stats: [95.2, 91.66, 89.9, 88.02, 85.93, 84.21]
+2026-10-30 15:25:38,473 [qsd.py] => QSD task=5 head=pgm_stats top1=84.56 old=85.05 new=82.29 task_pred=86.83 pair_ratio=1.102
+2026-10-30 15:25:38,474 [qsd.py] => QSD tasks head=pgm_stats: [90.68, 83.62, 82.55, 85.32, 81.89, 82.29]
+2026-10-30 15:25:38,474 [qsd.py] => QSD mech head=pgm_stats: {"task_prediction": 86.83, "pair_ratio": 1.102}
+2026-10-30 15:25:38,474 [qsd.py] => QSD curve head=pgm_stats: [96.05, 90.48, 88.62, 87.83, 85.84, 84.56]
+2026-10-30 15:25:38,474 [qsd.py] => QSD task=5 head=fuse_ridge_stats_b0p25 top1=86.21 old=86.23 new=86.16 task_pred=88.08 pair_ratio=1.2105714285714286
+2026-10-30 15:25:38,474 [qsd.py] => QSD tasks head=fuse_ridge_stats_b0p25: [88.56, 85.01, 86.91, 86.01, 84.1, 86.16]
+2026-10-30 15:25:38,474 [qsd.py] => QSD mech head=fuse_ridge_stats_b0p25: {"task_prediction": 88.08, "pair_ratio": 1.2105714285714286}
+2026-10-30 15:25:38,474 [qsd.py] => QSD curve head=fuse_ridge_stats_b0p25: [96.33, 91.29, 90.47, 89.21, 87.04, 86.21]
+2026-10-30 15:25:38,474 [qsd.py] => QSD task=5 head=fuse_ridge_stats_b0p5 top1=86.05 old=86.0 new=86.31 task_pred=88.11 pair_ratio=1.0980519480519477
+2026-10-30 15:25:38,474 [qsd.py] => QSD tasks head=fuse_ridge_stats_b0p5: [87.99, 85.16, 85.74, 86.36, 84.29, 86.31]
+2026-10-30 15:25:38,474 [qsd.py] => QSD mech head=fuse_ridge_stats_b0p5: {"task_prediction": 88.11, "pair_ratio": 1.0980519480519477}
+2026-10-30 15:25:38,474 [qsd.py] => QSD curve head=fuse_ridge_stats_b0p5: [96.33, 91.96, 90.36, 89.25, 86.97, 86.05]
+2026-10-30 15:25:38,474 [qsd.py] => QSD task=5 head=fuse_ridge_stats_b1 top1=85.68 old=85.67 new=85.71 task_pred=87.82 pair_ratio=1.0830000000000002
+2026-10-30 15:25:38,474 [qsd.py] => QSD tasks head=fuse_ridge_stats_b1: [87.01, 84.7, 85.57, 86.53, 84.29, 85.71]
+2026-10-30 15:25:38,474 [qsd.py] => QSD mech head=fuse_ridge_stats_b1: {"task_prediction": 87.82, "pair_ratio": 1.0830000000000002}
+2026-10-30 15:25:38,474 [qsd.py] => QSD curve head=fuse_ridge_stats_b1: [96.19, 91.96, 90.11, 89.05, 86.97, 85.68]
+2026-10-30 15:25:38,474 [qsd.py] => QSD task=5 head=fuse_ridge_stats_b2 top1=85.41 old=85.44 new=85.27 task_pred=87.63 pair_ratio=1.059879518072289
+2026-10-30 15:25:38,474 [qsd.py] => QSD tasks head=fuse_ridge_stats_b2: [86.72, 84.7, 84.9, 86.53, 84.1, 85.27]
+2026-10-30 15:25:38,474 [qsd.py] => QSD mech head=fuse_ridge_stats_b2: {"task_prediction": 87.63, "pair_ratio": 1.059879518072289}
+2026-10-30 15:25:38,474 [qsd.py] => QSD curve head=fuse_ridge_stats_b2: [95.9, 91.81, 90.16, 88.85, 86.78, 85.41]
+2026-10-30 15:25:38,474 [qsd.py] => QSD task=5 head=fuse_ridge_stats_b4 top1=84.85 old=84.89 new=84.67 task_pred=87.26 pair_ratio=1.007
+2026-10-30 15:25:38,474 [qsd.py] => QSD tasks head=fuse_ridge_stats_b4: [86.44, 83.62, 83.89, 86.53, 83.73, 84.67]
+2026-10-30 15:25:38,474 [qsd.py] => QSD mech head=fuse_ridge_stats_b4: {"task_prediction": 87.26, "pair_ratio": 1.007}
+2026-10-30 15:25:38,474 [qsd.py] => QSD curve head=fuse_ridge_stats_b4: [95.62, 91.81, 90.01, 88.62, 86.36, 84.85]
+2026-10-30 15:25:38,474 [qsd.py] => QSD task=5 head=fuse_pgm_stats_b0p25 top1=85.84 old=85.84 new=85.86 task_pred=87.84 pair_ratio=1.1526666666666665
+2026-10-30 15:25:38,474 [qsd.py] => QSD tasks head=fuse_pgm_stats_b0p25: [88.98, 84.39, 86.07, 85.66, 83.36, 85.86]
+2026-10-30 15:25:38,474 [qsd.py] => QSD mech head=fuse_pgm_stats_b0p25: {"task_prediction": 87.84, "pair_ratio": 1.1526666666666665}
+2026-10-30 15:25:38,474 [qsd.py] => QSD curve head=fuse_pgm_stats_b0p25: [96.05, 91.22, 90.06, 89.05, 86.84, 85.84]
+2026-10-30 15:25:38,474 [qsd.py] => QSD task=5 head=fuse_pgm_stats_b0p5 top1=86.29 old=86.32 new=86.16 task_pred=88.32 pair_ratio=1.0925000000000002
+2026-10-30 15:25:38,474 [qsd.py] => QSD tasks head=fuse_pgm_stats_b0p5: [89.41, 85.16, 86.07, 86.18, 84.1, 86.16]
+2026-10-30 15:25:38,474 [qsd.py] => QSD mech head=fuse_pgm_stats_b0p5: {"task_prediction": 88.32, "pair_ratio": 1.0925000000000002}
+2026-10-30 15:25:38,474 [qsd.py] => QSD curve head=fuse_pgm_stats_b0p5: [96.05, 91.37, 90.06, 89.21, 86.97, 86.29]
+2026-10-30 15:25:38,474 [qsd.py] => QSD task=5 head=fuse_pgm_stats_b1 top1=86.13 old=86.13 new=86.16 task_pred=88.27 pair_ratio=1.0426250000000001
+2026-10-30 15:25:38,474 [qsd.py] => QSD tasks head=fuse_pgm_stats_b1: [89.69, 84.54, 85.23, 86.18, 84.29, 86.16]
+2026-10-30 15:25:38,474 [qsd.py] => QSD mech head=fuse_pgm_stats_b1: {"task_prediction": 88.27, "pair_ratio": 1.0426250000000001}
+2026-10-30 15:25:38,474 [qsd.py] => QSD curve head=fuse_pgm_stats_b1: [96.19, 91.44, 90.06, 88.97, 86.97, 86.13]
+2026-10-30 15:25:38,474 [qsd.py] => QSD task=5 head=fuse_pgm_stats_b2 top1=86.05 old=86.1 new=85.86 task_pred=88.27 pair_ratio=1.0049397590361446
+2026-10-30 15:25:38,474 [qsd.py] => QSD tasks head=fuse_pgm_stats_b2: [90.82, 84.85, 84.23, 86.18, 83.36, 85.86]
+2026-10-30 15:25:38,474 [qsd.py] => QSD mech head=fuse_pgm_stats_b2: {"task_prediction": 88.27, "pair_ratio": 1.0049397590361446}
+2026-10-30 15:25:38,474 [qsd.py] => QSD curve head=fuse_pgm_stats_b2: [96.19, 91.44, 90.31, 89.05, 86.94, 86.05]
+2026-10-30 15:25:38,474 [qsd.py] => QSD task=5 head=fuse_pgm_stats_b4 top1=85.73 old=85.93 new=84.82 task_pred=87.90 pair_ratio=1.0625925925925925
+2026-10-30 15:25:38,474 [qsd.py] => QSD tasks head=fuse_pgm_stats_b4: [90.68, 85.01, 83.72, 86.01, 83.18, 84.82]
+2026-10-30 15:25:38,474 [qsd.py] => QSD mech head=fuse_pgm_stats_b4: {"task_prediction": 87.9, "pair_ratio": 1.0625925925925925}
+2026-10-30 15:25:38,474 [qsd.py] => QSD curve head=fuse_pgm_stats_b4: [96.19, 91.14, 89.85, 88.66, 86.75, 85.73]
+2026-10-30 15:25:38,474 [qsd.py] => QSD task=5 diag={"ridge_sensitivity": {"0.01": 84.34, "0.1": 84.21, "1.0": 84.8}, "fuse_scale": {"ridge_stats": 57.780729855589364, "pgm_stats": 5.765961234733383}} seconds=22.3
+2026-10-30 15:25:38,492 [trainer.py] => CNN: {'total': 85.44, '00-19': 88.14, '20-39': 84.08, '40-59': 85.91, '60-79': 84.97, '80-99': 83.36, '100-119': 85.57, 'old': 85.41, 'new': 85.57}
+2026-10-30 15:25:38,493 [trainer.py] => Continual metrics after task 5: BWT=-3.4400, forgetting=3.4400, task_acc=[88.14, 84.08, 85.91, 84.97, 83.36, 85.57]
+2026-10-30 15:25:38,493 [trainer.py] => CNN top1 curve: [96.05, 91.37, 90.01, 88.54, 86.32, 85.44]
+2026-10-30 15:25:38,493 [trainer.py] => CNN top5 curve: [99.58, 98.67, 97.74, 96.64, 95.83, 95.51]
+2026-10-30 15:25:38,493 [trainer.py] => Average Accuracy (CNN): 89.62166666666667
+2026-10-30 15:25:38,493 [trainer.py] => All params: 87080448
+2026-10-30 15:25:38,493 [trainer.py] => Trainable params: 1281792
+2026-10-30 15:25:38,494 [RSIAT_adapter.py] => Learning on 120-140
+2026-10-30 15:25:58,538 [holevo.py] => HOLEVO start task=6 old=120 new=20 {"queue": {"120": 88, "121": 141, "122": 161, "123": 66, "124": 142, "125": 64, "126": 63, "127": 138, "128": 66, "129": 58, "130": 184, "131": 133, "132": 64, "133": 40, "134": 59, "135": 117, "136": 140, "137": 89, "138": 250, "139": 82}, "residual_share": 0.8855656697009103, "eta": null}
+2026-10-30 15:26:41,822 [holevo.py] => HOLEVO oracle task=6 phase=start {"oracle": {"vn": 0.3103586853212539, "mcr2": 23.417056237702337, "spread": 0.7060214983015058}, "stale": {"vn": 0.3135496787853749, "mcr2": 23.586709163422807, "spread": 0.7075119173470541}, "I_orc": 0.22591526721664368, "p_old_on_new": 0.7383596849670039}
+2026-10-30 15:26:41,824 [toolkit.py] => All params: 87244544
+2026-10-30 15:26:41,824 [toolkit.py] => Trainable params: 1445888
+2026-10-30 15:27:06,795 [holevo.py] => HOLEVO epoch task=6 epoch=1 {"objective": 0.31454517830360706, "p_y": 0.1337018149400102, "p_old": 0.7409123360008287, "p_null": 2.80564325554849e-07, "completeness_error": 5.995204332975845e-15, "loss_enc": -0.31454517830360706, "loss_dec": 2.098290341448487, "weight": 0.0}
+2026-10-30 15:27:36,352 [holevo.py] => HOLEVO epoch task=6 epoch=2 {"objective": 0.31520717266019477, "p_y": 0.13426979652680127, "p_old": 0.7413068556044613, "p_null": 2.77888288468429e-07, "completeness_error": 7.827072323607354e-15, "loss_enc": -0.31520717266019477, "loss_dec": 2.0813401953416957, "weight": 0.25}
+2026-10-30 15:28:02,130 [holevo.py] => HOLEVO epoch task=6 epoch=3 {"objective": 0.31574024558192215, "p_y": 0.13241933099665698, "p_old": 0.7442656518295868, "p_null": 2.7941690943019925e-07, "completeness_error": 6.8833827526759706e-15, "loss_enc": -0.31574024558192215, "loss_dec": 2.0799730164180703, "weight": 0.5}
+2026-10-30 15:28:22,888 [holevo.py] => HOLEVO epoch task=6 epoch=4 {"objective": 0.3154196085707319, "p_y": 0.14420510949835788, "p_old": 0.7467956105105756, "p_null": 2.4876919507663834e-07, "completeness_error": 7.93809462606987e-15, "loss_enc": -0.3154196085707319, "loss_dec": 2.0143848468015975, "weight": 0.75}
+2026-10-30 15:28:54,591 [holevo.py] => HOLEVO epoch task=6 epoch=5 {"objective": 0.3158804718219901, "p_y": 0.13752073743929327, "p_old": 0.7428604405047216, "p_null": 2.7484953494928534e-07, "completeness_error": 7.494005416219807e-15, "loss_enc": -0.3158804718219901, "loss_dec": 2.0558464541674364, "weight": 1.0}
+2026-10-30 15:29:26,176 [holevo.py] => HOLEVO epoch task=6 epoch=6 {"objective": 0.3159074844204548, "p_y": 0.14636490461176546, "p_old": 0.7392580497584855, "p_null": 2.709736606250306e-07, "completeness_error": 7.993605777301127e-15, "loss_enc": -0.3159074844204548, "loss_dec": 1.9910671632185217, "weight": 1.0}
+2026-10-30 15:29:52,726 [holevo.py] => HOLEVO epoch task=6 epoch=7 {"objective": 0.31577573281446, "p_y": 0.13622486449646937, "p_old": 0.7407977081952306, "p_null": 2.8282345459944736e-07, "completeness_error": 7.216449660063518e-15, "loss_enc": -0.31577573281446, "loss_dec": 2.064559964143017, "weight": 1.0}
+2026-10-30 15:30:17,276 [holevo.py] => HOLEVO epoch task=6 epoch=8 {"objective": 0.3163220393395337, "p_y": 0.12592992805116088, "p_old": 0.7535244101064571, "p_null": 2.857089252606672e-07, "completeness_error": 7.993605777301127e-15, "loss_enc": -0.3163220393395337, "loss_dec": 2.1210372008972165, "weight": 1.0}
+2026-10-30 15:30:42,502 [holevo.py] => HOLEVO epoch task=6 epoch=9 {"objective": 0.3159114412468963, "p_y": 0.13839993152941166, "p_old": 0.7441237896407568, "p_null": 2.7257372612531146e-07, "completeness_error": 6.050715484207103e-15, "loss_enc": -0.3159114412468963, "loss_dec": 2.029200119108559, "weight": 1.0}
+2026-10-30 15:31:07,651 [holevo.py] => HOLEVO epoch task=6 epoch=10 {"objective": 0.31590111709663754, "p_y": 0.1286739930089282, "p_old": 0.7518225821690991, "p_null": 2.7966642392842065e-07, "completeness_error": 1.0047518372857667e-14, "loss_enc": -0.31590111709663754, "loss_dec": 2.135442917925567, "weight": 1.0}
+2026-10-30 15:31:32,679 [holevo.py] => HOLEVO epoch task=6 epoch=11 {"objective": 0.3160943587150915, "p_y": 0.13967084890153808, "p_old": 0.7415246668413438, "p_null": 2.7549268009037113e-07, "completeness_error": 8.715250743307479e-15, "loss_enc": -0.3160943587150915, "loss_dec": 2.0310316776024617, "weight": 1.0}
+2026-10-30 15:31:57,867 [holevo.py] => HOLEVO epoch task=6 epoch=12 {"objective": 0.31591923155785806, "p_y": 0.14381234078050342, "p_old": 0.7382108154244944, "p_null": 2.734723170510436e-07, "completeness_error": 6.328271240363392e-15, "loss_enc": -0.31591923155785806, "loss_dec": 1.9979726481714108, "weight": 1.0}
+2026-10-30 15:32:22,651 [holevo.py] => HOLEVO epoch task=6 epoch=13 {"objective": 0.3160297950184809, "p_y": 0.14157209072962376, "p_old": 0.7522728008781644, "p_null": 2.4833809428394374e-07, "completeness_error": 1.199040866595169e-14, "loss_enc": -0.3160297950184809, "loss_dec": 2.016975272793511, "weight": 1.0}
+2026-10-30 15:32:47,799 [holevo.py] => HOLEVO epoch task=6 epoch=14 {"objective": 0.315979446053516, "p_y": 0.13765172871099185, "p_old": 0.7458650664336345, "p_null": 2.666310517181121e-07, "completeness_error": 8.770761894538737e-15, "loss_enc": -0.315979446053516, "loss_dec": 2.077442259264428, "weight": 1.0}
+2026-10-30 15:33:12,518 [holevo.py] => HOLEVO epoch task=6 epoch=15 {"objective": 0.31598646395757257, "p_y": 0.135662951843588, "p_old": 0.7464255529857874, "p_null": 2.73628130980615e-07, "completeness_error": 8.604228440844963e-15, "loss_enc": -0.31598646395757257, "loss_dec": 2.067886747392862, "weight": 1.0}
+2026-10-30 15:33:37,573 [holevo.py] => HOLEVO epoch task=6 epoch=16 {"objective": 0.316494414138896, "p_y": 0.13305965399337266, "p_old": 0.7490200784920512, "p_null": 2.7370581638282003e-07, "completeness_error": 1.0769163338864018e-14, "loss_enc": -0.316494414138896, "loss_dec": 2.108362886322772, "weight": 1.0}
+2026-10-30 15:34:02,789 [holevo.py] => HOLEVO epoch task=6 epoch=17 {"objective": 0.31626033780789353, "p_y": 0.14061538869343876, "p_old": 0.7430784368086495, "p_null": 2.6611022293456946e-07, "completeness_error": 7.827072323607354e-15, "loss_enc": -0.31626033780789353, "loss_dec": 2.028545191160809, "weight": 1.0}
+2026-10-30 15:34:27,509 [holevo.py] => HOLEVO epoch task=6 epoch=18 {"objective": 0.3162225880259126, "p_y": 0.1316031984875514, "p_old": 0.7479317155206946, "p_null": 2.8709110419375454e-07, "completeness_error": 6.439293542825908e-15, "loss_enc": -0.3162225880259126, "loss_dec": 2.115330626929712, "weight": 1.0}
+2026-10-30 15:34:52,426 [holevo.py] => HOLEVO epoch task=6 epoch=19 {"objective": 0.31619792822955356, "p_y": 0.14273247718197807, "p_old": 0.7428147428392795, "p_null": 2.712573155081324e-07, "completeness_error": 7.771561172376096e-15, "loss_enc": -0.31619792822955356, "loss_dec": 2.0083464295182214, "weight": 1.0}
+2026-10-30 15:35:17,384 [holevo.py] => HOLEVO epoch task=6 epoch=20 {"objective": 0.3162572968749179, "p_y": 0.1431680254267405, "p_old": 0.7383686765881401, "p_null": 2.757747516645338e-07, "completeness_error": 7.716050021144838e-15, "loss_enc": -0.3162572968749179, "loss_dec": 2.009942659093428, "weight": 1.0}
+2026-10-30 15:35:42,356 [holevo.py] => HOLEVO epoch task=6 epoch=21 {"objective": 0.3161290623314801, "p_y": 0.14349798347330836, "p_old": 0.7396915428074888, "p_null": 2.7530411732804113e-07, "completeness_error": 6.5503158452884236e-15, "loss_enc": -0.3161290623314801, "loss_dec": 2.00100981935738, "weight": 1.0}
+2026-10-30 15:36:07,385 [holevo.py] => HOLEVO epoch task=6 epoch=22 {"objective": 0.3160815318258158, "p_y": 0.12996652022308747, "p_old": 0.7477324282725222, "p_null": 2.8209375379247726e-07, "completeness_error": 5.051514762044462e-15, "loss_enc": -0.3160815318258158, "loss_dec": 2.1012921059509297, "weight": 1.0}
+2026-10-30 15:36:31,933 [holevo.py] => HOLEVO epoch task=6 epoch=23 {"objective": 0.3168230966875463, "p_y": 0.1316017758580689, "p_old": 0.752077690112368, "p_null": 2.8046701427494884e-07, "completeness_error": 6.439293542825908e-15, "loss_enc": -0.3168230966875463, "loss_dec": 2.077342977251977, "weight": 1.0}
+2026-10-30 15:36:57,125 [holevo.py] => HOLEVO epoch task=6 epoch=24 {"objective": 0.3161605851207554, "p_y": 0.14096351829554646, "p_old": 0.7425019738058861, "p_null": 2.672938884911844e-07, "completeness_error": 7.716050021144838e-15, "loss_enc": -0.3161605851207554, "loss_dec": 2.0426180940543714, "weight": 1.0}
+2026-10-30 15:37:22,067 [holevo.py] => HOLEVO epoch task=6 epoch=25 {"objective": 0.3162844071401463, "p_y": 0.14687973275428037, "p_old": 0.7402008296873455, "p_null": 2.616024853685741e-07, "completeness_error": 1.3322676295501878e-14, "loss_enc": -0.3162844071401463, "loss_dec": 1.9776811112725206, "weight": 1.0}
+2026-10-30 15:37:47,041 [holevo.py] => HOLEVO epoch task=6 epoch=26 {"objective": 0.31625814955663845, "p_y": 0.13671926430210107, "p_old": 0.7446312066071804, "p_null": 2.744878736371284e-07, "completeness_error": 7.16093850883226e-15, "loss_enc": -0.31625814955663845, "loss_dec": 2.048972571187391, "weight": 1.0}
+2026-10-30 15:38:12,165 [holevo.py] => HOLEVO epoch task=6 epoch=27 {"objective": 0.3160468475794561, "p_y": 0.13507762166277806, "p_old": 0.7438899002796955, "p_null": 2.854716698360736e-07, "completeness_error": 7.271960811294775e-15, "loss_enc": -0.3160468475794561, "loss_dec": 2.069171770356359, "weight": 1.0}
+2026-10-30 15:38:36,610 [holevo.py] => HOLEVO epoch task=6 epoch=28 {"objective": 0.31668392390363675, "p_y": 0.1333264673379398, "p_old": 0.7471927781272814, "p_null": 2.77737967756418e-07, "completeness_error": 7.993605777301127e-15, "loss_enc": -0.31668392390363675, "loss_dec": 2.11712336609723, "weight": 1.0}
+2026-10-30 15:39:01,635 [holevo.py] => HOLEVO epoch task=6 epoch=29 {"objective": 0.31639742342686816, "p_y": 0.14553435575249318, "p_old": 0.7397067064609837, "p_null": 2.689719604687672e-07, "completeness_error": 8.93729534823251e-15, "loss_enc": -0.31639742342686816, "loss_dec": 1.9811635808511412, "weight": 1.0}
+2026-10-30 15:39:26,788 [holevo.py] => HOLEVO epoch task=6 epoch=30 {"objective": 0.3160843049541858, "p_y": 0.15226291095357714, "p_old": 0.7324439586336802, "p_null": 2.6265633381533563e-07, "completeness_error": 7.66053886991358e-15, "loss_enc": -0.3160843049541858, "loss_dec": 1.938932010558625, "weight": 1.0}
+2026-10-30 15:39:37,351 [RSIAT_adapter.py] => Task 6, Epoch 30/30 => Loss 3.353, Loss_c 2.163, Losses_rt 1.190, Train_accy 80.19, Test_accy 84.74, Time 25.15s
+2026-10-30 15:39:37,351 [RSIAT_adapter.py] => Task 6 peak GPU memory: 4981.92 MiB
+2026-10-30 15:40:20,655 [holevo.py] => HOLEVO oracle task=6 phase=end {"oracle": {"vn": 0.311272402963476, "mcr2": 23.464139921624174, "spread": 0.7059832792470349}, "stale": {"vn": 0.3153898797474455, "mcr2": 23.65223646861818, "spread": 0.7077406971311181}, "I_orc": 0.22786858564314874, "p_old_on_new": 0.7337470906825985, "trace_distance": {"mean": 0.01717744869392922, "max": 0.0291913892530669}}
+2026-10-30 15:40:20,655 [holevo.py] => HOLEVO end task=6 lambdas={"enc": null, "dec": null}
+2026-10-30 15:40:41,475 [base.py] => CA Task 6 => Loss 0.068, Test_accy skipped
+2026-10-30 15:40:44,063 [base.py] => CA Task 6 => Loss 0.065, Test_accy skipped
+2026-10-30 15:40:46,649 [base.py] => CA Task 6 => Loss 0.056, Test_accy skipped
+2026-10-30 15:40:49,119 [base.py] => CA Task 6 => Loss 0.056, Test_accy skipped
+2026-10-30 15:40:51,679 [base.py] => CA Task 6 => Loss 0.059, Test_accy skipped
+2026-10-30 15:40:54,278 [base.py] => CA Task 6 => Loss 0.056, Test_accy skipped
+2026-10-30 15:40:56,700 [base.py] => CA Task 6 => Loss 0.053, Test_accy skipped
+2026-10-30 15:40:59,191 [base.py] => CA Task 6 => Loss 0.053, Test_accy skipped
+2026-10-30 15:41:01,799 [base.py] => CA Task 6 => Loss 0.054, Test_accy skipped
+2026-10-30 15:41:14,120 [base.py] => CA Task 6 => Loss 0.051, Test_accy 85.060
+2026-10-30 15:41:45,486 [qsd.py] => QSD task=6 head=linear top1=85.06 old=84.74 new=87.23 task_pred=86.88 pair_ratio=1.1428418803418805
+2026-10-30 15:41:45,487 [qsd.py] => QSD tasks head=linear: [86.44, 83.77, 84.9, 84.8, 82.26, 85.71, 87.23]
+2026-10-30 15:41:45,487 [qsd.py] => QSD mech head=linear: {"task_prediction": 86.88, "pair_ratio": 1.1428418803418805}
+2026-10-30 15:41:45,487 [qsd.py] => QSD curve head=linear: [96.05, 91.37, 90.01, 88.54, 86.32, 85.44, 85.06]
+2026-10-30 15:41:45,487 [qsd.py] => QSD task=6 head=ridge_stats top1=83.55 old=83.09 new=86.68 task_pred=85.78 pair_ratio=1.0060763888888888
+2026-10-30 15:41:45,487 [qsd.py] => QSD tasks head=ridge_stats: [84.32, 82.38, 82.21, 84.8, 81.52, 83.04, 86.68]
+2026-10-30 15:41:45,487 [qsd.py] => QSD mech head=ridge_stats: {"task_prediction": 85.78, "pair_ratio": 1.0060763888888888}
+2026-10-30 15:41:45,487 [qsd.py] => QSD curve head=ridge_stats: [95.2, 91.66, 89.9, 88.02, 85.93, 84.21, 83.55]
+2026-10-30 15:41:45,487 [qsd.py] => QSD task=6 head=pgm_stats top1=83.59 old=83.38 new=85.04 task_pred=85.81 pair_ratio=1.015
+2026-10-30 15:41:45,487 [qsd.py] => QSD tasks head=pgm_stats: [89.27, 82.53, 81.04, 84.63, 79.48, 82.14, 85.04]
+2026-10-30 15:41:45,487 [qsd.py] => QSD mech head=pgm_stats: {"task_prediction": 85.81, "pair_ratio": 1.015}
+2026-10-30 15:41:45,487 [qsd.py] => QSD curve head=pgm_stats: [96.05, 90.48, 88.62, 87.83, 85.84, 84.56, 83.59]
+2026-10-30 15:41:45,487 [qsd.py] => QSD task=6 head=fuse_ridge_stats_b0p25 top1=85.39 old=85.12 new=87.23 task_pred=87.18 pair_ratio=1.1309523809523812
+2026-10-30 15:41:45,487 [qsd.py] => QSD tasks head=fuse_ridge_stats_b0p25: [87.15, 83.15, 85.91, 85.49, 82.81, 85.71, 87.23]
+2026-10-30 15:41:45,487 [qsd.py] => QSD mech head=fuse_ridge_stats_b0p25: {"task_prediction": 87.18, "pair_ratio": 1.1309523809523812}
+2026-10-30 15:41:45,487 [qsd.py] => QSD curve head=fuse_ridge_stats_b0p25: [96.33, 91.29, 90.47, 89.21, 87.04, 86.21, 85.39]
+2026-10-30 15:41:45,487 [qsd.py] => QSD task=6 head=fuse_ridge_stats_b0p5 top1=85.36 old=85.04 new=87.59 task_pred=87.18 pair_ratio=1.1164529914529915
+2026-10-30 15:41:45,487 [qsd.py] => QSD tasks head=fuse_ridge_stats_b0p5: [86.58, 83.46, 85.4, 86.01, 82.62, 85.71, 87.59]
+2026-10-30 15:41:45,487 [qsd.py] => QSD mech head=fuse_ridge_stats_b0p5: {"task_prediction": 87.18, "pair_ratio": 1.1164529914529915}
+2026-10-30 15:41:45,487 [qsd.py] => QSD curve head=fuse_ridge_stats_b0p5: [96.33, 91.96, 90.36, 89.25, 86.97, 86.05, 85.36]
+2026-10-30 15:41:45,487 [qsd.py] => QSD task=6 head=fuse_ridge_stats_b1 top1=84.95 old=84.58 new=87.41 task_pred=86.88 pair_ratio=1.0739959839357431
+2026-10-30 15:41:45,487 [qsd.py] => QSD tasks head=fuse_ridge_stats_b1: [85.45, 83.15, 85.4, 85.66, 82.62, 84.97, 87.41]
+2026-10-30 15:41:45,487 [qsd.py] => QSD mech head=fuse_ridge_stats_b1: {"task_prediction": 86.88, "pair_ratio": 1.0739959839357431}
+2026-10-30 15:41:45,487 [qsd.py] => QSD curve head=fuse_ridge_stats_b1: [96.19, 91.96, 90.11, 89.05, 86.97, 85.68, 84.95]
+2026-10-30 15:41:45,487 [qsd.py] => QSD task=6 head=fuse_ridge_stats_b2 top1=84.53 old=84.16 new=87.04 task_pred=86.51 pair_ratio=1.0785294117647057
+2026-10-30 15:41:45,487 [qsd.py] => QSD tasks head=fuse_ridge_stats_b2: [85.31, 82.69, 84.73, 85.32, 82.07, 84.52, 87.04]
+2026-10-30 15:41:45,487 [qsd.py] => QSD mech head=fuse_ridge_stats_b2: {"task_prediction": 86.51, "pair_ratio": 1.0785294117647057}
+2026-10-30 15:41:45,487 [qsd.py] => QSD curve head=fuse_ridge_stats_b2: [95.9, 91.81, 90.16, 88.85, 86.78, 85.41, 84.53]
+2026-10-30 15:41:45,487 [qsd.py] => QSD task=6 head=fuse_ridge_stats_b4 top1=84.08 old=83.65 new=87.04 task_pred=86.16 pair_ratio=1.0567415730337077
+2026-10-30 15:41:45,487 [qsd.py] => QSD tasks head=fuse_ridge_stats_b4: [84.89, 82.69, 83.89, 85.15, 81.7, 83.33, 87.04]
+2026-10-30 15:41:45,487 [qsd.py] => QSD mech head=fuse_ridge_stats_b4: {"task_prediction": 86.16, "pair_ratio": 1.0567415730337077}
+2026-10-30 15:41:45,487 [qsd.py] => QSD curve head=fuse_ridge_stats_b4: [95.62, 91.81, 90.01, 88.62, 86.36, 84.85, 84.08]
+2026-10-30 15:41:45,487 [qsd.py] => QSD task=6 head=fuse_pgm_stats_b0p25 top1=85.25 old=85.01 new=86.86 task_pred=87.04 pair_ratio=1.1432900432900432
+2026-10-30 15:41:45,487 [qsd.py] => QSD tasks head=fuse_pgm_stats_b0p25: [87.71, 83.31, 85.57, 84.63, 82.07, 86.01, 86.86]
+2026-10-30 15:41:45,487 [qsd.py] => QSD mech head=fuse_pgm_stats_b0p25: {"task_prediction": 87.04, "pair_ratio": 1.1432900432900432}
+2026-10-30 15:41:45,487 [qsd.py] => QSD curve head=fuse_pgm_stats_b0p25: [96.05, 91.22, 90.06, 89.05, 86.84, 85.84, 85.25]
+2026-10-30 15:41:45,487 [qsd.py] => QSD task=6 head=fuse_pgm_stats_b0p5 top1=85.39 old=85.2 new=86.68 task_pred=87.14 pair_ratio=1.1653333333333333
+2026-10-30 15:41:45,487 [qsd.py] => QSD tasks head=fuse_pgm_stats_b0p5: [87.99, 83.46, 85.57, 85.32, 82.26, 85.86, 86.68]
+2026-10-30 15:41:45,487 [qsd.py] => QSD mech head=fuse_pgm_stats_b0p5: {"task_prediction": 87.14, "pair_ratio": 1.1653333333333333}
+2026-10-30 15:41:45,487 [qsd.py] => QSD curve head=fuse_pgm_stats_b0p5: [96.05, 91.37, 90.06, 89.21, 86.97, 86.29, 85.39]
+2026-10-30 15:41:45,488 [qsd.py] => QSD task=6 head=fuse_pgm_stats_b1 top1=85.57 old=85.41 new=86.68 task_pred=87.25 pair_ratio=1.2028935185185188
+2026-10-30 15:41:45,488 [qsd.py] => QSD tasks head=fuse_pgm_stats_b1: [88.7, 83.77, 85.4, 86.18, 82.44, 85.27, 86.68]
+2026-10-30 15:41:45,488 [qsd.py] => QSD mech head=fuse_pgm_stats_b1: {"task_prediction": 87.25, "pair_ratio": 1.2028935185185188}
+2026-10-30 15:41:45,488 [qsd.py] => QSD curve head=fuse_pgm_stats_b1: [96.19, 91.44, 90.06, 88.97, 86.97, 86.13, 85.57]
+2026-10-30 15:41:45,488 [qsd.py] => QSD task=6 head=fuse_pgm_stats_b2 top1=85.46 old=85.2 new=87.23 task_pred=87.25 pair_ratio=1.1247835497835499
+2026-10-30 15:41:45,488 [qsd.py] => QSD tasks head=fuse_pgm_stats_b2: [89.27, 83.62, 84.4, 86.36, 81.7, 84.97, 87.23]
+2026-10-30 15:41:45,488 [qsd.py] => QSD mech head=fuse_pgm_stats_b2: {"task_prediction": 87.25, "pair_ratio": 1.1247835497835499}
+2026-10-30 15:41:45,488 [qsd.py] => QSD curve head=fuse_pgm_stats_b2: [96.19, 91.44, 90.31, 89.05, 86.94, 86.05, 85.46]
+2026-10-30 15:41:45,488 [qsd.py] => QSD task=6 head=fuse_pgm_stats_b4 top1=85.13 old=84.91 new=86.68 task_pred=87.00 pair_ratio=1.1043749999999999
+2026-10-30 15:41:45,488 [qsd.py] => QSD tasks head=fuse_pgm_stats_b4: [89.69, 84.08, 82.72, 86.36, 81.33, 84.23, 86.68]
+2026-10-30 15:41:45,488 [qsd.py] => QSD mech head=fuse_pgm_stats_b4: {"task_prediction": 87.0, "pair_ratio": 1.1043749999999999}
+2026-10-30 15:41:45,488 [qsd.py] => QSD curve head=fuse_pgm_stats_b4: [96.19, 91.14, 89.85, 88.66, 86.75, 85.73, 85.13]
+2026-10-30 15:41:45,488 [qsd.py] => QSD task=6 diag={"ridge_sensitivity": {"0.01": 83.41, "0.1": 83.55, "1.0": 83.59}, "fuse_scale": {"ridge_stats": 61.89226295785525, "pgm_stats": 5.640397009918599}} seconds=21.3
+2026-10-30 15:41:45,507 [trainer.py] => CNN: {'total': 85.06, '00-19': 86.44, '20-39': 83.77, '40-59': 84.9, '60-79': 84.8, '80-99': 82.26, '100-119': 85.71, '120-139': 87.23, 'old': 84.74, 'new': 87.23}
+2026-10-30 15:41:45,507 [trainer.py] => Continual metrics after task 6: BWT=-3.5583, forgetting=3.5583, task_acc=[86.44, 83.77, 84.9, 84.8, 82.26, 85.71, 87.23]
+2026-10-30 15:41:45,507 [trainer.py] => CNN top1 curve: [96.05, 91.37, 90.01, 88.54, 86.32, 85.44, 85.06]
+2026-10-30 15:41:45,507 [trainer.py] => CNN top5 curve: [99.58, 98.67, 97.74, 96.64, 95.83, 95.51, 95.39]
+2026-10-30 15:41:45,507 [trainer.py] => Average Accuracy (CNN): 88.97
+2026-10-30 15:41:45,508 [trainer.py] => All params: 87095808
+2026-10-30 15:41:45,508 [trainer.py] => Trainable params: 1297152
+2026-10-30 15:41:45,508 [RSIAT_adapter.py] => Learning on 140-160
+2026-10-30 15:42:08,704 [holevo.py] => HOLEVO start task=7 old=140 new=20 {"queue": {"140": 160, "141": 256, "142": 109, "143": 67, "144": 124, "145": 120, "146": 256, "147": 81, "148": 74, "149": 101, "150": 256, "151": 96, "152": 64, "153": 152, "154": 168, "155": 73, "156": 61, "157": 109, "158": 200, "159": 182}, "residual_share": 0.8868660598179454, "eta": null}
+2026-10-30 15:42:58,146 [holevo.py] => HOLEVO oracle task=7 phase=start {"oracle": {"vn": 0.3026947134574721, "mcr2": 22.988083362933953, "spread": 0.6891293035001296}, "stale": {"vn": 0.3064111140976592, "mcr2": 23.18899065817673, "spread": 0.6906322192488851}, "I_orc": 0.22928887541164955, "p_old_on_new": 0.7439976184929891}
+2026-10-30 15:42:58,148 [toolkit.py] => All params: 87259904
+2026-10-30 15:42:58,148 [toolkit.py] => Trainable params: 1461248
+2026-10-30 15:43:30,936 [holevo.py] => HOLEVO epoch task=7 epoch=1 {"objective": 0.30706004721106545, "p_y": 0.1253396370035387, "p_old": 0.7473803449639757, "p_null": 2.658855910912607e-07, "completeness_error": 6.6058269965196814e-15, "loss_enc": -0.30706004721106545, "loss_dec": 2.160141513648965, "weight": 0.0}
+2026-10-30 15:44:04,045 [holevo.py] => HOLEVO epoch task=7 epoch=2 {"objective": 0.3072493757647416, "p_y": 0.11369079841475352, "p_old": 0.755146753793971, "p_null": 2.6453190903340416e-07, "completeness_error": 9.547918011776346e-15, "loss_enc": -0.3072493757647416, "loss_dec": 2.2741818182639877, "weight": 0.25}
+2026-10-30 15:44:36,799 [holevo.py] => HOLEVO epoch task=7 epoch=3 {"objective": 0.30782179197193704, "p_y": 0.11846899281152523, "p_old": 0.7551498960600203, "p_null": 2.6549560336630207e-07, "completeness_error": 7.549516567451064e-15, "loss_enc": -0.30782179197193704, "loss_dec": 2.2263365199965457, "weight": 0.5}
+2026-10-30 15:45:10,213 [holevo.py] => HOLEVO epoch task=7 epoch=4 {"objective": 0.3075231338183306, "p_y": 0.12669337220145535, "p_old": 0.7561600548582046, "p_null": 2.491373641790188e-07, "completeness_error": 8.918791631155424e-15, "loss_enc": -0.3075231338183306, "loss_dec": 2.154679762586455, "weight": 0.75}
+2026-10-30 15:45:43,234 [holevo.py] => HOLEVO epoch task=7 epoch=5 {"objective": 0.30817527986398374, "p_y": 0.12156190243389331, "p_old": 0.7475635676412877, "p_null": 2.8328374686545895e-07, "completeness_error": 6.5503158452884236e-15, "loss_enc": -0.30817527986398374, "loss_dec": 2.1879072257973062, "weight": 1.0}
+2026-10-30 15:46:16,127 [holevo.py] => HOLEVO epoch task=7 epoch=6 {"objective": 0.308088591185388, "p_y": 0.12945901372444754, "p_old": 0.7444255303040284, "p_null": 2.6598822985331766e-07, "completeness_error": 7.271960811294775e-15, "loss_enc": -0.308088591185388, "loss_dec": 2.114227436655508, "weight": 1.0}
+2026-10-30 15:46:49,532 [holevo.py] => HOLEVO epoch task=7 epoch=7 {"objective": 0.3078649476046135, "p_y": 0.12696802926521966, "p_old": 0.7484266849466185, "p_null": 2.6701176329242976e-07, "completeness_error": 8.25265781638033e-15, "loss_enc": -0.3078649476046135, "loss_dec": 2.139966443261067, "weight": 1.0}
+2026-10-30 15:47:28,262 [holevo.py] => HOLEVO epoch task=7 epoch=8 {"objective": 0.3082646694816487, "p_y": 0.12115226986864057, "p_old": 0.7495809596843169, "p_null": 2.8555787811303507e-07, "completeness_error": 5.440092820663267e-15, "loss_enc": -0.3082646694816487, "loss_dec": 2.186296885416449, "weight": 1.0}
+2026-10-30 15:47:54,274 [holevo.py] => HOLEVO epoch task=7 epoch=9 {"objective": 0.3084601073397375, "p_y": 0.1252726987123001, "p_old": 0.7442019203694872, "p_null": 2.8389387604155296e-07, "completeness_error": 5.995204332975845e-15, "loss_enc": -0.3084601073397375, "loss_dec": 2.132066413272586, "weight": 1.0}
+2026-10-30 15:48:29,608 [holevo.py] => HOLEVO epoch task=7 epoch=10 {"objective": 0.3080863696944742, "p_y": 0.12178993576425118, "p_old": 0.7508021123516954, "p_null": 2.7513636794628717e-07, "completeness_error": 8.104628079763643e-15, "loss_enc": -0.3080863696944742, "loss_dec": 2.1781497479830163, "weight": 1.0}
+2026-10-30 15:49:08,079 [holevo.py] => HOLEVO epoch task=7 epoch=11 {"objective": 0.3082134290679389, "p_y": 0.12108007639755941, "p_old": 0.7481342032808173, "p_null": 2.823849604200586e-07, "completeness_error": 5.329070518200751e-15, "loss_enc": -0.3082134290679389, "loss_dec": 2.1960522204501802, "weight": 1.0}
+2026-10-30 15:49:40,639 [holevo.py] => HOLEVO epoch task=7 epoch=12 {"objective": 0.30830035115568344, "p_y": 0.12161879203297195, "p_old": 0.7493489135046572, "p_null": 2.7893256279372445e-07, "completeness_error": 1.0158540675320182e-14, "loss_enc": -0.30830035115568344, "loss_dec": 2.1877026835217315, "weight": 1.0}
+2026-10-30 15:50:13,987 [holevo.py] => HOLEVO epoch task=7 epoch=13 {"objective": 0.3083120628623439, "p_y": 0.12458116467483094, "p_old": 0.7517236281308176, "p_null": 2.672291255756487e-07, "completeness_error": 9.39988827515966e-15, "loss_enc": -0.3083120628623439, "loss_dec": 2.1577420044733637, "weight": 1.0}
+2026-10-30 15:50:46,541 [holevo.py] => HOLEVO epoch task=7 epoch=14 {"objective": 0.30847302210212646, "p_y": 0.13838436119999847, "p_old": 0.7460464822927297, "p_null": 2.5412941494277325e-07, "completeness_error": 1.0880185641326534e-14, "loss_enc": -0.30847302210212646, "loss_dec": 2.0310423164798586, "weight": 1.0}
+2026-10-30 15:51:19,463 [holevo.py] => HOLEVO epoch task=7 epoch=15 {"objective": 0.30855471499304804, "p_y": 0.1299476080264109, "p_old": 0.7428631264424339, "p_null": 2.675300598330739e-07, "completeness_error": 7.438494264988549e-15, "loss_enc": -0.30855471499304804, "loss_dec": 2.1107288878963195, "weight": 1.0}
+2026-10-30 15:51:52,763 [holevo.py] => HOLEVO epoch task=7 epoch=16 {"objective": 0.3084135417959468, "p_y": 0.1280403743783757, "p_old": 0.7463000481023859, "p_null": 2.6870255111044437e-07, "completeness_error": 7.364479396680205e-15, "loss_enc": -0.3084135417959468, "loss_dec": 2.1191860641211266, "weight": 1.0}
+2026-10-30 15:52:25,617 [holevo.py] => HOLEVO epoch task=7 epoch=17 {"objective": 0.3085522045681195, "p_y": 0.13508617059971306, "p_old": 0.7451950441242752, "p_null": 2.6385708137638855e-07, "completeness_error": 1.1823875212257917e-14, "loss_enc": -0.3085522045681195, "loss_dec": 2.0618496189792808, "weight": 1.0}
+2026-10-30 15:52:58,997 [holevo.py] => HOLEVO epoch task=7 epoch=18 {"objective": 0.30835742855830567, "p_y": 0.12023551760589318, "p_old": 0.7502559094601132, "p_null": 2.7489123290145176e-07, "completeness_error": 7.438494264988549e-15, "loss_enc": -0.30835742855830567, "loss_dec": 2.214577818265397, "weight": 1.0}
+2026-10-30 15:53:40,171 [holevo.py] => HOLEVO epoch task=7 epoch=19 {"objective": 0.30858788628561606, "p_y": 0.12987324253645827, "p_old": 0.7441786849191108, "p_null": 2.806104522972926e-07, "completeness_error": 6.994405055138486e-15, "loss_enc": -0.30858788628561606, "loss_dec": 2.1173076035065606, "weight": 1.0}
+2026-10-30 15:54:09,316 [holevo.py] => HOLEVO epoch task=7 epoch=20 {"objective": 0.3084888152524839, "p_y": 0.13004916821577464, "p_old": 0.7514993569030874, "p_null": 2.6043122616305793e-07, "completeness_error": 8.826273045769994e-15, "loss_enc": -0.3084888152524839, "loss_dec": 2.1139394007948837, "weight": 1.0}
+2026-10-30 15:54:47,737 [holevo.py] => HOLEVO epoch task=7 epoch=21 {"objective": 0.30828370534967386, "p_y": 0.12499563182040445, "p_old": 0.7510669945740333, "p_null": 2.6462116836194004e-07, "completeness_error": 8.511709855459534e-15, "loss_enc": -0.30828370534967386, "loss_dec": 2.1505600682535184, "weight": 1.0}
+2026-10-30 15:55:29,370 [holevo.py] => HOLEVO epoch task=7 epoch=22 {"objective": 0.30850293383206984, "p_y": 0.12631066223927803, "p_old": 0.7476975313326405, "p_null": 2.7717138119980726e-07, "completeness_error": 1.0047518372857667e-14, "loss_enc": -0.30850293383206984, "loss_dec": 2.150144701943265, "weight": 1.0}
+2026-10-30 15:56:04,907 [holevo.py] => HOLEVO epoch task=7 epoch=23 {"objective": 0.30817335480883656, "p_y": 0.13129707041210703, "p_old": 0.7518560018429633, "p_null": 2.520112657863575e-07, "completeness_error": 7.827072323607354e-15, "loss_enc": -0.30817335480883656, "loss_dec": 2.1044450108103017, "weight": 1.0}
+2026-10-30 15:56:38,362 [holevo.py] => HOLEVO epoch task=7 epoch=24 {"objective": 0.3083815272604366, "p_y": 0.12117525571551502, "p_old": 0.751845869070103, "p_null": 2.738611239362158e-07, "completeness_error": 6.3652786745175644e-15, "loss_enc": -0.3083815272604366, "loss_dec": 2.2041421639460084, "weight": 1.0}
+2026-10-30 15:57:11,823 [holevo.py] => HOLEVO epoch task=7 epoch=25 {"objective": 0.3086812772224552, "p_y": 0.1354736561627355, "p_old": 0.7404805376954529, "p_null": 2.73145804743171e-07, "completeness_error": 7.549516567451064e-15, "loss_enc": -0.3086812772224552, "loss_dec": 2.0578716241507045, "weight": 1.0}
+2026-10-30 15:57:45,190 [holevo.py] => HOLEVO epoch task=7 epoch=26 {"objective": 0.3089245635318889, "p_y": 0.13485415006918489, "p_old": 0.745689624545445, "p_null": 2.5916956052453564e-07, "completeness_error": 8.493206138382448e-15, "loss_enc": -0.3089245635318889, "loss_dec": 2.0764577409738454, "weight": 1.0}
+2026-10-30 15:58:19,014 [holevo.py] => HOLEVO epoch task=7 epoch=27 {"objective": 0.3083492653834956, "p_y": 0.12702568064044914, "p_old": 0.7469334737371693, "p_null": 2.7229978180647333e-07, "completeness_error": 1.0510111299784816e-14, "loss_enc": -0.3083492653834956, "loss_dec": 2.148165099530435, "weight": 1.0}
+2026-10-30 15:58:52,178 [holevo.py] => HOLEVO epoch task=7 epoch=28 {"objective": 0.3086247774310583, "p_y": 0.1336779731486799, "p_old": 0.746214247105478, "p_null": 2.6463234216425e-07, "completeness_error": 1.0380585280245214e-14, "loss_enc": -0.3086247774310583, "loss_dec": 2.075130315552971, "weight": 1.0}
+2026-10-30 15:59:26,109 [holevo.py] => HOLEVO epoch task=7 epoch=29 {"objective": 0.30855981970536384, "p_y": 0.12849710990024085, "p_old": 0.749518823241759, "p_null": 2.665659195325033e-07, "completeness_error": 9.584925445930518e-15, "loss_enc": -0.30855981970536384, "loss_dec": 2.1244228220809482, "weight": 1.0}
+2026-10-30 15:59:59,349 [holevo.py] => HOLEVO epoch task=7 epoch=30 {"objective": 0.30865798400482714, "p_y": 0.1294332738088147, "p_old": 0.7495864888540572, "p_null": 2.6246511756307644e-07, "completeness_error": 7.993605777301127e-15, "loss_enc": -0.30865798400482714, "loss_dec": 2.1196146116184336, "weight": 1.0}
+2026-10-30 16:00:11,414 [RSIAT_adapter.py] => Task 7, Epoch 30/30 => Loss 3.187, Loss_c 2.013, Losses_rt 1.174, Train_accy 80.79, Test_accy 83.91, Time 33.24s
+2026-10-30 16:00:11,415 [RSIAT_adapter.py] => Task 7 peak GPU memory: 5001.87 MiB
+2026-10-30 16:01:02,805 [holevo.py] => HOLEVO oracle task=7 phase=end {"oracle": {"vn": 0.30295109217724525, "mcr2": 22.887003703222003, "spread": 0.6860141676239577}, "stale": {"vn": 0.30827667573609785, "mcr2": 23.228481025719642, "spread": 0.6903371368197424}, "I_orc": 0.22958122974481232, "p_old_on_new": 0.741508062338003, "trace_distance": {"mean": 0.016346797658391844, "max": 0.027013814015288823}}
+2026-10-30 16:01:02,805 [holevo.py] => HOLEVO end task=7 lambdas={"enc": null, "dec": null}
+2026-10-30 16:01:28,139 [base.py] => CA Task 7 => Loss 0.070, Test_accy skipped
+2026-10-30 16:01:31,116 [base.py] => CA Task 7 => Loss 0.062, Test_accy skipped
+2026-10-30 16:01:34,090 [base.py] => CA Task 7 => Loss 0.061, Test_accy skipped
+2026-10-30 16:01:36,829 [base.py] => CA Task 7 => Loss 0.059, Test_accy skipped
+2026-10-30 16:01:39,714 [base.py] => CA Task 7 => Loss 0.059, Test_accy skipped
+2026-10-30 16:01:42,634 [base.py] => CA Task 7 => Loss 0.054, Test_accy skipped
+2026-10-30 16:01:45,514 [base.py] => CA Task 7 => Loss 0.052, Test_accy skipped
+2026-10-30 16:01:48,519 [base.py] => CA Task 7 => Loss 0.054, Test_accy skipped
+2026-10-30 16:01:51,473 [base.py] => CA Task 7 => Loss 0.054, Test_accy skipped
+2026-10-30 16:02:06,078 [base.py] => CA Task 7 => Loss 0.055, Test_accy 83.950
+2026-10-30 16:02:44,009 [qsd.py] => QSD task=7 head=linear top1=83.95 old=83.69 new=85.52 task_pred=85.45 pair_ratio=1.319142857142857
+2026-10-30 16:02:44,009 [qsd.py] => QSD tasks head=linear: [83.47, 82.23, 84.06, 83.94, 80.78, 84.82, 86.5, 85.52]
+2026-10-30 16:02:44,009 [qsd.py] => QSD mech head=linear: {"task_prediction": 85.45, "pair_ratio": 1.319142857142857}
+2026-10-30 16:02:44,009 [qsd.py] => QSD curve head=linear: [96.05, 91.37, 90.01, 88.54, 86.32, 85.44, 85.06, 83.95]
+2026-10-30 16:02:44,009 [qsd.py] => QSD task=7 head=ridge_stats top1=81.91 old=81.64 new=83.57 task_pred=84.11 pair_ratio=0.982077922077922
+2026-10-30 16:02:44,009 [qsd.py] => QSD tasks head=ridge_stats: [81.5, 81.76, 81.04, 83.59, 78.93, 79.91, 85.04, 83.57]
+2026-10-30 16:02:44,009 [qsd.py] => QSD mech head=ridge_stats: {"task_prediction": 84.11, "pair_ratio": 0.982077922077922}
+2026-10-30 16:02:44,009 [qsd.py] => QSD curve head=ridge_stats: [95.2, 91.66, 89.9, 88.02, 85.93, 84.21, 83.55, 81.91]
+2026-10-30 16:02:44,009 [qsd.py] => QSD task=7 head=pgm_stats top1=81.87 old=82.27 new=79.53 task_pred=84.17 pair_ratio=0.9358385093167702
+2026-10-30 16:02:44,009 [qsd.py] => QSD tasks head=pgm_stats: [88.14, 81.14, 80.03, 83.77, 78.56, 79.61, 83.76, 79.53]
+2026-10-30 16:02:44,009 [qsd.py] => QSD mech head=pgm_stats: {"task_prediction": 84.17, "pair_ratio": 0.9358385093167702}
+2026-10-30 16:02:44,009 [qsd.py] => QSD curve head=pgm_stats: [96.05, 90.48, 88.62, 87.83, 85.84, 84.56, 83.59, 81.87]
+2026-10-30 16:02:44,009 [qsd.py] => QSD task=7 head=fuse_ridge_stats_b0p25 top1=84.73 old=84.36 new=86.91 task_pred=86.26 pair_ratio=1.2126159554730986
+2026-10-30 16:02:44,009 [qsd.py] => QSD tasks head=fuse_ridge_stats_b0p25: [85.17, 82.07, 84.06, 85.66, 81.7, 84.52, 87.41, 86.91]
+2026-10-30 16:02:44,009 [qsd.py] => QSD mech head=fuse_ridge_stats_b0p25: {"task_prediction": 86.26, "pair_ratio": 1.2126159554730986}
+2026-10-30 16:02:44,009 [qsd.py] => QSD curve head=fuse_ridge_stats_b0p25: [96.33, 91.29, 90.47, 89.21, 87.04, 86.21, 85.39, 84.73]
+2026-10-30 16:02:44,009 [qsd.py] => QSD task=7 head=fuse_ridge_stats_b0p5 top1=84.43 old=84.08 new=86.49 task_pred=86.20 pair_ratio=1.0536918138041733
+2026-10-30 16:02:44,009 [qsd.py] => QSD tasks head=fuse_ridge_stats_b0p5: [85.31, 81.92, 83.56, 85.66, 81.33, 83.78, 87.04, 86.49]
+2026-10-30 16:02:44,009 [qsd.py] => QSD mech head=fuse_ridge_stats_b0p5: {"task_prediction": 86.2, "pair_ratio": 1.0536918138041733}
+2026-10-30 16:02:44,009 [qsd.py] => QSD curve head=fuse_ridge_stats_b0p5: [96.33, 91.96, 90.36, 89.25, 86.97, 86.05, 85.36, 84.43]
+2026-10-30 16:02:44,009 [qsd.py] => QSD task=7 head=fuse_ridge_stats_b1 top1=83.61 old=83.27 new=85.65 task_pred=85.47 pair_ratio=1.0623655913978496
+2026-10-30 16:02:44,009 [qsd.py] => QSD tasks head=fuse_ridge_stats_b1: [83.9, 81.45, 82.72, 85.15, 80.22, 82.89, 86.68, 85.65]
+2026-10-30 16:02:44,009 [qsd.py] => QSD mech head=fuse_ridge_stats_b1: {"task_prediction": 85.47, "pair_ratio": 1.0623655913978496}
+2026-10-30 16:02:44,009 [qsd.py] => QSD curve head=fuse_ridge_stats_b1: [96.19, 91.96, 90.11, 89.05, 86.97, 85.68, 84.95, 83.61]
+2026-10-30 16:02:44,009 [qsd.py] => QSD task=7 head=fuse_ridge_stats_b2 top1=83.21 old=82.82 new=85.52 task_pred=85.11 pair_ratio=1.0657142857142856
+2026-10-30 16:02:44,009 [qsd.py] => QSD tasks head=fuse_ridge_stats_b2: [82.77, 82.07, 82.21, 85.15, 79.48, 81.99, 86.31, 85.52]
+2026-10-30 16:02:44,009 [qsd.py] => QSD mech head=fuse_ridge_stats_b2: {"task_prediction": 85.11, "pair_ratio": 1.0657142857142856}
+2026-10-30 16:02:44,009 [qsd.py] => QSD curve head=fuse_ridge_stats_b2: [95.9, 91.81, 90.16, 88.85, 86.78, 85.41, 84.53, 83.21]
+2026-10-30 16:02:44,009 [qsd.py] => QSD task=7 head=fuse_ridge_stats_b4 top1=82.69 old=82.38 new=84.54 task_pred=84.71 pair_ratio=1.0292786421499291
+2026-10-30 16:02:44,010 [qsd.py] => QSD tasks head=fuse_ridge_stats_b4: [82.2, 81.92, 81.88, 84.46, 79.11, 81.55, 85.77, 84.54]
+2026-10-30 16:02:44,010 [qsd.py] => QSD mech head=fuse_ridge_stats_b4: {"task_prediction": 84.71, "pair_ratio": 1.0292786421499291}
+2026-10-30 16:02:44,010 [qsd.py] => QSD curve head=fuse_ridge_stats_b4: [95.62, 91.81, 90.01, 88.62, 86.36, 84.85, 84.08, 82.69]
+2026-10-30 16:02:44,010 [qsd.py] => QSD task=7 head=fuse_pgm_stats_b0p25 top1=84.43 old=84.11 new=86.35 task_pred=85.97 pair_ratio=1.2390538033395178
+2026-10-30 16:02:44,010 [qsd.py] => QSD tasks head=fuse_pgm_stats_b0p25: [84.75, 82.38, 84.23, 85.15, 80.96, 84.52, 86.68, 86.35]
+2026-10-30 16:02:44,010 [qsd.py] => QSD mech head=fuse_pgm_stats_b0p25: {"task_prediction": 85.97, "pair_ratio": 1.2390538033395178}
+2026-10-30 16:02:44,010 [qsd.py] => QSD curve head=fuse_pgm_stats_b0p25: [96.05, 91.22, 90.06, 89.05, 86.84, 85.84, 85.25, 84.43]
+2026-10-30 16:02:44,010 [qsd.py] => QSD task=7 head=fuse_pgm_stats_b0p5 top1=84.51 old=84.22 new=86.21 task_pred=86.16 pair_ratio=1.1331325301204822
+2026-10-30 16:02:44,010 [qsd.py] => QSD tasks head=fuse_pgm_stats_b0p5: [85.17, 82.23, 84.06, 85.32, 81.15, 84.52, 87.04, 86.21]
+2026-10-30 16:02:44,010 [qsd.py] => QSD mech head=fuse_pgm_stats_b0p5: {"task_prediction": 86.16, "pair_ratio": 1.1331325301204822}
+2026-10-30 16:02:44,010 [qsd.py] => QSD curve head=fuse_pgm_stats_b0p5: [96.05, 91.37, 90.06, 89.21, 86.97, 86.29, 85.39, 84.51]
+2026-10-30 16:02:44,010 [qsd.py] => QSD task=7 head=fuse_pgm_stats_b1 top1=84.49 old=84.25 new=85.93 task_pred=86.18 pair_ratio=1.104873949579832
+2026-10-30 16:02:44,010 [qsd.py] => QSD tasks head=fuse_pgm_stats_b1: [86.16, 82.07, 83.56, 85.49, 80.96, 84.23, 87.04, 85.93]
+2026-10-30 16:02:44,010 [qsd.py] => QSD mech head=fuse_pgm_stats_b1: {"task_prediction": 86.18, "pair_ratio": 1.104873949579832}
+2026-10-30 16:02:44,010 [qsd.py] => QSD curve head=fuse_pgm_stats_b1: [96.19, 91.44, 90.06, 88.97, 86.97, 86.13, 85.57, 84.49]
+2026-10-30 16:02:44,010 [qsd.py] => QSD task=7 head=fuse_pgm_stats_b2 top1=84.31 old=84.13 new=85.38 task_pred=86.09 pair_ratio=1.0628410914927768
+2026-10-30 16:02:44,010 [qsd.py] => QSD tasks head=fuse_pgm_stats_b2: [87.29, 82.38, 82.72, 84.97, 81.15, 83.33, 86.68, 85.38]
+2026-10-30 16:02:44,010 [qsd.py] => QSD mech head=fuse_pgm_stats_b2: {"task_prediction": 86.09, "pair_ratio": 1.0628410914927768}
+2026-10-30 16:02:44,010 [qsd.py] => QSD curve head=fuse_pgm_stats_b2: [96.19, 91.44, 90.31, 89.05, 86.94, 86.05, 85.46, 84.31]
+2026-10-30 16:02:44,010 [qsd.py] => QSD task=7 head=fuse_pgm_stats_b4 top1=83.97 old=83.87 new=84.54 task_pred=85.83 pair_ratio=1.0360983102918588
+2026-10-30 16:02:44,010 [qsd.py] => QSD tasks head=fuse_pgm_stats_b4: [87.85, 82.53, 82.21, 85.15, 80.22, 82.59, 85.95, 84.54]
+2026-10-30 16:02:44,010 [qsd.py] => QSD mech head=fuse_pgm_stats_b4: {"task_prediction": 85.83, "pair_ratio": 1.0360983102918588}
+2026-10-30 16:02:44,010 [qsd.py] => QSD curve head=fuse_pgm_stats_b4: [96.19, 91.14, 89.85, 88.66, 86.75, 85.73, 85.13, 83.97]
+2026-10-30 16:02:44,010 [qsd.py] => QSD task=7 diag={"ridge_sensitivity": {"0.01": 82.03, "0.1": 81.91, "1.0": 81.87}, "fuse_scale": {"ridge_stats": 69.49793942833067, "pgm_stats": 5.7328225026961235}} seconds=26.2
+2026-10-30 16:02:44,031 [trainer.py] => CNN: {'total': 83.95, '00-19': 83.47, '20-39': 82.23, '40-59': 84.06, '60-79': 83.94, '80-99': 80.78, '100-119': 84.82, '120-139': 86.5, '140-159': 85.52, 'old': 83.69, 'new': 85.52}
+2026-10-30 16:02:44,031 [trainer.py] => Continual metrics after task 7: BWT=-4.3800, forgetting=4.4000, task_acc=[83.47, 82.23, 84.06, 83.94, 80.78, 84.82, 86.5, 85.52]
+2026-10-30 16:02:44,031 [trainer.py] => CNN top1 curve: [96.05, 91.37, 90.01, 88.54, 86.32, 85.44, 85.06, 83.95]
+2026-10-30 16:02:44,031 [trainer.py] => CNN top5 curve: [99.58, 98.67, 97.74, 96.64, 95.83, 95.51, 95.39, 94.97]
+2026-10-30 16:02:44,031 [trainer.py] => Average Accuracy (CNN): 88.3425
+2026-10-30 16:02:44,031 [trainer.py] => All params: 87111168
+2026-10-30 16:02:44,032 [trainer.py] => Trainable params: 1312512
+2026-10-30 16:02:44,032 [RSIAT_adapter.py] => Learning on 160-180
+2026-10-30 16:03:07,008 [holevo.py] => HOLEVO start task=8 old=160 new=20 {"queue": {"160": 98, "161": 65, "162": 69, "163": 63, "164": 111, "165": 213, "166": 121, "167": 100, "168": 68, "169": 66, "170": 75, "171": 172, "172": 56, "173": 100, "174": 71, "175": 64, "176": 72, "177": 104, "178": 60, "179": 184}, "residual_share": 0.8855656697009103, "eta": null}
+2026-10-30 16:04:02,061 [holevo.py] => HOLEVO oracle task=8 phase=start {"oracle": {"vn": 0.29619015321401576, "mcr2": 22.738543980951587, "spread": 0.6721582040557643}, "stale": {"vn": 0.30078607508381866, "mcr2": 23.02112791447161, "spread": 0.6747964705389065}, "I_orc": 0.23010747135828077, "p_old_on_new": 0.736944063875439}
+2026-10-30 16:04:02,063 [toolkit.py] => All params: 87275264
+2026-10-30 16:04:02,063 [toolkit.py] => Trainable params: 1476608
+2026-10-30 16:04:25,066 [holevo.py] => HOLEVO epoch task=8 epoch=1 {"objective": 0.3012709968070097, "p_y": 0.11442372844274534, "p_old": 0.7563600449689494, "p_null": 2.797360059705146e-07, "completeness_error": 7.716050021144838e-15, "loss_enc": -0.3012709968070097, "loss_dec": 2.2879114927326674, "weight": 0.0}
+2026-10-30 16:04:47,659 [holevo.py] => HOLEVO epoch task=8 epoch=2 {"objective": 0.3020360000137123, "p_y": 0.13415849092562485, "p_old": 0.7466627040035041, "p_null": 2.8328645323546467e-07, "completeness_error": 7.549516567451064e-15, "loss_enc": -0.3020360000137123, "loss_dec": 2.064064890541279, "weight": 0.25}
+2026-10-30 16:05:10,642 [holevo.py] => HOLEVO epoch task=8 epoch=3 {"objective": 0.30203977327438947, "p_y": 0.1308207993411068, "p_old": 0.7452480127635317, "p_null": 2.805876392564464e-07, "completeness_error": 7.216449660063518e-15, "loss_enc": -0.30203977327438947, "loss_dec": 2.0903618282297467, "weight": 0.5}
+2026-10-30 16:05:33,225 [holevo.py] => HOLEVO epoch task=8 epoch=4 {"objective": 0.30246229863229895, "p_y": 0.146855838604811, "p_old": 0.7398525829203929, "p_null": 2.641085324650098e-07, "completeness_error": 9.547918011776346e-15, "loss_enc": -0.30246229863229895, "loss_dec": 1.986801157389871, "weight": 0.75}
+2026-10-30 16:05:56,074 [holevo.py] => HOLEVO epoch task=8 epoch=5 {"objective": 0.3020331369633691, "p_y": 0.14438166286402454, "p_old": 0.7337465525371405, "p_null": 2.7065172767310825e-07, "completeness_error": 8.992806499463768e-15, "loss_enc": -0.3020331369633691, "loss_dec": 1.9980947216761709, "weight": 1.0}
+2026-10-30 16:06:19,179 [holevo.py] => HOLEVO epoch task=8 epoch=6 {"objective": 0.30252492976711276, "p_y": 0.138209824714296, "p_old": 0.7497796599449913, "p_null": 2.6472024841680565e-07, "completeness_error": 6.5503158452884236e-15, "loss_enc": -0.30252492976711276, "loss_dec": 2.0374313727581894, "weight": 1.0}
+2026-10-30 16:06:41,766 [holevo.py] => HOLEVO epoch task=8 epoch=7 {"objective": 0.30320194514752186, "p_y": 0.1395404762149515, "p_old": 0.7390979693728582, "p_null": 2.946839750127939e-07, "completeness_error": 7.216449660063518e-15, "loss_enc": -0.30320194514752186, "loss_dec": 2.0413490186130003, "weight": 1.0}
+2026-10-30 16:07:04,691 [holevo.py] => HOLEVO epoch task=8 epoch=8 {"objective": 0.30235659529452075, "p_y": 0.13608567001385044, "p_old": 0.7444380679903918, "p_null": 2.7445025308598617e-07, "completeness_error": 6.716849298982197e-15, "loss_enc": -0.30235659529452075, "loss_dec": 2.045073556999447, "weight": 1.0}
+2026-10-30 16:07:27,655 [holevo.py] => HOLEVO epoch task=8 epoch=9 {"objective": 0.3024786221632003, "p_y": 0.1377703113325842, "p_old": 0.739848585572122, "p_null": 2.7880188304733377e-07, "completeness_error": 8.382183835919932e-15, "loss_enc": -0.3024786221632003, "loss_dec": 2.0287575681397216, "weight": 1.0}
+2026-10-30 16:07:50,134 [holevo.py] => HOLEVO epoch task=8 epoch=10 {"objective": 0.30272622268574517, "p_y": 0.15202239061932016, "p_old": 0.7322788722630824, "p_null": 2.7379256478179654e-07, "completeness_error": 7.771561172376096e-15, "loss_enc": -0.30272622268574517, "loss_dec": 1.9240131792964341, "weight": 1.0}
+2026-10-30 16:08:13,329 [holevo.py] => HOLEVO epoch task=8 epoch=11 {"objective": 0.30256400982286463, "p_y": 0.13379093922969243, "p_old": 0.7489683089079129, "p_null": 2.771396156990887e-07, "completeness_error": 8.659739592076221e-15, "loss_enc": -0.30256400982286463, "loss_dec": 2.066008366860518, "weight": 1.0}
+2026-10-30 16:08:36,384 [holevo.py] => HOLEVO epoch task=8 epoch=12 {"objective": 0.3023167849263958, "p_y": 0.14532812088949298, "p_old": 0.7385510589880984, "p_null": 2.6381640946751797e-07, "completeness_error": 9.103828801926284e-15, "loss_enc": -0.3023167849263958, "loss_dec": 1.9928035524589474, "weight": 1.0}
+2026-10-30 16:08:58,976 [holevo.py] => HOLEVO epoch task=8 epoch=13 {"objective": 0.3032667596074164, "p_y": 0.1522079323385297, "p_old": 0.7344643717796796, "p_null": 2.7209778525301284e-07, "completeness_error": 8.548717289613705e-15, "loss_enc": -0.3032667596074164, "loss_dec": 1.9225547009154047, "weight": 1.0}
+2026-10-30 16:09:22,088 [holevo.py] => HOLEVO epoch task=8 epoch=14 {"objective": 0.30266792998794123, "p_y": 0.14141025752618852, "p_old": 0.738804412158621, "p_null": 2.7781361088921666e-07, "completeness_error": 7.494005416219807e-15, "loss_enc": -0.30266792998794123, "loss_dec": 2.0236078556994324, "weight": 1.0}
+2026-10-30 16:09:44,593 [holevo.py] => HOLEVO epoch task=8 epoch=15 {"objective": 0.3029968253849556, "p_y": 0.14658046816542825, "p_old": 0.7402066078599912, "p_null": 2.814717599329726e-07, "completeness_error": 7.993605777301127e-15, "loss_enc": -0.3029968253849556, "loss_dec": 1.9588593634046432, "weight": 1.0}
+2026-10-30 16:10:07,795 [holevo.py] => HOLEVO epoch task=8 epoch=16 {"objective": 0.30289405409523384, "p_y": 0.1469240750012707, "p_old": 0.739870671251884, "p_null": 2.6400369212453055e-07, "completeness_error": 7.882583474838611e-15, "loss_enc": -0.30289405409523384, "loss_dec": 1.9830845816206952, "weight": 1.0}
+2026-10-30 16:10:30,838 [holevo.py] => HOLEVO epoch task=8 epoch=17 {"objective": 0.3027375442849269, "p_y": 0.12883706144767393, "p_old": 0.7500823782051439, "p_null": 2.8478523588678783e-07, "completeness_error": 7.66053886991358e-15, "loss_enc": -0.3027375442849269, "loss_dec": 2.127304221887375, "weight": 1.0}
+2026-10-30 16:10:53,316 [holevo.py] => HOLEVO epoch task=8 epoch=18 {"objective": 0.3031461511839949, "p_y": 0.14054056510217094, "p_old": 0.7408194360233908, "p_null": 2.9247587515486896e-07, "completeness_error": 9.103828801926284e-15, "loss_enc": -0.3031461511839949, "loss_dec": 2.024236261447557, "weight": 1.0}
+2026-10-30 16:11:16,475 [holevo.py] => HOLEVO epoch task=8 epoch=19 {"objective": 0.30313757793938956, "p_y": 0.1426814482106203, "p_old": 0.739912942128826, "p_null": 2.813447509876461e-07, "completeness_error": 8.659739592076221e-15, "loss_enc": -0.30313757793938956, "loss_dec": 2.018019915010525, "weight": 1.0}
+2026-10-30 16:11:39,589 [holevo.py] => HOLEVO epoch task=8 epoch=20 {"objective": 0.3029445186421361, "p_y": 0.142852512605614, "p_old": 0.738270532659056, "p_null": 2.796624546816817e-07, "completeness_error": 6.716849298982197e-15, "loss_enc": -0.3029445186421361, "loss_dec": 1.997368976427667, "weight": 1.0}
+2026-10-30 16:12:02,466 [holevo.py] => HOLEVO epoch task=8 epoch=21 {"objective": 0.3030488400740707, "p_y": 0.14460638653203353, "p_old": 0.7354257513895954, "p_null": 2.838973986125652e-07, "completeness_error": 7.993605777301127e-15, "loss_enc": -0.3030488400740707, "loss_dec": 1.9871562806081013, "weight": 1.0}
+2026-10-30 16:12:25,591 [holevo.py] => HOLEVO epoch task=8 epoch=22 {"objective": 0.30308524441288676, "p_y": 0.14419085201747003, "p_old": 0.7436474723686175, "p_null": 2.6002618098523447e-07, "completeness_error": 7.605027718682322e-15, "loss_enc": -0.30308524441288676, "loss_dec": 1.9859662001557168, "weight": 1.0}
+2026-10-30 16:12:48,598 [holevo.py] => HOLEVO epoch task=8 epoch=23 {"objective": 0.30326693445668773, "p_y": 0.14053724336137063, "p_old": 0.7422976212694787, "p_null": 2.768727316240315e-07, "completeness_error": 8.826273045769994e-15, "loss_enc": -0.30326693445668773, "loss_dec": 2.0270335701511257, "weight": 1.0}
+2026-10-30 16:13:11,421 [holevo.py] => HOLEVO epoch task=8 epoch=24 {"objective": 0.303312561154641, "p_y": 0.14320626919668858, "p_old": 0.7394794466866146, "p_null": 2.7771939505879754e-07, "completeness_error": 6.217248937900877e-15, "loss_enc": -0.303312561154641, "loss_dec": 2.0053064753144554, "weight": 1.0}
+2026-10-30 16:13:34,272 [holevo.py] => HOLEVO epoch task=8 epoch=25 {"objective": 0.30288193870218444, "p_y": 0.14564276581337077, "p_old": 0.7424631547100542, "p_null": 2.5932315653714376e-07, "completeness_error": 9.825473767932635e-15, "loss_enc": -0.30288193870218444, "loss_dec": 1.9801873444957159, "weight": 1.0}
+2026-10-30 16:13:57,210 [holevo.py] => HOLEVO epoch task=8 epoch=26 {"objective": 0.3027579752502278, "p_y": 0.14088355314162854, "p_old": 0.7479856481814349, "p_null": 2.719040322964878e-07, "completeness_error": 5.662137425588298e-15, "loss_enc": -0.3027579752502278, "loss_dec": 2.033724954134356, "weight": 1.0}
+2026-10-30 16:14:19,838 [holevo.py] => HOLEVO epoch task=8 epoch=27 {"objective": 0.30345190192514987, "p_y": 0.1354954756427169, "p_old": 0.7441395176846493, "p_null": 2.967506986922089e-07, "completeness_error": 9.992007221626409e-15, "loss_enc": -0.30345190192514987, "loss_dec": 2.080980892369059, "weight": 1.0}
+2026-10-30 16:14:42,680 [holevo.py] => HOLEVO epoch task=8 epoch=28 {"objective": 0.30319410968960553, "p_y": 0.14479155742974337, "p_old": 0.7415589506424465, "p_null": 2.6830842546670044e-07, "completeness_error": 8.43769498715119e-15, "loss_enc": -0.30319410968960553, "loss_dec": 1.982830303463238, "weight": 1.0}
+2026-10-30 16:15:05,181 [holevo.py] => HOLEVO epoch task=8 epoch=29 {"objective": 0.3030726810579059, "p_y": 0.14038192329105142, "p_old": 0.7523371632317579, "p_null": 2.597173450447185e-07, "completeness_error": 6.8833827526759706e-15, "loss_enc": -0.3030726810579059, "loss_dec": 2.0484315543744973, "weight": 1.0}
+2026-10-30 16:15:28,218 [holevo.py] => HOLEVO epoch task=8 epoch=30 {"objective": 0.30313127769593307, "p_y": 0.14055675525704125, "p_old": 0.7445553111937553, "p_null": 2.685231078558458e-07, "completeness_error": 6.8833827526759706e-15, "loss_enc": -0.30313127769593307, "loss_dec": 2.0287844315260783, "weight": 1.0}
+2026-10-30 16:15:41,519 [RSIAT_adapter.py] => Task 8, Epoch 30/30 => Loss 3.671, Loss_c 2.443, Losses_rt 1.228, Train_accy 79.09, Test_accy 82.85, Time 23.04s
+2026-10-30 16:15:41,519 [RSIAT_adapter.py] => Task 8 peak GPU memory: 5010.24 MiB
+2026-10-30 16:16:37,239 [holevo.py] => HOLEVO oracle task=8 phase=end {"oracle": {"vn": 0.29559626539170225, "mcr2": 22.661363861204478, "spread": 0.669187686835339}, "stale": {"vn": 0.30265142038968695, "mcr2": 23.086433426371514, "spread": 0.6748181311572423}, "I_orc": 0.23104703488424022, "p_old_on_new": 0.7331526634919476, "trace_distance": {"mean": 0.016902079099441237, "max": 0.02649786763616164}}
+2026-10-30 16:16:37,240 [holevo.py] => HOLEVO end task=8 lambdas={"enc": null, "dec": null}
+2026-10-30 16:16:58,469 [base.py] => CA Task 8 => Loss 0.065, Test_accy skipped
+2026-10-30 16:17:01,854 [base.py] => CA Task 8 => Loss 0.063, Test_accy skipped
+2026-10-30 16:17:05,179 [base.py] => CA Task 8 => Loss 0.057, Test_accy skipped
+2026-10-30 16:17:08,406 [base.py] => CA Task 8 => Loss 0.060, Test_accy skipped
+2026-10-30 16:17:11,744 [base.py] => CA Task 8 => Loss 0.055, Test_accy skipped
+2026-10-30 16:17:14,961 [base.py] => CA Task 8 => Loss 0.053, Test_accy skipped
+2026-10-30 16:17:18,325 [base.py] => CA Task 8 => Loss 0.053, Test_accy skipped
+2026-10-30 16:17:21,617 [base.py] => CA Task 8 => Loss 0.054, Test_accy skipped
+2026-10-30 16:17:24,742 [base.py] => CA Task 8 => Loss 0.057, Test_accy skipped
+2026-10-30 16:17:40,794 [base.py] => CA Task 8 => Loss 0.053, Test_accy 83.300
+2026-10-30 16:18:16,975 [qsd.py] => QSD task=8 head=linear top1=83.30 old=83.11 new=85.22 task_pred=84.57 pair_ratio=1.440267857142857
+2026-10-30 16:18:16,975 [qsd.py] => QSD tasks head=linear: [81.92, 82.23, 84.06, 82.56, 79.11, 83.63, 85.95, 85.1, 85.22]
+2026-10-30 16:18:16,975 [qsd.py] => QSD mech head=linear: {"task_prediction": 84.57, "pair_ratio": 1.440267857142857}
+2026-10-30 16:18:16,975 [qsd.py] => QSD curve head=linear: [96.05, 91.37, 90.01, 88.54, 86.32, 85.44, 85.06, 83.95, 83.3]
+2026-10-30 16:18:16,975 [qsd.py] => QSD task=8 head=ridge_stats top1=80.72 old=80.3 new=85.02 task_pred=82.83 pair_ratio=0.9674030172413792
+2026-10-30 16:18:16,975 [qsd.py] => QSD tasks head=ridge_stats: [78.81, 80.68, 77.85, 81.52, 77.45, 80.06, 84.49, 81.62, 85.02]
+2026-10-30 16:18:16,975 [qsd.py] => QSD mech head=ridge_stats: {"task_prediction": 82.83, "pair_ratio": 0.9674030172413792}
+2026-10-30 16:18:16,975 [qsd.py] => QSD curve head=ridge_stats: [95.2, 91.66, 89.9, 88.02, 85.93, 84.21, 83.55, 81.91, 80.72]
+2026-10-30 16:18:16,975 [qsd.py] => QSD task=8 head=pgm_stats top1=80.94 old=80.57 new=84.62 task_pred=83.05 pair_ratio=0.9551185344827587
+2026-10-30 16:18:16,975 [qsd.py] => QSD tasks head=pgm_stats: [85.73, 80.53, 78.02, 81.87, 76.34, 79.17, 83.94, 78.55, 84.62]
+2026-10-30 16:18:16,975 [qsd.py] => QSD mech head=pgm_stats: {"task_prediction": 83.05, "pair_ratio": 0.9551185344827587}
+2026-10-30 16:18:16,975 [qsd.py] => QSD curve head=pgm_stats: [96.05, 90.48, 88.62, 87.83, 85.84, 84.56, 83.59, 81.87, 80.94]
+2026-10-30 16:18:16,975 [qsd.py] => QSD task=8 head=fuse_ridge_stats_b0p25 top1=83.28 old=83.07 new=85.43 task_pred=84.72 pair_ratio=1.2641613924050632
+2026-10-30 16:18:16,975 [qsd.py] => QSD tasks head=fuse_ridge_stats_b0p25: [81.64, 81.76, 83.05, 84.11, 79.85, 83.18, 85.95, 84.96, 85.43]
+2026-10-30 16:18:16,975 [qsd.py] => QSD mech head=fuse_ridge_stats_b0p25: {"task_prediction": 84.72, "pair_ratio": 1.2641613924050632}
+2026-10-30 16:18:16,975 [qsd.py] => QSD curve head=fuse_ridge_stats_b0p25: [96.33, 91.29, 90.47, 89.21, 87.04, 86.21, 85.39, 84.73, 83.28]
+2026-10-30 16:18:16,975 [qsd.py] => QSD task=8 head=fuse_ridge_stats_b0p5 top1=83.06 old=82.79 new=85.83 task_pred=84.68 pair_ratio=1.1247893258426966
+2026-10-30 16:18:16,975 [qsd.py] => QSD tasks head=fuse_ridge_stats_b0p5: [81.21, 81.92, 82.38, 83.94, 79.3, 82.59, 86.5, 84.54, 85.83]
+2026-10-30 16:18:16,975 [qsd.py] => QSD mech head=fuse_ridge_stats_b0p5: {"task_prediction": 84.68, "pair_ratio": 1.1247893258426966}
+2026-10-30 16:18:16,975 [qsd.py] => QSD curve head=fuse_ridge_stats_b0p5: [96.33, 91.96, 90.36, 89.25, 86.97, 86.05, 85.36, 84.43, 83.06]
+2026-10-30 16:18:16,975 [qsd.py] => QSD task=8 head=fuse_ridge_stats_b1 top1=82.59 old=82.27 new=85.83 task_pred=84.32 pair_ratio=1.07875
+2026-10-30 16:18:16,975 [qsd.py] => QSD tasks head=fuse_ridge_stats_b1: [80.65, 81.76, 81.71, 83.94, 79.3, 81.25, 86.13, 83.7, 85.83]
+2026-10-30 16:18:16,975 [qsd.py] => QSD mech head=fuse_ridge_stats_b1: {"task_prediction": 84.32, "pair_ratio": 1.07875}
+2026-10-30 16:18:16,975 [qsd.py] => QSD curve head=fuse_ridge_stats_b1: [96.19, 91.96, 90.11, 89.05, 86.97, 85.68, 84.95, 83.61, 82.59]
+2026-10-30 16:18:16,975 [qsd.py] => QSD task=8 head=fuse_ridge_stats_b2 top1=82.01 old=81.63 new=85.83 task_pred=83.88 pair_ratio=1.0226334951456308
+2026-10-30 16:18:16,975 [qsd.py] => QSD tasks head=fuse_ridge_stats_b2: [79.94, 81.3, 80.7, 82.73, 78.37, 81.25, 85.58, 83.29, 85.83]
+2026-10-30 16:18:16,975 [qsd.py] => QSD mech head=fuse_ridge_stats_b2: {"task_prediction": 83.88, "pair_ratio": 1.0226334951456308}
+2026-10-30 16:18:16,975 [qsd.py] => QSD curve head=fuse_ridge_stats_b2: [95.9, 91.81, 90.16, 88.85, 86.78, 85.41, 84.53, 83.21, 82.01]
+2026-10-30 16:18:16,975 [qsd.py] => QSD task=8 head=fuse_ridge_stats_b4 top1=81.41 old=80.97 new=85.83 task_pred=83.34 pair_ratio=1.0272995283018866
+2026-10-30 16:18:16,975 [qsd.py] => QSD tasks head=fuse_ridge_stats_b4: [79.66, 81.3, 79.19, 82.38, 77.45, 80.51, 84.85, 82.45, 85.83]
+2026-10-30 16:18:16,975 [qsd.py] => QSD mech head=fuse_ridge_stats_b4: {"task_prediction": 83.34, "pair_ratio": 1.0272995283018866}
+2026-10-30 16:18:16,975 [qsd.py] => QSD curve head=fuse_ridge_stats_b4: [95.62, 91.81, 90.01, 88.62, 86.36, 84.85, 84.08, 82.69, 81.41]
+2026-10-30 16:18:16,976 [qsd.py] => QSD task=8 head=fuse_pgm_stats_b0p25 top1=83.41 old=83.25 new=85.02 task_pred=84.77 pair_ratio=1.3268333333333333
+2026-10-30 16:18:16,976 [qsd.py] => QSD tasks head=fuse_pgm_stats_b0p25: [82.91, 81.92, 83.05, 83.59, 79.11, 83.63, 85.95, 85.38, 85.02]
+2026-10-30 16:18:16,976 [qsd.py] => QSD mech head=fuse_pgm_stats_b0p25: {"task_prediction": 84.77, "pair_ratio": 1.3268333333333333}
+2026-10-30 16:18:16,976 [qsd.py] => QSD curve head=fuse_pgm_stats_b0p25: [96.05, 91.22, 90.06, 89.05, 86.84, 85.84, 85.25, 84.43, 83.41]
+2026-10-30 16:18:16,976 [qsd.py] => QSD task=8 head=fuse_pgm_stats_b0p5 top1=83.52 old=83.29 new=85.83 task_pred=85.03 pair_ratio=1.1789156626506023
+2026-10-30 16:18:16,976 [qsd.py] => QSD tasks head=fuse_pgm_stats_b0p5: [83.9, 82.07, 82.21, 83.94, 79.48, 83.33, 86.13, 84.82, 85.83]
+2026-10-30 16:18:16,976 [qsd.py] => QSD mech head=fuse_pgm_stats_b0p5: {"task_prediction": 85.03, "pair_ratio": 1.1789156626506023}
+2026-10-30 16:18:16,976 [qsd.py] => QSD curve head=fuse_pgm_stats_b0p5: [96.05, 91.37, 90.06, 89.21, 86.97, 86.29, 85.39, 84.51, 83.52]
+2026-10-30 16:18:16,976 [qsd.py] => QSD task=8 head=fuse_pgm_stats_b1 top1=83.30 old=83.05 new=85.83 task_pred=84.92 pair_ratio=1.107443820224719
+2026-10-30 16:18:16,976 [qsd.py] => QSD tasks head=fuse_pgm_stats_b1: [84.32, 81.92, 81.71, 83.59, 79.11, 83.04, 85.95, 84.26, 85.83]
+2026-10-30 16:18:16,976 [qsd.py] => QSD mech head=fuse_pgm_stats_b1: {"task_prediction": 84.92, "pair_ratio": 1.107443820224719}
+2026-10-30 16:18:16,976 [qsd.py] => QSD curve head=fuse_pgm_stats_b1: [96.19, 91.44, 90.06, 88.97, 86.97, 86.13, 85.57, 84.49, 83.3]
+2026-10-30 16:18:16,976 [qsd.py] => QSD task=8 head=fuse_pgm_stats_b2 top1=83.12 old=82.85 new=85.83 task_pred=84.75 pair_ratio=1.1070138888888887
+2026-10-30 16:18:16,976 [qsd.py] => QSD tasks head=fuse_pgm_stats_b2: [85.17, 82.53, 81.38, 83.42, 78.37, 82.44, 85.58, 83.29, 85.83]
+2026-10-30 16:18:16,976 [qsd.py] => QSD mech head=fuse_pgm_stats_b2: {"task_prediction": 84.75, "pair_ratio": 1.1070138888888887}
+2026-10-30 16:18:16,976 [qsd.py] => QSD curve head=fuse_pgm_stats_b2: [96.19, 91.44, 90.31, 89.05, 86.94, 86.05, 85.46, 84.31, 83.12]
+2026-10-30 16:18:16,976 [qsd.py] => QSD task=8 head=fuse_pgm_stats_b4 top1=82.81 old=82.55 new=85.43 task_pred=84.55 pair_ratio=1.0514322916666665
+2026-10-30 16:18:16,976 [qsd.py] => QSD tasks head=fuse_pgm_stats_b4: [86.02, 82.38, 80.37, 83.42, 77.26, 82.14, 85.4, 82.59, 85.43]
+2026-10-30 16:18:16,976 [qsd.py] => QSD mech head=fuse_pgm_stats_b4: {"task_prediction": 84.55, "pair_ratio": 1.0514322916666665}
+2026-10-30 16:18:16,976 [qsd.py] => QSD curve head=fuse_pgm_stats_b4: [96.19, 91.14, 89.85, 88.66, 86.75, 85.73, 85.13, 83.97, 82.81]
+2026-10-30 16:18:16,976 [qsd.py] => QSD task=8 diag={"ridge_sensitivity": {"0.01": 80.67, "0.1": 80.72, "1.0": 80.56}, "fuse_scale": {"ridge_stats": 70.671906669998, "pgm_stats": 5.56092787137432}} seconds=23.3
+2026-10-30 16:18:16,997 [trainer.py] => CNN: {'total': 83.3, '00-19': 81.92, '20-39': 82.23, '40-59': 84.06, '60-79': 82.56, '80-99': 79.11, '100-119': 83.63, '120-139': 85.95, '140-159': 85.1, '160-179': 85.22, 'old': 83.11, 'new': 85.22}
+2026-10-30 16:18:16,997 [trainer.py] => Continual metrics after task 8: BWT=-4.6775, forgetting=4.6950, task_acc=[81.92, 82.23, 84.06, 82.56, 79.11, 83.63, 85.95, 85.1, 85.22]
+2026-10-30 16:18:16,997 [trainer.py] => CNN top1 curve: [96.05, 91.37, 90.01, 88.54, 86.32, 85.44, 85.06, 83.95, 83.3]
+2026-10-30 16:18:16,998 [trainer.py] => CNN top5 curve: [99.58, 98.67, 97.74, 96.64, 95.83, 95.51, 95.39, 94.97, 94.48]
+2026-10-30 16:18:16,998 [trainer.py] => Average Accuracy (CNN): 87.78222222222222
+2026-10-30 16:18:16,998 [trainer.py] => All params: 87126528
+2026-10-30 16:18:16,998 [trainer.py] => Trainable params: 1327872
+2026-10-30 16:18:16,999 [RSIAT_adapter.py] => Learning on 180-200
+2026-10-30 16:18:43,848 [holevo.py] => HOLEVO start task=9 old=180 new=20 {"queue": {"180": 120, "181": 44, "182": 77, "183": 256, "184": 49, "185": 108, "186": 178, "187": 114, "188": 90, "189": 109, "190": 212, "191": 46, "192": 137, "193": 57, "194": 148, "195": 74, "196": 64, "197": 196, "198": 108, "199": 73}, "residual_share": 0.8842652795838751, "eta": null}
+2026-10-30 16:19:47,364 [holevo.py] => HOLEVO oracle task=9 phase=start {"oracle": {"vn": 0.29086949447459176, "mcr2": 22.41655618391657, "spread": 0.6568919874734123}, "stale": {"vn": 0.29723147310621506, "mcr2": 22.786606739849258, "spread": 0.6610169171773019}, "I_orc": 0.23228353299714613, "p_old_on_new": 0.7507512908044903}
+2026-10-30 16:19:47,367 [toolkit.py] => All params: 87290624
+2026-10-30 16:19:47,367 [toolkit.py] => Trainable params: 1491968
+2026-10-30 16:20:09,669 [holevo.py] => HOLEVO epoch task=9 epoch=1 {"objective": 0.29770830577565044, "p_y": 0.12845939970593365, "p_old": 0.7579503531890444, "p_null": 2.6462023806716306e-07, "completeness_error": 8.992806499463768e-15, "loss_enc": -0.29770830577565044, "loss_dec": 2.1260623087675983, "weight": 0.0}
+2026-10-30 16:20:42,161 [holevo.py] => HOLEVO epoch task=9 epoch=2 {"objective": 0.2979631822838882, "p_y": 0.12346040820511014, "p_old": 0.7609871031524219, "p_null": 2.6977390622988595e-07, "completeness_error": 9.159339953157541e-15, "loss_enc": -0.2979631822838882, "loss_dec": 2.1807061598653084, "weight": 0.25}
+2026-10-30 16:21:14,378 [holevo.py] => HOLEVO epoch task=9 epoch=3 {"objective": 0.29826587837131047, "p_y": 0.13169724371459995, "p_old": 0.7597981206234274, "p_null": 2.629858794775509e-07, "completeness_error": 6.5503158452884236e-15, "loss_enc": -0.29826587837131047, "loss_dec": 2.103966831242672, "weight": 0.5}
+2026-10-30 16:21:43,247 [holevo.py] => HOLEVO epoch task=9 epoch=4 {"objective": 0.2983913176150951, "p_y": 0.12902963019245978, "p_old": 0.758046542095075, "p_null": 2.786474368688588e-07, "completeness_error": 7.716050021144838e-15, "loss_enc": -0.2983913176150951, "loss_dec": 2.130543928782291, "weight": 0.75}
+2026-10-30 16:22:08,819 [holevo.py] => HOLEVO epoch task=9 epoch=5 {"objective": 0.29842180932834483, "p_y": 0.13108591348636206, "p_old": 0.7548017439114498, "p_null": 2.801275507740532e-07, "completeness_error": 9.547918011776346e-15, "loss_enc": -0.29842180932834483, "loss_dec": 2.1083758623403, "weight": 1.0}
+2026-10-30 16:22:35,917 [holevo.py] => HOLEVO epoch task=9 epoch=6 {"objective": 0.2983365680161949, "p_y": 0.13215777201378653, "p_old": 0.7498546595620826, "p_null": 2.8363206491484453e-07, "completeness_error": 7.771561172376096e-15, "loss_enc": -0.2983365680161949, "loss_dec": 2.101456533060726, "weight": 1.0}
+2026-10-30 16:23:03,033 [holevo.py] => HOLEVO epoch task=9 epoch=7 {"objective": 0.29863385163949685, "p_y": 0.13326459434296775, "p_old": 0.7557860393330108, "p_null": 2.6636408779162393e-07, "completeness_error": 6.494804694057166e-15, "loss_enc": -0.29863385163949685, "loss_dec": 2.0986982978547832, "weight": 1.0}
+2026-10-30 16:23:29,532 [holevo.py] => HOLEVO epoch task=9 epoch=8 {"objective": 0.29848095187176354, "p_y": 0.12399736742464273, "p_old": 0.7669654057412121, "p_null": 2.6746586625663736e-07, "completeness_error": 6.994405055138486e-15, "loss_enc": -0.29848095187176354, "loss_dec": 2.1752711448873874, "weight": 1.0}
+2026-10-30 16:23:56,509 [holevo.py] => HOLEVO epoch task=9 epoch=9 {"objective": 0.2983084569144123, "p_y": 0.13351192368566042, "p_old": 0.7620074284037254, "p_null": 2.491950861836105e-07, "completeness_error": 7.049916206369744e-15, "loss_enc": -0.2983084569144123, "loss_dec": 2.099870495952521, "weight": 1.0}
+2026-10-30 16:24:23,363 [holevo.py] => HOLEVO epoch task=9 epoch=10 {"objective": 0.2986057608354179, "p_y": 0.13636834144760085, "p_old": 0.7516886639581505, "p_null": 2.74295382711417e-07, "completeness_error": 8.43769498715119e-15, "loss_enc": -0.2986057608354179, "loss_dec": 2.067444664716753, "weight": 1.0}
+2026-10-30 16:24:50,276 [holevo.py] => HOLEVO epoch task=9 epoch=11 {"objective": 0.2985194325929912, "p_y": 0.1329761706343205, "p_old": 0.7560483014217172, "p_null": 2.697770158819722e-07, "completeness_error": 5.995204332975845e-15, "loss_enc": -0.2985194325929912, "loss_dec": 2.09623306941289, "weight": 1.0}
+2026-10-30 16:25:17,205 [holevo.py] => HOLEVO epoch task=9 epoch=12 {"objective": 0.29838009230199547, "p_y": 0.12338348964961723, "p_old": 0.7623619625856952, "p_null": 2.6760749743027354e-07, "completeness_error": 7.549516567451064e-15, "loss_enc": -0.29838009230199547, "loss_dec": 2.169004838325862, "weight": 1.0}
+2026-10-30 16:25:44,232 [holevo.py] => HOLEVO epoch task=9 epoch=13 {"objective": 0.2986545362137234, "p_y": 0.13136643600854409, "p_old": 0.756890748991512, "p_null": 2.795314219940233e-07, "completeness_error": 7.66053886991358e-15, "loss_enc": -0.2986545362137234, "loss_dec": 2.1211782928761416, "weight": 1.0}
+2026-10-30 16:26:11,368 [holevo.py] => HOLEVO epoch task=9 epoch=14 {"objective": 0.29827579012247096, "p_y": 0.13857547864035308, "p_old": 0.7502616222878015, "p_null": 2.6118386644097357e-07, "completeness_error": 5.551115123125783e-15, "loss_enc": -0.29827579012247096, "loss_dec": 2.074501877234018, "weight": 1.0}
+2026-10-30 16:26:42,716 [holevo.py] => HOLEVO epoch task=9 epoch=15 {"objective": 0.29887623071027314, "p_y": 0.1317574380609615, "p_old": 0.7612942136903206, "p_null": 2.6429834167060643e-07, "completeness_error": 9.658940314238862e-15, "loss_enc": -0.29887623071027314, "loss_dec": 2.1156394390318316, "weight": 1.0}
+2026-10-30 16:27:15,046 [holevo.py] => HOLEVO epoch task=9 epoch=16 {"objective": 0.2986936292038138, "p_y": 0.13610800217020813, "p_old": 0.7578219578628698, "p_null": 2.595217037904416e-07, "completeness_error": 8.548717289613705e-15, "loss_enc": -0.2986936292038138, "loss_dec": 2.0786583616416587, "weight": 1.0}
+2026-10-30 16:27:38,626 [holevo.py] => HOLEVO epoch task=9 epoch=17 {"objective": 0.2988154730152891, "p_y": 0.12297372895984252, "p_old": 0.7594914789001137, "p_null": 2.854921315147132e-07, "completeness_error": 7.993605777301127e-15, "loss_enc": -0.2988154730152891, "loss_dec": 2.164259415541927, "weight": 1.0}
+2026-10-30 16:28:03,577 [holevo.py] => HOLEVO epoch task=9 epoch=18 {"objective": 0.2983688886587035, "p_y": 0.13240695650924528, "p_old": 0.7569973681020665, "p_null": 2.646238042965236e-07, "completeness_error": 5.162537064506978e-15, "loss_enc": -0.2983688886587035, "loss_dec": 2.0904539264410125, "weight": 1.0}
+2026-10-30 16:28:36,783 [holevo.py] => HOLEVO epoch task=9 epoch=19 {"objective": 0.29849656374771216, "p_y": 0.11904403542987965, "p_old": 0.7634966219597054, "p_null": 2.6770109259010947e-07, "completeness_error": 8.271161533457416e-15, "loss_enc": -0.29849656374771216, "loss_dec": 2.2368523848393727, "weight": 1.0}
+2026-10-30 16:29:09,207 [holevo.py] => HOLEVO epoch task=9 epoch=20 {"objective": 0.2987304287564739, "p_y": 0.13349837960891447, "p_old": 0.7560547833405087, "p_null": 2.69863205615146e-07, "completeness_error": 5.551115123125783e-15, "loss_enc": -0.2987304287564739, "loss_dec": 2.0983258020962285, "weight": 1.0}
+2026-10-30 16:29:40,013 [holevo.py] => HOLEVO epoch task=9 epoch=21 {"objective": 0.29852014017389317, "p_y": 0.134754360386921, "p_old": 0.7563675709922264, "p_null": 2.659358995488607e-07, "completeness_error": 7.93809462606987e-15, "loss_enc": -0.29852014017389317, "loss_dec": 2.064421096465724, "weight": 1.0}
+2026-10-30 16:30:06,634 [holevo.py] => HOLEVO epoch task=9 epoch=22 {"objective": 0.29869333997017444, "p_y": 0.14650402790871198, "p_old": 0.7459031374543741, "p_null": 2.574978432443721e-07, "completeness_error": 6.328271240363392e-15, "loss_enc": -0.29869333997017444, "loss_dec": 1.9980355838426875, "weight": 1.0}
+2026-10-30 16:30:33,436 [holevo.py] => HOLEVO epoch task=9 epoch=23 {"objective": 0.29882137047031465, "p_y": 0.13220347722396789, "p_old": 0.7600346819291093, "p_null": 2.623018980005152e-07, "completeness_error": 6.5503158452884236e-15, "loss_enc": -0.29882137047031465, "loss_dec": 2.1406685262829415, "weight": 1.0}
+2026-10-30 16:31:00,039 [holevo.py] => HOLEVO epoch task=9 epoch=24 {"objective": 0.2988297105762343, "p_y": 0.13182196671096014, "p_old": 0.7511167775483876, "p_null": 2.869062679562383e-07, "completeness_error": 7.216449660063518e-15, "loss_enc": -0.2988297105762343, "loss_dec": 2.1028791572788417, "weight": 1.0}
+2026-10-30 16:31:26,885 [holevo.py] => HOLEVO epoch task=9 epoch=25 {"objective": 0.2987408394191091, "p_y": 0.13216024461309997, "p_old": 0.761621832748008, "p_null": 2.5609499086626076e-07, "completeness_error": 1.0103029524088925e-14, "loss_enc": -0.2987408394191091, "loss_dec": 2.1152265265230517, "weight": 1.0}
+2026-10-30 16:31:53,663 [holevo.py] => HOLEVO epoch task=9 epoch=26 {"objective": 0.29877328246144813, "p_y": 0.13161057852288846, "p_old": 0.7569515955206334, "p_null": 2.6983134177142294e-07, "completeness_error": 1.0325074129013956e-14, "loss_enc": -0.29877328246144813, "loss_dec": 2.133294967876725, "weight": 1.0}
+2026-10-30 16:32:20,756 [holevo.py] => HOLEVO epoch task=9 epoch=27 {"objective": 0.2986822269115159, "p_y": 0.12001104631264736, "p_old": 0.7664136129124217, "p_null": 2.843054270236734e-07, "completeness_error": 6.716849298982197e-15, "loss_enc": -0.2986822269115159, "loss_dec": 2.199013512603626, "weight": 1.0}
+2026-10-30 16:32:47,709 [holevo.py] => HOLEVO epoch task=9 epoch=28 {"objective": 0.2988371918314332, "p_y": 0.13689737731366458, "p_old": 0.7559065164568799, "p_null": 2.691901955475018e-07, "completeness_error": 6.38378239159465e-15, "loss_enc": -0.2988371918314332, "loss_dec": 2.0684347315045164, "weight": 1.0}
+2026-10-30 16:33:14,330 [holevo.py] => HOLEVO epoch task=9 epoch=29 {"objective": 0.29880096495965924, "p_y": 0.1385323117625032, "p_old": 0.7498570211634228, "p_null": 2.730714618454658e-07, "completeness_error": 8.215650382226158e-15, "loss_enc": -0.29880096495965924, "loss_dec": 2.0650023394253214, "weight": 1.0}
+2026-10-30 16:33:41,211 [holevo.py] => HOLEVO epoch task=9 epoch=30 {"objective": 0.2989704874065556, "p_y": 0.13653899573767977, "p_old": 0.7523803911399536, "p_null": 2.738884714645059e-07, "completeness_error": 9.270362255620057e-15, "loss_enc": -0.2989704874065556, "loss_dec": 2.059652865377627, "weight": 1.0}
+2026-10-30 16:33:55,671 [RSIAT_adapter.py] => Task 9, Epoch 30/30 => Loss 3.166, Loss_c 1.985, Losses_rt 1.181, Train_accy 80.35, Test_accy 82.14, Time 26.88s
+2026-10-30 16:33:55,671 [RSIAT_adapter.py] => Task 9 peak GPU memory: 5029.21 MiB
+2026-10-30 16:34:57,762 [holevo.py] => HOLEVO oracle task=9 phase=end {"oracle": {"vn": 0.29039725330234706, "mcr2": 22.2372810303855, "spread": 0.6527822357032553}, "stale": {"vn": 0.29861696423719986, "mcr2": 22.819095744445534, "spread": 0.6609595320346926}, "I_orc": 0.23164577073357506, "p_old_on_new": 0.7490883251597156, "trace_distance": {"mean": 0.01525880159882726, "max": 0.018253339204319548}}
+2026-10-30 16:34:57,762 [holevo.py] => HOLEVO end task=9 lambdas={"enc": null, "dec": null}
+2026-10-30 16:35:21,020 [base.py] => CA Task 9 => Loss 0.071, Test_accy skipped
+2026-10-30 16:35:24,717 [base.py] => CA Task 9 => Loss 0.067, Test_accy skipped
+2026-10-30 16:35:28,455 [base.py] => CA Task 9 => Loss 0.062, Test_accy skipped
+2026-10-30 16:35:32,189 [base.py] => CA Task 9 => Loss 0.061, Test_accy skipped
+2026-10-30 16:35:35,915 [base.py] => CA Task 9 => Loss 0.061, Test_accy skipped
+2026-10-30 16:35:39,633 [base.py] => CA Task 9 => Loss 0.058, Test_accy skipped
+2026-10-30 16:35:43,251 [base.py] => CA Task 9 => Loss 0.057, Test_accy skipped
+2026-10-30 16:35:46,874 [base.py] => CA Task 9 => Loss 0.055, Test_accy skipped
+2026-10-30 16:35:50,494 [base.py] => CA Task 9 => Loss 0.054, Test_accy skipped
+2026-10-30 16:36:08,268 [base.py] => CA Task 9 => Loss 0.055, Test_accy 82.420
+2026-10-30 16:36:48,138 [qsd.py] => QSD task=9 head=linear top1=82.42 old=82.05 new=86.01 task_pred=83.62 pair_ratio=1.4401826484018265
+2026-10-30 16:36:48,138 [qsd.py] => QSD tasks head=linear: [79.8, 79.6, 82.05, 82.73, 78.19, 82.29, 85.58, 84.54, 84.01, 86.01]
+2026-10-30 16:36:48,138 [qsd.py] => QSD mech head=linear: {"task_prediction": 83.62, "pair_ratio": 1.4401826484018265}
+2026-10-30 16:36:48,138 [qsd.py] => QSD curve head=linear: [96.05, 91.37, 90.01, 88.54, 86.32, 85.44, 85.06, 83.95, 83.3, 82.42]
+2026-10-30 16:36:48,138 [qsd.py] => QSD task=9 head=ridge_stats top1=80.06 old=79.65 new=83.94 task_pred=82.03 pair_ratio=0.961435185185185
+2026-10-30 16:36:48,138 [qsd.py] => QSD tasks head=ridge_stats: [78.81, 77.74, 77.18, 80.48, 77.63, 77.83, 83.21, 81.06, 84.01, 83.94]
+2026-10-30 16:36:48,138 [qsd.py] => QSD mech head=ridge_stats: {"task_prediction": 82.03, "pair_ratio": 0.961435185185185}
+2026-10-30 16:36:48,138 [qsd.py] => QSD curve head=ridge_stats: [95.2, 91.66, 89.9, 88.02, 85.93, 84.21, 83.55, 81.91, 80.72, 80.06]
+2026-10-30 16:36:48,138 [qsd.py] => QSD task=9 head=pgm_stats top1=79.71 old=79.57 new=81.0 task_pred=81.60 pair_ratio=1.0271014492753623
+2026-10-30 16:36:48,138 [qsd.py] => QSD tasks head=pgm_stats: [84.6, 78.21, 76.17, 80.48, 75.23, 77.83, 83.03, 78.41, 82.19, 81.0]
+2026-10-30 16:36:48,138 [qsd.py] => QSD mech head=pgm_stats: {"task_prediction": 81.6, "pair_ratio": 1.0271014492753623}
+2026-10-30 16:36:48,138 [qsd.py] => QSD curve head=pgm_stats: [96.05, 90.48, 88.62, 87.83, 85.84, 84.56, 83.59, 81.87, 80.94, 79.71]
+2026-10-30 16:36:48,138 [qsd.py] => QSD task=9 head=fuse_ridge_stats_b0p25 top1=82.64 old=82.26 new=86.18 task_pred=83.87 pair_ratio=1.3806666666666667
+2026-10-30 16:36:48,138 [qsd.py] => QSD tasks head=fuse_ridge_stats_b0p25: [80.51, 79.91, 81.71, 83.07, 78.74, 82.59, 85.04, 84.12, 85.22, 86.18]
+2026-10-30 16:36:48,138 [qsd.py] => QSD mech head=fuse_ridge_stats_b0p25: {"task_prediction": 83.87, "pair_ratio": 1.3806666666666667}
+2026-10-30 16:36:48,138 [qsd.py] => QSD curve head=fuse_ridge_stats_b0p25: [96.33, 91.29, 90.47, 89.21, 87.04, 86.21, 85.39, 84.73, 83.28, 82.64]
+2026-10-30 16:36:48,138 [qsd.py] => QSD task=9 head=fuse_ridge_stats_b0p5 top1=82.28 old=81.9 new=85.84 task_pred=83.66 pair_ratio=1.249074074074074
+2026-10-30 16:36:48,138 [qsd.py] => QSD tasks head=fuse_ridge_stats_b0p5: [80.79, 80.06, 80.37, 82.56, 78.56, 81.25, 85.22, 84.26, 84.41, 85.84]
+2026-10-30 16:36:48,138 [qsd.py] => QSD mech head=fuse_ridge_stats_b0p5: {"task_prediction": 83.66, "pair_ratio": 1.249074074074074}
+2026-10-30 16:36:48,138 [qsd.py] => QSD curve head=fuse_ridge_stats_b0p5: [96.33, 91.96, 90.36, 89.25, 86.97, 86.05, 85.36, 84.43, 83.06, 82.28]
+2026-10-30 16:36:48,138 [qsd.py] => QSD task=9 head=fuse_ridge_stats_b1 top1=81.70 old=81.28 new=85.66 task_pred=83.31 pair_ratio=1.0932539682539681
+2026-10-30 16:36:48,138 [qsd.py] => QSD tasks head=fuse_ridge_stats_b1: [80.51, 79.44, 79.7, 81.87, 78.74, 80.21, 84.31, 83.15, 84.21, 85.66]
+2026-10-30 16:36:48,138 [qsd.py] => QSD mech head=fuse_ridge_stats_b1: {"task_prediction": 83.31, "pair_ratio": 1.0932539682539681}
+2026-10-30 16:36:48,138 [qsd.py] => QSD curve head=fuse_ridge_stats_b1: [96.19, 91.96, 90.11, 89.05, 86.97, 85.68, 84.95, 83.61, 82.59, 81.7]
+2026-10-30 16:36:48,138 [qsd.py] => QSD task=9 head=fuse_ridge_stats_b2 top1=81.27 old=80.77 new=86.01 task_pred=82.98 pair_ratio=1.0504807692307692
+2026-10-30 16:36:48,138 [qsd.py] => QSD tasks head=fuse_ridge_stats_b2: [79.66, 79.6, 79.03, 81.69, 77.82, 79.17, 83.94, 82.45, 84.41, 86.01]
+2026-10-30 16:36:48,138 [qsd.py] => QSD mech head=fuse_ridge_stats_b2: {"task_prediction": 82.98, "pair_ratio": 1.0504807692307692}
+2026-10-30 16:36:48,138 [qsd.py] => QSD curve head=fuse_ridge_stats_b2: [95.9, 91.81, 90.16, 88.85, 86.78, 85.41, 84.53, 83.21, 82.01, 81.27]
+2026-10-30 16:36:48,138 [qsd.py] => QSD task=9 head=fuse_ridge_stats_b4 top1=80.76 old=80.3 new=85.15 task_pred=82.64 pair_ratio=0.9777777777777777
+2026-10-30 16:36:48,138 [qsd.py] => QSD tasks head=fuse_ridge_stats_b4: [79.52, 79.29, 78.02, 81.17, 77.82, 78.57, 83.58, 81.34, 84.41, 85.15]
+2026-10-30 16:36:48,138 [qsd.py] => QSD mech head=fuse_ridge_stats_b4: {"task_prediction": 82.64, "pair_ratio": 0.9777777777777777}
+2026-10-30 16:36:48,138 [qsd.py] => QSD curve head=fuse_ridge_stats_b4: [95.62, 91.81, 90.01, 88.62, 86.36, 84.85, 84.08, 82.69, 81.41, 80.76]
+2026-10-30 16:36:48,138 [qsd.py] => QSD task=9 head=fuse_pgm_stats_b0p25 top1=82.80 old=82.37 new=86.87 task_pred=84.08 pair_ratio=1.3099715099715097
+2026-10-30 16:36:48,138 [qsd.py] => QSD tasks head=fuse_pgm_stats_b0p25: [81.07, 79.44, 82.72, 83.25, 78.37, 82.44, 85.4, 84.4, 84.62, 86.87]
+2026-10-30 16:36:48,138 [qsd.py] => QSD mech head=fuse_pgm_stats_b0p25: {"task_prediction": 84.08, "pair_ratio": 1.3099715099715097}
+2026-10-30 16:36:48,138 [qsd.py] => QSD curve head=fuse_pgm_stats_b0p25: [96.05, 91.22, 90.06, 89.05, 86.84, 85.84, 85.25, 84.43, 83.41, 82.8]
+2026-10-30 16:36:48,139 [qsd.py] => QSD task=9 head=fuse_pgm_stats_b0p5 top1=82.65 old=82.26 new=86.36 task_pred=84.02 pair_ratio=1.2361445783132532
+2026-10-30 16:36:48,139 [qsd.py] => QSD tasks head=fuse_pgm_stats_b0p5: [81.5, 79.44, 81.54, 83.42, 78.0, 82.14, 85.4, 84.26, 85.02, 86.36]
+2026-10-30 16:36:48,139 [qsd.py] => QSD mech head=fuse_pgm_stats_b0p5: {"task_prediction": 84.02, "pair_ratio": 1.2361445783132532}
+2026-10-30 16:36:48,139 [qsd.py] => QSD curve head=fuse_pgm_stats_b0p5: [96.05, 91.37, 90.06, 89.21, 86.97, 86.29, 85.39, 84.51, 83.52, 82.65]
+2026-10-30 16:36:48,139 [qsd.py] => QSD task=9 head=fuse_pgm_stats_b1 top1=82.59 old=82.28 new=85.49 task_pred=83.99 pair_ratio=1.2095424836601305
+2026-10-30 16:36:48,139 [qsd.py] => QSD tasks head=fuse_pgm_stats_b1: [82.77, 80.22, 80.37, 83.42, 78.19, 81.85, 85.04, 83.84, 85.02, 85.49]
+2026-10-30 16:36:48,139 [qsd.py] => QSD mech head=fuse_pgm_stats_b1: {"task_prediction": 83.99, "pair_ratio": 1.2095424836601305}
+2026-10-30 16:36:48,139 [qsd.py] => QSD curve head=fuse_pgm_stats_b1: [96.19, 91.44, 90.06, 88.97, 86.97, 86.13, 85.57, 84.49, 83.3, 82.59]
+2026-10-30 16:36:48,139 [qsd.py] => QSD task=9 head=fuse_pgm_stats_b2 top1=82.09 old=81.85 new=84.46 task_pred=83.59 pair_ratio=1.1576312576312575
+2026-10-30 16:36:48,139 [qsd.py] => QSD tasks head=fuse_pgm_stats_b2: [83.62, 80.22, 79.19, 82.21, 77.82, 81.1, 84.85, 83.43, 84.01, 84.46]
+2026-10-30 16:36:48,139 [qsd.py] => QSD mech head=fuse_pgm_stats_b2: {"task_prediction": 83.59, "pair_ratio": 1.1576312576312575}
+2026-10-30 16:36:48,139 [qsd.py] => QSD curve head=fuse_pgm_stats_b2: [96.19, 91.44, 90.31, 89.05, 86.94, 86.05, 85.46, 84.31, 83.12, 82.09]
+2026-10-30 16:36:48,139 [qsd.py] => QSD task=9 head=fuse_pgm_stats_b4 top1=81.60 old=81.39 new=83.59 task_pred=83.13 pair_ratio=1.164516129032258
+2026-10-30 16:36:48,139 [qsd.py] => QSD tasks head=fuse_pgm_stats_b4: [84.6, 80.06, 78.02, 81.69, 77.45, 80.06, 84.67, 82.03, 83.81, 83.59]
+2026-10-30 16:36:48,139 [qsd.py] => QSD mech head=fuse_pgm_stats_b4: {"task_prediction": 83.13, "pair_ratio": 1.164516129032258}
+2026-10-30 16:36:48,139 [qsd.py] => QSD curve head=fuse_pgm_stats_b4: [96.19, 91.14, 89.85, 88.66, 86.75, 85.73, 85.13, 83.97, 82.81, 81.6]
+2026-10-30 16:36:48,139 [qsd.py] => QSD task=9 diag={"ridge_sensitivity": {"0.01": 79.96, "0.1": 80.06, "1.0": 79.51}, "fuse_scale": {"ridge_stats": 80.30706848874216, "pgm_stats": 5.522394471107958}} seconds=25.9
+2026-10-30 16:36:48,161 [trainer.py] => CNN: {'total': 82.42, '00-19': 79.8, '20-39': 79.6, '40-59': 82.05, '60-79': 82.73, '80-99': 78.19, '100-119': 82.29, '120-139': 85.58, '140-159': 84.54, '160-179': 84.01, '180-199': 86.01, 'old': 82.05, 'new': 86.01}
+2026-10-30 16:36:48,161 [trainer.py] => Continual metrics after task 9: BWT=-5.3789, forgetting=5.3944, task_acc=[79.8, 79.6, 82.05, 82.73, 78.19, 82.29, 85.58, 84.54, 84.01, 86.01]
+2026-10-30 16:36:48,161 [trainer.py] => CNN top1 curve: [96.05, 91.37, 90.01, 88.54, 86.32, 85.44, 85.06, 83.95, 83.3, 82.42]
+2026-10-30 16:36:48,161 [trainer.py] => CNN top5 curve: [99.58, 98.67, 97.74, 96.64, 95.83, 95.51, 95.39, 94.97, 94.48, 94.06]
+2026-10-30 16:36:48,161 [trainer.py] => Average Accuracy (CNN): 87.24600000000001
+2026-10-30 16:36:48,268 [trainer.py] => Average Seed Accuracy (CNN): 87.24600000000001
