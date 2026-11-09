@@ -26,7 +26,8 @@ PLAN_KEYS = ("name", "jobs", "max_parallel", "overrides", "tests", "summaries", 
 def excluded(path):
     """Same exclusions as the base (pack_base.EXCLUDE), plus Markdown and the runner itself."""
     parts = path.split("/")
-    return (path.endswith((".md", ".ipynb")) or parts[0] in ("paper", "docs", "dist", "images", "kaggle")
+    return (path.endswith((".md", ".ipynb")) or parts[0].startswith("paper")  # paper/, paper_acl/, paper_icisn/
+            or parts[0] in ("docs", "dist", "images", "kaggle")
             or path.startswith("exps/archive/") or (parts[0] == "exps" and "results" in parts[2:-1]))
 
 

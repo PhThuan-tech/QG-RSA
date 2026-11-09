@@ -101,6 +101,7 @@ def gain():
              ha="center", fontsize=11, color=MUTED)
     fig.tight_layout(rect=(0, 0.04, 1, 1))
     fig.savefig(OUT / "slide_scf_gain.png", dpi=200)
+    fig.savefig(OUT / "slide_scf_gain.pdf")
     plt.close(fig)
     return rows
 

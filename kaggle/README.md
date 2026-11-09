@@ -61,3 +61,4 @@ Run đã xong được bỏ qua khi chạy lại. Kết quả nằm ở `runs/SU
 | `w04_qksr_p0` | QKSR-v2 bước P0: đo nguyên nhân, chỉ đọc (`exps/qksr2/README.md`) | `c7bc4fd` |
 | `w05_qksr_p1` | QKSR-v2 bước P1: PQK so với RBF / bỏ CNOT trên cùng phép chiếu, 9 run (`exps/qksr2/README.md`) | `c7bc4fd` |
 | `w06_qksr_p2` | QKSR-v2 bước P2: phép chiếu LDA + bandwidth mỗi task, 9 run; chỉ chạy sau P0 | `c7bc4fd` |
+| `w07_qscf` | Lượng tử lúc train × SCF, 2×2, 6 run (`exps/qscf/README.md`) | `c7bc4fd` |

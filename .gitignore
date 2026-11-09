@@ -66,3 +66,20 @@ research_notes/
 # Duplicates waiting for manual deletion
 _duplicates_to_delete/
 waves/w01_svf/results/
+# --- Chỉ giữ trên máy local, không đẩy lên GitHub (từ 09/11/2026) ---
+# Log thô của các thí nghiệm không dùng trực tiếp trong paper ICISN. Thành viên chỉ cần:
+# exps/scf, exps/qscf, exps/qsd/results/a2, exps/holevo_povm/results, exps/qbound và các README kết quả.
+# Config (.json) và spec (README.md) ở gốc mỗi thí nghiệm vẫn trong git (test và runner Kaggle cần).
+exps/archive/
+kaggle/waves/*/results/
+exps/diagnostics/results/
+exps/measurement/results/
+exps/qksr/results/
+exps/qrfca/results/
+exps/svf/results/
+exps/upper/results/
+exps/qsd/results/stage_a/
+exps/holevo/results/*
+!exps/holevo/results/README.md
+exps/qksr2/results/*
+!exps/qksr2/results/README.md

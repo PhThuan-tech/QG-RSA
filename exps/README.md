@@ -1,5 +1,18 @@
 # Thí nghiệm
 
+> **Thành viên viết paper ICISN: chỉ cần đọc các thư mục dưới đây**, bỏ qua phần còn lại.
+>
+> | Thư mục | Dùng cho phần nào của paper |
+> |---|---|
+> | `scf/` (`results/summary.md`) | Bảng chính, hình gain, ablation (C1) |
+> | `qscf/` | Bảng 2×2 W07: lượng tử lúc train × SCF (C3) |
+> | `holevo_povm/results/` | Số pilot dự phòng cho bảng 2×2 |
+> | `qksr2/results/README.md` | Các dòng QKSR trong bảng twin (C2) |
+> | `qsd/results/a2/` | Run ImageNet-R/A dùng trong bảng chính |
+>
+> Log thô của các thí nghiệm khác chỉ còn trên máy của Thuận (đã đưa vào `.gitignore` từ 09/11/2026).
+> Tài liệu cho nhóm: `paper_icisn/KE_HOACH_NHOM.md`, `paper_icisn/HUONG_DAN_THANH_VIEN.md`.
+
 ## Cấu trúc
 
 Mỗi thí nghiệm là một thư mục `exps/<thí nghiệm>/`:
