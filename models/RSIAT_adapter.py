@@ -212,20 +212,23 @@ class Learner(BaseLearner):
         self.shared_adapter_update_mode = str(
             args.get("shared_adapter_update_mode", "baseline")
         ).lower()
-        if self.shared_adapter_update_mode not in ("baseline", "keeplora_m_only"):
+        if self.shared_adapter_update_mode not in ("baseline", "keeplora_m_only", "dense_control"):
             raise ValueError(
-                "shared_adapter_update_mode must be 'baseline' or "
-                "'keeplora_m_only'."
+                "shared_adapter_update_mode must be 'baseline', "
+                "'keeplora_m_only' or 'dense_control'."
             )
         self._uses_m_only = self.shared_adapter_update_mode == "keeplora_m_only"
-        if self._uses_m_only and (
+        self._uses_dense_control = self.shared_adapter_update_mode == "dense_control"
+        if (self._uses_m_only or self._uses_dense_control) and (
             args.get("model_name") != "adapter"
             or "_adapter" not in str(args["convnet_type"]).lower()
             or self._uses_keeplora
         ):
             raise ValueError(
-                "keeplora_m_only requires the RSIAT Shared Adapter backbone."
+                "M-only and dense control require the RSIAT Shared Adapter backbone."
             )
+        if args.get("rebuild_task0_feature_basis", False) and not self._uses_m_only:
+            raise ValueError("rebuild_task0_feature_basis requires keeplora_m_only.")
         self._m_only_bases = {}
         self.m_only_init_loader = None
         self.keeplora_init_mode = str(args.get("keeplora_init_mode", "cosine")).lower()
@@ -360,27 +363,42 @@ class Learner(BaseLearner):
                 "the checkpoint."
             )
         m_only_state = checkpoint.get("shared_adapter_m_only_state")
-        self._task_boundary_rng_state = None
+        self._task_boundary_rng_state = checkpoint.get("dense_control_task_boundary_rng_state")
+        if getattr(self, "_uses_m_only", False):
+            self._m_only_bases = {}
         if m_only_state is not None:
-            if not self._uses_m_only:
+            task_zero = (
+                int(checkpoint.get("cur_task", -1)) == 0
+                and checkpoint.get("mid_task_training_state") is None
+            )
+            dense_control_start = (
+                getattr(self, "_uses_dense_control", False)
+                and task_zero
+                and not checkpoint.get("shared_adapter_m_only_active_factors")
+            )
+            if not (self._uses_m_only or dense_control_start):
                 raise ValueError(
                     "Checkpoint contains Shared Adapter M-only state, but the "
                     "current mode is not keeplora_m_only."
                 )
             if int(m_only_state.get("version", 0)) != 1:
                 raise ValueError("Unsupported Shared Adapter M-only checkpoint state.")
-            self._m_only_bases = {
-                name: basis.detach().cpu().float()
-                for name, basis in m_only_state.get("feature_bases", {}).items()
-            }
-            saved_basis_hash = m_only_state.get("feature_basis_sha256")
-            if (
-                saved_basis_hash is not None
-                and saved_basis_hash != self._m_only_feature_basis_checksum()
-            ):
-                raise ValueError(
-                    "Shared Adapter feature-basis checksum does not match checkpoint."
-                )
+            rebuild_basis = task_zero and self.args.get("rebuild_task0_feature_basis", False)
+            if self._uses_m_only and not rebuild_basis:
+                self._m_only_bases = {
+                    name: basis.detach().cpu().float()
+                    for name, basis in m_only_state.get("feature_bases", {}).items()
+                }
+                saved_basis_hash = m_only_state.get("feature_basis_sha256")
+                if (
+                    saved_basis_hash is not None
+                    and saved_basis_hash != self._m_only_feature_basis_checksum()
+                ):
+                    raise ValueError(
+                        "Shared Adapter feature-basis checksum does not match checkpoint."
+                    )
+            elif rebuild_basis:
+                logging.info("Task-0 adapter weights reused. M0 will be rebuilt before Task 1.")
             if checkpoint.get("mid_task_training_state") is None:
                 self._task_boundary_rng_state = m_only_state.get("task_boundary_rng_state")
         if self._cur_task >= 1:
@@ -540,6 +558,8 @@ class Learner(BaseLearner):
                     }
                 )
             state["shared_adapter_m_only_active_factors"] = active_factors
+        elif getattr(self, "_uses_dense_control", False) and not mid_task:
+            state["dense_control_task_boundary_rng_state"] = self._capture_training_rng_state()
         return state
 
     def _shared_adapter_state_checksum(self):
@@ -1168,7 +1188,10 @@ class Learner(BaseLearner):
             input_dims=768,
             code_dims=self.args["ae_code_dims"],
             zero_residual=self.rae_zero_init,
-            baseline_init_order=getattr(self, "_uses_m_only", False),
+            baseline_init_order=(
+                getattr(self, "_uses_m_only", False)
+                or getattr(self, "_uses_dense_control", False)
+            ),
         )
 
     def _create_rae(self, task_id):
@@ -1604,16 +1627,16 @@ class Learner(BaseLearner):
         print("The number of training dataset:", len(self.train_dataset))
 
         self.data_manager = data_manager
+        persistent_workers = self.persistent_workers and not (
+            self._cur_task > 0 and (self._uses_m_only or self._uses_dense_control)
+        )
         self.train_loader = DataLoader(
             train_dataset,
             batch_size=self.batch_size,
             shuffle=True,
             num_workers=self.num_workers,
             pin_memory=self.pin_memory,
-            persistent_workers=(
-                self.persistent_workers
-                and not (self._uses_m_only and self._cur_task > 0)
-            ),
+            persistent_workers=persistent_workers,
         )
         probe_mode = _validate_ssca_drift_probe_mode(self.args)
         ssca_drift_probe_loader = self.train_loader
@@ -1632,10 +1655,7 @@ class Learner(BaseLearner):
                 drop_last=True,
                 num_workers=self.num_workers,
                 pin_memory=self.pin_memory,
-                persistent_workers=(
-                    self.persistent_workers
-                    and not (self._uses_m_only and self._cur_task > 0)
-                ),
+                persistent_workers=persistent_workers,
             )
         if self._uses_m_only and self._cur_task > 0:
             self.m_only_init_loader = self._m_only_data_loader(
@@ -1651,10 +1671,7 @@ class Learner(BaseLearner):
             shuffle=False,
             num_workers=self.num_workers,
             pin_memory=self.pin_memory,
-            persistent_workers=(
-                self.persistent_workers
-                and not (self._uses_m_only and self._cur_task > 0)
-            ),
+            persistent_workers=persistent_workers,
         )
 
         if len(self._multiple_gpus) > 1:
@@ -1686,6 +1703,9 @@ class Learner(BaseLearner):
                         )
                     old_probe_labels = pre_task_state["labels"]
                     old_probe_indices = pre_task_state["indices"]
+                    probe_rng_state = pre_task_state.get("probe_rng_state")
+                    if probe_rng_state is not None:
+                        ssca_drift_probe_loader.generator.set_state(probe_rng_state)
                 self._mid_task_pre_task_state = pre_task_state
             elif probe_mode is None:
                 train_embeddings_old, _ = self.extract_features(
@@ -1706,6 +1726,7 @@ class Learner(BaseLearner):
                     "features": train_embeddings_old.detach().cpu(),
                     "labels": old_probe_labels.detach().cpu(),
                     "indices": old_probe_indices.detach().cpu(),
+                    "probe_rng_state": ssca_drift_probe_loader.generator.get_state(),
                 }
 
         self._diagnose_rae_initialization(self.train_loader)
@@ -1809,6 +1830,7 @@ class Learner(BaseLearner):
         self._network.fc.backup()
         self._compute_class_mean(data_manager, check_diff=False, oracle=False)
         if self._cur_task>0 and self.args['ca_epochs']>0 and self.args['ca'] is True:
+            self.semantic_drift.measure_pre_ca()
             self._stage2_compact_classifier(task_size, self.args['ca_epochs'])
             if len(self._multiple_gpus) > 1:
                 self._network = self._network.module

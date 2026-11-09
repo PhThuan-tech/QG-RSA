@@ -26,10 +26,10 @@ def get_convnet(args, pretrained=False):
             shared_adapter_update_mode = str(
                 args.get("shared_adapter_update_mode", "baseline")
             ).lower()
-            if shared_adapter_update_mode not in ("baseline", "keeplora_m_only"):
+            if shared_adapter_update_mode not in ("baseline", "keeplora_m_only", "dense_control"):
                 raise ValueError(
-                    "shared_adapter_update_mode must be 'baseline' or "
-                    "'keeplora_m_only'."
+                    "shared_adapter_update_mode must be 'baseline', "
+                    "'keeplora_m_only' or 'dense_control'."
                 )
             tuning_config = EasyDict(
                 # AdaptFormer

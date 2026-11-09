@@ -65,7 +65,7 @@ def _train(args):
         format="%(asctime)s [%(filename)s] => %(message)s",
         force=True,
         handlers=[
-            logging.FileHandler(filename=logfilename + ".log"),
+            logging.FileHandler(filename=logfilename + ".log", encoding="utf-8"),
             logging.StreamHandler(sys.stdout),
         ],
     )
@@ -111,9 +111,12 @@ def _train(args):
             )
             logging.info("Resuming experiment from task %d", start_task)
         else:
-            if getattr(model, "_uses_m_only", False) and args.get("resume_path"):
+            if (
+                getattr(model, "_uses_m_only", False)
+                or getattr(model, "_uses_dense_control", False)
+            ) and args.get("resume_path"):
                 raise FileNotFoundError(
-                    "M-only requires the shared Task-0 checkpoint: {}".format(
+                    "This run requires the shared Task-0 checkpoint: {}".format(
                         args["resume_path"]
                     )
                 )

@@ -122,7 +122,11 @@ class SharedAdapterMOnlyTests(unittest.TestCase):
             task_one_initial_factors = []
             for optimizer in ("adamw", "sgd"):
                 with self.subTest(optimizer=optimizer):
-                    run_args = dict(args, incremental_optimizer=optimizer)
+                    run_args = dict(
+                        args,
+                        incremental_optimizer=optimizer,
+                        ssca_drift_probe_mode="stochastic_unpaired",
+                    )
                     torch.manual_seed(args["seed"])
                     learner = Learner(run_args)
                     learner.topk = 2
@@ -162,6 +166,9 @@ class SharedAdapterMOnlyTests(unittest.TestCase):
                         self.assertEqual(init_checksum.call_count, 1)
                     mid_state = torch.load(mid_task, weights_only=False)
                     self.assertTrue(mid_state["shared_adapter_m_only_active_factors"])
+                    self.assertIn(
+                        "probe_rng_state", mid_state["mid_task_training_state"]["pre_task_state"]
+                    )
                     self.assertFalse(
                         learner._checkpoint_extra_state()["shared_adapter_m_only_active_factors"]
                     )

@@ -128,6 +128,85 @@ before the next task starts, after rebuilding the model and classifier.
 Keep the two optimizer runs in their separate configured prefixes; do not
 share their incremental checkpoint directory.
 
+### Exp2 capacity, protection threshold, and SSCA controls
+
+Run from the `QG-RSA` directory. Reuse the completed Exp1 h64 Task-0
+checkpoint for all h64 branches. If it is missing, run
+`exp1_h64_shared_adapter_task0.json` first. On Kaggle, copy the checkpoint
+to the path in `resume_path` or point `resume_path` at the mounted file.
+Each branch resumes its own latest checkpoint first when one exists.
+
+1. Compare the M-only basis energy thresholds at h64 with FullSGD,
+   down/up rank caps of 16, and effective scaling of 0.0625.
+
+   ```sh
+   python main.py --config exps/exp2_h64_monly_fullsgd_rank16_e099.json
+   python main.py --config exps/exp2_h64_monly_fullsgd_rank16_e095.json
+   ```
+
+   E095 reloads the same dense Task-0 weights and recomputes M0 from the
+   Task-0 training split at threshold 0.95. E099 uses the saved M0 at 0.99.
+   Each branch keeps its threshold for later tasks. E099 is the matched
+   reference for Exp2. Exp1 uses the legacy SSCA loader, whereas Exp2 uses a
+   separate RNG for the SSCA probe in both comparison arms.
+
+2. Measure the effect of increasing the shared adapter bottleneck in both
+   dense and M-only training. Train h128 Task 0 once, then reuse its
+   checkpoint for both h128 branches. Use E099 from step 1 for h64 M-only.
+
+   ```sh
+   python main.py --config exps/exp2_h64_dense_sgd.json
+   python main.py --config exps/exp2_h128_shared_adapter_task0.json
+   python main.py --config exps/exp2_h128_dense_sgd.json
+   python main.py --config exps/exp2_h128_monly_fullsgd_rank16_e099.json
+   ```
+
+   `dense_control` updates the full shared adapter, including biases, with
+   RSIAT SGD. It uses the same Task-0 initialization, RAE construction order,
+   loss, classifier, SSCA and CA as its M-only match. The dense/M-only contrast
+   measures the combined effect of the update rules, including the M-only
+   bias freeze and factor scaling. Check residual dimension and actual rank
+   before attributing a width effect to extra usable directions.
+
+3. Test the SSCA probe at h64 when correction error or accuracy after CA is
+   a concern. Compare each paired branch to its stochastic-unpaired Exp2
+   counterpart from the previous steps.
+
+   ```sh
+   python main.py --config exps/exp2_h64_dense_sgd_ssca_paired.json
+   python main.py --config exps/exp2_h64_monly_fullsgd_rank16_e099_ssca_paired.json
+   ```
+
+   Paired SSCA reuses the same train images in the same order with an eval
+   transform before and after training. This tests sample pairing and
+   deterministic transforms together. Both probe modes isolate their RNG
+   from training. The paired log should report
+   `pre_post_sample_id_match=1.000000`.
+
+Every incremental branch records old/new and overall Top-1 before CA
+alongside final accuracy, forgetting and semantic drift in
+`semantic_drift/<prefix>/summary.csv` and `task_XX.json`.
+For M-only, also read `rank_M`, `residual_dimension`, `actual_rank`,
+and the gradient projection norm ratio for each down/up linear in the
+training log.
+
+#### h128 FullAdamW compared with completed h64 Exp1 runs
+
+Use the same h128 Task-0 checkpoint from step 2 for both ranks. Generate it
+with `exp2_h128_shared_adapter_task0.json` if it is missing. Task 0 uses
+dense SGD. The following runs start AdamW at Task 1.
+
+```sh
+python main.py --config exps/exp2_h128_monly_fulladamw_rank16_e099.json
+python main.py --config exps/exp2_h128_monly_fulladamw_rank32_e099.json
+```
+
+Compare rank 16 with the Exp1 h64 FullAdamW rank-16 run, and rank 32 with
+the Exp1 h64 FullAdamW run whose filename has no rank suffix. These pairs
+use the same legacy SSCA probe, 0.99 basis threshold, and optimizer settings.
+The h128 runs additionally log pre-CA accuracy. Use post-CA accuracy,
+forgetting and semantic drift to compare with completed Exp1 runs.
+
 ### Efficient training
 
 `eval_interval: 0` and `ca_eval_interval: 0` evaluate only the final epoch of each training stage. This avoids repeated full validation passes without changing gradients, optimizer steps, or the cosine scheduler. Set either value to a positive number when intermediate validation curves are needed. `num_workers`, `stats_num_workers`, `pin_memory`, and `persistent_workers` configure data loading; the provided values are suitable starting points for a GPU runtime.

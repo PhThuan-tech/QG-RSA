@@ -609,6 +609,33 @@ class SemanticDriftObserver:
             ],
         }
 
+    def measure_pre_ca(self):
+        if (
+            not self.enabled
+            or not self.config.get("measure_pre_ca_accuracy", False)
+            or self._task_result is None
+        ):
+            return
+        model = self.learner._network
+        was_training = model.training
+        rng_state = self._rng_snapshot()
+        try:
+            evaluation = self.learner.eval_task()
+        finally:
+            model.train(was_training)
+            self._restore_rng(rng_state)
+        grouped = evaluation["grouped"]
+        self._task_result["pre_ca_evaluation"] = {
+            "overall_accuracy": evaluation["top1"],
+            "old_class_accuracy": grouped["old"],
+            "new_class_accuracy": grouped["new"],
+        }
+        logging.info(
+            "Before CA task=%d accuracy=%s",
+            self.learner._cur_task,
+            self._task_result["pre_ca_evaluation"],
+        )
+
     def record_evaluation(self, evaluation, task_accuracy_history=None):
         if not self.enabled or self._task_result is None:
             return
@@ -683,6 +710,13 @@ class SemanticDriftObserver:
             "mean_forgetting": forgetting.get("mean"),
             "forgetting_measured_tasks": forgetting.get("num_measured_tasks"),
         }
+        if self.config.get("measure_pre_ca_accuracy", False):
+            pre_ca = result.get("pre_ca_evaluation", {})
+            row.update(
+                pre_ca_overall_accuracy=pre_ca.get("overall_accuracy"),
+                pre_ca_old_class_accuracy=pre_ca.get("old_class_accuracy"),
+                pre_ca_new_class_accuracy=pre_ca.get("new_class_accuracy"),
+            )
         rows = {}
         if summary_path.exists():
             with summary_path.open(newline="", encoding="utf-8") as stream:

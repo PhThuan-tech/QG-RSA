@@ -188,6 +188,7 @@ class BaseLearner(object):
             "shared_adapter_update_mode": str(
                 self.args.get("shared_adapter_update_mode", "baseline")
             ).lower(),
+            "ssca_drift_probe_mode": self.args.get("ssca_drift_probe_mode"),
             **{key: self.args.get(key) for key in keys if key in self.args},
         }
         if metadata["shared_adapter_update_mode"] == "keeplora_m_only":
@@ -452,6 +453,7 @@ class BaseLearner(object):
                 "classifier_adamw_weight_decay", "classifier_adamw_betas",
                 "classifier_adamw_eps",
                 "shared_adapter_update_mode",
+                "ssca_drift_probe_mode",
                 "incremental_optimizer",
                 "shared_adapter_m_only_optimizer",
                 "rank_down_max",
@@ -482,13 +484,14 @@ class BaseLearner(object):
                 raise ValueError(
                     "Checkpoint is missing run metadata: {}".format(missing_metadata)
                 )
-        task_zero_m_only_compatibility = (
+        task_zero_adapter_compatibility = (
             int(checkpoint.get("cur_task", -1)) == 0
-            and current_metadata.get("shared_adapter_update_mode")
-            == "keeplora_m_only"
+            and checkpoint.get("mid_task_training_state") is None
+            and current_metadata["shared_adapter_update_mode"] in ("keeplora_m_only", "dense_control")
         )
         task_zero_compatible_keys = {
             "shared_adapter_update_mode",
+            "ssca_drift_probe_mode",
             "incremental_optimizer",
             "shared_adapter_m_only_optimizer",
             "rank_down_max",
@@ -509,9 +512,12 @@ class BaseLearner(object):
             "shared_adapter_m_only_adamw_rae_lr",
             "shared_adapter_m_only_adamw_rae_weight_decay",
         }
-        if task_zero_m_only_compatibility and checkpoint.get(
-            "shared_adapter_m_only_state", {}
-        ).get("feature_bases"):
+        if (
+            task_zero_adapter_compatibility
+            and current_metadata["shared_adapter_update_mode"] == "keeplora_m_only"
+            and checkpoint.get("shared_adapter_m_only_state", {}).get("feature_bases")
+            and not self.args.get("rebuild_task0_feature_basis", False)
+        ):
             task_zero_compatible_keys.difference_update(
                 {"feature_threshold", "shared_adapter_m_only_feature_rows_per_batch"}
             )
@@ -522,7 +528,7 @@ class BaseLearner(object):
             for key in current_metadata
             if key != "format_version"
             and not (
-                task_zero_m_only_compatibility
+                task_zero_adapter_compatibility
                 and key in task_zero_compatible_keys
             )
             and key in saved_metadata
