@@ -21,6 +21,8 @@ from KeepLora.keeplora_controller import KeepLoRAController
 from KeepLora.m_only_adapter import MOnlyKeepLoRA, update_feature_basis
 import math
 num_workers = 8
+KEEPLORA_FEATURE_RTOL = 1e-4
+KEEPLORA_FEATURE_ATOL = 1e-3
 
 
 def _validate_ssca_scale_config(args):
@@ -1042,12 +1044,14 @@ class Learner(BaseLearner):
             if not torch.allclose(
                 actual_features,
                 invariance_reference,
-                rtol=1e-4,
-                atol=1e-5,
+                rtol=KEEPLORA_FEATURE_RTOL,
+                atol=KEEPLORA_FEATURE_ATOL,
             ):
                 raise RuntimeError(
                     "Attaching M-only factors changed the Shared Adapter forward "
-                    "(max error {:.8g}).".format(maximum_error)
+                    "(max error {:.8g}, rtol={:g}, atol={:g}).".format(
+                        maximum_error, KEEPLORA_FEATURE_RTOL, KEEPLORA_FEATURE_ATOL
+                    )
                 )
             logging.info(
                 "M-only factorization forward invariance task=%d max_abs_error=%.8g",
@@ -1435,7 +1439,8 @@ class Learner(BaseLearner):
                 logit_error,
             )
             if not torch.allclose(
-                actual_features, reference_features, rtol=1e-4, atol=1e-3
+                actual_features, reference_features,
+                rtol=KEEPLORA_FEATURE_RTOL, atol=KEEPLORA_FEATURE_ATOL,
             ) or not torch.allclose(
                 actual_logits, reference_logits, rtol=1e-4, atol=1e-5
             ):
