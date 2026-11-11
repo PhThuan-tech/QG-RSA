@@ -1,0 +1,94 @@
+% Owner: Duc Anh. ~2.4 pages. Sources: paper_acl/sections/method.tex, appendix.tex (A).
+% The equations below are copied from the ACL version to keep the notation consistent; rewrite the text.
+% Order follows the pipeline: training (base -> incremental, 4.1) -> memory -> inference (4.2-4.6).
+% Focus on 4.2-4.6 (PGM + SCF). Keep 4.1 short (~0.4 page).
+\section{Method}\label{sec:method}
+\TODOD{Opening paragraph, 3--4 sentences, following the pipeline (Fig.~\ref{fig:pipeline}): quantum components can
+enter at training time, when the adapter learns the base task and the later tasks (Sect.~\ref{sec:pqk}); however
+it is trained, all that remains of the old classes is the memory $\mathcal M_t$; at inference we read $\mathcal M_t$
+as quantum states and measure them with the PGM (Sect.~\ref{sec:states}--\ref{sec:pgm}), then combine it with the
+linear head (Sect.~\ref{sec:scf}).}
+
+\subsection{Quantum Kernels at Training Time}\label{sec:pqk}
+% ~0.4 page. NOT a main contribution: it defines what is needed to read the twin table and the 2x2 table.
+% Sources: paper_acl/sections/method.tex Sect. 4.2 (PQK), PIPELINE_cho_nhom.md Sect. 4.
+A feature is mapped to $q=8$ angles $\theta(z)=\pi\tanh(W\,\mathrm{LN}(z)+b)$, loaded with $R_y$ rotations and
+followed by $L=2$ layers of trainable $R_y$ rotations and a ring of CNOTs. Following~\cite{huang2021power}, two
+features are compared through the one-qubit reduced density matrices $\rho_j$ of their states:
+\begin{equation}
+  k(z,z')=\exp\Big(-\gamma\sum_{j=1}^{q}\big\|\rho_j(z)-\rho_j(z')\big\|_F^2\Big).
+  \label{eq:pqk}
+\end{equation}
+\TODOD{Rewrite the paragraph above.}
+
+\paragraph{Base task.} \TODOD{1--2 sentences: $k$ replaces the cosine in the RSIAT steering loss; the circuit is
+trained together with the adapter and frozen after task 0.}
+
+\paragraph{Incremental tasks (QKSR).} \TODOD{1--2 sentences: penalise the mean $k(\mathrm{AE}(\mu_c^{\mathrm{old}}), z)$
+between old-class means and new features, to separate new classes from old ones. Twins: RBF on the same 8 angles;
+the same circuit without CNOTs. In the paper, ``QKSR'' means both the base-task and incremental-task parts are on.}
+
+\TODOD{Transition to 4.2: these kernels only change how the adapter learns; results in Table~\ref{tab:twin} and
+Table~\ref{tab:qscf}. However the network is trained, old classes survive only as $(\mu_c,\Sigma_c)$; the next
+part uses exactly these statistics at inference.}
+
+
+\subsection{Classes as Quantum States}\label{sec:states}
+\TODOD{1--2 lead-in sentences: at inference, each class in $\mathcal M_t$ becomes a quantum state.}
+Let $m_0$ and $s_0^2$ be the mean and the trace of the covariance of the task-0 features.
+\begin{equation}
+  v(z)=\begin{bmatrix}(z-m_0)/s_0\\1\end{bmatrix}\in\mathbb R^{769},\qquad \psi(z)=\frac{v(z)}{\|v(z)\|},
+  \label{eq:lift}
+\end{equation}
+\begin{equation}
+  \rho_c=\frac{\mathbb E_c[vv^{\top}]}{\mathbb E_c\|v\|^2},\qquad
+  \mathbb E_c[vv^{\top}]=\begin{bmatrix}\tilde\Sigma_c+\tilde\mu_c\tilde\mu_c^{\top}&\tilde\mu_c\\
+  \tilde\mu_c^{\top}&1\end{bmatrix}.
+  \label{eq:state}
+\end{equation}
+\TODOD{Explain: $\psi$ is a 10-qubit state (769 padded to 1024); $\rho_c$ is computed from
+$(\mu_c,\Sigma_c)$ only, needs no stored features, and follows the drift correction.}
+
+\subsection{Pretty-Good Measurement}\label{sec:pgm}
+\begin{equation}
+  E_c=\frac1{C_t}\,\bar\rho_\delta^{-1/2}\rho_c\,\bar\rho_\delta^{-1/2},\quad
+  \bar\rho_\delta=\frac1{C_t}\sum_{c}\rho_c+\delta I,\quad
+  p(c\mid z)=\frac{\psi^{\top}E_c\psi}{\sum_{c'}\psi^{\top}E_{c'}\psi}.
+  \label{eq:pgm}
+\end{equation}
+\TODOD{Explain the role of $\bar\rho_\delta^{-1/2}$ (compares class $c$ against all classes) and of $\delta$.}
+
+\subsection{Classical Twin: Ridge on the Same Statistics}\label{sec:ridge}
+\begin{equation}
+  \Big(\sum_{c}(\Sigma_c+\mu_c\mu_c^{\top})+\lambda I\Big)W=[\mu_1,\dots,\mu_{C_t}],\qquad
+  g^{\mathrm R}_c(z)=z^{\top}W_{:,c}.
+  \label{eq:ridge}
+\end{equation}
+\TODOD{Stress: same input $\mathcal M_t$ as the PGM; in the spirit of RanPAC~\cite{mcdonnell2023ranpac}.}
+
+\subsection{Statistics-Calibrated Fusion (SCF)}\label{sec:scf}
+\begin{equation}
+  \hat y=\arg\max_c\;\ell_c(z)+w\,\kappa\,g_c(z),\qquad
+  \kappa=\overline{\mathrm{sd}_c\,\ell_c}\,\big/\,\overline{\mathrm{sd}_c\,g_c},
+  \label{eq:scf}
+\end{equation}
+\TODOD{$g$ = $\log p(c\mid z)$ (PGM) or $g^{\mathrm R}$; $\mathrm{sd}_c$ = standard deviation over classes, averaged
+over the training images of the current task; $\kappa$ needs no labels; $w$ frozen on the tuning group
+(ridge 0.25, PGM 0.5).}
+
+\subsection{What the Measurement Can and Cannot Do}\label{sec:props}
+\begin{proposition}\label{prop:unitary}
+For any unitary $U$ applied after the encoding, $p(c\mid z)$ is unchanged.
+\end{proposition}
+\begin{proposition}\label{prop:shrink}
+Replacing every $\rho_c$ by $(1-\varepsilon)\rho_c+\varepsilon\bar\rho$, $\varepsilon\in[0,1)$, leaves
+$\arg\max_c p(c\mid z)$ unchanged.
+\end{proposition}
+\begin{proposition}\label{prop:scale}
+For any $a>0$ and class-independent $b(z)$, replacing $g_c$ by $a\,g_c+b$ leaves $\hat y$ in
+Eq.~\eqref{eq:scf} unchanged.
+\end{proposition}
+\TODOD{A 2--3 line proof for each proposition (appendix.tex Sect. A). After each, one sentence on its practical
+meaning: (1) training a circuit after the encoding is useless; (2) shrinking the states has no effect; (3) $w$ means
+the same for every source and dataset, so it can be frozen. Also: the PGM coincides with the least-squares
+measurement~\cite{eldar2001srm}, so we predict ridge $\approx$ PGM.}

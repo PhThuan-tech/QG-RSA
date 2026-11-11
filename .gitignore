@@ -83,3 +83,6 @@ exps/holevo/results/*
 !exps/holevo/results/README.md
 exps/qksr2/results/*
 !exps/qksr2/results/README.md
+
+# zip kết quả Kaggle tải về (đã giải nén vào exps/<thí nghiệm>/results/)
+results_*.zip

@@ -74,6 +74,8 @@ Tình trạng (✓ = đã có run A2 với đủ head SCF; mọi run đều ch�
 | Q-BOUND: cận Helstrom/fidelity làm chẩn đoán nhầm lẫn giữa task + đường đánh đổi cũ–mới (hậu kiểm) | `qbound/README.md` | `qbound/results/README.md` (phần A); phần B: wave `W04_qbound` | A (hậu kiểm, 61 run): 11/11 can thiệp huấn luyện (QKSR, Holevo, POVM) chỉ đổi old lấy new, AIA đứng yên; chỉ SCF tăng cả hai nửa. B chưa chạy |
 | QKSR-v2: P0 đo W1–W7 (probe chỉ đọc), P1 PQK so với bản cổ điển, P2 phép chiếu LDA + bandwidth mỗi task | `qksr2/README.md` | `qksr2/results/README.md` | DỪNG. P0: phép chiếu 768→8 mất thông tin lớp, gradient tách lớp ⟂ CosFace. P1: PQK giữ task cũ tốt hơn RBF/bỏ CNOT nhưng AIA chỉ +0.04–0.07. P2: sửa phép chiếu làm AIA giảm 0.07. QKSR − RSIAT n=3: +0.05 [−0.18, +0.28] AIA, forgetting −0.54 |
 
+| W07: lượng tử lúc train × SCF (2×2, ImageNet-R 1993, 3 replicate) | `qscf/README.md` | `qscf/results/README.md` | KHÔNG ĐẠT theo quy tắc: (QKSR+SCF) − (RSIAT+SCF) = +0.09 [−0.08, +0.26] Ā. SCF tăng trên cả hai mạng (+0.38 / +0.44); QKSR không thêm gì |
+
 `archive/qksr/`: config QKSR cũ (CIFAR, CUB), không còn dùng.
 
 ## Config gốc

@@ -1,0 +1,17 @@
+% Owner: Khanh. ~0.5 page. Sources: paper_acl/sections/task.tex, method.tex (4.1)
+\section{Background}\label{sec:background}
+\paragraph{Problem and metrics.}
+Tasks $t=0,\dots,B-1$ bring disjoint label sets $\mathcal Y_t$; after task $t$ the model classifies all
+classes $\mathcal C_t=\mathcal Y_0\cup\dots\cup\mathcal Y_t$, $C_t=|\mathcal C_t|$, without storing past images.
+With $A_k$ the accuracy on $\mathcal C_k$ after task $k$,
+\begin{equation}
+  \bar A=\frac1B\sum_{k=0}^{B-1}A_k,\qquad A_B=A_{B-1}.
+  \label{eq:metrics}
+\end{equation}
+\TODOK{Rewrite the paragraph above in your own words; add forgetting $F$ if used.}
+
+\paragraph{Baseline: RSIAT.}
+\TODOK{Frozen ViT-B/16~\cite{dosovitskiy2021vit} + shared adapter; features $z\in\mathbb R^{768}$;
+cosine classifier $\ell_c(z)=s\cos(w_c,z)$ (the \emph{linear head}); memory $\mathcal M_t=\{(\mu_c,\Sigma_c)\}$;
+drift correction; classifier alignment with Gaussian samples~\cite{zhang2023slca}. Closing sentence: $\mathcal M_t$
+is \emph{already there}; SCF adds nothing to it.}

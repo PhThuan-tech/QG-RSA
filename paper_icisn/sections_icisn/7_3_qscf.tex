@@ -1,0 +1,25 @@
+% Owner: Phat (W07 numbers run by Thuan). ~0.3 page. Numbers: exps/qscf/results/summary.md
+\subsection{Quantum at Training Time plus SCF}\label{sec:qscf}
+\begin{table}[t]
+\centering
+\caption{RSIAT or QKSR training $\times$ linear head or SCF, ImageNet-R seed 1993, 3 replicates
+($\bar A$ / $A_B$, mean over 3 replicates). \TODOP{Rewrite the caption.}}
+\label{tab:qscf}
+\small
+\begin{tabular}{lccc}
+\toprule
+Training & Linear head & SCF, ridge & SCF, PGM \\
+\midrule
+RSIAT & 87.39 / 82.50 & 87.76 / 82.75 & 87.76 / 82.85 \\
+QKSR (PQK steering + separation) & 87.41 / 82.64 & 87.85 / 82.82 & 87.87 / 82.91 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\TODOP{2--3 sentences, numbers from exps/qscf/results/summary.md (W07 done, 6/6 runs):
+(1) SCF helps on both networks: SCF ridge $-$ linear, $\Delta\bar A$ = +0.38 [0.30, 0.46] on RSIAT and
++0.44 [0.36, 0.52] on QKSR;
+(2) quantum training adds nothing once SCF is used: pre-registered test (QKSR+SCF ridge) $-$ (RSIAT+SCF ridge),
+$\Delta\bar A$ = +0.09 [$-$0.08, +0.26], FAIL (CI contains 0); without SCF, QKSR $-$ RSIAT = +0.02 [$-$0.23, +0.27];
+(3) so the gain comes from the inference-time fusion, not from the quantum kernels at training time.
+Do NOT headline the PGM row (+0.12 [0.01, 0.22]): it was not the pre-registered test.}

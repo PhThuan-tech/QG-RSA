@@ -1,0 +1,984 @@
+{
+  "runs": [
+    {
+      "family": "qscf_qksr",
+      "replicate": 0,
+      "seed": 1993,
+      "log": "exps\\qscf\\results\\kaggle1\\logs\\adapter\\imagenetr\\0\\20\\qscf_qksr_rep0_1993_pretrained_vit_b16_224_in21k_adapter.log",
+      "tasks": 10,
+      "heads": {
+        "linear": {
+          "aia": 87.405,
+          "final": 82.6,
+          "tasks": 10
+        },
+        "ridge_stats": {
+          "aia": 86.1,
+          "final": 79.99,
+          "tasks": 10
+        },
+        "pgm_stats": {
+          "aia": 86.55,
+          "final": 80.24,
+          "tasks": 10
+        },
+        "pgm_stats_hier": {
+          "aia": 86.994,
+          "final": 81.52,
+          "tasks": 10
+        },
+        "fuse_ridge_stats_b0p25": {
+          "aia": 87.812,
+          "final": 82.69,
+          "tasks": 10
+        },
+        "fuse_ridge_stats_b0p5": {
+          "aia": 87.67999999999999,
+          "final": 82.44,
+          "tasks": 10
+        },
+        "fuse_ridge_stats_b1": {
+          "aia": 87.321,
+          "final": 81.63,
+          "tasks": 10
+        },
+        "fuse_ridge_stats_b2": {
+          "aia": 86.996,
+          "final": 81.27,
+          "tasks": 10
+        },
+        "fuse_ridge_stats_b4": {
+          "aia": 86.687,
+          "final": 80.81,
+          "tasks": 10
+        },
+        "fuse_pgm_stats_b0p25": {
+          "aia": 87.66,
+          "final": 82.93,
+          "tasks": 10
+        },
+        "fuse_pgm_stats_b0p5": {
+          "aia": 87.8,
+          "final": 82.97,
+          "tasks": 10
+        },
+        "fuse_pgm_stats_b1": {
+          "aia": 87.748,
+          "final": 82.77,
+          "tasks": 10
+        },
+        "fuse_pgm_stats_b2": {
+          "aia": 87.589,
+          "final": 82.28,
+          "tasks": 10
+        },
+        "fuse_pgm_stats_b4": {
+          "aia": 87.351,
+          "final": 81.7,
+          "tasks": 10
+        },
+        "fuse_pgm_stats_hier_b0p25": {
+          "aia": 87.687,
+          "final": 82.95,
+          "tasks": 10
+        },
+        "fuse_pgm_stats_hier_b0p5": {
+          "aia": 87.863,
+          "final": 83.11,
+          "tasks": 10
+        },
+        "fuse_pgm_stats_hier_b1": {
+          "aia": 87.793,
+          "final": 82.98,
+          "tasks": 10
+        },
+        "fuse_pgm_stats_hier_b2": {
+          "aia": 87.781,
+          "final": 82.95,
+          "tasks": 10
+        },
+        "fuse_pgm_stats_hier_b4": {
+          "aia": 87.54599999999999,
+          "final": 82.47,
+          "tasks": 10
+        }
+      }
+    },
+    {
+      "family": "qscf_qksr",
+      "replicate": 1,
+      "seed": 1993,
+      "log": "exps\\qscf\\results\\kaggle1\\logs\\adapter\\imagenetr\\0\\20\\qscf_qksr_rep1_1993_pretrained_vit_b16_224_in21k_adapter.log",
+      "tasks": 10,
+      "heads": {
+        "linear": {
+          "aia": 87.43,
+          "final": 82.65,
+          "tasks": 10
+        },
+        "ridge_stats": {
+          "aia": 86.273,
+          "final": 80.2,
+          "tasks": 10
+        },
+        "pgm_stats": {
+          "aia": 86.637,
+          "final": 80.32,
+          "tasks": 10
+        },
+        "pgm_stats_hier": {
+          "aia": 86.996,
+          "final": 81.49,
+          "tasks": 10
+        },
+        "fuse_ridge_stats_b0p25": {
+          "aia": 87.898,
+          "final": 82.98,
+          "tasks": 10
+        },
+        "fuse_ridge_stats_b0p5": {
+          "aia": 87.747,
+          "final": 82.47,
+          "tasks": 10
+        },
+        "fuse_ridge_stats_b1": {
+          "aia": 87.377,
+          "final": 81.88,
+          "tasks": 10
+        },
+        "fuse_ridge_stats_b2": {
+          "aia": 87.032,
+          "final": 81.45,
+          "tasks": 10
+        },
+        "fuse_ridge_stats_b4": {
+          "aia": 86.76,
+          "final": 80.83,
+          "tasks": 10
+        },
+        "fuse_pgm_stats_b0p25": {
+          "aia": 87.7,
+          "final": 82.85,
+          "tasks": 10
+        },
+        "fuse_pgm_stats_b0p5": {
+          "aia": 87.882,
+          "final": 82.88,
+          "tasks": 10
+        },
+        "fuse_pgm_stats_b1": {
+          "aia": 87.854,
+          "final": 82.62,
+          "tasks": 10
+        },
+        "fuse_pgm_stats_b2": {
+          "aia": 87.72,
+          "final": 82.41,
+          "tasks": 10
+        },
+        "fuse_pgm_stats_b4": {
+          "aia": 87.485,
+          "final": 81.98,
+          "tasks": 10
+        },
+        "fuse_pgm_stats_hier_b0p25": {
+          "aia": 87.721,
+          "final": 83.0,
+          "tasks": 10
+        },
+        "fuse_pgm_stats_hier_b0p5": {
+          "aia": 87.923,
+          "final": 83.08,
+          "tasks": 10
+        },
+        "fuse_pgm_stats_hier_b1": {
+          "aia": 87.899,
+          "final": 83.06,
+          "tasks": 10
+        },
+        "fuse_pgm_stats_hier_b2": {
+          "aia": 87.787,
+          "final": 82.92,
+          "tasks": 10
+        },
+        "fuse_pgm_stats_hier_b4": {
+          "aia": 87.605,
+          "final": 82.52,
+          "tasks": 10
+        }
+      }
+    },
+    {
+      "family": "qscf_qksr",
+      "replicate": 2,
+      "seed": 1993,
+      "log": "exps\\qscf\\results\\kaggle1\\logs\\adapter\\imagenetr\\0\\20\\qscf_qksr_rep2_1993_pretrained_vit_b16_224_in21k_adapter.log",
+      "tasks": 10,
+      "heads": {
+        "linear": {
+          "aia": 87.384,
+          "final": 82.67,
+          "tasks": 10
+        },
+        "ridge_stats": {
+          "aia": 86.33,
+          "final": 80.19,
+          "tasks": 10
+        },
+        "pgm_stats": {
+          "aia": 86.641,
+          "final": 80.55,
+          "tasks": 10
+        },
+        "pgm_stats_hier": {
+          "aia": 87.11,
+          "final": 81.77,
+          "tasks": 10
+        },
+        "fuse_ridge_stats_b0p25": {
+          "aia": 87.839,
+          "final": 82.79,
+          "tasks": 10
+        },
+        "fuse_ridge_stats_b0p5": {
+          "aia": 87.75399999999999,
+          "final": 82.52,
+          "tasks": 10
+        },
+        "fuse_ridge_stats_b1": {
+          "aia": 87.419,
+          "final": 81.9,
+          "tasks": 10
+        },
+        "fuse_ridge_stats_b2": {
+          "aia": 87.118,
+          "final": 81.31,
+          "tasks": 10
+        },
+        "fuse_ridge_stats_b4": {
+          "aia": 86.84400000000001,
+          "final": 80.93,
+          "tasks": 10
+        },
+        "fuse_pgm_stats_b0p25": {
+          "aia": 87.778,
+          "final": 83.0,
+          "tasks": 10
+        },
+        "fuse_pgm_stats_b0p5": {
+          "aia": 87.929,
+          "final": 82.88,
+          "tasks": 10
+        },
+        "fuse_pgm_stats_b1": {
+          "aia": 87.883,
+          "final": 82.65,
+          "tasks": 10
+        },
+        "fuse_pgm_stats_b2": {
+          "aia": 87.71,
+          "final": 82.34,
+          "tasks": 10
+        },
+        "fuse_pgm_stats_b4": {
+          "aia": 87.44500000000001,
+          "final": 81.95,
+          "tasks": 10
+        },
+        "fuse_pgm_stats_hier_b0p25": {
+          "aia": 87.724,
+          "final": 82.93,
+          "tasks": 10
+        },
+        "fuse_pgm_stats_hier_b0p5": {
+          "aia": 87.88,
+          "final": 83.03,
+          "tasks": 10
+        },
+        "fuse_pgm_stats_hier_b1": {
+          "aia": 87.893,
+          "final": 83.03,
+          "tasks": 10
+        },
+        "fuse_pgm_stats_hier_b2": {
+          "aia": 87.767,
+          "final": 82.75,
+          "tasks": 10
+        },
+        "fuse_pgm_stats_hier_b4": {
+          "aia": 87.587,
+          "final": 82.49,
+          "tasks": 10
+        }
+      }
+    },
+    {
+      "family": "qscf_rsiat",
+      "replicate": 0,
+      "seed": 1993,
+      "log": "exps\\qscf\\results\\kaggle1\\logs\\adapter\\imagenetr\\0\\20\\qscf_rsiat_rep0_1993_pretrained_vit_b16_224_in21k_adapter.log",
+      "tasks": 10,
+      "heads": {
+        "linear": {
+          "aia": 87.331,
+          "final": 82.39,
+          "tasks": 10
+        },
+        "ridge_stats": {
+          "aia": 86.135,
+          "final": 80.02,
+          "tasks": 10
+        },
+        "pgm_stats": {
+          "aia": 86.501,
+          "final": 80.24,
+          "tasks": 10
+        },
+        "pgm_stats_hier": {
+          "aia": 86.833,
+          "final": 81.04,
+          "tasks": 10
+        },
+        "fuse_ridge_stats_b0p25": {
+          "aia": 87.698,
+          "final": 82.67,
+          "tasks": 10
+        },
+        "fuse_ridge_stats_b0p5": {
+          "aia": 87.59100000000001,
+          "final": 82.28,
+          "tasks": 10
+        },
+        "fuse_ridge_stats_b1": {
+          "aia": 87.238,
+          "final": 81.63,
+          "tasks": 10
+        },
+        "fuse_ridge_stats_b2": {
+          "aia": 86.969,
+          "final": 81.32,
+          "tasks": 10
+        },
+        "fuse_ridge_stats_b4": {
+          "aia": 86.608,
+          "final": 80.71,
+          "tasks": 10
+        },
+        "fuse_pgm_stats_b0p25": {
+          "aia": 87.606,
+          "final": 82.87,
+          "tasks": 10
+        },
+        "fuse_pgm_stats_b0p5": {
+          "aia": 87.66,
+          "final": 82.69,
+          "tasks": 10
+        },
+        "fuse_pgm_stats_b1": {
+          "aia": 87.722,
+          "final": 82.83,
+          "tasks": 10
+        },
+        "fuse_pgm_stats_b2": {
+          "aia": 87.59,
+          "final": 82.23,
+          "tasks": 10
+        },
+        "fuse_pgm_stats_b4": {
+          "aia": 87.32300000000001,
+          "final": 81.63,
+          "tasks": 10
+        },
+        "fuse_pgm_stats_hier_b0p25": {
+          "aia": 87.617,
+          "final": 82.87,
+          "tasks": 10
+        },
+        "fuse_pgm_stats_hier_b0p5": {
+          "aia": 87.661,
+          "final": 82.83,
+          "tasks": 10
+        },
+        "fuse_pgm_stats_hier_b1": {
+          "aia": 87.706,
+          "final": 82.98,
+          "tasks": 10
+        },
+        "fuse_pgm_stats_hier_b2": {
+          "aia": 87.61,
+          "final": 82.6,
+          "tasks": 10
+        },
+        "fuse_pgm_stats_hier_b4": {
+          "aia": 87.39,
+          "final": 82.09,
+          "tasks": 10
+        }
+      }
+    },
+    {
+      "family": "qscf_rsiat",
+      "replicate": 1,
+      "seed": 1993,
+      "log": "exps\\qscf\\results\\kaggle1\\logs\\adapter\\imagenetr\\0\\20\\qscf_rsiat_rep1_1993_pretrained_vit_b16_224_in21k_adapter.log",
+      "tasks": 10,
+      "heads": {
+        "linear": {
+          "aia": 87.345,
+          "final": 82.34,
+          "tasks": 10
+        },
+        "ridge_stats": {
+          "aia": 86.175,
+          "final": 79.78,
+          "tasks": 10
+        },
+        "pgm_stats": {
+          "aia": 86.514,
+          "final": 80.14,
+          "tasks": 10
+        },
+        "pgm_stats_hier": {
+          "aia": 86.899,
+          "final": 81.17,
+          "tasks": 10
+        },
+        "fuse_ridge_stats_b0p25": {
+          "aia": 87.756,
+          "final": 82.74,
+          "tasks": 10
+        },
+        "fuse_ridge_stats_b0p5": {
+          "aia": 87.607,
+          "final": 82.23,
+          "tasks": 10
+        },
+        "fuse_ridge_stats_b1": {
+          "aia": 87.365,
+          "final": 81.68,
+          "tasks": 10
+        },
+        "fuse_ridge_stats_b2": {
+          "aia": 87.055,
+          "final": 81.11,
+          "tasks": 10
+        },
+        "fuse_ridge_stats_b4": {
+          "aia": 86.751,
+          "final": 80.73,
+          "tasks": 10
+        },
+        "fuse_pgm_stats_b0p25": {
+          "aia": 87.637,
+          "final": 82.72,
+          "tasks": 10
+        },
+        "fuse_pgm_stats_b0p5": {
+          "aia": 87.743,
+          "final": 82.75,
+          "tasks": 10
+        },
+        "fuse_pgm_stats_b1": {
+          "aia": 87.706,
+          "final": 82.72,
+          "tasks": 10
+        },
+        "fuse_pgm_stats_b2": {
+          "aia": 87.661,
+          "final": 82.49,
+          "tasks": 10
+        },
+        "fuse_pgm_stats_b4": {
+          "aia": 87.405,
+          "final": 81.85,
+          "tasks": 10
+        },
+        "fuse_pgm_stats_hier_b0p25": {
+          "aia": 87.637,
+          "final": 82.7,
+          "tasks": 10
+        },
+        "fuse_pgm_stats_hier_b0p5": {
+          "aia": 87.716,
+          "final": 82.83,
+          "tasks": 10
+        },
+        "fuse_pgm_stats_hier_b1": {
+          "aia": 87.723,
+          "final": 82.88,
+          "tasks": 10
+        },
+        "fuse_pgm_stats_hier_b2": {
+          "aia": 87.601,
+          "final": 82.6,
+          "tasks": 10
+        },
+        "fuse_pgm_stats_hier_b4": {
+          "aia": 87.418,
+          "final": 82.16,
+          "tasks": 10
+        }
+      }
+    },
+    {
+      "family": "qscf_rsiat",
+      "replicate": 2,
+      "seed": 1993,
+      "log": "exps\\qscf\\results\\kaggle1\\logs\\adapter\\imagenetr\\0\\20\\qscf_rsiat_rep2_1993_pretrained_vit_b16_224_in21k_adapter.log",
+      "tasks": 10,
+      "heads": {
+        "linear": {
+          "aia": 87.48,
+          "final": 82.77,
+          "tasks": 10
+        },
+        "ridge_stats": {
+          "aia": 86.24,
+          "final": 79.96,
+          "tasks": 10
+        },
+        "pgm_stats": {
+          "aia": 86.553,
+          "final": 80.4,
+          "tasks": 10
+        },
+        "pgm_stats_hier": {
+          "aia": 86.86,
+          "final": 81.5,
+          "tasks": 10
+        },
+        "fuse_ridge_stats_b0p25": {
+          "aia": 87.828,
+          "final": 82.85,
+          "tasks": 10
+        },
+        "fuse_ridge_stats_b0p5": {
+          "aia": 87.636,
+          "final": 82.23,
+          "tasks": 10
+        },
+        "fuse_ridge_stats_b1": {
+          "aia": 87.354,
+          "final": 81.83,
+          "tasks": 10
+        },
+        "fuse_ridge_stats_b2": {
+          "aia": 87.104,
+          "final": 81.16,
+          "tasks": 10
+        },
+        "fuse_ridge_stats_b4": {
+          "aia": 86.795,
+          "final": 80.78,
+          "tasks": 10
+        },
+        "fuse_pgm_stats_b0p25": {
+          "aia": 87.787,
+          "final": 83.05,
+          "tasks": 10
+        },
+        "fuse_pgm_stats_b0p5": {
+          "aia": 87.863,
+          "final": 83.11,
+          "tasks": 10
+        },
+        "fuse_pgm_stats_b1": {
+          "aia": 87.87,
+          "final": 82.88,
+          "tasks": 10
+        },
+        "fuse_pgm_stats_b2": {
+          "aia": 87.671,
+          "final": 82.31,
+          "tasks": 10
+        },
+        "fuse_pgm_stats_b4": {
+          "aia": 87.371,
+          "final": 81.75,
+          "tasks": 10
+        },
+        "fuse_pgm_stats_hier_b0p25": {
+          "aia": 87.765,
+          "final": 83.05,
+          "tasks": 10
+        },
+        "fuse_pgm_stats_hier_b0p5": {
+          "aia": 87.819,
+          "final": 83.0,
+          "tasks": 10
+        },
+        "fuse_pgm_stats_hier_b1": {
+          "aia": 87.832,
+          "final": 82.85,
+          "tasks": 10
+        },
+        "fuse_pgm_stats_hier_b2": {
+          "aia": 87.67,
+          "final": 82.6,
+          "tasks": 10
+        },
+        "fuse_pgm_stats_hier_b4": {
+          "aia": 87.417,
+          "final": 82.37,
+          "tasks": 10
+        }
+      }
+    }
+  ],
+  "cells": {
+    "qscf_rsiat|linear|aia": {
+      "n": 3,
+      "mean": 87.38533333333334,
+      "sd": 0.08228203530135596,
+      "ci95": [
+        87.1809169291756,
+        87.58974973749108
+      ]
+    },
+    "qscf_rsiat|linear|final": {
+      "n": 3,
+      "mean": 82.5,
+      "sd": 0.23515952032609336,
+      "ci95": [
+        81.91578421860298,
+        83.08421578139702
+      ]
+    },
+    "qscf_rsiat|fuse_ridge_stats_b0p25|aia": {
+      "n": 3,
+      "mean": 87.76066666666667,
+      "sd": 0.06512551983158331,
+      "ci95": [
+        87.59887284941217,
+        87.92246048392116
+      ]
+    },
+    "qscf_rsiat|fuse_ridge_stats_b0p25|final": {
+      "n": 3,
+      "mean": 82.75333333333333,
+      "sd": 0.09073771725877122,
+      "ci95": [
+        82.52791015541136,
+        82.9787565112553
+      ]
+    },
+    "qscf_rsiat|fuse_pgm_stats_b0p5|aia": {
+      "n": 3,
+      "mean": 87.75533333333333,
+      "sd": 0.1020604396097414,
+      "ci95": [
+        87.50178068365261,
+        88.00888598301404
+      ]
+    },
+    "qscf_rsiat|fuse_pgm_stats_b0p5|final": {
+      "n": 3,
+      "mean": 82.85,
+      "sd": 0.22715633383201142,
+      "ci95": [
+        82.28566684059857,
+        83.41433315940142
+      ]
+    },
+    "qscf_qksr|linear|aia": {
+      "n": 3,
+      "mean": 87.40633333333334,
+      "sd": 0.02302896726589114,
+      "ci95": [
+        87.34912159005647,
+        87.4635450766102
+      ]
+    },
+    "qscf_qksr|linear|final": {
+      "n": 3,
+      "mean": 82.64,
+      "sd": 0.036055512754644546,
+      "ci95": [
+        82.55042591204297,
+        82.72957408795703
+      ]
+    },
+    "qscf_qksr|fuse_ridge_stats_b0p25|aia": {
+      "n": 3,
+      "mean": 87.84966666666666,
+      "sd": 0.04398105652816052,
+      "ci95": [
+        87.74040284749134,
+        87.95893048584199
+      ]
+    },
+    "qscf_qksr|fuse_ridge_stats_b0p25|final": {
+      "n": 3,
+      "mean": 82.82000000000001,
+      "sd": 0.14730919862656489,
+      "ci95": [
+        82.4540341294146,
+        83.18596587058542
+      ]
+    },
+    "qscf_qksr|fuse_pgm_stats_b0p5|aia": {
+      "n": 3,
+      "mean": 87.87033333333333,
+      "sd": 0.06528654787422683,
+      "ci95": [
+        87.70813946795988,
+        88.03252719870679
+      ]
+    },
+    "qscf_qksr|fuse_pgm_stats_b0p5|final": {
+      "n": 3,
+      "mean": 82.91,
+      "sd": 0.05196152422706829,
+      "ci95": [
+        82.78090999999999,
+        83.03909
+      ]
+    }
+  },
+  "comparisons": [
+    [
+      "SCF ridge \u2212 linear, m\u1ea1ng RSIAT",
+      "aia",
+      {
+        "n": 3,
+        "mean": 0.3753333333333302,
+        "sd": 0.03231614663497941,
+        "ci95": [
+          0.29504909550228337,
+          0.455617571164377
+        ]
+      }
+    ],
+    [
+      "SCF ridge \u2212 linear, m\u1ea1ng QKSR",
+      "aia",
+      {
+        "n": 3,
+        "mean": 0.44333333333332803,
+        "sd": 0.03212994449626669,
+        "ci95": [
+          0.3635116845899567,
+          0.5231549820766994
+        ]
+      }
+    ],
+    [
+      "SCF PGM \u2212 linear, m\u1ea1ng RSIAT",
+      "aia",
+      {
+        "n": 3,
+        "mean": 0.36999999999999506,
+        "sd": 0.036290494623249486,
+        "ci95": [
+          0.2798421376085174,
+          0.4601578623914727
+        ]
+      }
+    ],
+    [
+      "SCF PGM \u2212 linear, m\u1ea1ng QKSR",
+      "aia",
+      {
+        "n": 3,
+        "mean": 0.46399999999999864,
+        "sd": 0.07571657678474665,
+        "ci95": [
+          0.27589441529023334,
+          0.6521055847097639
+        ]
+      }
+    ],
+    [
+      "QKSR \u2212 RSIAT, linear head",
+      "aia",
+      {
+        "n": 3,
+        "mean": 0.021000000000000796,
+        "sd": 0.10147413463538792,
+        "ci95": [
+          -0.23109606983120162,
+          0.2730960698312032
+        ]
+      }
+    ],
+    [
+      "(QKSR + SCF ridge) \u2212 (RSIAT + SCF ridge)",
+      "aia",
+      {
+        "n": 3,
+        "mean": 0.08899999999999864,
+        "sd": 0.06898550572403038,
+        "ci95": [
+          -0.08238332769069229,
+          0.26038332769068956
+        ]
+      }
+    ],
+    [
+      "t\u01b0\u01a1ng t\u00e1c: gain SCF ridge tr\u00ean QKSR \u2212 tr\u00ean RSIAT",
+      "aia",
+      {
+        "n": 3,
+        "mean": 0.06799999999999784,
+        "sd": 0.034828149534535,
+        "ci95": [
+          -0.018524902613832966,
+          0.15452490261382865
+        ]
+      }
+    ],
+    [
+      "(QKSR + SCF PGM) \u2212 (RSIAT + SCF PGM)",
+      "aia",
+      {
+        "n": 3,
+        "mean": 0.11500000000000436,
+        "sd": 0.04243819034784744,
+        "ci95": [
+          0.009569182226764325,
+          0.22043081777324441
+        ]
+      }
+    ],
+    [
+      "t\u01b0\u01a1ng t\u00e1c: gain SCF PGM tr\u00ean QKSR \u2212 tr\u00ean RSIAT",
+      "aia",
+      {
+        "n": 3,
+        "mean": 0.09400000000000357,
+        "sd": 0.05919459434779721,
+        "ci95": [
+          -0.05305939246440737,
+          0.2410593924644145
+        ]
+      }
+    ],
+    [
+      "SCF ridge \u2212 linear, m\u1ea1ng RSIAT",
+      "final",
+      {
+        "n": 3,
+        "mean": 0.2533333333333303,
+        "sd": 0.16165807537309235,
+        "ci95": [
+          -0.14827999999999592,
+          0.6549466666666566
+        ]
+      }
+    ],
+    [
+      "SCF ridge \u2212 linear, m\u1ea1ng QKSR",
+      "final",
+      {
+        "n": 3,
+        "mean": 0.18000000000000208,
+        "sd": 0.130766968306217,
+        "ci95": [
+          -0.1448693757496903,
+          0.5048693757496945
+        ]
+      }
+    ],
+    [
+      "SCF PGM \u2212 linear, m\u1ea1ng RSIAT",
+      "final",
+      {
+        "n": 3,
+        "mean": 0.34999999999999903,
+        "sd": 0.05567764362829935,
+        "ci95": [
+          0.21167790258482558,
+          0.4883220974151725
+        ]
+      }
+    ],
+    [
+      "SCF PGM \u2212 linear, m\u1ea1ng QKSR",
+      "final",
+      {
+        "n": 3,
+        "mean": 0.269999999999996,
+        "sd": 0.08717797887082057,
+        "ci95": [
+          0.053420416166844786,
+          0.48657958383314726
+        ]
+      }
+    ],
+    [
+      "QKSR \u2212 RSIAT, linear head",
+      "final",
+      {
+        "n": 3,
+        "mean": 0.14000000000000057,
+        "sd": 0.2137755832643162,
+        "ci95": [
+          -0.39109084951006645,
+          0.6710908495100676
+        ]
+      }
+    ],
+    [
+      "(QKSR + SCF ridge) \u2212 (RSIAT + SCF ridge)",
+      "final",
+      {
+        "n": 3,
+        "mean": 0.06666666666667236,
+        "sd": 0.1553490693030814,
+        "ci95": [
+          -0.3192729618303842,
+          0.45260629516372897
+        ]
+      }
+    ],
+    [
+      "t\u01b0\u01a1ng t\u00e1c: gain SCF ridge tr\u00ean QKSR \u2212 tr\u00ean RSIAT",
+      "final",
+      {
+        "n": 3,
+        "mean": -0.07333333333332821,
+        "sd": 0.11503622617825134,
+        "ci95": [
+          -0.3591222253692399,
+          0.21245555870258348
+        ]
+      }
+    ],
+    [
+      "(QKSR + SCF PGM) \u2212 (RSIAT + SCF PGM)",
+      "final",
+      {
+        "n": 3,
+        "mean": 0.059999999999997534,
+        "sd": 0.2621068484416252,
+        "ci95": [
+          -0.5911620582466471,
+          0.7111620582466421
+        ]
+      }
+    ],
+    [
+      "t\u01b0\u01a1ng t\u00e1c: gain SCF PGM tr\u00ean QKSR \u2212 tr\u00ean RSIAT",
+      "final",
+      {
+        "n": 3,
+        "mean": -0.08000000000000303,
+        "sd": 0.13228756555323812,
+        "ci95": [
+          -0.4086470535899407,
+          0.24864705358993466
+        ]
+      }
+    ]
+  ],
+  "primary": {
+    "n": 3,
+    "mean": 0.08899999999999864,
+    "sd": 0.06898550572403038,
+    "ci95": [
+      -0.08238332769069229,
+      0.26038332769068956
+    ]
+  },
+  "verdict": "KH\u00d4NG \u0110\u1ea0T: QKSR kh\u00f4ng th\u00eam g\u00ec \u0111\u00e1ng k\u1ec3 khi \u0111\u00e3 c\u00f3 SCF (CI 95% c\u1ee7a \u0394\u0100 ch\u1ee9a 0 ho\u1eb7c \u00e2m)"
+}
