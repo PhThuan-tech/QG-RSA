@@ -1,0 +1,35 @@
+% Owner: Phat. ~0.4 page. Numbers: results/scf_ablation.md
+\subsection{Ablation and Cost}\label{sec:ablation}
+\begin{table}[t]
+\centering
+\caption{Ablation of SCF, final accuracy $A_B$ (mean over 3 seeds). Frozen weights: ridge $w=0.25$,
+PGM $w=0.5$. \TODOP{Rewrite the caption; consider adding $\bar A$.}}
+\label{tab:ablation}
+\small
+\begin{tabular}{lccccc}
+\toprule
+Variant & CIFAR-100 & ImageNet-R & ImageNet-A & CUB-200 & Mean \\
+\midrule
+Linear head (RSIAT) & 92.03 & 82.55 & 67.02 & 88.47 & 82.52 \\
+Ridge alone & 91.41 & 80.02 & 65.71 & 87.40 & 81.14 \\
+PGM alone & 91.32 & 80.11 & 65.06 & 85.90 & 80.60 \\
+\midrule
+Linear + ridge, no $\kappa$ ($w=1$) & 92.11 & 82.63 & 67.38 & 88.52 & 82.66 \\
+Linear + PGM, no $\kappa$ ($w=1$) & 92.24 & 82.98 & 67.49 & 88.56 & 82.82 \\
+\midrule
+SCF ridge, $w=0.25$ (frozen) & 92.41 & 83.03 & 67.69 & 88.85 & 83.00 \\
+SCF ridge, $w=1$ & 92.11 & 82.09 & 67.71 & 88.51 & 82.61 \\
+SCF ridge, $w=4$ & 91.69 & 80.93 & 66.51 & 87.90 & 81.76 \\
+SCF PGM, $w=0.5$ (frozen) & 92.34 & 83.07 & 67.65 & 88.57 & 82.91 \\
+SCF PGM, $w=1$ & 92.34 & 82.96 & 67.67 & 88.55 & 82.88 \\
+SCF PGM, $w=4$ & 91.90 & 81.83 & 66.62 & 87.77 & 82.03 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\TODOP{3 sentences that match the numbers (see HUONG\_DAN Sect. 4a): (1) fusion beats each source alone, although
+each source alone is worse than the linear head; (2) $\kappa$ is needed for ridge (without $\kappa$: +0.14 vs +0.48)
+and helps less for PGM; (3) small-to-moderate $w$ (0.25--1) works, large $w$ hurts; $w$ is frozen on the tuning group.}
+
+\TODOP{Cost (1 sentence or 1 row): run \texttt{scripts/scf\_cost.py}. CPU test numbers, $C=100$:
+ridge +0.002\,ms/image, 0.6\,MB; PGM +0.9\,ms/image, $\sim$230\,MB. Replace with GPU numbers if available, naming the GPU.}

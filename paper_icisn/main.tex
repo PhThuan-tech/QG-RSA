@@ -1,20 +1,21 @@
 % =====================================================================================
-% ICISN 2027 (Springer LNNS, template llncs). Tối đa 10 trang, tiếng Anh.
-% Một file duy nhất cho cả nhóm. Mỗi section ghi người phụ trách và số trang mục tiêu.
-%   Thuận   : Abstract, 1 Introduction, ghép bài            (\TODOT)
-%   Khánh   : 2 Related Work, 3 Background, 7.1, 8 Conclusion (\TODOK)
-%   Đức Anh : 4 Method (4.1-4.6), ký hiệu                (\TODOD)
-%   Phát    : 5 Setup, 6 Results, 7.2-7.3 Ablation, 2x2     (\TODOP)
-% Quy tắc: viết lại bằng lời của mình (similarity <= 15%); mọi con số phải có trong repo;
-% không dùng "quantum advantage", "state-of-the-art". Trước khi nộp: \showtodosfalse.
-% Hướng dẫn chi tiết: HUONG_DAN_THANH_VIEN.md. Số trong bảng lấy từ:
-%   bảng chính   exps/scf/results/summary.md
+% ICISN 2027 (Springer LNNS, llncs template). Max 10 pages, English.
+% main.tex holds only the preamble, title and authors; the content lives in sections_icisn/
+% (the first line of each file names its owner). Only Thuan edits main.tex.
+%   Thuan   : Abstract, 1 Introduction, merging        files 0, 1
+%   Khanh   : 2 Related Work, 3 Background, 7.1, 8     files 2, 3, 7_1, 8
+%   Duc Anh : 4 Method (4.1-4.6), notation             file  4
+%   Phat    : 5 Setup, 6 Results, 7.2-7.3              files 5, 6, 7_2, 7_3
+% Rules: write in your own words (similarity <= 15%); every number must exist in the repo;
+% never write "quantum advantage" or "state-of-the-art". Before submission: \showtodosfalse.
+% Guide: HUONG_DAN_THANH_VIEN.md. Sources of the numbers:
+%   main table   exps/scf/results/summary.md
 %   ablation     results/scf_ablation.md  (python scripts/scf_ablation.py)
-%   bảng twin    paper_acl/sections/results.tex (Table 1)
-%   bảng 2x2     exps/qscf/results/summary.md   (sau wave W07)
+%   twin table   paper_acl/sections/results.tex (Table 1)
+%   2x2 table    exps/qscf/results/summary.md   (after wave W07)
 % =====================================================================================
 \documentclass[runningheads]{llncs}
-\usepackage[T5,T1]{fontenc} % T1 cho bài; T5 chỉ để hiển thị TODO tiếng Việt (bỏ T5 khi nộp nếu đã xoá hết TODO)
+\usepackage[T1]{fontenc}
 \usepackage{graphicx}
 \usepackage{amsmath,amssymb}
 \usepackage{booktabs}
@@ -24,13 +25,13 @@
 \renewcommand\UrlFont{\color{blue}\rmfamily}
 \urlstyle{rm}
 
-% ---- TODO theo người: \TODOT{...} Thuận, \TODOK Khánh, \TODOD Đức Anh, \TODOP Phát -----
-\newif\ifshowtodos \showtodostrue   % đổi thành \showtodosfalse để ẩn mọi TODO
-\DeclareRobustCommand{\TODOX}[3]{\ifshowtodos{\fontencoding{T5}\selectfont\color{#1}\textbf{[#2:} #3\textbf{]}}\fi}
-\DeclareRobustCommand{\TODOT}[1]{\TODOX{red}{Thuận}{#1}}
-\DeclareRobustCommand{\TODOK}[1]{\TODOX{blue}{Khánh}{#1}}
-\DeclareRobustCommand{\TODOD}[1]{\TODOX{teal}{Đức Anh}{#1}}
-\DeclareRobustCommand{\TODOP}[1]{\TODOX{violet}{Phát}{#1}}
+% ---- TODO notes: red, with the owner's name. \TODOT Thuan, \TODOK Khanh, \TODOD Duc Anh, \TODOP Phat ----
+\newif\ifshowtodos \showtodostrue   % set to \showtodosfalse to hide every TODO
+\DeclareRobustCommand{\TODOX}[2]{\ifshowtodos{\color{red}\textbf{[TODO #1:} #2\textbf{]}}\fi}
+\DeclareRobustCommand{\TODOT}[1]{\TODOX{Thuan}{#1}}
+\DeclareRobustCommand{\TODOK}[1]{\TODOX{Khanh}{#1}}
+\DeclareRobustCommand{\TODOD}[1]{\TODOX{Duc Anh}{#1}}
+\DeclareRobustCommand{\TODOP}[1]{\TODOX{Phat}{#1}}
 \newcommand{\Tr}{\mathrm{Tr}}
 
 \begin{document}
@@ -39,356 +40,40 @@
 A Quantum Measurement and Its Classical Twin}
 \titlerunning{Statistics-Calibrated Fusion for Exemplar-Free CIL}
 
-% TODO Thuận: họ tên đầy đủ, ORCID (nếu có), đơn vị, email. Nếu review double-blind thì ẩn khi nộp.
-% Tên tác giả viết KHÔNG dấu theo thông lệ Springer (vd. Thuan Pham), vì font T1 không có đủ chữ tiếng Việt.
-\author{Thuan\inst{1} \and Khanh\inst{1} \and Duc Anh\inst{1} \and Phat\inst{1}}
-\authorrunning{\TODOT{tên viết tắt, vd. T. Pham et al.}}
-\institute{\TODOT{tên trường / khoa đầy đủ bằng tiếng Anh, thành phố, Vietnam}\\
-\email{\TODOT{email liên hệ}}}
+% Springer requires FULL names; ORCID optional: \author{Thuan Pham\inst{1}\orcidID{0000-...} \and ...}
+% If the review is double-blind, hide authors, institute and acknowledgments in the review version.
+\author{Pham Van Vuong Thuan\inst{1} \and Le Dinh Quoc Khanh\inst{1} \and
+Nguyen Thuan Phat\inst{1} \and Le Duc Anh\inst{1}}
+\authorrunning{P. V. V. Thuan et al.}
+\institute{University of Engineering and Technology, Vietnam National University, Hanoi, Vietnam\\
+\email{\TODOT{school email of the corresponding author, e.g. ...@vnu.edu.vn}}}
 
 \maketitle
 
 % =====================================================================================
-\begin{abstract}
-% Phụ trách: Thuận. 150--250 từ. Viết CUỐI CÙNG (thứ Năm), sau khi có số W07.
-\TODOT{Thứ tự 6 câu: (1) bài toán exemplar-free CIL; (2) khoảng trống: thống kê lớp $(\mu_c,\Sigma_c)$ được lưu
-nhưng chỉ dùng để train lại classifier, và các thành phần lượng tử ít khi được so với bản cổ điển;
-(3) C1: SCF, số +0.38 đến +0.67 A$_B$ trên 4 benchmark; (4) C2: PGM = ridge
-($-0.04$ [$-0.17$, $+0.08$]), lý thuyết dự đoán trước; (5) C3: lỗi bù nhau, tăng cả lớp cũ/mới, kết quả W07;
-(6) một câu kết luận.}
-\keywords{Class-incremental learning \and Exemplar-free \and Score fusion \and
-Quantum state discrimination \and Pre-trained models}
-\end{abstract}
+\input{sections_icisn/0_abstract}      % Thuan
+\input{sections_icisn/1_introduction}  % Thuan
+\input{sections_icisn/2_related}       % Khanh
+\input{sections_icisn/3_background}    % Khanh
+\input{sections_icisn/4_method}        % Duc Anh
+\input{sections_icisn/5_setup}         % Phat
+\input{sections_icisn/6_results}       % Phat
 
-% =====================================================================================
-\section{Introduction}\label{sec:intro}
-% Phụ trách: Thuận. ~1.25 trang. Nguồn: paper_acl/sections/introduction.tex
-\TODOT{Đoạn 1: CIL exemplar-free với ViT pre-trained; mô hình phải giữ lại tóm tắt các lớp cũ;
-RSIAT~\cite{rsiat} lưu một mean và một covariance cho mỗi lớp nhưng chỉ dùng chúng để train lại classifier.}
-
-\TODOT{Đoạn 2: QML thường báo mức tăng nhỏ cỡ nhiễu và thiếu bản cổ điển để so~\cite{bowles2024better};
-góc nhìn state discrimination: ma trận mật độ là tóm tắt tự nhiên của một lớp~\cite{hausladen1994pgm}.}
-
-\TODOT{Đoạn 3: ý tưởng SCF trong 3 câu (giữ classifier, cộng điểm từ thống kê, $\kappa$ không cần nhãn).
-Trỏ tới Hình~\ref{fig:pipeline}.}
-
-\noindent Our contributions are:
-\begin{itemize}
-  \item \textbf{C1 (SCF).} \TODOT{1--2 câu + số + trỏ Bảng~\ref{tab:main}, Mục~\ref{sec:ablation}.}
-  \item \textbf{C2 (a quantum measurement with its classical twin).} \TODOT{1--2 câu + mệnh đề + trỏ
-        Bảng~\ref{tab:twin}.}
-  \item \textbf{C3 (why it works).} \TODOT{1--2 câu: lỗi bù nhau, tăng cả hai nửa, bảng 2$\times$2
-        (Mục~\ref{sec:qscf}).}
-\end{itemize}
-
-\begin{figure}[t]
-\centering
-\includegraphics[width=\textwidth]{figures/pipeline.pdf}
-\caption{\TODOD{Hình tạm lấy từ bản ACL. Vẽ lại theo đúng thứ tự Method, trái sang phải:
-(1) lúc train: ảnh $\to$ ViT+adapter, PQK ở base task và QKSR ở incremental tasks (khung nhỏ, nét mờ);
-(2) memory $(\mu_c,\Sigma_c)$;
-(3) lúc dự đoán (khung chính, nổi bật): $z$ $\to$ linear head $\|$ (memory $\to\rho_c\to$ PGM, hoặc ridge)
-$\to$ fusion có $\kappa$ $\to\hat y$.
-Có thể sửa \texttt{paper\_acl/make\_figures.py}, hàm \texttt{pipeline()}.}}
-\label{fig:pipeline}
-\end{figure}
-
-% =====================================================================================
-\section{Related Work}\label{sec:related}
-% Phụ trách: Khánh. ~1 trang. Mỗi đoạn kết thúc bằng câu "Unlike these works, we ...".
-\paragraph{Class-incremental learning with pre-trained models.}
-\TODOK{Prompt/adapter-based: L2P~\cite{l2p}, DualPrompt~\cite{dualprompt}, CODA-Prompt~\cite{codaprompt},
-EASE~\cite{ease}, MOS~\cite{mos}, SSIAT~\cite{ssiat}, RSIAT~\cite{rsiat}. 3--4 câu.}
-
-\paragraph{Classifiers built from class statistics.}
-\TODOK{ĐOẠN QUAN TRỌNG NHẤT. NCM/prototype (SimpleCIL/APER~\cite{zhou2024aper}), FeCAM~\cite{goswami2023fecam},
-RanPAC~\cite{mcdonnell2023ranpac}, SLCA~\cite{zhang2023slca}. Kiểm tra bảng định vị trong KE\_HOACH\_NHOM.md
-với bài gốc. Câu chốt: các phương pháp này thay classifier hoặc train lại nó; SCF giữ classifier và cộng thêm
-điểm thống kê lúc dự đoán, hiệu chỉnh không cần nhãn.}
-
-\paragraph{Quantum machine learning and classical baselines.}
-\TODOK{Projected quantum kernels~\cite{huang2021power,thanasilp2024concentration}, QCL~\cite{jiang2022qcl},
-QKD~\cite{li2026qkd}, benchmark của Bowles et al.~\cite{bowles2024better}; PGM~\cite{hausladen1994pgm}
-và tương đương least-squares~\cite{eldar2001srm}.}
-
-% =====================================================================================
-\section{Background}\label{sec:background}
-% Phụ trách: Khánh. ~0.5 trang. Nguồn: paper_acl/sections/task.tex, method.tex (4.1)
-\paragraph{Problem and metrics.}
-Tasks $t=0,\dots,B-1$ bring disjoint label sets $\mathcal Y_t$; after task $t$ the model classifies all
-classes $\mathcal C_t=\mathcal Y_0\cup\dots\cup\mathcal Y_t$, $C_t=|\mathcal C_t|$, without storing past images.
-With $A_k$ the accuracy on $\mathcal C_k$ after task $k$,
-\begin{equation}
-  \bar A=\frac1B\sum_{k=0}^{B-1}A_k,\qquad A_B=A_{B-1}.
-  \label{eq:metrics}
-\end{equation}
-\TODOK{Viết lại đoạn trên bằng lời của mình; thêm forgetting $F$ nếu dùng.}
-
-\paragraph{Baseline: RSIAT.}
-\TODOK{ViT-B/16~\cite{dosovitskiy2021vit} đóng băng + adapter chung; features $z\in\mathbb R^{768}$;
-cosine classifier $\ell_c(z)=s\cos(w_c,z)$ (\emph{linear head}); memory $\mathcal M_t=\{(\mu_c,\Sigma_c)\}$;
-drift correction; classifier alignment bằng mẫu Gaussian~\cite{zhang2023slca}. Câu chốt: $\mathcal M_t$ là thứ
-\emph{có sẵn}, SCF không thêm gì.}
-
-% =====================================================================================
-\section{Method}\label{sec:method}
-% Phụ trách: Đức Anh. ~2.4 trang. Nguồn: paper_acl/sections/method.tex, appendix.tex (A).
-% Phương trình dưới đây chép từ bản ACL để thống nhất ký hiệu; chữ phải viết lại.
-% Thứ tự theo pipeline: lúc train (base -> incremental, mục 4.1) -> memory -> lúc dự đoán (4.2-4.6).
-% Trọng tâm là 4.2-4.6 (PGM + SCF). Mục 4.1 giữ ngắn (~0.4 trang).
-\TODOD{Đoạn mở đầu 3--4 câu theo pipeline (Hình~\ref{fig:pipeline}): lượng tử có thể vào lúc train, khi adapter
-học base task và các task sau (Mục~\ref{sec:pqk}); dù train thế nào, thứ duy nhất còn lại về lớp cũ là memory
-$\mathcal M_t$; lúc dự đoán, ta đọc $\mathcal M_t$ như các trạng thái lượng tử và đo chúng bằng PGM
-(Mục~\ref{sec:states}--\ref{sec:pgm}), rồi kết hợp với linear head (Mục~\ref{sec:scf}).}
-
-\subsection{Quantum Kernels at Training Time}\label{sec:pqk}
-% ~0.4 trang. KHÔNG phải đóng góp chính: định nghĩa để đọc được Bảng twin và Bảng 2x2.
-% Nguồn: paper_acl/sections/method.tex mục 4.2 (PQK), PIPELINE_cho_nhom.md mục 4.
-A feature is mapped to $q=8$ angles $\theta(z)=\pi\tanh(W\,\mathrm{LN}(z)+b)$, loaded with $R_y$ rotations and
-followed by $L=2$ layers of trainable $R_y$ rotations and a ring of CNOTs. Following~\cite{huang2021power}, two
-features are compared through the one-qubit reduced density matrices $\rho_j$ of their states:
-\begin{equation}
-  k(z,z')=\exp\Big(-\gamma\sum_{j=1}^{q}\big\|\rho_j(z)-\rho_j(z')\big\|_F^2\Big).
-  \label{eq:pqk}
-\end{equation}
-\TODOD{Viết lại đoạn trên.}
-
-\paragraph{Base task.} \TODOD{1--2 câu: $k$ thay cosine trong steering loss của RSIAT; mạch train cùng adapter
-rồi đóng băng sau task 0.}
-
-\paragraph{Incremental tasks (QKSR).} \TODOD{1--2 câu: phạt trung bình $k(\mathrm{AE}(\mu_c^{\mathrm{old}}), z)$
-giữa mean lớp cũ và feature mới, để tách lớp mới khỏi lớp cũ. Twin: RBF trên cùng 8 góc; cùng mạch nhưng bỏ CNOT.
-Trong bài, ``QKSR'' nghĩa là bật cả base task và incremental tasks.}
-
-\TODOD{Câu chuyển ý sang 4.2: các kernel này chỉ thay đổi cách adapter học; kết quả ở Bảng~\ref{tab:twin}
-và Bảng~\ref{tab:qscf}. Dù train bằng cách nào, lớp cũ chỉ còn lại dưới dạng $(\mu_c,\Sigma_c)$; phần tiếp theo
-dùng chính các thống kê đó lúc dự đoán.}
-
-
-\subsection{Classes as Quantum States}\label{sec:states}
-\TODOD{1--2 câu dẫn: lúc dự đoán, mỗi lớp trong $\mathcal M_t$ thành một trạng thái lượng tử.} Let $m_0$ and $s_0^2$ be the mean and the trace of the covariance of the task-0 features.
-\begin{equation}
-  v(z)=\begin{bmatrix}(z-m_0)/s_0\\1\end{bmatrix}\in\mathbb R^{769},\qquad \psi(z)=\frac{v(z)}{\|v(z)\|},
-  \label{eq:lift}
-\end{equation}
-\begin{equation}
-  \rho_c=\frac{\mathbb E_c[vv^{\top}]}{\mathbb E_c\|v\|^2},\qquad
-  \mathbb E_c[vv^{\top}]=\begin{bmatrix}\tilde\Sigma_c+\tilde\mu_c\tilde\mu_c^{\top}&\tilde\mu_c\\
-  \tilde\mu_c^{\top}&1\end{bmatrix}.
-  \label{eq:state}
-\end{equation}
-\TODOD{Giải thích: $\psi$ là trạng thái 10 qubit (769 đệm lên 1024); $\rho_c$ tính chỉ từ
-$(\mu_c,\Sigma_c)$, không cần lưu feature, và đi theo drift correction.}
-
-\subsection{Pretty-Good Measurement}\label{sec:pgm}
-\begin{equation}
-  E_c=\frac1{C_t}\,\bar\rho_\delta^{-1/2}\rho_c\,\bar\rho_\delta^{-1/2},\quad
-  \bar\rho_\delta=\frac1{C_t}\sum_{c}\rho_c+\delta I,\quad
-  p(c\mid z)=\frac{\psi^{\top}E_c\psi}{\sum_{c'}\psi^{\top}E_{c'}\psi}.
-  \label{eq:pgm}
-\end{equation}
-\TODOD{Giải thích vai trò của $\bar\rho_\delta^{-1/2}$ (so lớp $c$ với toàn bộ các lớp), $\delta$.}
-
-\subsection{Classical Twin: Ridge on the Same Statistics}\label{sec:ridge}
-\begin{equation}
-  \Big(\sum_{c}(\Sigma_c+\mu_c\mu_c^{\top})+\lambda I\Big)W=[\mu_1,\dots,\mu_{C_t}],\qquad
-  g^{\mathrm R}_c(z)=z^{\top}W_{:,c}.
-  \label{eq:ridge}
-\end{equation}
-\TODOD{Nhấn mạnh: cùng đầu vào $\mathcal M_t$ với PGM; tinh thần RanPAC~\cite{mcdonnell2023ranpac}.}
-
-\subsection{Statistics-Calibrated Fusion (SCF)}\label{sec:scf}
-\begin{equation}
-  \hat y=\arg\max_c\;\ell_c(z)+w\,\kappa\,g_c(z),\qquad
-  \kappa=\overline{\mathrm{sd}_c\,\ell_c}\,\big/\,\overline{\mathrm{sd}_c\,g_c},
-  \label{eq:scf}
-\end{equation}
-\TODOD{$g$ = $\log p(c\mid z)$ (PGM) hoặc $g^{\mathrm R}$; $\mathrm{sd}_c$ = độ lệch chuẩn theo lớp, lấy trung bình
-trên ảnh train của task hiện tại; $\kappa$ không cần nhãn; $w$ khoá trên tuning group (ridge 0.25, PGM 0.5).}
-
-\subsection{What the Measurement Can and Cannot Do}\label{sec:props}
-\begin{proposition}\label{prop:unitary}
-For any unitary $U$ applied after the encoding, $p(c\mid z)$ is unchanged.
-\end{proposition}
-\begin{proposition}\label{prop:shrink}
-Replacing every $\rho_c$ by $(1-\varepsilon)\rho_c+\varepsilon\bar\rho$, $\varepsilon\in[0,1)$, leaves
-$\arg\max_c p(c\mid z)$ unchanged.
-\end{proposition}
-\begin{proposition}\label{prop:scale}
-For any $a>0$ and class-independent $b(z)$, replacing $g_c$ by $a\,g_c+b$ leaves $\hat y$ in
-Eq.~\eqref{eq:scf} unchanged.
-\end{proposition}
-\TODOD{Chứng minh ngắn 2--3 dòng mỗi mệnh đề (appendix.tex mục A). Sau mỗi mệnh đề 1 câu ý nghĩa thực tế:
-(1) train mạch sau mã hoá là vô ích; (2) co trạng thái không có tác dụng; (3) $w$ cùng ý nghĩa cho mọi nguồn
-và dataset nên khoá được. Thêm: PGM trùng phép đo least-squares~\cite{eldar2001srm}, nên dự đoán ridge
-$\approx$ PGM.}
-
-% =====================================================================================
-\section{Experimental Setup}\label{sec:setup}
-% Phụ trách: Phát. ~0.5 trang. Nguồn: paper_acl/sections/setup.tex, task.tex
-\TODOP{4 dataset: CIFAR-100~\cite{krizhevsky2009cifar} (10 task), ImageNet-R~\cite{hendrycks2021many} (10 task),
-ImageNet-A~\cite{hendrycks2021nae} (10 task), CUB-200~\cite{wah2011cub} (20 task); seed 1993, 2015, 2026;
-cách chia dữ liệu; ViT-B/16 IN-21K; GPU; so cặp + CI 95\%; $w$ khoá trên ImageNet-R seed 1993;
-mọi head đánh giá trên cùng một mạng.}
-
-% =====================================================================================
-\section{Results}\label{sec:results}
-% Phụ trách: Phát. ~1.5 trang.
-
-\begin{table}[t]
-\centering
-\caption{Exemplar-free CIL, ViT-B/16-IN21K. Top: reported by~\cite{rsiat} on the authors' partitions (one run).
-Bottom: our runs, mean $\pm$ SD over 3 seeds; $\Delta$: paired difference to RSIAT with 95\% CI.
-\TODOP{Viết lại caption; chọn giữ bao nhiêu dòng đã công bố (bản ACL có 10).}}
-\label{tab:main}
-\resizebox{\textwidth}{!}{%
-\begin{tabular}{lcccccccc}
-\toprule
-& \multicolumn{2}{c}{CIFAR-100} & \multicolumn{2}{c}{ImageNet-R} & \multicolumn{2}{c}{ImageNet-A} & \multicolumn{2}{c}{CUB-200} \\
-\cmidrule(lr){2-3}\cmidrule(lr){4-5}\cmidrule(lr){6-7}\cmidrule(lr){8-9}
-Method & $\bar A$ & $A_B$ & $\bar A$ & $A_B$ & $\bar A$ & $A_B$ & $\bar A$ & $A_B$ \\
-\midrule
-SLCA~\cite{zhang2023slca} & 94.09 & 91.53 & 81.17 & 77.00 & 68.66 & 58.74 & 89.51 & 82.19 \\
-RanPAC~\cite{mcdonnell2023ranpac} & 94.35 & 90.86 & 82.98 & 77.94 & 69.32 & 61.82 & 93.13 & 89.40 \\
-SSIAT~\cite{ssiat} & 94.35 & 91.35 & 83.63 & 79.38 & 70.83 & 62.43 & 93.38 & 89.53 \\
-RSIAT~\cite{rsiat} & 95.15 & 92.20 & 86.92 & 82.75 & 74.89 & 66.23 & 93.99 & 90.59 \\
-\midrule
-RSIAT (ours) & 95.02{\tiny$\pm$.21} & 92.03{\tiny$\pm$.19} & 87.11{\tiny$\pm$.49} & 82.55{\tiny$\pm$.05}
- & 74.26{\tiny$\pm$1.1} & 67.02{\tiny$\pm$1.1} & 93.53{\tiny$\pm$.79} & 88.47{\tiny$\pm$.31} \\
-SCF, ridge & 95.22{\tiny$\pm$.20} & 92.41{\tiny$\pm$.21} & 87.42{\tiny$\pm$.46} & 83.03{\tiny$\pm$.24}
- & 75.12{\tiny$\pm$1.2} & 67.69{\tiny$\pm$0.9} & 93.54{\tiny$\pm$.88} & 88.85{\tiny$\pm$.22} \\
-SCF, PGM & 95.23{\tiny$\pm$.22} & 92.34{\tiny$\pm$.16} & 87.50{\tiny$\pm$.43} & 83.07{\tiny$\pm$.42}
- & 74.89{\tiny$\pm$1.0} & 67.65{\tiny$\pm$1.3} & 93.50{\tiny$\pm$.84} & 88.57{\tiny$\pm$.30} \\
-\midrule
-$\Delta$ ridge & $+$.20 {\tiny[.12,.28]} & $+$.38 {\tiny[.08,.69]} & $+$.32 {\tiny[.12,.51]} & $+$.48 {\tiny[.02,.94]}
- & $+$.85 {\tiny[.62,1.08]} & $+$.67 {\tiny[$-$.20,1.54]} & $+$.02 {\tiny[$-$.24,.27]} & $+$.38 {\tiny[.16,.61]} \\
-$\Delta$ PGM & $+$.22 {\tiny[.15,.28]} & $+$.31 {\tiny[.18,.43]} & $+$.39 {\tiny[.25,.53]} & $+$.52 {\tiny[$-$.41,1.45]}
- & $+$.63 {\tiny[$-$.10,1.36]} & $+$.62 {\tiny[$-$.08,1.32]} & $-$.03 {\tiny[$-$.18,.12]} & $+$.10 {\tiny[.05,.16]} \\
-\bottomrule
-\end{tabular}}
-\end{table}
-
-\paragraph{SCF raises final accuracy on all four benchmarks.}
-\TODOP{Đọc Bảng~\ref{tab:main} và Hình~\ref{fig:gain}: A$_B$ tăng +0.38 đến +0.67 (ridge), CI loại trừ 0 ở 3/4;
-$\bar A$ không tăng trên CUB-200. Vị trí so với số đã công bố, kèm lưu ý cách chia dữ liệu khác.}
-
-\begin{figure}[t]
-\centering
-\includegraphics[width=\textwidth]{figures/scf_gain.pdf}
-\caption{Paired gain of SCF over RSIAT (3 seeds, same network), 95\% CI. \TODOP{Viết lại caption.}}
-\label{fig:gain}
-\end{figure}
-
-\begin{table}[t]
-\centering
-\caption{Every quantum component against its classical twin (same inputs). $\Delta\bar A$ in points, paired
-runs. R: ImageNet-R, A: ImageNet-A. \TODOP{Rút gọn/viết lại caption; giữ hay bỏ dòng Holevo.}}
-\label{tab:twin}
-\small
-\begin{tabular}{lll r}
-\toprule
-Component & Comparison & $\Delta\bar A$ [95\% CI] & $n$ \\
-\midrule
-PQK, steering metric & PQK $-$ cosine, R & $+0.06$ [$-0.07$, $+0.18$] & 3 \\
-PQK, separation (QKSR) & PQK $-$ RBF, R & $+0.07$ [$-0.01$, $+0.15$] & 3 \\
- & PQK $-$ no CNOT, R & $+0.04$ [$+0.04$, $+0.05$] & 3 \\
- & repaired $-$ original, R & $-0.07$ [$-0.11$, $-0.03$] & 3 \\
-PQK, feature map & PQK ridge $-$ linear head, A & $-17.33$ [$-19.07$, $-15.59$] & 3 \\
-Holevo objective & von Neumann $-$ MCR$^2$, R & $+0.06$ (screening) & 1 \\
-PGM, stand-alone & PGM $-$ ridge, R+A & $+0.09$ [$-0.23$, $+0.40$] & 11 \\
-PGM, fused (SCF) & PGM $-$ ridge, 4 datasets & $-0.04$ [$-0.17$, $+0.08$] & 12 \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-\paragraph{The quantum score matches its classical twin.}
-\TODOP{Đọc Bảng~\ref{tab:twin}: chỉ một khoảng tin cậy nằm trên 0 (+0.04); PGM = ridge, đúng như
-Mệnh đề~\ref{prop:unitary}--\ref{prop:scale} và tương đương least-squares dự đoán.}
-
-% =====================================================================================
 \section{Analysis}\label{sec:analysis}
+\input{sections_icisn/7_1_why}         % Khanh
+\input{sections_icisn/7_2_ablation}    % Phat
+\input{sections_icisn/7_3_qscf}        % Phat
 
-\subsection{Why Fusion Helps}\label{sec:why}
-% Phụ trách: Khánh. ~0.4 trang. Nguồn: paper_acl/sections/analysis.tex (7.2, 7.4)
-\TODOK{Lỗi bù nhau: trên ImageNet-R, PGM và linear head bất đồng 14\% ảnh test (linear đúng 5.8\%,
-PGM đúng 3.2\%, cả hai sai 5.4\%). Hình~\ref{fig:frontier}: thay đổi lúc train chỉ đổi lớp mới lấy lớp cũ, fusion
-tăng cả hai. KHÔNG dùng câu cũ ``uncalibrated sum +0.25/+0.44'' (khác định nghĩa với Bảng~\ref{tab:ablation}).}
+\input{sections_icisn/8_conclusion}    % Khanh
 
-\begin{figure}[t]
-\centering
-\includegraphics[width=0.6\textwidth]{figures/frontier.pdf}
-\caption{Change of final accuracy on old (tasks 0--4) and new (tasks 5--9) halves, ImageNet-R seed 1993.
-\TODOK{Viết lại caption; thu nhỏ hoặc bỏ hình nếu thiếu trang.}}
-\label{fig:frontier}
-\end{figure}
+% Required by Springer (llncs v2.24, as in samplepaper.tex): Disclosure of Interests, before the references.
+\begin{credits}
+\subsubsection{\ackname} We thank Pham Thi Quynh Trang for supervising this work. Experiments were run on an
+NVIDIA RTX PRO 6000 Blackwell GPU.
 
-\subsection{Ablation and Cost}\label{sec:ablation}
-% Phụ trách: Phát. ~0.4 trang. Số: results/scf_ablation.md
-\begin{table}[t]
-\centering
-\caption{Ablation of SCF, final accuracy $A_B$ (mean over 3 seeds). Frozen weights: ridge $w=0.25$,
-PGM $w=0.5$. \TODOP{Viết lại caption; cân nhắc thêm $\bar A$.}}
-\label{tab:ablation}
-\small
-\begin{tabular}{lccccc}
-\toprule
-Variant & CIFAR-100 & ImageNet-R & ImageNet-A & CUB-200 & Mean \\
-\midrule
-Linear head (RSIAT) & 92.03 & 82.55 & 67.02 & 88.47 & 82.52 \\
-Ridge alone & 91.41 & 80.02 & 65.71 & 87.40 & 81.14 \\
-PGM alone & 91.32 & 80.11 & 65.06 & 85.90 & 80.60 \\
-\midrule
-Linear + ridge, no $\kappa$ ($w=1$) & 92.11 & 82.63 & 67.38 & 88.52 & 82.66 \\
-Linear + PGM, no $\kappa$ ($w=1$) & 92.24 & 82.98 & 67.49 & 88.56 & 82.82 \\
-\midrule
-SCF ridge, $w=0.25$ (frozen) & 92.41 & 83.03 & 67.69 & 88.85 & 83.00 \\
-SCF ridge, $w=1$ & 92.11 & 82.09 & 67.71 & 88.51 & 82.61 \\
-SCF ridge, $w=4$ & 91.69 & 80.93 & 66.51 & 87.90 & 81.76 \\
-SCF PGM, $w=0.5$ (frozen) & 92.34 & 83.07 & 67.65 & 88.57 & 82.91 \\
-SCF PGM, $w=1$ & 92.34 & 82.96 & 67.67 & 88.55 & 82.88 \\
-SCF PGM, $w=4$ & 91.90 & 81.83 & 66.62 & 87.77 & 82.03 \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-\TODOP{3 câu đúng theo số (xem HUONG\_DAN mục 4a): (1) fusion hơn từng nguồn riêng dù mỗi nguồn riêng kém
-linear head; (2) $\kappa$ cần cho ridge (không $\kappa$: +0.14 so với +0.48), giúp ít hơn với PGM;
-(3) $w$ nhỏ--vừa (0.25--1) tốt, $w$ lớn làm hại; $w$ khoá trên tuning group.}
-
-\TODOP{Chi phí (1 câu hoặc 1 dòng): chạy \texttt{scripts/scf\_cost.py}. Số thử trên CPU, $C=100$:
-ridge +0.002\,ms/ảnh, 0.6\,MB; PGM +0.9\,ms/ảnh, $\sim$230\,MB. Thay bằng số GPU nếu có, ghi tên GPU.}
-
-\subsection{Quantum at Training Time plus SCF}\label{sec:qscf}
-% Phụ trách: Phát (số do Thuận chạy W07). ~0.3 trang. Số: exps/qscf/results/summary.md
-\begin{table}[t]
-\centering
-\caption{RSIAT or QKSR training $\times$ linear head or SCF, ImageNet-R seed 1993, 3 replicates
-($\bar A$ / $A_B$, mean $\pm$ SD). \TODOP{Điền sau W07; nếu W07 lỗi dùng pilot 1 run (HUONG\_DAN mục 4b).}}
-\label{tab:qscf}
-\small
-\begin{tabular}{lccc}
-\toprule
-Training & Linear head & SCF, ridge & SCF, PGM \\
-\midrule
-RSIAT & \TODOP{} & \TODOP{} & \TODOP{} \\
-QKSR (PQK steering + separation) & \TODOP{} & \TODOP{} & \TODOP{} \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-\TODOP{2--3 câu về Bảng~\ref{tab:qscf}: SCF có tăng trên cả hai mạng không; kiểm định chốt trước
-(QKSR+SCF) $-$ (RSIAT+SCF): ĐẠT/KHÔNG ĐẠT, ghi đúng như summary.md.}
-
-% =====================================================================================
-\section{Conclusion}\label{sec:conclusion}
-% Phụ trách: Khánh. ~0.5 trang (gồm Limitations).
-\TODOK{Nhắc lại C1--C3 bằng số; bài học: luôn so với classical twin.}
-
-\paragraph{Limitations.}
-\TODOK{Một baseline (RSIAT); cách chia dữ liệu khác số công bố; mạch nhỏ ($\le$11 qubit) mô phỏng chính xác;
-W07 chỉ ImageNet-R một seed; $\bar A$ không tăng trên CUB-200; PGM tốn bộ nhớ $O(C\,D^2)$.}
-
-% \paragraph{Acknowledgements.} TODO Thuận: cảm ơn (nếu có), khai báo dùng công cụ AI theo quy định hội nghị.
+\subsubsection{\discintname}
+The authors have no competing interests to declare that are relevant to the content of this article.
+\end{credits}
 
 \bibliographystyle{splncs04}
 \bibliography{references}

@@ -1,0 +1,19 @@
+% Owner: Thuan. 150--250 words (currently ~210). Numbers: exps/scf/results/summary.md, exps/qscf/results/summary.md
+\begin{abstract}
+Exemplar-free class-incremental learning (CIL) methods built on pre-trained transformers store a mean and a
+covariance for every class seen so far, yet use these statistics only to retrain the classifier and discard them
+at prediction time. We propose Statistics-Calibrated Fusion (SCF), which keeps the trained classifier and adds a
+second score computed from the stored statistics, rescaled by a label-free factor so that a single fusion weight
+carries over across scores and datasets. The second score can be classical, a closed-form ridge classifier, or
+quantum, a pretty-good measurement (PGM) over class density matrices built from the same statistics. On four
+benchmarks with three seeds, SCF raises the final accuracy of the RSIAT baseline by 0.38 to 0.67 points, without
+retraining the network or storing any data. Every quantum component is compared with a classical twin that
+receives the same inputs: the PGM matches ridge ($-0.04$ points, 95\% CI $[-0.17,+0.08]$, 12 paired runs), as our
+invariance results and the least-squares view of the PGM predict. The gain comes from complementary errors: the
+classifier and the PGM disagree on 14\% of ImageNet-R test images, and fusion raises accuracy on both old and new classes, whereas
+training-time changes trade one for the other. A pre-registered $2\times2$ experiment confirms this: SCF adds 0.38
+and 0.44 points of average accuracy on classically and quantum-trained networks, while quantum training adds
+nothing measurable once SCF is used.
+\keywords{Class-incremental learning \and Exemplar-free \and Score fusion \and
+Quantum state discrimination \and Pre-trained models}
+\end{abstract}

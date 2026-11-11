@@ -20,9 +20,13 @@
    - Mọi con số phải có trong file kết quả của repo. Không chắc thì để `\todo{...}` và hỏi Thuận.
    - Không dùng "quantum advantage" và "state-of-the-art".
    - Ký hiệu thống nhất theo bảng của Đức Anh (có từ thứ Hai).
-   - Cả nhóm viết chung **một file `main.tex`** trên Overleaf (khung có sẵn: `paper_icisn/main.tex`,
-     zip upload: `dist/paper_icisn_overleaf.zip`). Mỗi chỗ cần viết có TODO màu ghi tên người:
-     đỏ = Thuận, xanh dương = Khánh, xanh lục = Đức Anh, tím = Phát. Viết xong thì xoá TODO của mình.
+   - Cả nhóm viết chung một project Overleaf. `main.tex` chỉ chứa preamble và tiêu đề; **mỗi người sửa file
+     của mình trong `sections_icisn/`** (đầu mỗi file ghi người phụ trách):
+     Thuận `0_abstract`, `1_introduction`; Khánh `2_related`, `3_background`, `7_1_why`, `8_conclusion`;
+     Đức Anh `4_method`; Phát `5_setup`, `6_results`, `7_2_ablation`, `7_3_qscf`.
+     Đừng sửa `main.tex` (trừ Thuận). Mỗi chỗ cần viết có TODO **màu đỏ** ghi tên người, bằng tiếng Anh:
+     `[TODO Thuan: ...]`, `[TODO Khanh: ...]`, `[TODO Duc Anh: ...]`, `[TODO Phat: ...]` (lệnh `\TODOT`,
+     `\TODOK`, `\TODOD`, `\TODOP`). Tìm phần của mình bằng Ctrl+F tên mình. Viết xong thì xoá TODO đó.
 
 **Ký hiệu chính** (Đức Anh chốt bản cuối):
 
